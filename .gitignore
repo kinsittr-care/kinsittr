@@ -1,0 +1,16 @@
+.env
+.env.local
+.env.*.local
+
+# Go
+apps/api/bin/
+apps/api/tmp/
+
+# Node
+apps/web/node_modules/
+apps/web/.next/
+apps/web/out/
+
+# OS
+.DS_Store
+Thumbs.db
