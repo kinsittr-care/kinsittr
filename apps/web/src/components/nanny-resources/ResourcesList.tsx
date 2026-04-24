@@ -40,7 +40,7 @@ export default function ResourcesList() {
       <div className="mx-auto px-[52px] max-w-[1080px] max-md:px-6">
         <RevealWrapper>
           <div
-            className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-[0.1em] rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
+            className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-widest rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
             style={{ color: "var(--teal)", background: "var(--teal-lt)", borderColor: "var(--teal-mid)" }}
           >
             Resources
@@ -53,7 +53,7 @@ export default function ResourcesList() {
           </p>
         </RevealWrapper>
 
-        <RevealWrapper delay={100}>
+        <RevealWrapper delay={0.1}>
           <div className="rounded-[18px] overflow-hidden" style={{ border: "1px solid var(--border)" }}>
             {resources.map((r, i) => (
               <div key={r.title} style={i === resources.length - 1 ? { borderBottom: "none" } : {}}>

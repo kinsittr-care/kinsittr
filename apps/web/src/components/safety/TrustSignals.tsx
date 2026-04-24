@@ -46,7 +46,7 @@ export default function TrustSignals() {
         <RevealWrapper>
           <div className="text-center mb-12">
             <div
-              className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-[0.1em] rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
+              className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-widest rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
               style={{ color: "var(--teal)", background: "var(--teal-lt)", borderColor: "var(--teal-mid)" }}
             >
               What this means for you
@@ -59,7 +59,7 @@ export default function TrustSignals() {
 
         <div className="grid grid-cols-3 gap-5 max-md:grid-cols-1">
           {cards.map((c, i) => (
-            <RevealWrapper key={c.title} delay={i * 80}>
+            <RevealWrapper key={c.title} delay={i * 0.1}>
               <div
                 className="bg-white rounded-[18px] p-[28px] text-center"
                 style={{ border: "1px solid var(--border)" }}

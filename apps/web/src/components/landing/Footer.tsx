@@ -1,4 +1,4 @@
-import type { FooterColumn } from "@/src/types/landing";
+import type { FooterColumn } from "@/src/types/components/landing";
 import Logo from "./Logo";
 
 const columns: FooterColumn[] = [
@@ -6,14 +6,12 @@ const columns: FooterColumn[] = [
     heading: "Families",
     links: [
       { label: "Find a nanny",  href: "/nanny-app" },
-      { label: "How it works",  href: "/#how" },
       { label: "Safety",        href: "/safety" },
     ],
   },
   {
     heading: "Nannies",
     links: [
-      { label: "Join KinSittr", href: "/nanny-resources" },
       { label: "Verification",  href: "/verification" },
       { label: "Resources",     href: "/nanny-resources" },
     ],
@@ -22,7 +20,6 @@ const columns: FooterColumn[] = [
     heading: "Company",
     links: [
       { label: "About",   href: "/about" },
-      { label: "Blog",    href: "#" },
       { label: "Contact", href: "/contact" },
     ],
   },
@@ -41,7 +38,7 @@ export default function Footer() {
 
         {columns.map((col) => (
           <div key={col.heading}>
-            <h5 className="text-[11.5px] font-bold uppercase tracking-[0.1em] mb-[14px]" style={{ color: "rgba(255,255,255,.4)" }}>
+            <h5 className="text-[11.5px] font-bold uppercase tracking-widest mb-[14px]" style={{ color: "rgba(255,255,255,.4)" }}>
               {col.heading}
             </h5>
             {col.links.map(({ label, href }) => (

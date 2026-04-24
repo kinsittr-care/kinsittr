@@ -1,4 +1,4 @@
-import type { LogoProps } from "@/src/types/landing";
+import type { LogoProps } from "@/src/types/components/landing";
 
 export default function Logo({ dark = false }: LogoProps) {
   return (

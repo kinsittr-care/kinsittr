@@ -14,10 +14,10 @@ export default function SafetyPage() {
         <TrustSignals />
         <FaqSection />
         <PageCtaBand
-          heading="Ready to find trusted care?"
-          body="Every nanny you see on KinSittr has passed all three steps. Browse with confidence."
-          primaryCta="Browse nannies →"
-          primaryHref="#"
+          heading="Like what you see?"
+          body="Join our waitlist and we'll let you know when we launch."
+          primaryCta="Get in touch →"
+          primaryHref="/contact"
           variant="dark"
         />
       </main>

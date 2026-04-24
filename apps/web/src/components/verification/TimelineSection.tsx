@@ -39,7 +39,7 @@ export default function TimelineSection() {
       <div className="mx-auto px-[52px] max-w-[640px] max-md:px-6">
         <RevealWrapper>
           <div
-            className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-[0.1em] rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
+            className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-widest rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
             style={{ color: "var(--teal)", background: "var(--teal-lt)", borderColor: "var(--teal-mid)" }}
           >
             Timeline
@@ -55,11 +55,11 @@ export default function TimelineSection() {
 
           <div className="flex flex-col gap-8">
             {events.map((e, i) => (
-              <RevealWrapper key={e.title} delay={i * 80}>
+              <RevealWrapper key={e.title} delay={i * 0.1}>
                 <div className="flex gap-6 items-start pl-10 relative">
                   {/* dot */}
                   <div
-                    className="absolute left-0 top-1 w-[16px] h-[16px] rounded-full border-[3px] flex-shrink-0"
+                    className="absolute left-0 top-1 w-[16px] h-[16px] rounded-full border-[3px] shrink-0"
                     style={{
                       background: e.gold ? "var(--gold)" : "var(--teal)",
                       borderColor: "var(--bg-warm)",

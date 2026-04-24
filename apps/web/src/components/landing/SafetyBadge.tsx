@@ -1,4 +1,4 @@
-import type { SafetyBadgeProps } from "@/src/types/landing";
+import type { SafetyBadgeProps } from "@/src/types/components/landing";
 
 export default function SafetyBadge({
   icon,

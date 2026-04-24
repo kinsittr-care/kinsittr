@@ -1,5 +1,5 @@
 import { Navbar, Footer } from "@/src/components/landing";
-import { AboutHero, StorySection, ValuesSection, TeamSection } from "@/src/components/about";
+import { AboutHero, ValuesSection, TeamSection } from "@/src/components/about";
 import PageCtaBand from "@/src/components/shared/PageCtaBand";
 
 export const metadata = { title: "About — KinSittr" };
@@ -10,12 +10,12 @@ export default function AboutPage() {
       <Navbar />
       <main>
         <AboutHero />
-        <StorySection />
+        {/* <StorySection /> */}
         <ValuesSection />
         <TeamSection />
         <PageCtaBand
-          heading="Want to work with us?"
-          body="We're a small team with big hearts. Reach out — we'd love to hear from you."
+          heading="Like what you see?"
+          body="Join our waitlist and we'll let you know when we launch."
           primaryCta="Get in touch →"
           primaryHref="/contact"
           variant="dark"

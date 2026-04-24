@@ -11,18 +11,18 @@ const channels = [
       </svg>
     ),
     label: "Email",
-    value: "hello@kinsittr.ca",
+    value: "kinsittr@gmail.com",
   },
-  {
-    iconBg: "var(--gold-lt)",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path d="M3 3h4l2 5-2.5 1.5a11 11 0 0 0 5 5L13 12l5 2v4a1 1 0 0 1-1 1C6 19 1 14 1 4a1 1 0 0 1 1-1z" stroke="var(--gold)" strokeWidth="1.8" fill="none" strokeLinejoin="round" />
-      </svg>
-    ),
-    label: "Phone",
-    value: "1-800-KIN-SITT",
-  },
+  // {
+  //   iconBg: "var(--gold-lt)",
+  //   icon: (
+  //     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+  //       <path d="M3 3h4l2 5-2.5 1.5a11 11 0 0 0 5 5L13 12l5 2v4a1 1 0 0 1-1 1C6 19 1 14 1 4a1 1 0 0 1 1-1z" stroke="var(--gold)" strokeWidth="1.8" fill="none" strokeLinejoin="round" />
+  //     </svg>
+  //   ),
+  //   label: "Phone",
+  //   value: "1-800-000-0000",
+  // },
   {
     iconBg: "var(--coral-lt)",
     icon: (
@@ -32,7 +32,7 @@ const channels = [
       </svg>
     ),
     label: "Headquarters",
-    value: "Toronto, Ontario, Canada",
+    value: "Calgary, Alberta, Canada",
   },
 ];
 
@@ -40,7 +40,7 @@ export default function ContactInfo() {
   return (
     <RevealWrapper>
       <div
-        className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-[0.1em] rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
+        className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-widest rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
         style={{ color: "var(--teal)", background: "var(--teal-lt)", borderColor: "var(--teal-mid)" }}
       >
         Contact us
@@ -55,7 +55,7 @@ export default function ContactInfo() {
       {channels.map(({ iconBg, icon, label, value }) => (
         <div key={label} className="flex items-center gap-[14px] mb-5">
           <div
-            className="w-[46px] h-[46px] rounded-[12px] flex items-center justify-center flex-shrink-0"
+            className="w-[46px] h-[46px] rounded-[12px] flex items-center justify-center shrink-0"
             style={{ background: iconBg }}
           >
             {icon}

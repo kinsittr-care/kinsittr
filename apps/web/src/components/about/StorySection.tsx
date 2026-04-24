@@ -10,7 +10,7 @@ export default function StorySection() {
           </div>
           <div className="text-[16.5px] leading-[1.85] space-y-[22px]" style={{ color: "var(--muted)" }}>
             <p>
-              KinSittr was founded in 2026 by a small team of parents and childcare professionals who kept running into the same wall:{" "}
+              KinSittr was founded in 2026 by a small team childcare professionals who kept running into the same wall:{" "}
               <strong style={{ color: "var(--brand-text)", fontWeight: 600 }}>existing platforms treated childcare like a gig economy</strong>.
               Post a job, get flooded with applicants, sort through unverified profiles, hope for the best.
             </p>

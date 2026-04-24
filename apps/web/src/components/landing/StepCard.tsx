@@ -1,4 +1,4 @@
-import type { StepCardProps } from "@/src/types/landing";
+import type { StepCardProps } from "@/src/types/components/landing";
 
 export default function StepCard({
   step,

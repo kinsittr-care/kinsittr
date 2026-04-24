@@ -12,7 +12,7 @@ export default function ResourceItem({ tag, tagStyle, title, description }: Reso
       style={{ borderBottom: "1px solid var(--border)" }}
     >
       <span
-        className="text-[11px] font-bold uppercase tracking-[0.07em] rounded-full px-[10px] py-[4px] flex-shrink-0"
+        className="text-[11px] font-bold uppercase tracking-[0.07em] rounded-full px-[10px] py-[4px] shrink-0"
         style={tagStyle}
       >
         {tag}
@@ -25,7 +25,7 @@ export default function ResourceItem({ tag, tagStyle, title, description }: Reso
           {description}
         </p>
       </div>
-      <span className="text-[18px] ml-auto flex-shrink-0" style={{ color: "var(--faint)" }}>→</span>
+      <span className="text-[18px] ml-auto shrink-0" style={{ color: "var(--faint)" }}>→</span>
     </div>
   );
 }

@@ -10,7 +10,7 @@ export default function ChecklistItem({ title, description }: ChecklistItemProps
       style={{ border: "1px solid var(--border)" }}
     >
       <div
-        className="w-[36px] h-[36px] rounded-full flex items-center justify-center flex-shrink-0"
+        className="w-[36px] h-[36px] rounded-full flex items-center justify-center hrink-0"
         style={{ background: "var(--teal-lt)" }}
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

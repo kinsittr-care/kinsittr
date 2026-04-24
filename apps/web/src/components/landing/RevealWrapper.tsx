@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import type { RevealWrapperProps } from "@/src/types/landing";
+import type { RevealWrapperProps } from "@/src/types/components/landing";
 
 export default function RevealWrapper({
   children,

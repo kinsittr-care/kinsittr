@@ -3,25 +3,18 @@ import RevealWrapper from "@/src/components/landing/RevealWrapper";
 
 const team = [
   {
-    initials: "MA",
+    initials: "OG",
     avatarBg: "var(--teal)",
-    name: "Maya Adeyemi",
+    name: "OluwaTinuke Griffin",
     role: "Co-founder & CEO",
-    bio: "Former early childhood educator and mother of two. Maya built KinSittr because she couldn't find what she needed as a parent.",
+    bio: "Tinuke spent over six years working in childcare across Canada as a nanny, in early childhood settings, and supporting families directly.",
   },
   {
-    initials: "JC",
+    initials: "EC",
     avatarBg: "#5a3a6a",
-    name: "James Chen",
+    name: "Emmanuella Chukwu",
     role: "Co-founder & CTO",
-    bio: "Software engineer and dad. James leads product and engineering, focused on keeping the experience simple and the platform reliable.",
-  },
-  {
-    initials: "SP",
-    avatarBg: "var(--coral)",
-    name: "Simone Pelletier",
-    role: "Head of Trust & Safety",
-    bio: "15 years in childcare and social services. Simone oversees every verification, every report, and every nanny approval on the platform.",
+    bio: "Emmanuella is a software engineer who leads product and engineering at KinSittr. She believes that finding trustworthy childcare should feel simple and safe.",
   },
 ];
 
@@ -41,7 +34,7 @@ export default function TeamSection() {
         </RevealWrapper>
         <RevealWrapper delay={0.2}>
           <p className="text-[16.5px] leading-[1.75] max-w-[460px] mb-12" style={{ color: "var(--muted)" }}>
-            Built by parents, childcare professionals, and people who believe trust is the foundation of everything.
+            Built by childcare professionals, and people who believe trust is the foundation of everything.
           </p>
         </RevealWrapper>
 

@@ -26,7 +26,7 @@ export default function RequirementsSection() {
       <div className="mx-auto px-[52px] max-w-[1080px] max-md:px-6">
         <RevealWrapper>
           <div
-            className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-[0.1em] rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
+            className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-widest rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
             style={{ color: "var(--teal)", background: "var(--teal-lt)", borderColor: "var(--teal-mid)" }}
           >
             Requirements
@@ -41,7 +41,7 @@ export default function RequirementsSection() {
 
         <div className="flex flex-col gap-3">
           {requirements.map((r, i) => (
-            <RevealWrapper key={r.title} delay={i * 80}>
+            <RevealWrapper key={r.title} delay={i * 0.1}>
               <ChecklistItem {...r} />
             </RevealWrapper>
           ))}

@@ -1,7 +1,7 @@
 import type {
   AudienceCardContent,
   AudienceCardProps,
-} from "@/src/types/landing";
+} from "@/src/types/components/landing";
 
 const checkIcon = (color: string) => (
   <svg width="10" height="8" viewBox="0 0 10 8" fill="none">

@@ -39,7 +39,7 @@ export default function VerificationSteps() {
 
         <div className="flex flex-col" style={{ gap: 2 }}>
           {steps.map((s, i) => (
-            <RevealWrapper key={s.num} delay={i * 100}>
+            <RevealWrapper key={s.num} delay={i * 0.1}>
               <div
                 className="flex gap-6 items-start bg-white p-[28px]"
                 style={{

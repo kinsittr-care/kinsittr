@@ -90,7 +90,7 @@ export default function BenefitsSection() {
 
         <div className="grid grid-cols-3 gap-5 max-md:grid-cols-1">
           {benefits.map((b, i) => (
-            <RevealWrapper key={b.title} delay={i * 2}>
+            <RevealWrapper key={b.title} delay={i * 0.1}>
               <BenefitCard {...b} />
             </RevealWrapper>
           ))}

@@ -13,10 +13,10 @@ export default function VerificationPage() {
         <RequirementsSection />
         <TimelineSection />
         <PageCtaBand
-          heading="Ready to get started?"
-          body="Join KinSittr and connect with families looking for someone just like you."
-          primaryCta="Apply now →"
-          primaryHref="#apply"
+          heading="Like what you see?"
+          body="Join our waitlist and we'll let you know when we launch."
+          primaryCta="Get in touch →"
+          primaryHref="/contact"
           variant="medium"
         />
       </main>

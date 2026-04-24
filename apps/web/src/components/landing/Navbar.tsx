@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { NavLink } from "@/src/types/landing";
+import type { NavLink } from "@/src/types/components/landing";
 import Logo from "./Logo";
 
 const navLinks: NavLink[] = [
-  { label: "Safety",      href: "/safety" },
-  { label: "For nannies", href: "/nanny-resources" },
+  // { label: "Safety",      href: "/safety" },
+  // { label: "For nannies", href: "/nanny-resources" },
   { label: "About",       href: "/about" },
   { label: "Contact",     href: "/contact" },
 ];
@@ -22,7 +22,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-[100] h-[66px] flex items-center justify-between px-[52px] transition-all duration-300 max-md:px-6"
+      className="fixed top-0 left-0 right-0 z-100 h-[66px] flex items-center justify-between px-[52px] transition-all duration-300 max-md:px-6"
       style={
         scrolled
           ? { background: "rgba(245,240,232,.94)", backdropFilter: "blur(14px)", boxShadow: "0 1px 20px rgba(40,30,20,.07)" }

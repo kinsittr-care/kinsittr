@@ -1,4 +1,4 @@
-import type { SafetyBadgeItem } from "@/src/types/landing";
+import type { SafetyBadgeItem } from "@/src/types/components/landing";
 import SafetyBadge from "./SafetyBadge";
 import RevealWrapper from "./RevealWrapper";
 

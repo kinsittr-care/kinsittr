@@ -11,10 +11,10 @@ export default function AboutHero() {
       </svg>
 
       <div className="relative max-w-[1000px] mx-auto grid grid-cols-2 gap-[72px] items-center max-md:grid-cols-1 max-md:gap-10">
-        <div className="relative z-[2]">
+        <div className="relative z-2">
           <RevealWrapper>
             <div
-              className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-[0.1em] rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
+              className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-widest rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
               style={{ color: "var(--teal)", background: "var(--teal-lt)", borderColor: "var(--teal-mid)" }}
             >
               Our story
@@ -33,7 +33,7 @@ export default function AboutHero() {
           </RevealWrapper>
         </div>
 
-        <RevealWrapper delay={0.15} className="flex justify-center relative z-[2] max-md:hidden">
+        <RevealWrapper delay={0.15} className="flex justify-center relative z-2 max-md:hidden">
           <HouseIllustration />
         </RevealWrapper>
       </div>

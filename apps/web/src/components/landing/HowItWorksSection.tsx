@@ -1,4 +1,4 @@
-import type { HowItWorksStep } from "@/src/types/landing";
+import type { HowItWorksStep } from "@/src/types/components/landing";
 import StepCard from "./StepCard";
 import RevealWrapper from "./RevealWrapper";
 
