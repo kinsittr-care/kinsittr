@@ -1,3 +1,8 @@
+import {
+  BackgroundCheckIcon,
+  InterviewScreenedIcon,
+  ReferenceVerifiedIcon,
+} from "@/src/components/icons";
 import type { SafetyBadgeItem } from "@/src/types/components/landing";
 import SafetyBadge from "./SafetyBadge";
 import RevealWrapper from "./RevealWrapper";
@@ -5,59 +10,15 @@ import RevealWrapper from "./RevealWrapper";
 const badges: SafetyBadgeItem[] = [
   {
     label: "Background check",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path
-          d="M10 1l7 3v6c0 4.4-3 8.3-7 9.4C6 18.3 3 14.4 3 10V4l7-3z"
-          stroke="rgba(255,255,255,.7)"
-          strokeWidth="1.5"
-          fill="rgba(255,255,255,.1)"
-        />
-        <path
-          d="M7 10l2 2 4-4"
-          stroke="rgba(255,255,255,.8)"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
+    icon: <BackgroundCheckIcon />,
   },
   {
     label: "Reference verified",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <circle cx="10" cy="7" r="4" stroke="rgba(255,255,255,.7)" strokeWidth="1.5" />
-        <path
-          d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6"
-          stroke="rgba(255,255,255,.7)"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
+    icon: <ReferenceVerifiedIcon />,
   },
   {
     label: "Interview screened",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <rect
-          x="2"
-          y="5"
-          width="16"
-          height="12"
-          rx="2.5"
-          stroke="rgba(255,255,255,.7)"
-          strokeWidth="1.5"
-        />
-        <path
-          d="M6 5V4a4 4 0 0 1 8 0v1"
-          stroke="rgba(255,255,255,.7)"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
+    icon: <InterviewScreenedIcon />,
   },
 ];
 

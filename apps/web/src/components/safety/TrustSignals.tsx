@@ -1,39 +1,26 @@
+import {
+  IdentityConfirmedIcon,
+  MonitoringIcon,
+  TrustSignalShieldIcon,
+} from "@/src/components/icons";
 import RevealWrapper from "@/src/components/landing/RevealWrapper";
 
 const cards = [
   {
     iconBg: "var(--teal-lt)",
-    icon: (
-      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-        <path d="M13 2.5 L21 6 L21 12 Q21 19 13 22.5 Q5 19 5 12 L5 6 Z" stroke="var(--teal)" strokeWidth="1.8" fill="none" />
-        <path d="M9 13 l3 3 5-6" stroke="var(--teal)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
+    icon: <TrustSignalShieldIcon />,
     title: "Only verified nannies",
     description: "No unverified profiles ever appear in search results. What you see is always approved.",
   },
   {
     iconBg: "var(--gold-lt)",
-    icon: (
-      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-        <circle cx="13" cy="9" r="4.5" stroke="var(--gold)" strokeWidth="1.8" />
-        <path d="M4 22c0-4.5 4-8 9-8s9 3.5 9 8" stroke="var(--gold)" strokeWidth="1.8" strokeLinecap="round" />
-        <path d="M17 7 l2 2" stroke="var(--gold)" strokeWidth="1.6" strokeLinecap="round" />
-        <circle cx="19" cy="7" r="2.5" fill="var(--gold)" opacity=".6" />
-      </svg>
-    ),
+    icon: <IdentityConfirmedIcon />,
     title: "Identity confirmed",
     description: "Government ID is verified at the interview stage. You always know exactly who you're booking.",
   },
   {
     iconBg: "var(--coral-lt)",
-    icon: (
-      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-        <circle cx="13" cy="13" r="9" stroke="var(--coral)" strokeWidth="1.8" />
-        <path d="M13 9v5l3 2" stroke="var(--coral)" strokeWidth="1.8" strokeLinecap="round" />
-        <path d="M6 6 l3 3M20 6 l-3 3" stroke="var(--coral)" strokeWidth="1.4" strokeLinecap="round" opacity=".6" />
-      </svg>
-    ),
+    icon: <MonitoringIcon />,
     title: "Ongoing monitoring",
     description: "Our trust team continuously monitors for reports or concerns, and acts swiftly when needed.",
   },

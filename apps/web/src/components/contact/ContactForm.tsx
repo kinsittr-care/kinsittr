@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRightIcon } from "@/src/components/icons";
 import { useState } from "react";
 
 const inputClass = `
@@ -104,9 +105,7 @@ export default function ContactForm() {
 
             <button type="submit" className="btn-cta justify-center" style={{ width: "100%", fontSize: 15, padding: "14px" }}>
               Send message
-              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <path d="M2 7.5h11M8 3l4.5 4.5L8 12" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ArrowRightIcon color="#fff" />
             </button>
           </form>
         </>

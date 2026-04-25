@@ -1,4 +1,6 @@
+import { ArrowRightIcon } from "@/src/components/icons";
 import NannyIllustration from "./NannyIllustration";
+import Link from "next/link";
 
 export default function NannyHero() {
   return (
@@ -17,7 +19,7 @@ export default function NannyHero() {
       <div className="relative mx-auto px-[52px] max-w-[1080px] grid grid-cols-2 gap-[64px] items-center max-md:grid-cols-1 max-md:px-6">
         <div>
           <div
-            className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-[0.1em] rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
+            className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-widest rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
             style={{ color: "var(--teal-mid)", background: "rgba(194,216,216,.15)", borderColor: "rgba(194,216,216,.3)" }}
           >
             For nannies &amp; caregivers
@@ -35,17 +37,15 @@ export default function NannyHero() {
           <div className="flex flex-wrap gap-4">
             <a href="/verification" className="btn-cta">
               Get verified
-              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <path d="M2 7.5h11M8 3l4.5 4.5L8 12" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ArrowRightIcon color="#fff" />
             </a>
-            <a
+            <Link
               href="/contact"
               className="inline-flex items-center gap-2 rounded-[10px] px-6 py-3 text-[15px] font-semibold transition-colors"
               style={{ background: "rgba(255,255,255,.12)", color: "#fff", border: "1.5px solid rgba(255,255,255,.25)" }}
             >
               Talk to our team
-            </a>
+            </Link>
           </div>
         </div>
         <div className="flex justify-center max-md:hidden">

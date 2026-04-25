@@ -5,7 +5,7 @@ const team = [
   {
     initials: "OG",
     avatarBg: "var(--teal)",
-    name: "OluwaTinuke Griffin",
+    name: "Oluwatinuke Griffin",
     role: "Co-founder & CEO",
     bio: "Tinuke spent over six years working in childcare across Canada as a nanny, in early childhood settings, and supporting families directly.",
   },

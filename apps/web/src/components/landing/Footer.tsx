@@ -5,7 +5,7 @@ const columns: FooterColumn[] = [
   {
     heading: "Families",
     links: [
-      { label: "Find a nanny",  href: "/nanny-app" },
+      { label: "Find a nanny",  href: "/contact" },
       { label: "Safety",        href: "/safety" },
     ],
   },

@@ -1,13 +1,9 @@
+import { AudienceCheckIcon } from "@/src/components/icons";
 import type {
   AudienceCardContent,
   AudienceCardProps,
 } from "@/src/types/components/landing";
-
-const checkIcon = (color: string) => (
-  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-    <path d="M1 4l3 3 5-5" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
+import Link from "next/link";
 
 const familiesData: AudienceCardContent = {
   tag: "For families",
@@ -57,7 +53,7 @@ export default function AudienceCard({ variant }: AudienceCardProps) {
 
       {/* Tag */}
       <div
-        className="inline-block text-[11px] font-bold tracking-[0.1em] uppercase rounded-[30px] px-3 py-1 mb-5"
+        className="inline-block text-[11px] font-bold tracking-widest uppercase rounded-[30px] px-3 py-1 mb-5"
         style={
           isFamilies
             ? { background: "rgba(255,255,255,.18)", color: "rgba(255,255,255,.9)" }
@@ -88,10 +84,10 @@ export default function AudienceCard({ variant }: AudienceCardProps) {
         {data.perks.map((perk) => (
           <div key={perk} className="flex items-center gap-[9px] text-[14px]">
             <div
-              className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+              className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
               style={{ background: isFamilies ? "rgba(255,255,255,.2)" : "rgba(200,164,74,.25)" }}
             >
-              {checkIcon(isFamilies ? "white" : "var(--gold)")}
+              <AudienceCheckIcon color={isFamilies ? "white" : "var(--gold)"} />
             </div>
             <span style={{ color: isFamilies ? "rgba(255,255,255,.88)" : "var(--brand-text)" }}>
               {perk}
@@ -101,9 +97,9 @@ export default function AudienceCard({ variant }: AudienceCardProps) {
       </div>
 
       {/* CTA */}
-      <a href="#" className={isFamilies ? "btn-white" : "btn-gold"}>
+      <Link href="/contact" className={isFamilies ? "btn-white" : "btn-gold"}>
         {data.cta}
-      </a>
+      </Link>
 
       {/* Decorative illustration */}
       {isFamilies ? (

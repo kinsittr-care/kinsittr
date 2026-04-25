@@ -1,3 +1,4 @@
+import { TinyCheckIcon } from "@/src/components/icons";
 import RevealWrapper from "@/src/components/landing/RevealWrapper";
 
 const perks = [
@@ -58,9 +59,7 @@ export default function PaySection() {
                 {perks.map((p) => (
                   <li key={p} className="flex items-center gap-3 text-[14px]" style={{ color: "rgba(255,255,255,.9)" }}>
                     <span className="w-[20px] h-[20px] rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                        <path d="M2 5l2.5 2.5L8 3" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                      <TinyCheckIcon color="#fff" />
                     </span>
                     {p}
                   </li>

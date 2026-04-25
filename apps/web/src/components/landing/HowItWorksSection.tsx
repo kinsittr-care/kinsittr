@@ -1,3 +1,8 @@
+import {
+  CalendarStepIcon,
+  ChatStepIcon,
+  SearchStepIcon,
+} from "@/src/components/icons";
 import type { HowItWorksStep } from "@/src/types/components/landing";
 import StepCard from "./StepCard";
 import RevealWrapper from "./RevealWrapper";
@@ -8,41 +13,21 @@ const steps: HowItWorksStep[] = [
     title: "Browse profiles",
     description:
       "Filter by location, hourly rate, and specialties. Every profile is hand-reviewed before it appears on KinSittr.",
-    icon: (
-      <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-        <circle cx="22" cy="22" r="22" fill="var(--teal-lt)" />
-        <circle cx="20" cy="20" r="8" stroke="var(--teal)" strokeWidth="2" />
-        <path d="M26 26l5 5" stroke="var(--teal)" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: <SearchStepIcon />,
   },
   {
     step: "Step 02",
     title: "Request a booking",
     description:
       "Choose your date and duration. Your nanny reviews your request and approves — both sides connect with confidence.",
-    icon: (
-      <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-        <circle cx="22" cy="22" r="22" fill="var(--gold-lt)" />
-        <rect x="12" y="13" width="20" height="18" rx="3" stroke="var(--gold)" strokeWidth="2" />
-        <path d="M12 19h20" stroke="var(--gold)" strokeWidth="1.5" />
-        <path d="M17 26h10" stroke="var(--gold)" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: <CalendarStepIcon />,
   },
   {
     step: "Step 03",
     title: "Chat & connect",
     description:
       "Once approved, messaging unlocks. Share details, ask questions, and build a real relationship before care begins.",
-    icon: (
-      <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-        <circle cx="22" cy="22" r="22" fill="#fdecea" />
-        <path d="M31 26a11 11 0 0 1-18 0" stroke="var(--coral)" strokeWidth="2" fill="none" />
-        <path d="M13 26V14a9 9 0 0 1 18 0v12" stroke="var(--coral)" strokeWidth="2" />
-        <circle cx="22" cy="28" r="2" fill="var(--coral)" />
-      </svg>
-    ),
+    icon: <ChatStepIcon />,
   },
 ];
 

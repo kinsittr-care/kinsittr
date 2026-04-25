@@ -1,3 +1,4 @@
+import { SafetyShieldCheckIcon } from "@/src/components/icons";
 import ShieldIllustration from "./ShieldIllustration";
 
 export default function SafetyHero() {
@@ -17,11 +18,8 @@ export default function SafetyHero() {
       <div className="relative mx-auto px-[52px] max-w-[1080px] grid grid-cols-2 gap-[60px] items-center max-md:grid-cols-1 max-md:px-6">
         <div>
           <div className="inline-flex items-center gap-[8px] mb-[18px]" style={{ color: "var(--teal-mid)" }}>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M9 1.5 L15.5 4.5 L15.5 9 Q15.5 14 9 16.5 Q2.5 14 2.5 9 L2.5 4.5 Z" stroke="var(--teal-mid)" strokeWidth="1.5" fill="none" />
-              <path d="M6 9 l2 2 4-4" stroke="var(--teal-mid)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className="text-[13px] font-bold uppercase tracking-[0.1em]">Trust &amp; Safety</span>
+            <SafetyShieldCheckIcon />
+            <span className="text-[13px] font-bold uppercase tracking-widest">Trust &amp; Safety</span>
           </div>
           <h1
             className="font-display leading-[1.1] tracking-[-0.02em] text-white mb-5"

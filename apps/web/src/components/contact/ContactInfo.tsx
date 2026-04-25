@@ -1,15 +1,11 @@
+import { MailIcon, MapPinIcon } from "@/src/components/icons";
 import RevealWrapper from "@/src/components/landing/RevealWrapper";
 import EnvelopeIllustration from "./EnvelopeIllustration";
 
 const channels = [
   {
     iconBg: "var(--teal-lt)",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <rect x="2" y="4" width="16" height="13" rx="2.5" stroke="var(--teal)" strokeWidth="1.8" />
-        <path d="M2 7l8 5 8-5" stroke="var(--teal)" strokeWidth="1.8" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: <MailIcon />,
     label: "Email",
     value: "kinsittr@gmail.com",
   },
@@ -25,12 +21,7 @@ const channels = [
   // },
   {
     iconBg: "var(--coral-lt)",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path d="M10 2C6 2 3 5 3 8c0 5 7 10 7 10s7-5 7-10c0-3-2.5-6-7-6z" stroke="var(--coral)" strokeWidth="1.8" fill="none" />
-        <circle cx="10" cy="8" r="2.5" fill="var(--coral)" />
-      </svg>
-    ),
+    icon: <MapPinIcon />,
     label: "Headquarters",
     value: "Calgary, Alberta, Canada",
   },

@@ -1,16 +1,12 @@
+import type { TeamCardProps } from "@/src/types/components/landing";
+
 export default function TeamCard({
   initials,
   avatarBg,
   name,
   role,
   bio,
-}: {
-  initials: string;
-  avatarBg: string;
-  name: string;
-  role: string;
-  bio: string;
-}) {
+}: TeamCardProps) {
   return (
     <div
       className="bg-white border rounded-[18px] p-7 text-center"

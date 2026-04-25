@@ -1,3 +1,10 @@
+import {
+  ArrowRightIcon,
+  LockIcon,
+  PlusIcon,
+  SparkleIcon,
+  VerifiedCircleIcon,
+} from "@/src/components/icons";
 import HeroIllustration from "./HeroIllustration";
 import RevealWrapper from "./RevealWrapper";
 
@@ -29,9 +36,7 @@ export default function HeroSection() {
             className="inline-flex items-center gap-[7px] text-[13px] font-semibold rounded-[30px] px-[13px] py-[5px] mb-6 border"
             style={{ color: "var(--teal)", background: "var(--teal-lt)", borderColor: "var(--teal-mid)" }}
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M7 1l1.6 4.8H14l-4.4 3.2 1.7 5.1L7 11.3l-4.3 2.8 1.7-5.1L0 5.8h5.4z" fill="var(--teal)" />
-            </svg>
+            <SparkleIcon width={14} height={14} color="var(--teal)" />
             Childcare, reimagined
           </div>
         </RevealWrapper>
@@ -53,9 +58,7 @@ export default function HeroSection() {
           <div className="flex gap-3 flex-wrap">
             <a href="#" className="btn-cta">
               I need a nanny
-              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <path d="M2 7.5h11M8 3l4.5 4.5L8 12" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ArrowRightIcon color="#fff" />
             </a>
             <a href="#" className="btn-outline">I&apos;m a nanny →</a>
           </div>
@@ -66,30 +69,15 @@ export default function HeroSection() {
             {[
               {
                 label: "All nannies verified",
-                icon: (
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M7 1a6 6 0 1 0 0 12A6 6 0 0 0 7 1z" stroke="var(--faint)" strokeWidth="1.4" />
-                    <path d="M5 7l1.5 1.5L9 5" stroke="var(--faint)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                ),
+                icon: <VerifiedCircleIcon color="var(--faint)" />,
               },
               {
                 label: "Free to browse",
-                icon: (
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <rect x="1" y="4" width="12" height="9" rx="2" stroke="var(--faint)" strokeWidth="1.4" />
-                    <path d="M9 4V3a2 2 0 0 0-4 0v1" stroke="var(--faint)" strokeWidth="1.4" strokeLinecap="round" />
-                  </svg>
-                ),
+                icon: <LockIcon color="var(--faint)" />,
               },
               {
                 label: "No subscription",
-                icon: (
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M2 7h10" stroke="var(--faint)" strokeWidth="1.4" strokeLinecap="round" />
-                    <path d="M7 2v10" stroke="var(--faint)" strokeWidth="1.4" strokeLinecap="round" />
-                  </svg>
-                ),
+                icon: <PlusIcon color="var(--faint)" />,
               },
             ].map(({ icon, label }) => (
               <span key={label} className="flex items-center gap-[5px]">

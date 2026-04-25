@@ -67,3 +67,11 @@ export interface StepCardProps {
   description: string;
   icon: ReactNode;
 }
+
+export interface TeamCardProps {
+  initials: string;
+  avatarBg: string;
+  name: string;
+  role: string;
+  bio: string;
+}
