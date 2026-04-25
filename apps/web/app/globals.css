@@ -1,0 +1,152 @@
+@import "tailwindcss";
+
+:root {
+  --teal:         #3a5a5a;
+  --teal-dk:      #243838;
+  --teal-lt:      #eaf2f2;
+  --teal-mid:     #c2d8d8;
+  --gold:         #c8a44a;
+  --gold-lt:      #fdf6e3;
+  --coral:        #d9826a;
+  --coral-lt:     #fdf0ea;
+  --sage:         #7a9e7e;
+  --bg:           #f5f0e8;
+  --bg-warm:      #faf6ef;
+  --brand-text:   #1c1a17;
+  --muted:        #7a7268;
+  --faint:        #b0a898;
+  --border:       #e2d9c8;
+}
+
+@theme inline {
+  --font-display: var(--font-dm-serif);
+  --font-sans:    var(--font-dm-sans);
+
+  --color-teal:         var(--teal);
+  --color-teal-dk:      var(--teal-dk);
+  --color-teal-lt:      var(--teal-lt);
+  --color-teal-mid:     var(--teal-mid);
+  --color-gold:         var(--gold);
+  --color-gold-lt:      var(--gold-lt);
+  --color-coral:        var(--coral);
+  --color-coral-lt:     var(--coral-lt);
+  --color-sage:         var(--sage);
+  --color-brand-bg:     var(--bg);
+  --color-brand-warm:   var(--bg-warm);
+  --color-brand-text:   var(--brand-text);
+  --color-brand-muted:  var(--muted);
+  --color-brand-faint:  var(--faint);
+  --color-brand-border: var(--border);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-dm-sans), sans-serif;
+  background: var(--bg);
+  color: var(--brand-text);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-12px); }
+}
+
+.float-a { animation: float 5s   ease-in-out infinite; }
+.float-b { animation: float 6.5s ease-in-out 0.6s infinite; }
+.float-c { animation: float 4.8s ease-in-out 1.2s infinite; }
+
+/* ── Buttons ── */
+.btn-cta {
+  display: inline-flex; align-items: center; gap: 8px;
+  text-decoration: none; border-radius: 12px; padding: 14px 26px;
+  font-size: 15px; font-weight: 600; color: white;
+  background: var(--teal); box-shadow: 0 4px 16px rgba(58,90,90,.32);
+  transition: all .15s;
+}
+.btn-cta:hover {
+  background: var(--teal-dk);
+  transform: translateY(-2px);
+  box-shadow: 0 7px 24px rgba(58,90,90,.4);
+}
+
+.btn-outline {
+  display: inline-flex; align-items: center; gap: 8px;
+  text-decoration: none; border-radius: 12px; padding: 13px 22px;
+  font-size: 15px; font-weight: 500;
+  color: var(--brand-text); background: white;
+  border: 1.5px solid var(--border); transition: all .15s;
+}
+.btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+
+.btn-white {
+  display: inline-flex; align-items: center; gap: 7px;
+  text-decoration: none; border-radius: 10px; padding: 12px 22px;
+  font-size: 14px; font-weight: 600;
+  color: var(--teal); background: white; transition: all .15s;
+}
+.btn-white:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.12); }
+
+.btn-gold {
+  display: inline-flex; align-items: center; gap: 7px;
+  text-decoration: none; border-radius: 10px; padding: 12px 22px;
+  font-size: 14px; font-weight: 600;
+  color: white; background: var(--gold); transition: all .15s;
+}
+.btn-gold:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(200,164,74,.38); }
+
+.btn-nav {
+  text-decoration: none; border-radius: 10px; padding: 9px 20px;
+  font-size: 14px; font-weight: 600; color: white;
+  background: var(--teal); box-shadow: 0 2px 10px rgba(58,90,90,.28);
+  transition: all .15s;
+}
+.btn-nav:hover { background: var(--teal-dk); transform: translateY(-1px); }
+
+.btn-nav-ghost {
+  text-decoration: none; border-radius: 10px; padding: 8px 18px;
+  font-size: 14px; font-weight: 500;
+  color: var(--muted); background: transparent;
+  border: 1.5px solid var(--border); transition: all .15s;
+}
+.btn-nav-ghost:hover { color: var(--teal); border-color: var(--teal); }
+
+/* ── Hover links ── */
+.link-muted {
+  text-decoration: none; color: var(--muted);
+  font-size: 14px; font-weight: 500; transition: color .15s;
+}
+.link-muted:hover { color: var(--brand-text); }
+
+.link-white {
+  display: block; text-decoration: none; font-size: 14px;
+  color: rgba(255,255,255,.55); margin-bottom: 8px; transition: color .12s;
+}
+.link-white:hover { color: rgba(255,255,255,.9); }
+
+.link-white-faint {
+  text-decoration: none; font-size: 13px;
+  color: rgba(255,255,255,.3); transition: color .12s;
+}
+.link-white-faint:hover { color: rgba(255,255,255,.6); }
+
+/* Ghost button for dark/teal hero backgrounds */
+.btn-ghost-dark {
+  display: inline-flex; align-items: center; gap: 8px;
+  text-decoration: none; border-radius: 12px; padding: 13px 24px;
+  font-size: 15px; font-weight: 500;
+  color: #fff; background: rgba(255,255,255,.12);
+  border: 1.5px solid rgba(255,255,255,.25); transition: all .15s;
+}
+.btn-ghost-dark:hover { background: rgba(255,255,255,.2); }
+
+/* White button with teal text — used on medium-teal CTA bands */
+.btn-cta-white {
+  display: inline-flex; align-items: center; gap: 8px;
+  text-decoration: none; border-radius: 12px; padding: 13px 26px;
+  font-size: 15px; font-weight: 600;
+  color: var(--teal); background: #fff; transition: all .15s;
+}
+.btn-cta-white:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.12); }
