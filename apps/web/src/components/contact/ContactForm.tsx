@@ -1,7 +1,10 @@
 "use client";
 
 import { ArrowRightIcon } from "@/src/components/icons";
-import { useState } from "react";
+import { ContactFormPayload } from "@/src/types/api/api";
+import { ApiRequestError } from "@/src/utils/api";
+import { sendContactMessage } from "@/src/utils/api/contact";
+import { ChangeEvent, useState } from "react";
 
 const inputClass = `
   w-full border-[1.5px] rounded-[10px] px-[14px] py-3 text-[14px] outline-none transition-all
@@ -9,12 +12,44 @@ const inputClass = `
 `.trim();
 
 export default function ContactForm() {
+  const [formValues, setFormValues] = useState<ContactFormPayload>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    role: "Parent / guardian",
+    subject: "General enquiry",
+    message: "",
+  });
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSubmitted(true);
-  }
+  const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = event.target;
+    setFormValues((current) => ({
+      ...current,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (event: ChangeEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setErrorMessage("");
+    setIsSubmitting(true);
+
+    try {
+      await sendContactMessage(formValues);
+      setSubmitted(true);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof ApiRequestError || error instanceof Error
+          ? error.message
+          : "We could not send your message.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div
@@ -36,10 +71,13 @@ export default function ContactForm() {
                     {label}
                   </label>
                   <input
+                    name={label === "First name" ? "firstName" : "lastName"}
                     type="text"
                     required
                     placeholder={label === "First name" ? "Jordan" : "Lee"}
                     className={inputClass}
+                    value={label === "First name" ? formValues.firstName : formValues.lastName}
+                    onChange={handleChange}
                     style={{ borderColor: "var(--border)", background: "var(--bg-warm)", color: "var(--brand-text)" }}
                   />
                 </div>
@@ -51,10 +89,13 @@ export default function ContactForm() {
                 Email
               </label>
               <input
+                name="email"
                 type="email"
                 required
                 placeholder="you@example.com"
                 className={inputClass}
+                value={formValues.email}
+                onChange={handleChange}
                 style={{ borderColor: "var(--border)", background: "var(--bg-warm)", color: "var(--brand-text)" }}
               />
             </div>
@@ -64,7 +105,10 @@ export default function ContactForm() {
                 I am a…
               </label>
               <select
+                name="role"
                 className={inputClass}
+                value={formValues.role}
+                onChange={handleChange}
                 style={{ borderColor: "var(--border)", background: "var(--bg-warm)", color: "var(--brand-text)" }}
               >
                 <option>Parent / guardian</option>
@@ -79,7 +123,10 @@ export default function ContactForm() {
                 Subject
               </label>
               <select
+                name="subject"
                 className={inputClass}
+                value={formValues.subject}
+                onChange={handleChange}
                 style={{ borderColor: "var(--border)", background: "var(--bg-warm)", color: "var(--brand-text)" }}
               >
                 <option>General enquiry</option>
@@ -95,16 +142,30 @@ export default function ContactForm() {
                 Message
               </label>
               <textarea
+                name="message"
                 required
                 placeholder="Tell us what's on your mind…"
                 rows={5}
                 className={inputClass}
+                value={formValues.message}
+                onChange={handleChange}
                 style={{ borderColor: "var(--border)", background: "var(--bg-warm)", color: "var(--brand-text)", resize: "vertical" }}
               />
             </div>
 
-            <button type="submit" className="btn-cta justify-center" style={{ width: "100%", fontSize: 15, padding: "14px" }}>
-              Send message
+            {errorMessage ? (
+              <p className="text-[13px]" style={{ color: "#b34b39" }}>
+                {errorMessage}
+              </p>
+            ) : null}
+
+            <button
+              type="submit"
+              className="btn-cta justify-center"
+              style={{ width: "100%", fontSize: 15, padding: "14px", opacity: isSubmitting ? 0.8 : 1 }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Sending..." : "Send message"}
               <ArrowRightIcon color="#fff" />
             </button>
           </form>
