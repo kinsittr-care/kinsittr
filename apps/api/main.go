@@ -13,7 +13,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	app := server.New(cfg)
+	app, err := server.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if err := app.Listen(":" + cfg.Port); err != nil {
 		log.Fatal(err)

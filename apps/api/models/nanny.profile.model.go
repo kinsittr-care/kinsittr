@@ -1,0 +1,43 @@
+package models
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+type Currency string
+
+const (
+	CAD Currency = "CAD"
+	// NGN Currency = "NGN"
+)
+
+type VerificationStatus string
+
+const (
+	PendingVerificationStatus     VerificationStatus = "pending"
+	UnderReviewVerificationStatus VerificationStatus = "under_review"
+	VerifiedVerificationStatus    VerificationStatus = "verified"
+	RejectedVerificationStatus    VerificationStatus = "rejected"
+)
+
+type NannyProfile struct {
+	ID                 uuid.UUID          `json:"id"`
+	UserID             uuid.UUID          `json:"user_id"`
+	DisplayName        string             `json:"display_name"`
+	Bio                string             `json:"bio"`
+	RatePerHour        float64            `json:"rate_per_hour"`
+	ServiceType        ServiceType        `json:"service_type"`
+	Currency           Currency           `json:"currency"`
+	VerificationStatus VerificationStatus `json:"verification_status"`
+	VerifiedAt         time.Time          `json:"verified_at"`
+	StripeAccountID    string             `json:"stripe_account_id"`
+	StripeOnboarded    bool               `json:"stripe_onboarded"`
+	RatingAvg          float64            `json:"rating_avg"`
+	RatingCount        int                `json:"rating_count"`
+	City               string             `json:"city"`
+	Province           string             `json:"province"`
+	CreatedAt          time.Time          `json:"created_at"`
+	UpdatedAt          time.Time          `json:"updated_at"`
+}
