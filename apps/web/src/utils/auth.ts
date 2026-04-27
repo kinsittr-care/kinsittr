@@ -31,6 +31,10 @@ export function clearAuthSession() {
 }
 
 export function buildSessionFromTokenPair(auth: AuthTokenPair): AuthSession {
+  if (!auth.user) {
+    throw new Error("Authentication response is missing user data.");
+  }
+
   return {
     accessToken: auth.access_token,
     refreshToken: auth.refresh_token,
