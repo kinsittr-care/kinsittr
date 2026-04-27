@@ -56,7 +56,7 @@ export default function HeroSection() {
 
         <RevealWrapper delay={0.3}>
           <div className="flex gap-3 flex-wrap">
-            <a href="#" className="btn-cta">
+            <a href="" className="btn-cta">
               I need a nanny
               <ArrowRightIcon color="#fff" />
             </a>

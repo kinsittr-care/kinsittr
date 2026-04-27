@@ -11,7 +11,7 @@ func ContactRoutes(controller *controllers.ContactController) []api.RouterSchema
 	return []api.RouterSchema{
 		{
 			RouteMethod: api.RouteMethod(fiber.MethodPost),
-			Path:        "/contact",
+			Path:        "/",
 			Middlewares: []typings.FiberMiddleware{},
 			Handler:     controller.Send,
 		},

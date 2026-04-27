@@ -54,8 +54,8 @@ export default function Footer() {
       >
         <span>© 2026 KinSittr Inc.</span>
         <div className="flex gap-5">
-          <a href="#" className="link-white-faint">Privacy</a>
-          <a href="#" className="link-white-faint">Terms</a>
+          <a href="/privacy" className="link-white-faint">Privacy</a>
+          <a href="/terms" className="link-white-faint">Terms</a>
         </div>
       </div>
     </footer>
