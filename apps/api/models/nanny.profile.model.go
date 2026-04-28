@@ -31,8 +31,8 @@ type NannyProfile struct {
 	ServiceType        ServiceType        `json:"service_type"`
 	Currency           Currency           `json:"currency"`
 	VerificationStatus VerificationStatus `json:"verification_status"`
-	VerifiedAt         time.Time          `json:"verified_at"`
-	StripeAccountID    string             `json:"stripe_account_id"`
+	VerifiedAt         *time.Time         `json:"verified_at,omitempty"`
+	StripeAccountID    *string            `json:"stripe_account_id,omitempty"`
 	StripeOnboarded    bool               `json:"stripe_onboarded"`
 	RatingAvg          float64            `json:"rating_avg"`
 	RatingCount        int                `json:"rating_count"`

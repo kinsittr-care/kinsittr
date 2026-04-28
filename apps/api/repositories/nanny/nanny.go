@@ -9,7 +9,7 @@ import (
 )
 
 type NannyRepository interface {
-	ListVerifiedNannies(ctx context.Context, page, limit int) ([]models.NannyProfile, int, error)
+	ListVerifiedNannies(ctx context.Context, filter ListVerifiedNanniesFilter) ([]models.NannyProfile, int, error)
 	GetVerifiedNannyByID(ctx context.Context, nannyID uuid.UUID) (models.NannyProfile, error)
 }
 

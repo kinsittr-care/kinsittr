@@ -56,7 +56,7 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	authController := auth_controller.NewAuthController(authPipe)
 
 	// nanny public
-	nannyPipe := nanny_pipe.NewNannyPipe(nanny_repo.NannyRepo)
+	nannyPipe := nanny_pipe.NewNannyPipe(nanny_repo.NannyRepo, profile_repo.ProfileRepo)
 	nannyController := nanny_controller.NewNannyController(nannyPipe)
 
 	apiGroup := app.Group("/api/v1")
@@ -74,8 +74,11 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	authGroup := apiGroup.Group("/auth")
 	api.BaseRouter(authGroup, auth_router.AuthRoutes(authController, cfg.JWTSecret))
 
-	nannyGroup := apiGroup.Group("/nannies")
-	api.BaseRouter(nannyGroup, nanny_router.PublicNannyRoutes(nannyController))
+	publicNannyGroup := apiGroup.Group("/nannies")
+	api.BaseRouter(publicNannyGroup, nanny_router.PublicNannyRoutes(nannyController))
+
+	nannyGroup := apiGroup.Group("/nanny")
+	api.BaseRouter(nannyGroup, nanny_router.NannyRoutes(nannyController, cfg.JWTSecret))
 
 	return app, nil
 }

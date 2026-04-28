@@ -18,7 +18,7 @@ func (p *NannyPipe) GetPublicByID(ctx context.Context, nannyID uuid.UUID) *share
 	}
 
 	verifiedAt := ""
-	if !nanny.VerifiedAt.IsZero() {
+	if nanny.VerifiedAt != nil && !nanny.VerifiedAt.IsZero() {
 		verifiedAt = nanny.VerifiedAt.Format("2006-01-02T15:04:05Z07:00")
 	}
 

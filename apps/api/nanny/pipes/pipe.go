@@ -3,6 +3,7 @@ package pipes
 import (
 	"github.com/kinsittr/kinsittr-api/models"
 	"github.com/kinsittr/kinsittr-api/repositories/nanny"
+	"github.com/kinsittr/kinsittr-api/repositories/profile"
 )
 
 type PublicNannyCard struct {
@@ -32,9 +33,13 @@ type PublicNannyListData struct {
 }
 
 type NannyPipe struct {
-	repo nanny.NannyRepository
+	repo        nanny.NannyRepository
+	profileRepo profile.ProfileRepository
 }
 
-func NewNannyPipe(repo nanny.NannyRepository) *NannyPipe {
-	return &NannyPipe{repo: repo}
+func NewNannyPipe(repo nanny.NannyRepository, profileRepo profile.ProfileRepository) *NannyPipe {
+	return &NannyPipe{
+		repo:        repo,
+		profileRepo: profileRepo,
+	}
 }

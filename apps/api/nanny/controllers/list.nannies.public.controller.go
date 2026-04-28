@@ -1,18 +1,30 @@
 package controllers
 
 import (
-	"strconv"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/kinsittr/kinsittr-api/nanny/dtos"
+	"github.com/kinsittr/kinsittr-api/nanny/messages"
 )
 
 func (c *NannyController) ListPublic(ctx *fiber.Ctx) error {
-	page, _ := strconv.Atoi(ctx.Query("page", "1"))
-	limit, _ := strconv.Atoi(ctx.Query("limit", "12"))
+	dto := dtos.ListPublicNanniesQuery{
+		Page:  1,
+		Limit: 12,
+	}
+	if err := ctx.QueryParser(&dto); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Invalid query parameters.",
+		})
+	}
 
-	res := c.pipe.ListPublic(ctx.Context(), page, limit)
+	res := c.pipe.ListPublic(ctx.Context(), dto)
 	if !res.Success {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		status := fiber.StatusInternalServerError
+		if string(res.Message) == messages.Invalid_Public_Query {
+			status = fiber.StatusBadRequest
+		}
+		return ctx.Status(status).JSON(fiber.Map{
 			"success": false,
 			"message": string(res.Message),
 		})
