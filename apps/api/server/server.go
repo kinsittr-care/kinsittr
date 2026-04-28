@@ -15,8 +15,13 @@ import (
 	contact_router "github.com/kinsittr/kinsittr-api/contact/routers"
 	contact_services "github.com/kinsittr/kinsittr-api/contact/services"
 	"github.com/kinsittr/kinsittr-api/db"
+	nanny_controller "github.com/kinsittr/kinsittr-api/nanny/controllers"
+	nanny_pipe "github.com/kinsittr/kinsittr-api/nanny/pipes"
+	nanny_router "github.com/kinsittr/kinsittr-api/nanny/routers"
 	"github.com/kinsittr/kinsittr-api/repositories"
 	"github.com/kinsittr/kinsittr-api/repositories/account"
+	nanny_repo "github.com/kinsittr/kinsittr-api/repositories/nanny"
+	profile_repo "github.com/kinsittr/kinsittr-api/repositories/profile"
 	"github.com/kinsittr/kinsittr-api/shared/api"
 	"github.com/kinsittr/kinsittr-api/shared/mail"
 )
@@ -47,8 +52,12 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	repositories.InitRepositories(pool)
 
 	// auth
-	authPipe := auth_pipe.NewAuthPipe(account.AccountRepo, cfg.JWTSecret, cfg.JWTRefreshSecret)
+	authPipe := auth_pipe.NewAuthPipe(account.AccountRepo, profile_repo.ProfileRepo, cfg.JWTSecret, cfg.JWTRefreshSecret)
 	authController := auth_controller.NewAuthController(authPipe)
+
+	// nanny public
+	nannyPipe := nanny_pipe.NewNannyPipe(nanny_repo.NannyRepo)
+	nannyController := nanny_controller.NewNannyController(nannyPipe)
 
 	apiGroup := app.Group("/api/v1")
 
@@ -64,6 +73,9 @@ func New(cfg *config.Config) (*fiber.App, error) {
 
 	authGroup := apiGroup.Group("/auth")
 	api.BaseRouter(authGroup, auth_router.AuthRoutes(authController, cfg.JWTSecret))
+
+	nannyGroup := apiGroup.Group("/nannies")
+	api.BaseRouter(nannyGroup, nanny_router.PublicNannyRoutes(nannyController))
 
 	return app, nil
 }

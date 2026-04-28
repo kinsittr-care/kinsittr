@@ -24,12 +24,12 @@ func (p *AuthPipe) Me(ctx context.Context, userID uuid.UUID) *shared.PipeRes[Cur
 
 	switch user.Role {
 	case models.ParentUserRole:
-		profile, err := p.repo.GetParentProfileByUserID(ctx, user.ID)
+		profile, err := p.profileRepo.GetParentProfileByUserID(ctx, user.ID)
 		if err == nil && profile.ID != uuid.Nil {
 			data.ParentProfile = &profile
 		}
 	case models.NannyUserRole:
-		profile, err := p.repo.GetNannyProfileByUserID(ctx, user.ID)
+		profile, err := p.profileRepo.GetNannyProfileByUserID(ctx, user.ID)
 		if err == nil && profile.ID != uuid.Nil {
 			data.NannyProfile = &profile
 		}

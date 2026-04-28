@@ -20,12 +20,6 @@ const inputStyle = {
 
 const labelClass = "block text-[12px] font-semibold uppercase tracking-[0.07em] mb-[7px]";
 
-const SERVICE_TYPES: { value: RegisterNannyPayload["service_type"]; label: string }[] = [
-  { value: "nanny", label: "Nanny / Caregiver" },
-  { value: "cleaner", label: "Cleaner" },
-  { value: "tutor", label: "Tutor" },
-];
-
 interface NannyRegisterFormProps {
   onSuccess?: () => void;
 }
@@ -108,11 +102,14 @@ export default function NannyRegisterForm({ onSuccess }: NannyRegisterFormProps)
 
       <div>
         <label className={labelClass} style={{ color: "var(--muted)" }}>Service type</label>
-        <select name="service_type" className={inputClass} value={values.service_type} onChange={handleChange} style={inputStyle}>
-          {SERVICE_TYPES.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
-          ))}
-        </select>
+        <input
+          type="text"
+          value="Nanny / Caregiver"
+          className={inputClass}
+          style={inputStyle}
+          disabled
+          readOnly
+        />
       </div>
 
       <div>

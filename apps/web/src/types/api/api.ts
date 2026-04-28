@@ -32,7 +32,7 @@ export interface RegisterNannyPayload {
   password: string;
   phone?: string;
   display_name: string;
-  service_type: "nanny" | "cleaner" | "tutor";
+  service_type: "nanny";
   bio: string;
   rate_per_hour: number;
   city: string;
@@ -71,6 +71,7 @@ export interface NannyProfile {
   display_name: string;
   bio: string;
   rate_per_hour: number;
+  service_type: "nanny";
   currency: string;
   verification_status: string;
   verified_at: string;
