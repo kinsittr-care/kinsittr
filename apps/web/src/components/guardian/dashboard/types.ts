@@ -1,15 +1,15 @@
 export interface Nanny {
-  id: number;
+  id: string;
   name: string;
   initials: string;
   city: string;
   rate: number;
   rating: number;
   reviews: number;
-  years: number;
+  years?: number;
   bio: string;
-  tags: string[];
-  available: boolean;
+  tags?: string[];
+  available?: boolean;
 }
 
 export interface ChatMessage {

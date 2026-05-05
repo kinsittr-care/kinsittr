@@ -74,8 +74,8 @@ export interface NannyProfile {
   service_type: "nanny";
   currency: string;
   verification_status: string;
-  verified_at: string;
-  stripe_account_id: string;
+  verified_at?: string | null;
+  stripe_account_id?: string | null;
   stripe_onboarded: boolean;
   rating_avg: number;
   rating_count: number;
@@ -83,6 +83,37 @@ export interface NannyProfile {
   province: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface PublicNannyCard {
+  id: string;
+  display_name: string;
+  bio: string;
+  rate_per_hour: number;
+  service_type: "nanny";
+  currency: string;
+  rating_avg: number;
+  rating_count: number;
+  city: string;
+  province: string;
+}
+
+export interface PublicNannyListData {
+  items: PublicNannyCard[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
+export interface ListPublicNanniesParams {
+  page?: number;
+  limit?: number;
+  city?: string;
+  province?: string;
+  min_rate?: number;
+  max_rate?: number;
+  service_type?: "nanny";
+  sort?: "newest" | "oldest" | "rate_asc" | "rate_desc" | "rating_desc";
 }
 
 export interface AuthTokenPair {

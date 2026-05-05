@@ -27,6 +27,7 @@ interface NannyCardProps {
 
 export default function NannyCard({ nanny, onBook, delay = 0 }: NannyCardProps) {
   const [hovered, setHovered] = useState(false);
+  const tags = nanny.tags ?? [];
 
   return (
     <div
@@ -81,12 +82,14 @@ export default function NannyCard({ nanny, onBook, delay = 0 }: NannyCardProps) 
           </p>
 
           <div className="flex gap-[7px] flex-wrap items-center">
-            {nanny.tags.map((t, i) => (
-              <Tag key={t} label={t} variant={i === nanny.tags.length - 1 ? "accent" : "default"} />
+            {tags.map((t, i) => (
+              <Tag key={t} label={t} variant={i === tags.length - 1 ? "accent" : "default"} />
             ))}
-            <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--faint)" }}>
-              {nanny.years} yrs exp.
-            </span>
+            {typeof nanny.years === "number" && nanny.years > 0 && (
+              <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--faint)" }}>
+                {nanny.years} yrs exp.
+              </span>
+            )}
           </div>
         </div>
       </div>

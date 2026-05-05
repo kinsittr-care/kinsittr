@@ -1,31 +1,4 @@
-import type { Nanny, MessageThread } from "./types";
-
-export const NANNIES: Nanny[] = [
-  {
-    id: 1, name: "Sarah Okonkwo", initials: "SO", city: "Toronto, ON",
-    rate: 28, rating: 4.9, reviews: 47, years: 6, available: true,
-    bio: "6 years caring for children aged 0–8. Former early childhood educator. Warm, patient, and bilingual in English and Yoruba. Experienced with newborns, toddlers, and school-age children.",
-    tags: ["Infant care", "CPR certified", "English"],
-  },
-  {
-    id: 2, name: "Marie-Claire Beaumont", initials: "MB", city: "Vancouver, BC",
-    rate: 32, rating: 4.8, reviews: 31, years: 8, available: true,
-    bio: "8 years experience specializing in Montessori methods and children with diverse developmental needs. Former Montessori classroom assistant. Warm, structured, and nurturing.",
-    tags: ["Special needs", "Montessori", "English"],
-  },
-  {
-    id: 3, name: "Priya Sharma", initials: "PS", city: "Toronto, ON",
-    rate: 25, rating: 4.7, reviews: 22, years: 4, available: false,
-    bio: "Experienced nanny with a background in early childhood education. Fluent in English and Hindi. Loves outdoor activities, arts and crafts, and building strong routines.",
-    tags: ["Bilingual", "Infant care", "Montessori"],
-  },
-  {
-    id: 4, name: "Aisha Mensah", initials: "AM", city: "Calgary, AB",
-    rate: 30, rating: 4.9, reviews: 58, years: 10, available: true,
-    bio: "10 years working with families across Canada. Specializes in newborns and toddlers. CPR and first aid certified. Dependable, kind, and communicates excellently.",
-    tags: ["Infant care", "CPR certified", "Special needs"],
-  },
-];
+import type { MessageThread } from "./types";
 
 export const MESSAGE_THREADS: MessageThread[] = [
   {
