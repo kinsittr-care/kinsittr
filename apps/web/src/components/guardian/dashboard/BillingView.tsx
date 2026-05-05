@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import SectionCard from "./profile/SectionCard";
+import SectionCard from "../profile/SectionCard";
 
 const labelStyle: React.CSSProperties = {
   fontSize: 12,

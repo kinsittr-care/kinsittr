@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useIsMobile } from "./useIsMobile";
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -87,6 +88,7 @@ const labelStyle: React.CSSProperties = {
 };
 
 export default function SettingsView() {
+  const isMobile = useIsMobile();
   const [notif, setNotif] = useState({ messages: true, bookings: true, reminders: false, weekly: true });
   const [priv, setPriv] = useState({ showProfile: true, shareReviews: true, analytics: false });
 
@@ -94,7 +96,7 @@ export default function SettingsView() {
     <div
       style={{
         maxWidth: 620, margin: "0 auto",
-        padding: "40px 36px 60px",
+        padding: isMobile ? "20px 16px 40px" : "40px 36px 60px",
         overflowY: "auto", height: "100%",
       }}
     >

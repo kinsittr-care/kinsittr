@@ -1,4 +1,4 @@
-import SettingsView from "@/src/components/dashboard/SettingsView";
+import SettingsView from "@/src/components/guardian/dashboard/SettingsView";
 
 export const metadata = { title: "Settings — KinSittr" };
 

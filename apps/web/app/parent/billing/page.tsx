@@ -1,4 +1,4 @@
-import BillingView from "@/src/components/dashboard/BillingView";
+import BillingView from "@/src/components/guardian/dashboard/BillingView";
 
 export const metadata = { title: "Billing — KinSittr" };
 

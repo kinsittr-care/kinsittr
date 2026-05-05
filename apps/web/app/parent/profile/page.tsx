@@ -1,4 +1,4 @@
-import ProfileView from "@/src/components/dashboard/ProfileView";
+import ProfileView from "@/src/components/guardian/dashboard/ProfileView";
 
 export const metadata = { title: "My profile — KinSittr" };
 

@@ -1,14 +1,18 @@
+"use client";
+
 import ProfileDetailsSection from "./profile/ProfileDetailsSection";
 import ChildrenSection from "./profile/ChildrenSection";
 import BookingHistorySection from "./profile/BookingHistorySection";
+import { useIsMobile } from "./useIsMobile";
 
 export default function ProfileView() {
+  const isMobile = useIsMobile();
   return (
     <div
       style={{
         maxWidth: 660,
         margin: "0 auto",
-        padding: "40px 36px 60px",
+        padding: isMobile ? "20px 16px 40px" : "40px 36px 60px",
         overflowY: "auto",
         height: "100%",
       }}

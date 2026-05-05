@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { DashboardProvider, useDashboard } from "./DashboardContext";
 import AppNav from "./AppNav";
-import BookingModal from "./BookingModal";
+import BookingSheet from "../compositions/BookingSheet";
 import type { ReactNode } from "react";
 
 function ShellInner({ children }: { children: ReactNode }) {
@@ -16,16 +16,12 @@ function ShellInner({ children }: { children: ReactNode }) {
       <div style={{ flex: 1, overflow: "hidden", display: "flex" }}>
         {children}
       </div>
-      {bookingNanny && (
-        <BookingModal
-          nanny={bookingNanny}
-          onClose={() => setBookingNanny(null)}
-          onBooked={() => {
-            setHasMessages(true);
-            router.push("/parent/messages");
-          }}
-        />
-      )}
+      <BookingSheet
+        nanny={bookingNanny}
+        open={!!bookingNanny}
+        onClose={() => setBookingNanny(null)}
+        onBooked={() => { setHasMessages(true); router.push("/parent/messages"); }}
+      />
     </div>
   );
 }

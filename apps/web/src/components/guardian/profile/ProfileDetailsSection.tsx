@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Avatar from "../Avatar";
 import SectionCard from "./SectionCard";
+import { useIsMobile } from "../useIsMobile";
 
 const labelStyle: React.CSSProperties = {
   fontSize: 12,
@@ -30,6 +31,7 @@ const inputStyle: React.CSSProperties = {
 type Profile = { name: string; email: string; phone: string; city: string };
 
 export default function ProfileDetailsSection() {
+  const isMobile = useIsMobile();
   const [editProfile, setEditProfile] = useState(false);
   const [profile, setProfile] = useState<Profile>({
     name: "Jordan Lee",
@@ -80,7 +82,7 @@ export default function ProfileDetailsSection() {
       </div>
 
       {!editProfile ? (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr" }}>
           {(
             [
               ["Full name", profile.name],
@@ -106,7 +108,7 @@ export default function ProfileDetailsSection() {
           ))}
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "0 16px" }}>
           {(
             [
               ["Full name", "name"],
@@ -128,7 +130,7 @@ export default function ProfileDetailsSection() {
           ))}
           <button
             className="btn-cta"
-            style={{ gridColumn: "span 2", width: "fit-content", fontSize: 14, padding: "10px 20px" }}
+            style={{ gridColumn: isMobile ? "span 1" : "span 2", width: "fit-content", fontSize: 14, padding: "10px 20px" }}
             onClick={() => {
               setProfile(profileDraft);
               setEditProfile(false);

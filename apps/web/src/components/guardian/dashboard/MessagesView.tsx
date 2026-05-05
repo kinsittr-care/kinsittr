@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { MESSAGE_THREADS } from "./data";
 import type { MessageThread } from "./types";
 import Avatar from "./Avatar";
+import { useIsMobile } from "./useIsMobile";
 
 interface MessagesViewProps {
   hasMessages: boolean;
@@ -12,7 +13,9 @@ interface MessagesViewProps {
 
 export default function MessagesView({ hasMessages }: MessagesViewProps) {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const [selected, setSelected] = useState<MessageThread>(MESSAGE_THREADS[0]);
+  const [mobileView, setMobileView] = useState<"list" | "chat">("list");
   const [input, setInput] = useState("");
   const [chats, setChats] = useState<Record<number, MessageThread["chat"]>>(
     () => Object.fromEntries(MESSAGE_THREADS.map((m) => [m.id, m.chat]))
@@ -71,23 +74,29 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
     );
   }
 
+  const showThreadList = !isMobile || mobileView === "list";
+  const showChat = !isMobile || mobileView === "chat";
+
   return (
     <div className="flex h-full overflow-hidden" style={{ flex: 1 }}>
       {/* Thread list */}
+      {showThreadList && (
       <div
         style={{
-          width: 296, flexShrink: 0,
-          borderRight: "1px solid var(--border)",
+          width: isMobile ? "100%" : 296,
+          flexShrink: 0,
+          borderRight: isMobile ? "none" : "1px solid var(--border)",
           overflowY: "auto", background: "var(--bg)",
+          display: "flex", flexDirection: "column",
         }}
       >
         <div
           style={{
-            padding: "28px 22px 18px",
+            padding: isMobile ? "20px 16px 14px" : "28px 22px 18px",
             borderBottom: "1px solid var(--border)",
           }}
         >
-          <h2 className="font-display" style={{ fontWeight: 400, fontSize: 24 }}>
+          <h2 className="font-display" style={{ fontWeight: 400, fontSize: isMobile ? 22 : 24 }}>
             Messages
           </h2>
         </div>
@@ -95,13 +104,13 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
         {MESSAGE_THREADS.map((m) => (
           <div
             key={m.id}
-            onClick={() => setSelected(m)}
+            onClick={() => { setSelected(m); if (isMobile) setMobileView("chat"); }}
             className="flex items-center gap-[13px]"
             style={{
               padding: "16px 20px",
               borderBottom: "1px solid var(--border)",
               cursor: "pointer",
-              background: selected.id === m.id ? "var(--teal-lt)" : "transparent",
+              background: selected.id === m.id && !isMobile ? "var(--teal-lt)" : "transparent",
               transition: "background .12s",
             }}
           >
@@ -141,22 +150,35 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
           </div>
         ))}
       </div>
+      )}
 
       {/* Chat panel */}
+      {showChat && (
       <div className="flex flex-col overflow-hidden" style={{ flex: 1 }}>
         {/* Chat header */}
         <div
           className="flex items-center gap-[14px]"
           style={{
-            padding: "18px 26px",
+            padding: isMobile ? "14px 16px" : "18px 26px",
             borderBottom: "1px solid var(--border)",
             background: "#fdfaf5",
             boxShadow: "0 2px 12px rgba(40,30,20,.07)",
           }}
         >
-          <Avatar initials={selected.nannyInitials} size={44} />
+          {/* Back button on mobile */}
+          {isMobile && (
+            <button
+              onClick={() => setMobileView("list")}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--teal)", padding: "4px 8px 4px 0", display: "flex", alignItems: "center", gap: 4, fontSize: 14, fontFamily: "inherit", fontWeight: 500 }}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          )}
+          <Avatar initials={selected.nannyInitials} size={isMobile ? 36 : 44} />
           <div>
-            <div style={{ fontWeight: 600, fontSize: 16 }}>{selected.nannyName}</div>
+            <div style={{ fontWeight: 600, fontSize: isMobile ? 15 : 16 }}>{selected.nannyName}</div>
             <div className="flex items-center gap-[5px]" style={{ fontSize: 13, marginTop: 2 }}>
               <span
                 style={{
@@ -170,6 +192,7 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
               </span>
             </div>
           </div>
+          {!isMobile && (
           <div className="flex gap-2" style={{ marginLeft: "auto" }}>
             <button className="btn-outline" style={{ padding: "7px 14px", fontSize: 13 }}>
               View profile
@@ -178,6 +201,7 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
               Booking details
             </button>
           </div>
+          )}
         </div>
 
         {/* Messages */}
@@ -276,6 +300,7 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import DashboardShell from "@/src/components/dashboard/DashboardShell";
+import DashboardShell from "@/src/components/guardian/dashboard/DashboardShell";
 import type { ReactNode } from "react";
 
 export const metadata = { title: "Parent — KinSittr" };

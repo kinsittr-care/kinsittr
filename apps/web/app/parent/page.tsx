@@ -1,4 +1,4 @@
-import FindNannyView from "@/src/components/dashboard/FindNannyView";
+import FindNannyView from "@/src/components/guardian/dashboard/FindNannyView";
 
 export const metadata = { title: "Browse nannies — KinSittr" };
 

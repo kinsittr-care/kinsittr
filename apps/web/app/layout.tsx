@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
-import { DM_Serif_Display, DM_Sans } from "next/font/google";
+import { DM_Serif_Display, DM_Sans, Geist } from "next/font/google";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const dmSerifDisplay = DM_Serif_Display({
   weight: "400",
@@ -29,7 +32,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${dmSerifDisplay.variable} ${dmSans.variable}`}
+      className={cn(dmSerifDisplay.variable, dmSans.variable, "font-sans", geist.variable)}
     >
       <body suppressHydrationWarning>{children}</body>
     </html>

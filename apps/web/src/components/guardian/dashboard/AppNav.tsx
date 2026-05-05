@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useDashboard } from "./DashboardContext";
+import { useIsMobile } from "./useIsMobile";
 import Avatar from "./Avatar";
 import { BrandMarkIcon } from "@/src/components/icons";
 
@@ -17,6 +18,7 @@ export default function AppNav() {
   const router = useRouter();
   const { hasMessages } = useDashboard();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const isActive = (href: string) =>
     href === "/parent" ? pathname === "/parent" : pathname.startsWith(href);
@@ -25,10 +27,12 @@ export default function AppNav() {
     <>
       <nav
         style={{
-          height: 62, background: "#fff",
+          height: isMobile ? 56 : 62,
+          background: "#fff",
           borderBottom: "1px solid var(--border)",
           display: "flex", alignItems: "center",
-          padding: "0 28px", gap: 4, flexShrink: 0, zIndex: 10,
+          padding: isMobile ? "0 16px" : "0 28px",
+          gap: 4, flexShrink: 0, zIndex: 10,
           boxShadow: "0 1px 8px rgba(40,30,20,.05)",
         }}
       >
@@ -36,7 +40,7 @@ export default function AppNav() {
         <Link
           href="/parent"
           className="flex items-center gap-[9px] no-underline"
-          style={{ marginRight: 16 }}
+          style={{ marginRight: isMobile ? 8 : 16 }}
         >
           <div
             style={{
@@ -47,9 +51,11 @@ export default function AppNav() {
           >
             <BrandMarkIcon />
           </div>
-          <span className="font-display" style={{ fontSize: 20, color: "var(--brand-text)" }}>
-            Kin<span style={{ color: "var(--teal)" }}>Sittr</span>
-          </span>
+          {!isMobile && (
+            <span className="font-display" style={{ fontSize: 20, color: "var(--brand-text)" }}>
+              Kin<span style={{ color: "var(--teal)" }}>Sittr</span>
+            </span>
+          )}
         </Link>
 
         {/* Tabs */}
@@ -62,11 +68,13 @@ export default function AppNav() {
                 href={href}
                 style={{
                   background: active ? "var(--teal-lt)" : "transparent",
-                  borderRadius: 9, padding: "7px 18px",
-                  fontSize: 14, cursor: "pointer",
+                  borderRadius: 9,
+                  padding: isMobile ? "6px 12px" : "7px 18px",
+                  fontSize: isMobile ? 13 : 14,
+                  cursor: "pointer",
                   color: active ? "var(--teal)" : "var(--muted)",
                   fontWeight: active ? 600 : 400,
-                  display: "flex", alignItems: "center", gap: 7,
+                  display: "flex", alignItems: "center", gap: 6,
                   transition: "all .15s", position: "relative",
                   textDecoration: "none",
                 }}
@@ -77,7 +85,7 @@ export default function AppNav() {
                     style={{
                       width: 7, height: 7, borderRadius: "50%",
                       background: "#e74c3c", display: "inline-block",
-                      position: "absolute", top: 6, right: 10,
+                      position: "absolute", top: 5, right: isMobile ? 6 : 10,
                     }}
                   />
                 )}
