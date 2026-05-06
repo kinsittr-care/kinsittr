@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDashboard } from "./DashboardContext";
 import { useIsMobile } from "./useIsMobile";
 import NannyCard from "./NannyCard";
@@ -67,7 +67,7 @@ function mapPublicNannyToCard(nanny: PublicNannyCard): Nanny {
     rating: nanny.rating_avg,
     reviews: nanny.rating_count,
     bio: nanny.bio,
-    tags: [],
+    tags: nanny.specialties,
   };
 }
 
@@ -85,6 +85,13 @@ export default function FindNannyView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [debouncedFilters, setDebouncedFilters] = useState({
+    city,
+    rate,
+    sort,
+    specs,
+    page,
+  });
 
   const pct = (((rate - 20) / (60 - 20)) * 100).toFixed(0) + "%";
   const activeFilterCount = specs.length + (city !== "All cities" ? 1 : 0) + (rate < 60 ? 1 : 0);
@@ -93,8 +100,21 @@ export default function FindNannyView() {
     setSpecs((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
 
   useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedFilters({ city, rate, sort, specs, page });
+    }, 300);
+
+    return () => window.clearTimeout(timeout);
+  }, [city, rate, sort, specs, page]);
+
+  const normalizedSpecialties = useMemo(
+    () => [...debouncedFilters.specs].sort((a, b) => a.localeCompare(b)),
+    [debouncedFilters.specs],
+  );
+
+  useEffect(() => {
     let cancelled = false;
-    const location = parseLocationFilter(city);
+    const location = parseLocationFilter(debouncedFilters.city);
 
     async function loadNannies() {
       setLoading(true);
@@ -102,12 +122,13 @@ export default function FindNannyView() {
 
       try {
         const response = await listPublicNannies({
-          page,
+          page: debouncedFilters.page,
           limit: PAGE_SIZE,
           city: location.city,
           province: location.province,
-          max_rate: rate,
-          sort: mapSortOption(sort),
+          specialties: normalizedSpecialties,
+          max_rate: debouncedFilters.rate,
+          sort: mapSortOption(debouncedFilters.sort),
         });
 
         if (cancelled) return;
@@ -137,7 +158,7 @@ export default function FindNannyView() {
     return () => {
       cancelled = true;
     };
-  }, [city, page, rate, reloadKey, sort]);
+  }, [debouncedFilters, normalizedSpecialties, reloadKey]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -153,6 +174,11 @@ export default function FindNannyView() {
 
   const handleSortChange = (value: string) => {
     setSort(value);
+    setPage(1);
+  };
+
+  const handleSpecialtyToggle = (value: string) => {
+    toggleSpec(value);
     setPage(1);
   };
 
@@ -186,7 +212,7 @@ export default function FindNannyView() {
           return (
             <label key={s} className="flex items-center gap-[10px]" style={{ marginBottom: 10, cursor: "pointer", userSelect: "none" }}>
               <div
-                onClick={() => toggleSpec(s)}
+                onClick={() => handleSpecialtyToggle(s)}
                 style={{
                   width: 18, height: 18, borderRadius: 5, flexShrink: 0,
                   border: `1.5px solid ${checked ? "var(--teal)" : "var(--border)"}`,

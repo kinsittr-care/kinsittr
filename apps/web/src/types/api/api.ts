@@ -89,6 +89,7 @@ export interface PublicNannyCard {
   id: string;
   display_name: string;
   bio: string;
+  specialties: string[];
   rate_per_hour: number;
   service_type: "nanny";
   currency: string;
@@ -110,6 +111,7 @@ export interface ListPublicNanniesParams {
   limit?: number;
   city?: string;
   province?: string;
+  specialties?: string[];
   min_rate?: number;
   max_rate?: number;
   service_type?: "nanny";

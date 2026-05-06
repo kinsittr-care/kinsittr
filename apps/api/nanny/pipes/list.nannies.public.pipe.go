@@ -2,6 +2,7 @@ package pipes
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/kinsittr/kinsittr-api/models"
@@ -10,6 +11,36 @@ import (
 	repository "github.com/kinsittr/kinsittr-api/repositories/nanny"
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
+
+var allowedSpecialties = []string{
+	"Infant care",
+	"Special needs",
+	"Montessori",
+	"CPR certified",
+	"Bilingual",
+}
+
+func normalizeSpecialty(value string) string {
+	trimmed := strings.TrimSpace(value)
+	for _, specialty := range allowedSpecialties {
+		if strings.EqualFold(trimmed, specialty) {
+			return specialty
+		}
+	}
+	return ""
+}
+
+func normalizeSpecialties(values []string) []string {
+	normalized := make([]string, 0, len(values))
+	for _, value := range values {
+		specialty := normalizeSpecialty(value)
+		if specialty == "" || slices.Contains(normalized, specialty) {
+			continue
+		}
+		normalized = append(normalized, specialty)
+	}
+	return normalized
+}
 
 func (p *NannyPipe) ListPublic(ctx context.Context, query dtos.ListPublicNanniesQuery) *shared.PipeRes[PublicNannyListData] {
 	if query.Page < 1 {
@@ -23,6 +54,8 @@ func (p *NannyPipe) ListPublic(ctx context.Context, query dtos.ListPublicNannies
 	}
 	query.City = strings.TrimSpace(query.City)
 	query.Province = strings.TrimSpace(query.Province)
+	rawSpecialties := slices.Clone(query.Specialties)
+	query.Specialties = normalizeSpecialties(query.Specialties)
 	query.Sort = strings.ToLower(strings.TrimSpace(query.Sort))
 	query.ServiceType = strings.ToLower(strings.TrimSpace(query.ServiceType))
 
@@ -44,6 +77,18 @@ func (p *NannyPipe) ListPublic(ctx context.Context, query dtos.ListPublicNannies
 			Message: shared.CreatePipeMessage(messages.Invalid_Public_Query),
 		}
 	}
+	for _, specialty := range rawSpecialties {
+		trimmed := strings.TrimSpace(specialty)
+		if trimmed == "" {
+			continue
+		}
+		if normalizeSpecialty(trimmed) == "" {
+			return &shared.PipeRes[PublicNannyListData]{
+				Success: false,
+				Message: shared.CreatePipeMessage(messages.Invalid_Public_Query),
+			}
+		}
+	}
 	switch query.Sort {
 	case "", "newest", "oldest", "rate_asc", "rate_desc", "rating_desc":
 	default:
@@ -58,6 +103,7 @@ func (p *NannyPipe) ListPublic(ctx context.Context, query dtos.ListPublicNannies
 		Limit:       query.Limit,
 		City:        query.City,
 		Province:    query.Province,
+		Specialties: query.Specialties,
 		MinRate:     query.MinRate,
 		MaxRate:     query.MaxRate,
 		ServiceType: models.ServiceType(query.ServiceType),
@@ -76,6 +122,7 @@ func (p *NannyPipe) ListPublic(ctx context.Context, query dtos.ListPublicNannies
 			ID:          nanny.ID.String(),
 			DisplayName: nanny.DisplayName,
 			Bio:         nanny.Bio,
+			Specialties: slices.Clone(nanny.Specialties),
 			RatePerHour: nanny.RatePerHour,
 			ServiceType: nanny.ServiceType,
 			Currency:    nanny.Currency,

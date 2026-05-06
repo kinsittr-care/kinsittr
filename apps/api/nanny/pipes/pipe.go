@@ -10,6 +10,7 @@ type PublicNannyCard struct {
 	ID          string             `json:"id"`
 	DisplayName string             `json:"display_name"`
 	Bio         string             `json:"bio"`
+	Specialties []string           `json:"specialties"`
 	RatePerHour float64            `json:"rate_per_hour"`
 	ServiceType models.ServiceType `json:"service_type"`
 	Currency    models.Currency    `json:"currency"`

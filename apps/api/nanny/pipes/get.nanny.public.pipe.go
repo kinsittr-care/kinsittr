@@ -2,6 +2,7 @@ package pipes
 
 import (
 	"context"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/nanny/messages"
@@ -30,6 +31,7 @@ func (p *NannyPipe) GetPublicByID(ctx context.Context, nannyID uuid.UUID) *share
 				ID:          nanny.ID.String(),
 				DisplayName: nanny.DisplayName,
 				Bio:         nanny.Bio,
+				Specialties: slices.Clone(nanny.Specialties),
 				RatePerHour: nanny.RatePerHour,
 				ServiceType: nanny.ServiceType,
 				Currency:    nanny.Currency,

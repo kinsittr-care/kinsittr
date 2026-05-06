@@ -25,6 +25,7 @@ type ListVerifiedNanniesFilter struct {
 	Limit       int
 	City        string
 	Province    string
+	Specialties []string
 	MinRate     float64
 	MaxRate     float64
 	ServiceType models.ServiceType
@@ -48,7 +49,8 @@ func (r *pgRepository) ListVerifiedNannies(ctx context.Context, filter ListVerif
 	orderBy := buildVerifiedNanniesOrder(filter.NormalizedSort())
 	listArgs := append(append([]any{}, whereArgs...), filter.Limit, offset)
 	query := fmt.Sprintf(`
-		SELECT id, user_id, display_name, bio, rate_per_hour, service_type, currency, verification_status, verified_at,
+		SELECT id, user_id, display_name, bio, COALESCE(specialties, '{}'::text[]),
+		       rate_per_hour, service_type, currency, verification_status, verified_at,
 		       stripe_account_id, stripe_onboarded, rating_avg, rating_count, city, province, created_at, updated_at
 		FROM nanny_profiles
 		WHERE %s
@@ -69,6 +71,7 @@ func (r *pgRepository) ListVerifiedNannies(ctx context.Context, filter ListVerif
 			&nanny.UserID,
 			&nanny.DisplayName,
 			&nanny.Bio,
+			&nanny.Specialties,
 			&nanny.RatePerHour,
 			&nanny.ServiceType,
 			&nanny.Currency,
@@ -98,7 +101,8 @@ func (r *pgRepository) ListVerifiedNannies(ctx context.Context, filter ListVerif
 func (r *pgRepository) GetVerifiedNannyByID(ctx context.Context, nannyID uuid.UUID) (models.NannyProfile, error) {
 	var nanny models.NannyProfile
 	err := r.db.QueryRow(ctx, `
-		SELECT id, user_id, display_name, bio, rate_per_hour, service_type, currency, verification_status, verified_at,
+		SELECT id, user_id, display_name, bio, COALESCE(specialties, '{}'::text[]),
+		       rate_per_hour, service_type, currency, verification_status, verified_at,
 		       stripe_account_id, stripe_onboarded, rating_avg, rating_count, city, province, created_at, updated_at
 		FROM nanny_profiles
 		WHERE id = $1 AND verification_status = $2
@@ -107,6 +111,7 @@ func (r *pgRepository) GetVerifiedNannyByID(ctx context.Context, nannyID uuid.UU
 		&nanny.UserID,
 		&nanny.DisplayName,
 		&nanny.Bio,
+		&nanny.Specialties,
 		&nanny.RatePerHour,
 		&nanny.ServiceType,
 		&nanny.Currency,
@@ -146,6 +151,10 @@ func buildVerifiedNanniesWhere(filter ListVerifiedNanniesFilter) (string, []any)
 	if filter.Province != "" {
 		args = append(args, strings.TrimSpace(filter.Province))
 		clauses = append(clauses, fmt.Sprintf("LOWER(province) = LOWER($%d)", len(args)))
+	}
+	if len(filter.Specialties) > 0 {
+		args = append(args, filter.Specialties)
+		clauses = append(clauses, fmt.Sprintf("COALESCE(specialties, '{}'::text[]) && $%d::text[]", len(args)))
 	}
 	if filter.MinRate > 0 {
 		args = append(args, filter.MinRate)

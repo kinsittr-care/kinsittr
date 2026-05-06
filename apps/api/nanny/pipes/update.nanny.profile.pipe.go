@@ -2,6 +2,8 @@ package pipes
 
 import (
 	"context"
+	"slices"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/models"
@@ -11,13 +13,23 @@ import (
 )
 
 func (p *NannyPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto dtos.UpdateNannyProfileDTO) *shared.PipeRes[models.NannyProfile] {
+	specialties := make([]string, 0, len(dto.Specialties))
+	for _, specialty := range dto.Specialties {
+		normalized := normalizeSpecialty(specialty)
+		if normalized == "" || slices.Contains(specialties, normalized) {
+			continue
+		}
+		specialties = append(specialties, normalized)
+	}
+
 	profile, err := p.profileRepo.UpdateNannyProfile(ctx, models.NannyProfile{
 		UserID:      userID,
-		DisplayName: dto.DisplayName,
-		Bio:         dto.Bio,
+		DisplayName: strings.TrimSpace(dto.DisplayName),
+		Bio:         strings.TrimSpace(dto.Bio),
+		Specialties: specialties,
 		RatePerHour: dto.RatePerHour,
-		City:        dto.City,
-		Province:    dto.Province,
+		City:        strings.TrimSpace(dto.City),
+		Province:    strings.TrimSpace(dto.Province),
 	})
 	if err != nil || profile.ID == uuid.Nil {
 		return &shared.PipeRes[models.NannyProfile]{
