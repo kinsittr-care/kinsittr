@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useIsMobile } from "./useIsMobile";
+import { ArrowDownToLine, Lock } from "lucide-react";
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -33,7 +34,7 @@ function ToggleRow({
 }) {
   return (
     <div
-      className="flex items-center justify-between"
+      className="flex items-center justify-between gap-1"
       style={{
         padding: "13px 0",
         borderBottom: last ? "none" : "1px solid var(--border)",
@@ -152,16 +153,11 @@ export default function SettingsView() {
       <SectionCard title="Security">
         <div className="flex flex-col gap-[10px]">
           <button className="btn-outline" style={{ justifyContent: "flex-start", gap: 10, fontSize: 14 }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <rect x="3" y="7" width="10" height="8" rx="2" stroke="var(--muted)" strokeWidth="1.5" />
-              <path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="var(--muted)" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <Lock className="text-gray-300" size={16} />
             Change password
           </button>
           <button className="btn-outline" style={{ justifyContent: "flex-start", gap: 10, fontSize: 14 }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M8 2v9M4 8l4 4 4-4M2 14h12" stroke="var(--muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <ArrowDownToLine className="text-gray-300" size={16}  />
             Download my data
           </button>
           <button

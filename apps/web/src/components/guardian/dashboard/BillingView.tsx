@@ -59,8 +59,8 @@ export default function BillingView() {
       <SectionCard title="Payment Method">
         {!editPayment ? (
           <div>
-            <div
-              className="flex items-center gap-4"
+            <div 
+              className="flex flex-col items-start md:flex-row md:items-center gap-4"
               style={{
                 background: "var(--bg-warm)",
                 border: "1px solid var(--border)",
@@ -69,28 +69,30 @@ export default function BillingView() {
                 marginBottom: 16,
               }}
             >
-              <div
-                style={{
-                  width: 52,
-                  height: 34,
-                  background: "linear-gradient(135deg, #1a3a6e, #2a5cb8)",
-                  borderRadius: 8,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#fff",
-                  fontSize: 11,
-                  fontWeight: 800,
-                  letterSpacing: "0.06em",
-                  flexShrink: 0,
-                }}
-              >
-                VISA
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 15, letterSpacing: "0.06em" }}>{card.number}</div>
-                <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>
-                  {card.name} · Expires {card.expiry}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div
+                  style={{
+                    width: 52,
+                    height: 34,
+                    background: "linear-gradient(135deg, #1a3a6e, #2a5cb8)",
+                    borderRadius: 8,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#fff",
+                    fontSize: 11,
+                    fontWeight: 800,
+                    letterSpacing: "0.06em",
+                    flexShrink: 0,
+                  }}
+                >
+                  VISA
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 15, letterSpacing: "0.06em" }}>{card.number}</div>
+                  <div style={{ fontSize: 13, color: "var(--faint)", marginTop: 2 }}>
+                    {card.name} · Expires {card.expiry}
+                  </div>
                 </div>
               </div>
               <span
@@ -107,7 +109,7 @@ export default function BillingView() {
                 ✓ Default
               </span>
             </div>
-            <div className="flex gap-[10px]">
+            <div className="flex flex-col md:flex-row gap-[10px]">
               <button
                 className="btn-outline"
                 style={{ fontSize: 13, padding: "8px 16px" }}
