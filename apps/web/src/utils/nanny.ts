@@ -2,13 +2,7 @@ import type {
   ListPublicNanniesParams,
   PublicNannyListData,
 } from "@/src/types/api/api";
-import { apiRequest, type ApiResponse } from "@/src/utils/api";
-
-const LIST_PUBLIC_NANNIES_TTL_MS = 30_000;
-const publicNannyListCache = new Map<
-  string,
-  { expiresAt: number; response: ApiResponse<PublicNannyListData> }
->();
+import { apiRequest } from "@/src/utils/api";
 
 function buildListPublicNanniesQuery(params: ListPublicNanniesParams) {
   const query = new URLSearchParams();
@@ -29,24 +23,11 @@ function buildListPublicNanniesQuery(params: ListPublicNanniesParams) {
   return queryString ? `?${queryString}` : "";
 }
 
+export function publicNanniesQueryKey(params: ListPublicNanniesParams) {
+  return ["public-nannies", params] as const;
+}
+
 export async function listPublicNannies(params: ListPublicNanniesParams) {
   const queryString = buildListPublicNanniesQuery(params);
-  const cacheKey = queryString || "?";
-  const now = Date.now();
-  const cached = publicNannyListCache.get(cacheKey);
-
-  if (cached && cached.expiresAt > now) {
-    return cached.response;
-  }
-
-  const response = await apiRequest<PublicNannyListData>(
-    `/api/v1/nannies${queryString}`,
-  );
-
-  publicNannyListCache.set(cacheKey, {
-    expiresAt: now + LIST_PUBLIC_NANNIES_TTL_MS,
-    response,
-  });
-
-  return response;
+  return apiRequest<PublicNannyListData>(`/api/v1/nannies${queryString}`);
 }

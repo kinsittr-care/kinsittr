@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Serif_Display, DM_Sans, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import QueryProvider from "@/src/components/providers/QueryProvider";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -34,7 +35,9 @@ export default function RootLayout({
       lang="en"
       className={cn(dmSerifDisplay.variable, dmSans.variable, "font-sans", geist.variable)}
     >
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <QueryProvider>{children}</QueryProvider>
+      </body>
     </html>
   );
 }

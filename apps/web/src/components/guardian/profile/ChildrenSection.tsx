@@ -1,4 +1,4 @@
-import Avatar from "../Avatar";
+import Avatar from "../dashboard/Avatar";
 import SectionCard from "./SectionCard";
 
 const CHILDREN = [

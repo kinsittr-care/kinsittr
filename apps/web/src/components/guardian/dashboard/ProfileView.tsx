@@ -1,8 +1,8 @@
 "use client";
 
-import ProfileDetailsSection from "./profile/ProfileDetailsSection";
-import ChildrenSection from "./profile/ChildrenSection";
-import BookingHistorySection from "./profile/BookingHistorySection";
+import ProfileDetailsSection from "../profile/ProfileDetailsSection";
+import ChildrenSection from "../profile/ChildrenSection";
+import BookingHistorySection from "../profile/BookingHistorySection";
 import { useIsMobile } from "./useIsMobile";
 
 export default function ProfileView() {

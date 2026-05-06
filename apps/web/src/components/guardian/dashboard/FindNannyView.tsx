@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useDashboard } from "./DashboardContext";
 import { useIsMobile } from "./useIsMobile";
@@ -7,8 +8,7 @@ import NannyCard from "./NannyCard";
 import { TinyCheckIcon } from "@/src/components/icons";
 import FilterDrawer from "../compositions/FilterDrawer";
 import type { PublicNannyCard } from "@/src/types/api/api";
-import { ApiRequestError } from "@/src/utils/api";
-import { listPublicNannies } from "@/src/utils/nanny";
+import { listPublicNannies, publicNanniesQueryKey } from "@/src/utils/nanny";
 import type { Nanny } from "./types";
 
 const CITIES = ["All cities", "Toronto, ON", "Vancouver, BC", "Calgary, AB", "Ottawa, ON", "Montreal, QC"];
@@ -80,11 +80,6 @@ export default function FindNannyView() {
   const [sort, setSort] = useState("Top rated");
   const [filterOpen, setFilterOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const [nannies, setNannies] = useState<Nanny[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
   const [debouncedFilters, setDebouncedFilters] = useState({
     city,
     rate,
@@ -112,53 +107,43 @@ export default function FindNannyView() {
     [debouncedFilters.specs],
   );
 
-  useEffect(() => {
-    let cancelled = false;
-    const location = parseLocationFilter(debouncedFilters.city);
+  const location = useMemo(
+    () => parseLocationFilter(debouncedFilters.city),
+    [debouncedFilters.city],
+  );
 
-    async function loadNannies() {
-      setLoading(true);
-      setError(null);
+  const queryParams = useMemo(
+    () => ({
+      page: debouncedFilters.page,
+      limit: PAGE_SIZE,
+      city: location.city,
+      province: location.province,
+      specialties: normalizedSpecialties,
+      max_rate: debouncedFilters.rate,
+      sort: mapSortOption(debouncedFilters.sort),
+    }),
+    [
+      debouncedFilters.page,
+      debouncedFilters.rate,
+      debouncedFilters.sort,
+      location.city,
+      location.province,
+      normalizedSpecialties,
+    ],
+  );
 
-      try {
-        const response = await listPublicNannies({
-          page: debouncedFilters.page,
-          limit: PAGE_SIZE,
-          city: location.city,
-          province: location.province,
-          specialties: normalizedSpecialties,
-          max_rate: debouncedFilters.rate,
-          sort: mapSortOption(debouncedFilters.sort),
-        });
+  const { data, error, isLoading, isFetching, refetch } = useQuery({
+    queryKey: publicNanniesQueryKey(queryParams),
+    queryFn: () => listPublicNannies(queryParams),
+    placeholderData: (previousData) => previousData,
+  });
 
-        if (cancelled) return;
-
-        const data = response.data;
-        setNannies((data?.items ?? []).map(mapPublicNannyToCard));
-        setTotal(data?.total ?? 0);
-      } catch (err) {
-        if (cancelled) return;
-
-        setNannies([]);
-        setTotal(0);
-        setError(
-          err instanceof ApiRequestError
-            ? err.message
-            : "Unable to load nannies right now.",
-        );
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void loadNannies();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [debouncedFilters, normalizedSpecialties, reloadKey]);
+  const nannies = useMemo(
+    () => (data?.data?.items ?? []).map(mapPublicNannyToCard),
+    [data],
+  );
+  const total = data?.data?.total ?? 0;
+  const errorMessage = error instanceof Error ? error.message : "Unable to load nannies right now.";
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -316,33 +301,36 @@ export default function FindNannyView() {
         </div>
 
         <p style={{ color: "var(--faint)", fontSize: 14, marginBottom: isMobile ? 16 : 28 }}>
-          {loading
+          {isLoading
             ? "Loading verified nannies…"
             : `${total} verified ${total === 1 ? "nanny" : "nannies"} in your area`}
         </p>
 
         <div className="flex flex-col gap-4">
-          {loading && (
+          {isLoading && (
             <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--muted)" }}>
               <p style={{ fontSize: 16 }}>Loading nannies…</p>
             </div>
           )}
-          {!loading && error && (
+          {!isLoading && error && (
             <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--muted)" }}>
-              <p style={{ fontSize: 16, color: "#b24a3f" }}>{error}</p>
+              <p style={{ fontSize: 16, color: "#b24a3f" }}>{errorMessage}</p>
               <button
                 className="btn-outline"
                 style={{ marginTop: 12, padding: "10px 18px", fontSize: 13 }}
-                onClick={() => setReloadKey((current) => current + 1)}
+                onClick={() => void refetch()}
               >
                 Retry
               </button>
             </div>
           )}
-          {!loading && !error && nannies.map((n, i) => (
+          {!isLoading && !error && isFetching && (
+            <p style={{ fontSize: 13, color: "var(--muted)" }}>Updating results...</p>
+          )}
+          {!isLoading && !error && nannies.map((n, i) => (
             <NannyCard key={n.id} nanny={n} onBook={setBookingNanny} delay={i * 40} />
           ))}
-          {!loading && !error && nannies.length === 0 && (
+          {!isLoading && !error && nannies.length === 0 && (
             <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--muted)" }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
               <p style={{ fontSize: 16 }}>No nannies match your filters</p>
@@ -351,7 +339,7 @@ export default function FindNannyView() {
           )}
         </div>
 
-        {!loading && !error && totalPages > 1 && (
+        {!isLoading && !error && totalPages > 1 && (
           <div className="flex items-center justify-between" style={{ marginTop: 24, gap: 12 }}>
             <button
               className="btn-outline"
@@ -379,7 +367,7 @@ export default function FindNannyView() {
       <FilterDrawer
         open={filterOpen}
         onClose={() => setFilterOpen(false)}
-        resultCount={loading ? 0 : total}
+        resultCount={isLoading ? 0 : total}
       >
         {filterControls}
       </FilterDrawer>

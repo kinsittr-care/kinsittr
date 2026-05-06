@@ -59,7 +59,16 @@ export default function AppNav() {
         </Link>
 
         {/* Tabs */}
-        <div className="flex gap-[2px]" style={{ flex: 1 }}>
+        <div
+          className="flex gap-2"
+          style={{
+            flex: 1,
+            minWidth: 0,
+            overflowX: "auto",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
+        >
           {NAV_TABS.map(({ id, label, href }) => {
             const active = isActive(href);
             return (
@@ -67,14 +76,16 @@ export default function AppNav() {
                 key={id}
                 href={href}
                 style={{
-                  background: active ? "var(--teal-lt)" : "transparent",
+                  background: active ? "var(--teal-lt)" : "var(--teal-dk)",
                   borderRadius: 9,
                   padding: isMobile ? "6px 12px" : "7px 18px",
                   fontSize: isMobile ? 13 : 14,
                   cursor: "pointer",
-                  color: active ? "var(--teal)" : "var(--muted)",
+                  color: active ? "var(--teal)" : "var(--teal-lt)",
                   fontWeight: active ? 600 : 400,
                   display: "flex", alignItems: "center", gap: 6,
+                  flexShrink: 0,
+                  whiteSpace: "nowrap",
                   transition: "all .15s", position: "relative",
                   textDecoration: "none",
                 }}

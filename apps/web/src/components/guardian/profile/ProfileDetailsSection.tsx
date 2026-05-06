@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Avatar from "../Avatar";
+import Avatar from "../dashboard/Avatar";
 import SectionCard from "./SectionCard";
-import { useIsMobile } from "../useIsMobile";
+import { useIsMobile } from "../dashboard/useIsMobile";
 
 const labelStyle: React.CSSProperties = {
   fontSize: 12,
@@ -43,43 +43,45 @@ export default function ProfileDetailsSection() {
 
   return (
     <SectionCard title="Profile">
-      <div
-        className="flex items-center gap-5"
-        style={{
-          marginBottom: 20,
-          paddingBottom: 20,
-          borderBottom: "1px solid var(--border)",
-        }}
-      >
-        <Avatar initials="JL" size={68} />
-        <div>
-          <div style={{ fontWeight: 700, fontSize: 20 }}>{profile.name}</div>
-          <div style={{ color: "var(--muted)", fontSize: 14, marginTop: 2 }}>{profile.email}</div>
-          <div className="flex items-center gap-[6px]" style={{ marginTop: 6 }}>
-            <span
-              style={{
-                background: "var(--teal-lt)",
-                color: "var(--teal)",
-                border: "1px solid var(--teal-mid)",
-                borderRadius: 20,
-                padding: "2px 10px",
-                fontSize: 12,
-                fontWeight: 500,
-              }}
-            >
-              Verified parent
-            </span>
-            <span style={{ fontSize: 12, color: "var(--faint)" }}>Member since Jan 2025</span>
+      <div className="flex flex-col md:flex-row items-end md:items-center md:gap-5 border-b border-brand-border pb-5 mb-5">
+        <div
+          className="flex gap-3"
+          style={{
+            // marginBottom: 20,
+            paddingBottom: 20,
+          }}
+        >
+          <Avatar initials="JL" size={68} />
+          <div className="">
+            <div style={{ fontWeight: 700, fontSize: 20 }}>{profile.name}</div>
+            <div style={{ color: "var(--faint)", fontSize: 14, marginTop: 2 }}>{profile.email}</div>
+            <div className="flex flex-col md:flex-row items-start gap-[6px] mt-3.5">
+              <span
+                style={{
+                  background: "var(--teal-lt)",
+                  color: "var(--teal)",
+                  border: "1px solid var(--teal-mid)",
+                  borderRadius: 20,
+                  padding: "2px 10px",
+                  fontSize: 12,
+                  fontWeight: 500,
+                }}
+              >
+                Verified parent
+              </span>
+              <span style={{ fontSize: 12, color: "var(--faint)" }}>Member since Jan 2025</span>
+            </div>
           </div>
         </div>
         <button
           className="btn-outline"
-          style={{ marginLeft: "auto", padding: "8px 16px", fontSize: 13 }}
+          style={{ padding: "8px 16px", fontSize: 13 }}
           onClick={() => setEditProfile((prev) => !prev)}
         >
           {editProfile ? "Cancel" : "Edit profile"}
         </button>
       </div>
+      
 
       {!editProfile ? (
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr" }}>
