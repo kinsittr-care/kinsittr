@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Nanny } from "./types";
 import Avatar from "./Avatar";
+import { ApiRequestError } from "@/src/utils/api";
+import { createBooking } from "@/src/utils/bookings";
 
 const inputStyle: React.CSSProperties = {
     width: "100%", border: "1.5px solid var(--border)", borderRadius: 9,
@@ -38,6 +40,8 @@ export default function BookingFormContent({ nanny, onClose, onBooked }: FormPro
     const [date, setDate] = useState("");
     const [startTime, setStartTime] = useState("08:00");
     const [hours, setHours] = useState(4);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const total = nanny.rate * hours;
   
     if (step === 2) {
@@ -74,6 +78,31 @@ export default function BookingFormContent({ nanny, onClose, onBooked }: FormPro
       );
     }
   
+    const handleSubmit = async () => {
+      if (!date || submitting) return;
+
+      setSubmitting(true);
+      setError(null);
+
+      try {
+        await createBooking({
+          nanny_id: nanny.id,
+          date,
+          start_time: startTime,
+          duration: hours,
+        });
+        setStep(2);
+      } catch (err) {
+        setError(
+          err instanceof ApiRequestError
+            ? err.message
+            : "Unable to send booking request right now.",
+        );
+      } finally {
+        setSubmitting(false);
+      }
+    };
+
     return (
       <div className="p-6">
         <div className="flex items-center gap-4 pb-5 mb-5" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -130,19 +159,25 @@ export default function BookingFormContent({ nanny, onClose, onBooked }: FormPro
           <div style={{ fontSize: 14, color: "var(--muted)" }}>{hours}h × ${nanny.rate}/hr</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: "var(--teal)" }}>${total}</div>
         </div>
+
+        {error && (
+          <p style={{ fontSize: 13, color: "#b24a3f", marginBottom: 14 }}>
+            {error}
+          </p>
+        )}
   
         <div className="flex gap-[10px]">
           <button
-            onClick={() => setStep(2)}
-            disabled={!date}
+            onClick={() => void handleSubmit()}
+            disabled={!date || submitting}
             style={{
               flex: 1, padding: 13, fontSize: 15, borderRadius: 10, border: "none",
-              background: date ? "var(--teal)" : "var(--border)",
-              color: "#fff", cursor: date ? "pointer" : "not-allowed",
+              background: date && !submitting ? "var(--teal)" : "var(--border)",
+              color: "#fff", cursor: date && !submitting ? "pointer" : "not-allowed",
               fontFamily: "inherit", fontWeight: 500,
             }}
           >
-            Send booking request
+            {submitting ? "Sending..." : "Send booking request"}
           </button>
           <button
             onClick={onClose}

@@ -1,0 +1,3 @@
+ALTER TABLE bookings
+ALTER COLUMN date TYPE DATE
+USING date::date;

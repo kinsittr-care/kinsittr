@@ -118,6 +118,29 @@ export interface ListPublicNanniesParams {
   sort?: "newest" | "oldest" | "rate_asc" | "rate_desc" | "rating_desc";
 }
 
+export interface CreateBookingPayload {
+  nanny_id: string;
+  date: string;
+  start_time: string;
+  duration: number;
+}
+
+export interface Booking {
+  id: string;
+  parent_profile_id: string;
+  nanny_profile_id: string;
+  nanny_display_name?: string;
+  nanny_city?: string;
+  nanny_province?: string;
+  date: string;
+  start_time: string;
+  duration: number;
+  total_amount: number;
+  status: "pending" | "approved" | "declined";
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AuthTokenPair {
   access_token: string;
   refresh_token: string;

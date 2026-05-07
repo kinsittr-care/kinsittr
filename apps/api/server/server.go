@@ -9,6 +9,9 @@ import (
 	auth_controller "github.com/kinsittr/kinsittr-api/auth/controllers"
 	auth_pipe "github.com/kinsittr/kinsittr-api/auth/pipes"
 	auth_router "github.com/kinsittr/kinsittr-api/auth/routers"
+	bookings_controller "github.com/kinsittr/kinsittr-api/bookings/controllers"
+	bookings_pipe "github.com/kinsittr/kinsittr-api/bookings/pipes"
+	bookings_router "github.com/kinsittr/kinsittr-api/bookings/routers"
 	"github.com/kinsittr/kinsittr-api/config"
 	contact_controller "github.com/kinsittr/kinsittr-api/contact/controllers"
 	contact_pipe "github.com/kinsittr/kinsittr-api/contact/pipes"
@@ -20,6 +23,7 @@ import (
 	nanny_router "github.com/kinsittr/kinsittr-api/nanny/routers"
 	"github.com/kinsittr/kinsittr-api/repositories"
 	"github.com/kinsittr/kinsittr-api/repositories/account"
+	bookings_repo "github.com/kinsittr/kinsittr-api/repositories/bookings"
 	nanny_repo "github.com/kinsittr/kinsittr-api/repositories/nanny"
 	profile_repo "github.com/kinsittr/kinsittr-api/repositories/profile"
 	"github.com/kinsittr/kinsittr-api/shared/api"
@@ -59,6 +63,10 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	nannyPipe := nanny_pipe.NewNannyPipe(nanny_repo.NannyRepo, profile_repo.ProfileRepo)
 	nannyController := nanny_controller.NewNannyController(nannyPipe)
 
+	// bookings
+	bookingsPipe := bookings_pipe.NewBookingsPipe(bookings_repo.BookingsRepo, profile_repo.ProfileRepo, nanny_repo.NannyRepo)
+	bookingsController := bookings_controller.NewBookingsController(bookingsPipe)
+
 	apiGroup := app.Group("/api/v1")
 
 	if cfg.ContactConfigured() {
@@ -78,7 +86,12 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	api.BaseRouter(publicNannyGroup, nanny_router.PublicNannyRoutes(nannyController))
 
 	nannyGroup := apiGroup.Group("/nanny")
+	nannyBookingsGroup := nannyGroup.Group("/bookings")
+	api.BaseRouter(nannyBookingsGroup, bookings_router.NannyBookingRoutes(bookingsController, cfg.JWTSecret))
 	api.BaseRouter(nannyGroup, nanny_router.NannyRoutes(nannyController, cfg.JWTSecret))
+
+	bookingsGroup := apiGroup.Group("/bookings")
+	api.BaseRouter(bookingsGroup, bookings_router.BookingRoutes(bookingsController, cfg.JWTSecret))
 
 	return app, nil
 }
