@@ -89,6 +89,7 @@ export default function AllNanniesView() {
           {NANNIES.map((n, i) => (
             <div
               key={n.id}
+              className="admin-table-row"
               style={{
                 display: "grid",
                 gridTemplateColumns: colTemplate,
@@ -98,8 +99,6 @@ export default function AllNanniesView() {
                 borderBottom: i < NANNIES.length - 1 ? `1px solid ${A.borderSoft}` : "none",
                 transition: "background .15s",
               }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLDivElement).style.background = A.cardWarm)}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLDivElement).style.background = "transparent")}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <AdminAvatar

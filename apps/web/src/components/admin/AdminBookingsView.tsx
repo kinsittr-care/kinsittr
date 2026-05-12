@@ -67,6 +67,7 @@ export default function AdminBookingsView() {
           {BOOKINGS.map((b, i) => (
             <div
               key={b.id}
+              className="admin-table-row"
               style={{
                 display: "grid",
                 gridTemplateColumns: colTemplate,
@@ -76,8 +77,6 @@ export default function AdminBookingsView() {
                 borderBottom: i < BOOKINGS.length - 1 ? `1px solid ${A.borderSoft}` : "none",
                 transition: "background .15s",
               }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLDivElement).style.background = A.cardWarm)}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLDivElement).style.background = "transparent")}
             >
               <div style={{ fontFamily: "monospace", fontSize: 13, color: A.inkSoft, letterSpacing: ".02em" }}>
                 {b.id}

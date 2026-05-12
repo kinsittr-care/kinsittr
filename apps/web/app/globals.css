@@ -203,6 +203,20 @@ body {
 }
 .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
 
+@media (hover: hover) {
+  .admin-table-row:hover {
+    background: var(--admin-card-warm);
+  }
+
+  .nanny-payout-row:hover {
+    background: var(--nanny-card-soft);
+  }
+
+  .nanny-sidebar-link[data-active="false"]:hover {
+    background: rgba(45,90,61,.05);
+  }
+}
+
 .btn-white {
   display: inline-flex; align-items: center; gap: 7px;
   text-decoration: none; border-radius: 10px; padding: 12px 22px;
