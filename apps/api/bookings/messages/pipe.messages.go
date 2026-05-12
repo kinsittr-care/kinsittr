@@ -13,6 +13,7 @@ const (
 	Booking_Already_Exists   = "booking_already_exists"
 	Booking_Already_Approved = "booking_already_approved"
 	Nanny_Time_Unavailable   = "nanny_time_unavailable"
+	Booking_Start_In_Past    = "booking_start_in_past"
 	Invalid_Booking_Request  = "invalid_booking_request"
 	Parent_Profile_Not_Found = "parent_profile_not_found"
 	Nanny_Profile_Not_Found  = "nanny_profile_not_found"

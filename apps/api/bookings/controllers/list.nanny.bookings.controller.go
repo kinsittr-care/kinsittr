@@ -3,6 +3,7 @@ package controllers
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/kinsittr/kinsittr-api/bookings/dtos"
 	"github.com/kinsittr/kinsittr-api/bookings/messages"
 	"github.com/kinsittr/kinsittr-api/models"
 )
@@ -24,7 +25,18 @@ func (c *BookingsController) ListForNanny(ctx *fiber.Ctx) error {
 		})
 	}
 
-	res := c.pipe.ListForNanny(ctx.Context(), userID)
+	dto := dtos.ListBookingsQueryDTO{
+		Page:  1,
+		Limit: 20,
+	}
+	if err := ctx.QueryParser(&dto); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": messages.Invalid_Booking_Request,
+		})
+	}
+
+	res := c.pipe.ListForNanny(ctx.Context(), userID, dto)
 	if !res.Success {
 		status := fiber.StatusBadRequest
 		if string(res.Message) == messages.Nanny_Profile_Not_Found {

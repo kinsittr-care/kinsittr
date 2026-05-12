@@ -35,9 +35,21 @@ func (p *BookingsPipe) List(ctx context.Context, userID uuid.UUID, dto dtos.List
 		return pipeError[BookingListData](messages.Invalid_Booking_Request)
 	}
 
+	page := dto.Page
+	if page < 1 {
+		page = 1
+	}
+	limit := dto.Limit
+	if limit < 1 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
 	filter := bookings.ListBookingsFilter{
-		Page:     dto.Page,
-		Limit:    dto.Limit,
+		Page:     page,
+		Limit:    limit,
 		Status:   status,
 		DateFrom: dateFrom,
 		DateTo:   dateTo,
@@ -51,16 +63,6 @@ func (p *BookingsPipe) List(ctx context.Context, userID uuid.UUID, dto dtos.List
 	items := make([]BookingData, 0, len(itemsRaw))
 	for _, booking := range itemsRaw {
 		items = append(items, toBookingRecordData(booking))
-	}
-
-	if filter.Page < 1 {
-		filter.Page = 1
-	}
-	if filter.Limit < 1 {
-		filter.Limit = 20
-	}
-	if filter.Limit > 100 {
-		filter.Limit = 100
 	}
 
 	data := BookingListData{

@@ -1,14 +1,21 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { DashboardProvider, useDashboard } from "./DashboardContext";
 import AppNav from "./AppNav";
 import BookingSheet from "../compositions/BookingSheet";
 import type { ReactNode } from "react";
+import { listParentBookings, parentBookingsQueryKey } from "@/src/utils/bookings";
+import type { Booking } from "@/src/types/api/api";
 
 function ShellInner({ children }: { children: ReactNode }) {
-  const { bookingNanny, setBookingNanny, setHasMessages } = useDashboard();
+  const { bookingNanny, setBookingNanny } = useDashboard();
   const router = useRouter();
+  useQuery({
+    queryKey: parentBookingsQueryKey({ page: 1, limit: 1, status: "approved" }),
+    queryFn: async () => listParentBookings({ page: 1, limit: 1, status: "approved" }),
+  });
 
   return (
     <div style={{ height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
@@ -20,7 +27,7 @@ function ShellInner({ children }: { children: ReactNode }) {
         nanny={bookingNanny}
         open={!!bookingNanny}
         onClose={() => setBookingNanny(null)}
-        onBooked={() => { setHasMessages(true); router.push("/parent/messages"); }}
+        onBooked={(_booking: Booking) => { router.push("/parent/bookings"); }}
       />
     </div>
   );

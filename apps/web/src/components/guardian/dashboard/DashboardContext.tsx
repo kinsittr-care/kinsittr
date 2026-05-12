@@ -5,8 +5,6 @@ import type { ReactNode } from "react";
 import type { Nanny } from "./types";
 
 interface DashboardContextValue {
-  hasMessages: boolean;
-  setHasMessages: (v: boolean) => void;
   bookingNanny: Nanny | null;
   setBookingNanny: (n: Nanny | null) => void;
 }
@@ -14,11 +12,10 @@ interface DashboardContextValue {
 const DashboardContext = createContext<DashboardContextValue | null>(null);
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
-  const [hasMessages, setHasMessages] = useState(false);
   const [bookingNanny, setBookingNanny] = useState<Nanny | null>(null);
 
   return (
-    <DashboardContext.Provider value={{ hasMessages, setHasMessages, bookingNanny, setBookingNanny }}>
+    <DashboardContext.Provider value={{ bookingNanny, setBookingNanny }}>
       {children}
     </DashboardContext.Provider>
   );

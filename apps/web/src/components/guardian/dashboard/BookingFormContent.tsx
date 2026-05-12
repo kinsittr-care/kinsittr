@@ -3,6 +3,7 @@ import { Nanny } from "./types";
 import Avatar from "./Avatar";
 import { ApiRequestError } from "@/src/utils/api";
 import { createBooking } from "@/src/utils/bookings";
+import type { Booking } from "@/src/types/api/api";
 
 const inputStyle: React.CSSProperties = {
     width: "100%", border: "1.5px solid var(--border)", borderRadius: 9,
@@ -32,7 +33,7 @@ const inputStyle: React.CSSProperties = {
   interface FormProps {
     nanny: Nanny;
     onClose: () => void;
-    onBooked: () => void;
+    onBooked: (booking: Booking) => void;
   }
   
 export default function BookingFormContent({ nanny, onClose, onBooked }: FormProps) {
@@ -42,6 +43,7 @@ export default function BookingFormContent({ nanny, onClose, onBooked }: FormPro
     const [hours, setHours] = useState(4);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
     const total = nanny.rate * hours;
   
     if (step === 2) {
@@ -64,8 +66,34 @@ export default function BookingFormContent({ nanny, onClose, onBooked }: FormPro
             Your booking request has been sent to <strong>{nanny.name}</strong>.
             Once they approve, messaging will be unlocked.
           </p>
+          {createdBooking && (
+            <div
+              style={{
+                textAlign: "left",
+                background: "var(--bg-warm)",
+                border: "1px solid var(--border)",
+                borderRadius: 12,
+                padding: "14px 16px",
+                margin: "0 auto 24px",
+                maxWidth: 320,
+                fontSize: 13,
+                color: "var(--brand-text)",
+                lineHeight: 1.7,
+              }}
+            >
+              <div><strong>Date:</strong> {createdBooking.date}</div>
+              <div><strong>Start:</strong> {createdBooking.start_time}</div>
+              <div><strong>Duration:</strong> {createdBooking.duration}h</div>
+              <div><strong>Total:</strong> ${createdBooking.total_amount}</div>
+            </div>
+          )}
           <button
-            onClick={() => { onBooked(); onClose(); }}
+            onClick={() => {
+              if (createdBooking) {
+                onBooked(createdBooking);
+              }
+              onClose();
+            }}
             style={{
               width: "100%", padding: 13, fontSize: 15, borderRadius: 10,
               background: "var(--teal)", color: "#fff", border: "none",
@@ -85,12 +113,15 @@ export default function BookingFormContent({ nanny, onClose, onBooked }: FormPro
       setError(null);
 
       try {
-        await createBooking({
+        const response = await createBooking({
           nanny_id: nanny.id,
           date,
           start_time: startTime,
           duration: hours,
         });
+        if (response.data) {
+          setCreatedBooking(response.data);
+        }
         setStep(2);
       } catch (err) {
         setError(

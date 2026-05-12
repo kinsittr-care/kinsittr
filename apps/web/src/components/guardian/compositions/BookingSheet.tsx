@@ -1,5 +1,6 @@
 "use client";
 
+import type { Booking } from "@/src/types/api/api";
 import type { Nanny } from "../dashboard/types";
 import { useIsMobile } from "../dashboard/useIsMobile";
 import {
@@ -16,7 +17,7 @@ interface BookingSheetProps {
   nanny: Nanny | null;
   open: boolean;
   onClose: () => void;
-  onBooked: () => void;
+  onBooked: (booking: Booking) => void;
 }
 
 export default function BookingSheet({ nanny, open, onClose, onBooked }: BookingSheetProps) {

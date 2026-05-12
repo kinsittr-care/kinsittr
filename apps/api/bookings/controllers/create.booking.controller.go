@@ -49,6 +49,8 @@ func (c *BookingsController) Create(ctx *fiber.Ctx) error {
 			status = fiber.StatusNotFound
 		case messages.Booking_Already_Exists, messages.Nanny_Time_Unavailable:
 			status = fiber.StatusConflict
+		case messages.Booking_Start_In_Past:
+			status = fiber.StatusUnprocessableEntity
 		}
 		return ctx.Status(status).JSON(fiber.Map{
 			"success": false,

@@ -1,12 +1,13 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useDashboard } from "./DashboardContext";
 import { useIsMobile } from "./useIsMobile";
 import Avatar from "./Avatar";
 import { BrandMarkIcon } from "@/src/components/icons";
+import { listParentBookings, parentBookingsQueryKey } from "@/src/utils/bookings";
 
 const NAV_TABS = [
   { id: "browse", label: "Browse", href: "/parent" },
@@ -16,9 +17,13 @@ const NAV_TABS = [
 export default function AppNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { hasMessages } = useDashboard();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { data: approvedBookingData } = useQuery({
+    queryKey: parentBookingsQueryKey({ page: 1, limit: 1, status: "approved" }),
+    queryFn: async () => listParentBookings({ page: 1, limit: 1, status: "approved" }),
+  });
+  const hasMessages = (approvedBookingData?.data?.total ?? 0) > 0;
 
   const isActive = (href: string) =>
     href === "/parent" ? pathname === "/parent" : pathname.startsWith(href);

@@ -38,7 +38,7 @@ func (p *BookingsPipe) Create(ctx context.Context, userID uuid.UUID, dto dtos.Cr
 		return pipeError[BookingData](messages.Invalid_Booking_Request)
 	}
 	if !startDateTime.After(time.Now().UTC()) {
-		return pipeError[BookingData](messages.Invalid_Booking_Request)
+		return pipeError[BookingData](messages.Booking_Start_In_Past)
 	}
 
 	hasExistingBooking, err := p.repo.HasParentActiveBookingWithNanny(
