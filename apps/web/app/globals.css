@@ -64,6 +64,33 @@
   --nanny-amber-lt:   #f7e6c8;
   --nanny-shadow:     0 1px 2px rgba(60,40,15,.04), 0 4px 18px rgba(60,40,15,.06);
   --nanny-shadow-md:  0 4px 24px rgba(60,40,15,.10);
+
+  /* Admin — warm blush-cream + terracotta/clay */
+  --admin-bg:           #f9ece0;
+  --admin-bg-soft:      #fdf5ec;
+  --admin-sidebar:      #f3e3d2;
+  --admin-card:         #ffffff;
+  --admin-card-warm:    #fffaf3;
+  --admin-border:       #ecd9c2;
+  --admin-border-soft:  #f4e5d2;
+  --admin-divider:      #ede0cc;
+  --admin-ink:          #2c1e16;
+  --admin-ink-mid:      #5c473a;
+  --admin-ink-soft:     #8a7565;
+  --admin-ink-faint:    #b09c87;
+  --admin-clay:         #b8552e;
+  --admin-clay-dark:    #8f3f1d;
+  --admin-clay-light:   #f7dccb;
+  --admin-clay-soft:    #fbe9da;
+  --admin-amber:        #c98a2b;
+  --admin-amber-light:  #fae8c8;
+  --admin-green:        #5a7a3d;
+  --admin-green-light:  #e1ecd0;
+  --admin-red:          #a8442e;
+  --admin-red-light:    #f5d9cd;
+  --admin-plum:         #7a3f5b;
+  --admin-plum-light:   #ecd6e0;
+  --admin-shadow:       0 1px 2px rgba(80,40,20,.04), 0 4px 16px rgba(120,70,30,.06);
   --sidebar:         oklch(0.985 0 0);
   --sidebar-foreground:         oklch(0.145 0 0);
   --sidebar-primary:         oklch(0.205 0 0);
