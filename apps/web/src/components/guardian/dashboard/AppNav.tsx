@@ -7,7 +7,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useIsMobile } from "./useIsMobile";
 import Avatar from "./Avatar";
 import { BrandMarkIcon } from "@/src/components/icons";
-import { listParentBookings, parentBookingsQueryKey } from "@/src/utils/bookings";
+import {
+  conversationsQueryKey,
+  listConversations,
+} from "@/src/utils/conversations";
 
 const NAV_TABS = [
   { id: "browse", label: "Browse", href: "/parent" },
@@ -19,11 +22,11 @@ export default function AppNav() {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const isMobile = useIsMobile();
-  const { data: approvedBookingData } = useQuery({
-    queryKey: parentBookingsQueryKey({ page: 1, limit: 1, status: "approved" }),
-    queryFn: async () => listParentBookings({ page: 1, limit: 1, status: "approved" }),
+  const { data: conversationsData } = useQuery({
+    queryKey: conversationsQueryKey({ page: 1, limit: 1 }),
+    queryFn: async () => listConversations({ page: 1, limit: 1 }),
   });
-  const hasMessages = (approvedBookingData?.data?.total ?? 0) > 0;
+  const hasMessages = (conversationsData?.data?.total ?? 0) > 0;
 
   const isActive = (href: string) =>
     href === "/parent" ? pathname === "/parent" : pathname.startsWith(href);

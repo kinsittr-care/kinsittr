@@ -11,19 +11,3 @@ export interface Nanny {
   tags?: string[];
   available?: boolean;
 }
-
-export interface ChatMessage {
-  from: "nanny" | "user";
-  text: string;
-}
-
-export interface MessageThread {
-  id: number;
-  nannyId: number;
-  nannyName: string;
-  nannyInitials: string;
-  preview: string;
-  time: string;
-  online: boolean;
-  chat: ChatMessage[];
-}

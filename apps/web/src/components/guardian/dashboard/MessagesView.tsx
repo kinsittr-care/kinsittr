@@ -1,305 +1,232 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MESSAGE_THREADS } from "./data";
-import type { MessageThread } from "./types";
-import Avatar from "./Avatar";
+import type { Conversation, Message } from "@/src/types/api/api";
+import {
+  conversationMessagesQueryKey,
+  conversationsQueryKey,
+  listConversationMessages,
+  listConversations,
+  sendConversationMessage,
+} from "@/src/utils/conversations";
+import { ApiRequestError } from "@/src/utils/api";
 import { useIsMobile } from "./useIsMobile";
-
+import MessagesChatHeader from "./messages/MessagesChatHeader";
+import MessagesComposer from "./messages/MessagesComposer";
+import MessagesEmptyState from "./messages/MessagesEmptyState";
+import MessagesMessageList from "./messages/MessagesMessageList";
+import MessagesThreadList from "./messages/MessagesThreadList";
 interface MessagesViewProps {
   hasMessages: boolean;
 }
 
+const CONVERSATIONS_PAGE_SIZE = 50;
+const MESSAGES_PAGE_SIZE = 100;
+const EMPTY_CONVERSATIONS: Conversation[] = [];
+const EMPTY_MESSAGES: Message[] = [];
+
 export default function MessagesView({ hasMessages }: MessagesViewProps) {
   const router = useRouter();
   const isMobile = useIsMobile();
-  const [selected, setSelected] = useState<MessageThread>(MESSAGE_THREADS[0]);
+  const queryClient = useQueryClient();
+  const [conversationLimit, setConversationLimit] = useState(CONVERSATIONS_PAGE_SIZE);
+  const [messageLimit, setMessageLimit] = useState(MESSAGES_PAGE_SIZE);
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
   const [input, setInput] = useState("");
-  const [chats, setChats] = useState<Record<number, MessageThread["chat"]>>(
-    () => Object.fromEntries(MESSAGE_THREADS.map((m) => [m.id, m.chat]))
-  );
+  const [sendError, setSendError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const conversationsQuery = useQuery({
+    queryKey: conversationsQueryKey({ page: 1, limit: conversationLimit }),
+    queryFn: async () => listConversations({ page: 1, limit: conversationLimit }),
+  });
+
+  const conversations = conversationsQuery.data?.data?.items ?? EMPTY_CONVERSATIONS;
+  const totalConversations = conversationsQuery.data?.data?.total ?? 0;
+  const resolvedSelectedConversationId =
+    selectedConversationId !== null &&
+    conversations.some((conversation) => conversation.id === selectedConversationId)
+      ? selectedConversationId
+      : (conversations[0]?.id ?? null);
+  const effectiveMessageLimit =
+    resolvedSelectedConversationId === selectedConversationId
+      ? messageLimit
+      : MESSAGES_PAGE_SIZE;
+  const selectedConversation =
+    conversations.find(
+      (conversation) => conversation.id === resolvedSelectedConversationId,
+    ) ?? null;
+
+  const messagesQuery = useQuery({
+    queryKey:
+      resolvedSelectedConversationId === null
+        ? ["conversation-messages-disabled"]
+        : conversationMessagesQueryKey(resolvedSelectedConversationId, {
+            page: 1,
+            limit: effectiveMessageLimit,
+          }),
+    queryFn: async () => {
+      if (!resolvedSelectedConversationId) {
+        throw new ApiRequestError("No conversation selected.");
+      }
+      return listConversationMessages(resolvedSelectedConversationId, {
+        page: 1,
+        limit: effectiveMessageLimit,
+      });
+    },
+    enabled: resolvedSelectedConversationId !== null,
+  });
+
+  const messages = messagesQuery.data?.data?.items ?? EMPTY_MESSAGES;
+  const totalMessages = messagesQuery.data?.data?.total ?? 0;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [selected, chats]);
+  }, [resolvedSelectedConversationId, messages]);
+
+  const sendMessageMutation = useMutation({
+    mutationFn: async (body: string) => {
+      if (!resolvedSelectedConversationId) {
+        throw new ApiRequestError("No conversation selected.");
+      }
+
+      return sendConversationMessage(resolvedSelectedConversationId, { body });
+    },
+    onSuccess: async (_, body) => {
+      setInput("");
+      setSendError(null);
+
+      if (!resolvedSelectedConversationId) {
+        return;
+      }
+
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: conversationMessagesQueryKey(resolvedSelectedConversationId, {
+            page: 1,
+            limit: effectiveMessageLimit,
+          }),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: conversationsQueryKey({ page: 1, limit: conversationLimit }),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: conversationsQueryKey({ page: 1, limit: 1 }),
+        }),
+      ]);
+
+      if (body.trim() && isMobile) {
+        setMobileView("chat");
+      }
+    },
+    onError: (error) => {
+      setSendError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while sending your message.",
+      );
+    },
+  });
 
   const send = () => {
-    if (!input.trim()) return;
-    setChats((prev) => ({
-      ...prev,
-      [selected.id]: [...(prev[selected.id] || []), { from: "user", text: input }],
-    }));
-    setInput("");
+    const body = input.trim();
+    if (!body || sendMessageMutation.isPending) {
+      return;
+    }
+
+    sendMessageMutation.mutate(body);
   };
 
-  if (!hasMessages) {
+  if (!hasMessages && !conversationsQuery.isLoading) {
     return (
-      <div
-        className="flex-1 flex flex-col items-center justify-center gap-4"
-        style={{ padding: 40 }}
-      >
-        <div
-          style={{
-            width: 80, height: 80, borderRadius: "50%",
-            background: "var(--teal-lt)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 36,
-          }}
-        >
-          💬
-        </div>
-        <div style={{ textAlign: "center" }}>
-          <h2
-            className="font-display"
-            style={{ fontWeight: 400, fontSize: 26, marginBottom: 10 }}
-          >
-            No messages yet
-          </h2>
-          <p style={{ color: "var(--muted)", fontSize: 15, lineHeight: 1.7, maxWidth: 360 }}>
-            Once a nanny accepts your booking request, messaging will unlock.
-            Find a nanny to get started.
-          </p>
-        </div>
-        <button
-          onClick={() => router.push("/parent")}
-          className="btn-cta"
-          style={{ marginTop: 8, padding: "12px 28px", fontSize: 15 }}
-        >
-          Find a nanny
-        </button>
-      </div>
+      <MessagesEmptyState onFindNanny={() => router.push("/parent")} />
     );
   }
 
   const showThreadList = !isMobile || mobileView === "list";
-  const showChat = !isMobile || mobileView === "chat";
+  const showChat =
+    !isMobile || (mobileView === "chat" && resolvedSelectedConversationId !== null);
 
   return (
     <div className="flex h-full overflow-hidden" style={{ flex: 1 }}>
-      {/* Thread list */}
       {showThreadList && (
-      <div
-        style={{
-          width: isMobile ? "100%" : 296,
-          flexShrink: 0,
-          borderRight: isMobile ? "none" : "1px solid var(--border)",
-          overflowY: "auto", background: "var(--bg)",
-          display: "flex", flexDirection: "column",
-        }}
-      >
-        <div
-          style={{
-            padding: isMobile ? "20px 16px 14px" : "28px 22px 18px",
-            borderBottom: "1px solid var(--border)",
+        <MessagesThreadList
+          conversations={conversations}
+          totalConversations={totalConversations}
+          isLoading={conversationsQuery.isLoading}
+          isError={conversationsQuery.isError}
+          errorMessage={
+            conversationsQuery.error instanceof Error
+              ? conversationsQuery.error.message
+              : undefined
+          }
+          isMobile={isMobile}
+          selectedConversationId={selectedConversationId}
+          onRetry={() => conversationsQuery.refetch()}
+          onSelectConversation={(id) => {
+            setSelectedConversationId(id);
+            setMessageLimit(MESSAGES_PAGE_SIZE);
+            if (isMobile) {
+              setMobileView("chat");
+            }
           }}
-        >
-          <h2 className="font-display" style={{ fontWeight: 400, fontSize: isMobile ? 22 : 24 }}>
-            Messages
-          </h2>
-        </div>
-
-        {MESSAGE_THREADS.map((m) => (
-          <div
-            key={m.id}
-            onClick={() => { setSelected(m); if (isMobile) setMobileView("chat"); }}
-            className="flex items-center gap-[13px]"
-            style={{
-              padding: "16px 20px",
-              borderBottom: "1px solid var(--border)",
-              cursor: "pointer",
-              background: selected.id === m.id && !isMobile ? "var(--teal-lt)" : "transparent",
-              transition: "background .12s",
-            }}
-          >
-            <div style={{ position: "relative" }}>
-              <Avatar initials={m.nannyInitials} size={46} />
-              {m.online && (
-                <div
-                  style={{
-                    position: "absolute", bottom: 1, right: 1,
-                    width: 11, height: 11, borderRadius: "50%",
-                    background: "#4caf7d", border: "2px solid #fff",
-                  }}
-                />
-              )}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  fontWeight: 600, fontSize: 14, marginBottom: 2,
-                  color: selected.id === m.id ? "var(--teal-dk)" : "var(--brand-text)",
-                }}
-              >
-                {m.nannyName}
-              </div>
-              <div
-                style={{
-                  fontSize: 12.5, color: "var(--faint)",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }}
-              >
-                {m.preview}
-              </div>
-            </div>
-            <div style={{ fontSize: 11.5, color: "var(--faint)", flexShrink: 0 }}>
-              {m.time}
-            </div>
-          </div>
-        ))}
-      </div>
+          onLoadMore={() =>
+            setConversationLimit((current) => current + CONVERSATIONS_PAGE_SIZE)
+          }
+        />
       )}
 
-      {/* Chat panel */}
       {showChat && (
-      <div className="flex flex-col overflow-hidden" style={{ flex: 1 }}>
-        {/* Chat header */}
-        <div
-          className="flex items-center gap-[14px]"
-          style={{
-            padding: isMobile ? "14px 16px" : "18px 26px",
-            borderBottom: "1px solid var(--border)",
-            background: "#fdfaf5",
-            boxShadow: "0 2px 12px rgba(40,30,20,.07)",
-          }}
-        >
-          {/* Back button on mobile */}
-          {isMobile && (
-            <button
-              onClick={() => setMobileView("list")}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--teal)", padding: "4px 8px 4px 0", display: "flex", alignItems: "center", gap: 4, fontSize: 14, fontFamily: "inherit", fontWeight: 500 }}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          )}
-          <Avatar initials={selected.nannyInitials} size={isMobile ? 36 : 44} />
-          <div>
-            <div style={{ fontWeight: 600, fontSize: isMobile ? 15 : 16 }}>{selected.nannyName}</div>
-            <div className="flex items-center gap-[5px]" style={{ fontSize: 13, marginTop: 2 }}>
-              <span
-                style={{
-                  width: 8, height: 8, borderRadius: "50%",
-                  background: selected.online ? "#4caf7d" : "#ccc",
-                  display: "inline-block",
-                }}
-              />
-              <span style={{ color: selected.online ? "#4caf7d" : "var(--faint)" }}>
-                {selected.online ? "Online" : "Offline"}
-              </span>
-            </div>
-          </div>
-          {!isMobile && (
-          <div className="flex gap-2" style={{ marginLeft: "auto" }}>
-            <button className="btn-outline" style={{ padding: "7px 14px", fontSize: 13 }}>
-              View profile
-            </button>
-            <button className="btn-outline" style={{ padding: "7px 14px", fontSize: 13 }}>
-              Booking details
-            </button>
-          </div>
-          )}
-        </div>
-
-        {/* Messages */}
-        <div
-          className="flex flex-col gap-3"
-          style={{
-            flex: 1, overflowY: "auto", padding: "24px 28px",
-            background: "#f8f4ee",
-          }}
-        >
-          <div style={{ textAlign: "center", marginBottom: 8 }}>
-            <span
-              style={{
-                fontSize: 12, color: "var(--faint)",
-                background: "var(--border)", borderRadius: 10,
-                padding: "4px 12px",
-              }}
-            >
-              Today · Booking approved ✓
-            </span>
-          </div>
-
-          {(chats[selected.id] || []).map((msg, i) => (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                justifyContent: msg.from === "user" ? "flex-end" : "flex-start",
-              }}
-            >
-              <div
-                style={{
-                  maxWidth: "60%", padding: "13px 17px",
-                  borderRadius: msg.from === "user"
-                    ? "20px 20px 5px 20px"
-                    : "20px 20px 20px 5px",
-                  background: msg.from === "user" ? "var(--teal)" : "#fff",
-                  color: msg.from === "user" ? "#fff" : "var(--brand-text)",
-                  fontSize: 14.5, lineHeight: 1.65,
-                  boxShadow: msg.from === "user"
-                    ? "0 3px 12px rgba(58,90,90,.28)"
-                    : "0 2px 12px rgba(40,30,20,.07)",
-                }}
-              >
-                {msg.text}
-              </div>
-            </div>
-          ))}
-          <div ref={bottomRef} />
-        </div>
-
-        {/* Input */}
-        <div
-          className="flex gap-[10px] items-center"
-          style={{
-            padding: "14px 24px",
-            borderTop: "1px solid var(--border)",
-            background: "#fdfaf5",
-          }}
-        >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && send()}
-            placeholder="Type a message..."
-            style={{
-              flex: 1, border: "1.5px solid var(--border)", borderRadius: 30,
-              padding: "12px 20px", fontSize: 14, background: "var(--bg)",
-              outline: "none", color: "var(--brand-text)", transition: "border-color .15s",
-              fontFamily: "inherit",
-            }}
-            onFocus={(e) => (e.target.style.borderColor = "var(--teal)")}
-            onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
+        <div className="flex flex-col overflow-hidden" style={{ flex: 1 }}>
+          <MessagesChatHeader
+            conversation={selectedConversation}
+            isMobile={isMobile}
+            onBack={() => setMobileView("list")}
+            onViewProfile={() => router.push("/parent")}
+            onViewBookingDetails={() => router.push("/parent/bookings")}
           />
-          <button
-            onClick={send}
-            style={{
-              width: 46, height: 46, borderRadius: "50%",
-              background: "var(--teal)", border: "none", color: "#fff",
-              cursor: "pointer", display: "flex", alignItems: "center",
-              justifyContent: "center", flexShrink: 0,
-              boxShadow: "0 3px 10px rgba(58,90,90,.38)",
-              transition: "transform .1s, box-shadow .1s",
+
+          <MessagesMessageList
+            conversation={selectedConversation}
+            messages={messages}
+            totalMessages={totalMessages}
+            isLoading={messagesQuery.isLoading}
+            isError={messagesQuery.isError}
+            errorMessage={
+              messagesQuery.error instanceof Error
+                ? messagesQuery.error.message
+                : undefined
+            }
+            bottomRef={bottomRef}
+            onRetry={() => messagesQuery.refetch()}
+            onLoadOlder={() =>
+              setMessageLimit((current) => current + MESSAGES_PAGE_SIZE)
+            }
+          />
+
+          <MessagesComposer
+            input={input}
+            sendError={sendError}
+            canSend={Boolean(selectedConversation && input.trim() && !sendMessageMutation.isPending)}
+            isSending={sendMessageMutation.isPending}
+            isConversationSelected={selectedConversation !== null}
+            isMobile={isMobile}
+            onInputChange={(value) => {
+              setInput(value);
+              if (sendError) {
+                setSendError(null);
+              }
             }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.06)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
-            }}
-            aria-label="Send"
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M2 9h14M9 2l7 7-7 7" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+            onSend={send}
+          />
         </div>
-      </div>
       )}
     </div>
   );
