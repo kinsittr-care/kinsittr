@@ -11,6 +11,7 @@ import (
 	"github.com/kinsittr/kinsittr-api/bookings/messages"
 	"github.com/kinsittr/kinsittr-api/models"
 	bookingsrepo "github.com/kinsittr/kinsittr-api/repositories/bookings"
+	messagesrepo "github.com/kinsittr/kinsittr-api/repositories/messages"
 	nannyrepo "github.com/kinsittr/kinsittr-api/repositories/nanny"
 )
 
@@ -117,10 +118,40 @@ func (m *mockNannyRepo) ListVerifiedNannies(_ context.Context, _ nannyrepo.ListV
 	return m.nannies, m.nanniesTotal, m.nanniesErr
 }
 
+type mockMessagesRepo struct {
+	conversation models.Conversation
+}
+
+func (m *mockMessagesRepo) GetConversationByBookingID(_ context.Context, _ uuid.UUID) (models.Conversation, error) {
+	return m.conversation, nil
+}
+func (m *mockMessagesRepo) CreateConversation(_ context.Context, conversation models.Conversation) (models.Conversation, error) {
+	m.conversation = conversation
+	return conversation, nil
+}
+func (m *mockMessagesRepo) ListParentConversations(_ context.Context, _ uuid.UUID, _ messagesrepo.ConversationListFilter) ([]messagesrepo.ConversationRecord, int, error) {
+	return nil, 0, nil
+}
+func (m *mockMessagesRepo) ListNannyConversations(_ context.Context, _ uuid.UUID, _ messagesrepo.ConversationListFilter) ([]messagesrepo.ConversationRecord, int, error) {
+	return nil, 0, nil
+}
+func (m *mockMessagesRepo) GetParentConversationByID(_ context.Context, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
+	return messagesrepo.ConversationRecord{}, nil
+}
+func (m *mockMessagesRepo) GetNannyConversationByID(_ context.Context, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
+	return messagesrepo.ConversationRecord{}, nil
+}
+func (m *mockMessagesRepo) ListMessages(_ context.Context, _ uuid.UUID, _ messagesrepo.MessageListFilter) ([]models.Message, int, error) {
+	return nil, 0, nil
+}
+func (m *mockMessagesRepo) CreateMessage(_ context.Context, message models.Message) (models.Message, error) {
+	return message, nil
+}
+
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 func newBookingsPipe(b bookingsrepo.BookingsRepository, pr *mockProfileRepo, nr *mockNannyRepo) *BookingsPipe {
-	return NewBookingsPipe(b, pr, nr)
+	return NewBookingsPipe(b, &mockMessagesRepo{}, pr, nr)
 }
 
 func futureDate() string { return time.Now().UTC().AddDate(0, 0, 2).Format("2006-01-02") }
