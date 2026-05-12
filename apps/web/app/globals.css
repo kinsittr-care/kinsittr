@@ -42,6 +42,28 @@
   --chart-4:         oklch(0.371 0 0);
   --chart-5:         oklch(0.269 0 0);
   --radius:         0.625rem;
+
+  /* Nanny caregiver palette */
+  --nanny-green:      #2d5a3d;
+  --nanny-green-dk:   #1f4029;
+  --nanny-green-lt:   #e6ede2;
+  --nanny-green-mid:  #bccfb8;
+  --nanny-bg-deep:    #ebe2d0;
+  --nanny-card:       #fbf6ec;
+  --nanny-card-soft:  #f7f0e2;
+  --nanny-border:     #e2d6bf;
+  --nanny-border-soft:#ece2cc;
+  --nanny-ink-soft:   #5b5141;
+  --nanny-ink-mute:   #8a7f6b;
+  --nanny-ink-faint:  #b3a78f;
+  --nanny-gold:       #b88a2e;
+  --nanny-gold-lt:    #f6ecd0;
+  --nanny-rose:       #b15545;
+  --nanny-rose-lt:    #f6e3dc;
+  --nanny-amber:      #c2761b;
+  --nanny-amber-lt:   #f7e6c8;
+  --nanny-shadow:     0 1px 2px rgba(60,40,15,.04), 0 4px 18px rgba(60,40,15,.06);
+  --nanny-shadow-md:  0 4px 24px rgba(60,40,15,.10);
   --sidebar:         oklch(0.985 0 0);
   --sidebar-foreground:         oklch(0.145 0 0);
   --sidebar-primary:         oklch(0.205 0 0);
@@ -272,6 +294,33 @@ body {
   --sidebar-border:         oklch(1 0 0 / 10%);
   --sidebar-ring:         oklch(0.556 0 0);
 }
+
+/* Nanny dashboard range slider */
+.nanny-range {
+  -webkit-appearance: none; appearance: none;
+  background: transparent; cursor: pointer; width: 100%;
+}
+.nanny-range::-webkit-slider-runnable-track {
+  height: 6px; border-radius: 3px;
+  background: linear-gradient(to right, var(--nanny-green) var(--val, 50%), var(--nanny-border) var(--val, 50%));
+}
+.nanny-range::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 20px; height: 20px;
+  border-radius: 50%; background: var(--nanny-green); margin-top: -7px;
+  box-shadow: 0 2px 8px rgba(45,90,61,.35), 0 0 0 4px #fff;
+  cursor: pointer;
+}
+
+@keyframes nanny-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes nanny-slide-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.nanny-fade-up   { animation: nanny-fade-up  .35s ease-out both; }
+.nanny-slide-in  { animation: nanny-slide-in .25s ease-out both; }
 
 @layer base {
   * {

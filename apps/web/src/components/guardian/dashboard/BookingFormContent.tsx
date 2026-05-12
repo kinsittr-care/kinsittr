@@ -126,9 +126,11 @@ export default function BookingFormContent({ nanny, onClose, onBooked }: FormPro
           timezone_offset_minutes: getTimezoneOffsetMinutes(),
           duration: hours,
         });
-        if (response.data) {
-          setCreatedBooking(response.data);
+        if (!response.data) {
+          throw new ApiRequestError("Booking request succeeded, but no booking details were returned.");
         }
+
+        setCreatedBooking(response.data);
         setStep(2);
       } catch (err) {
         setError(
