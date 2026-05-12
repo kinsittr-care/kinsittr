@@ -45,6 +45,12 @@ export default function BookingFormContent({ nanny, onClose, onBooked }: FormPro
     const [error, setError] = useState<string | null>(null);
     const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
     const total = nanny.rate * hours;
+
+    const getTimezoneOffsetMinutes = () => {
+      const [year, month, day] = date.split("-").map(Number);
+      const [hour, minute] = startTime.split(":").map(Number);
+      return new Date(year, month - 1, day, hour, minute, 0, 0).getTimezoneOffset();
+    };
   
     if (step === 2) {
       return (
@@ -117,6 +123,7 @@ export default function BookingFormContent({ nanny, onClose, onBooked }: FormPro
           nanny_id: nanny.id,
           date,
           start_time: startTime,
+          timezone_offset_minutes: getTimezoneOffsetMinutes(),
           duration: hours,
         });
         if (response.data) {

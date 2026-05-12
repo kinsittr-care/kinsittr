@@ -38,6 +38,8 @@ func (c *BookingsController) Approve(ctx *fiber.Ctx) error {
 		switch string(res.Message) {
 		case messages.Nanny_Profile_Not_Found, messages.Booking_Not_Found:
 			status = fiber.StatusNotFound
+		case messages.Nanny_Time_Unavailable:
+			status = fiber.StatusConflict
 		}
 		return ctx.Status(status).JSON(fiber.Map{
 			"success": false,

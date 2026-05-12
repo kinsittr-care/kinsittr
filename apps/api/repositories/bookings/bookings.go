@@ -2,6 +2,7 @@ package bookings
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -9,11 +10,16 @@ import (
 	"github.com/kinsittr/kinsittr-api/models"
 )
 
+var (
+	ErrBookingAlreadyExists = errors.New("booking_already_exists")
+	ErrNannyTimeUnavailable = errors.New("nanny_time_unavailable")
+)
+
 type BookingRecord struct {
 	models.Booking
-	NannyDisplayName string `json:"nanny_display_name"`
-	NannyCity        string `json:"nanny_city"`
-	NannyProvince    string `json:"nanny_province"`
+	NannyDisplayName  string `json:"nanny_display_name"`
+	NannyCity         string `json:"nanny_city"`
+	NannyProvince     string `json:"nanny_province"`
 	ParentDisplayName string `json:"parent_display_name"`
 	ParentCity        string `json:"parent_city"`
 	ParentProvince    string `json:"parent_province"`

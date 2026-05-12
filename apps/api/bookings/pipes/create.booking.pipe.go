@@ -2,12 +2,14 @@ package pipes
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/bookings/dtos"
 	"github.com/kinsittr/kinsittr-api/bookings/messages"
 	"github.com/kinsittr/kinsittr-api/models"
+	"github.com/kinsittr/kinsittr-api/repositories/bookings"
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
 
@@ -33,7 +35,7 @@ func (p *BookingsPipe) Create(ctx context.Context, userID uuid.UUID, dto dtos.Cr
 		return pipeError[BookingData](messages.Nanny_Profile_Not_Found)
 	}
 
-	dateOnly, startDateTime, err := parseBookingDateTime(dto.Date, dto.StartTime)
+	dateOnly, startDateTime, err := parseBookingDateTime(dto.Date, dto.StartTime, dto.TimezoneOffsetMinutes)
 	if err != nil {
 		return pipeError[BookingData](messages.Invalid_Booking_Request)
 	}
@@ -79,6 +81,12 @@ func (p *BookingsPipe) Create(ctx context.Context, userID uuid.UUID, dto dtos.Cr
 		Status:          models.PendingBookingStatus,
 	})
 	if err != nil {
+		switch {
+		case errors.Is(err, bookings.ErrBookingAlreadyExists):
+			return pipeError[BookingData](messages.Booking_Already_Exists)
+		case errors.Is(err, bookings.ErrNannyTimeUnavailable):
+			return pipeError[BookingData](messages.Nanny_Time_Unavailable)
+		}
 		return pipeError[BookingData](messages.Invalid_Booking_Request)
 	}
 

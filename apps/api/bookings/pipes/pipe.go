@@ -12,22 +12,22 @@ import (
 )
 
 type BookingData struct {
-	ID               string               `json:"id"`
-	ParentProfileID  string               `json:"parent_profile_id"`
-	NannyProfileID   string               `json:"nanny_profile_id"`
-	ParentDisplayName string              `json:"parent_display_name,omitempty"`
-	ParentCity        string              `json:"parent_city,omitempty"`
-	ParentProvince    string              `json:"parent_province,omitempty"`
-	NannyDisplayName string               `json:"nanny_display_name,omitempty"`
-	NannyCity        string               `json:"nanny_city,omitempty"`
-	NannyProvince    string               `json:"nanny_province,omitempty"`
-	Date             string               `json:"date"`
-	StartTime        string               `json:"start_time"`
-	Duration         int                  `json:"duration"`
-	TotalAmount      float64              `json:"total_amount"`
-	Status           models.BookingStatus `json:"status"`
-	CreatedAt        time.Time            `json:"created_at"`
-	UpdatedAt        time.Time            `json:"updated_at"`
+	ID                string               `json:"id"`
+	ParentProfileID   string               `json:"parent_profile_id"`
+	NannyProfileID    string               `json:"nanny_profile_id"`
+	ParentDisplayName string               `json:"parent_display_name,omitempty"`
+	ParentCity        string               `json:"parent_city,omitempty"`
+	ParentProvince    string               `json:"parent_province,omitempty"`
+	NannyDisplayName  string               `json:"nanny_display_name,omitempty"`
+	NannyCity         string               `json:"nanny_city,omitempty"`
+	NannyProvince     string               `json:"nanny_province,omitempty"`
+	Date              string               `json:"date"`
+	StartTime         string               `json:"start_time"`
+	Duration          int                  `json:"duration"`
+	TotalAmount       float64              `json:"total_amount"`
+	Status            models.BookingStatus `json:"status"`
+	CreatedAt         time.Time            `json:"created_at"`
+	UpdatedAt         time.Time            `json:"updated_at"`
 }
 
 type BookingListData struct {
@@ -92,7 +92,7 @@ func pipeSuccess[T any](message string, data *T) *shared.PipeRes[T] {
 	}
 }
 
-func parseBookingDateTime(dateValue, timeValue string) (time.Time, time.Time, error) {
+func parseBookingDateTime(dateValue, timeValue string, timezoneOffsetMinutes int) (time.Time, time.Time, error) {
 	date, err := time.Parse("2006-01-02", dateValue)
 	if err != nil {
 		return time.Time{}, time.Time{}, err
@@ -103,6 +103,8 @@ func parseBookingDateTime(dateValue, timeValue string) (time.Time, time.Time, er
 		return time.Time{}, time.Time{}, err
 	}
 
+	location := time.FixedZone("client-local", -timezoneOffsetMinutes*60)
+
 	startDateTime := time.Date(
 		date.Year(),
 		date.Month(),
@@ -111,8 +113,8 @@ func parseBookingDateTime(dateValue, timeValue string) (time.Time, time.Time, er
 		parsedTime.Minute(),
 		0,
 		0,
-		time.UTC,
-	)
+		location,
+	).UTC()
 
 	dateOnly := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
 	return dateOnly, startDateTime, nil

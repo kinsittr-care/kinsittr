@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kinsittr/kinsittr-api/models"
 )
@@ -19,6 +20,26 @@ type pgRepository struct {
 
 func newPgRepository(db *pgxpool.Pool) *pgRepository {
 	return &pgRepository{db: db}
+}
+
+func mapBookingWriteError(err error) error {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return err
+	}
+
+	if pgErr.Code != "23P01" {
+		return err
+	}
+
+	switch pgErr.ConstraintName {
+	case "bookings_parent_nanny_slot_excl":
+		return ErrBookingAlreadyExists
+	case "bookings_nanny_approved_slot_excl":
+		return ErrNannyTimeUnavailable
+	default:
+		return err
+	}
 }
 
 func (r *pgRepository) HasParentActiveBookingWithNanny(ctx context.Context, parentProfileID, nannyProfileID uuid.UUID, startTime time.Time, duration int) (bool, error) {
@@ -64,7 +85,7 @@ func (r *pgRepository) CreateBooking(ctx context.Context, booking models.Booking
 		&created.ID, &created.ParentProfileID, &created.NannyProfileID, &created.Date, &created.StartTime,
 		&created.Duration, &created.TotalAmount, &created.Status, &created.CreatedAt, &created.UpdatedAt,
 	)
-	return created, err
+	return created, mapBookingWriteError(err)
 }
 
 func buildListBookingsWhere(baseColumn string, filter ListBookingsFilter, args []any) (string, []any) {
@@ -284,5 +305,5 @@ func (r *pgRepository) updateNannyBookingStatus(ctx context.Context, nannyProfil
 	if errors.Is(err, pgx.ErrNoRows) {
 		return BookingRecord{}, nil
 	}
-	return booking, err
+	return booking, mapBookingWriteError(err)
 }

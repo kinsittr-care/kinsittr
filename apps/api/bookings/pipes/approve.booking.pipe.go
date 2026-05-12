@@ -2,9 +2,11 @@ package pipes
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/bookings/messages"
+	"github.com/kinsittr/kinsittr-api/repositories/bookings"
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
 
@@ -19,6 +21,9 @@ func (p *BookingsPipe) Approve(ctx context.Context, userID, bookingID uuid.UUID)
 
 	booking, err := p.repo.ApproveNannyBooking(ctx, nannyProfile.ID, bookingID)
 	if err != nil {
+		if errors.Is(err, bookings.ErrNannyTimeUnavailable) {
+			return pipeError[BookingData](messages.Nanny_Time_Unavailable)
+		}
 		return pipeError[BookingData](messages.Cannot_Approve_Booking)
 	}
 	if booking.ID == uuid.Nil {

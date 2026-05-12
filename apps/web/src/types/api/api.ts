@@ -122,6 +122,7 @@ export interface CreateBookingPayload {
   nanny_id: string;
   date: string;
   start_time: string;
+  timezone_offset_minutes: number;
   duration: number;
 }
 
