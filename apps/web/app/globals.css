@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
   --teal:         #3a5a5a;
@@ -13,14 +17,66 @@
   --bg:           #f5f0e8;
   --bg-warm:      #faf6ef;
   --brand-text:   #1c1a17;
-  --muted:        #7a7268;
+  --muted:         oklch(0.97 0 0);
   --faint:        #b0a898;
-  --border:       #e2d9c8;
+  --border:         oklch(0.922 0 0);
+  --background:         oklch(1 0 0);
+  --foreground:         oklch(0.145 0 0);
+  --card:         oklch(1 0 0);
+  --card-foreground:         oklch(0.145 0 0);
+  --popover:         oklch(1 0 0);
+  --popover-foreground:         oklch(0.145 0 0);
+  --primary:         oklch(0.205 0 0);
+  --primary-foreground:         oklch(0.985 0 0);
+  --secondary:         oklch(0.97 0 0);
+  --secondary-foreground:         oklch(0.205 0 0);
+  --muted-foreground:         oklch(0.556 0 0);
+  --accent:         oklch(0.97 0 0);
+  --accent-foreground:         oklch(0.205 0 0);
+  --destructive:         oklch(0.577 0.245 27.325);
+  --input:         oklch(0.922 0 0);
+  --ring:         oklch(0.708 0 0);
+  --chart-1:         oklch(0.87 0 0);
+  --chart-2:         oklch(0.556 0 0);
+  --chart-3:         oklch(0.439 0 0);
+  --chart-4:         oklch(0.371 0 0);
+  --chart-5:         oklch(0.269 0 0);
+  --radius:         0.625rem;
+
+  /* Nanny caregiver palette */
+  --nanny-green:      #2d5a3d;
+  --nanny-green-dk:   #1f4029;
+  --nanny-green-lt:   #e6ede2;
+  --nanny-green-mid:  #bccfb8;
+  --nanny-bg-deep:    #ebe2d0;
+  --nanny-card:       #fbf6ec;
+  --nanny-card-soft:  #f7f0e2;
+  --nanny-border:     #e2d6bf;
+  --nanny-border-soft:#ece2cc;
+  --nanny-ink-soft:   #5b5141;
+  --nanny-ink-mute:   #8a7f6b;
+  --nanny-ink-faint:  #b3a78f;
+  --nanny-gold:       #b88a2e;
+  --nanny-gold-lt:    #f6ecd0;
+  --nanny-rose:       #b15545;
+  --nanny-rose-lt:    #f6e3dc;
+  --nanny-amber:      #c2761b;
+  --nanny-amber-lt:   #f7e6c8;
+  --nanny-shadow:     0 1px 2px rgba(60,40,15,.04), 0 4px 18px rgba(60,40,15,.06);
+  --nanny-shadow-md:  0 4px 24px rgba(60,40,15,.10);
+  --sidebar:         oklch(0.985 0 0);
+  --sidebar-foreground:         oklch(0.145 0 0);
+  --sidebar-primary:         oklch(0.205 0 0);
+  --sidebar-primary-foreground:         oklch(0.985 0 0);
+  --sidebar-accent:         oklch(0.97 0 0);
+  --sidebar-accent-foreground:         oklch(0.205 0 0);
+  --sidebar-border:         oklch(0.922 0 0);
+  --sidebar-ring:         oklch(0.708 0 0);
 }
 
 @theme inline {
   --font-display: var(--font-dm-serif);
-  --font-sans:    var(--font-dm-sans);
+  --font-sans:         var(--font-sans);
 
   --color-teal:         var(--teal);
   --color-teal-dk:      var(--teal-dk);
@@ -37,6 +93,45 @@
   --color-brand-muted:  var(--muted);
   --color-brand-faint:  var(--faint);
   --color-brand-border: var(--border);
+  --font-heading:         var(--font-sans);
+  --color-sidebar-ring:         var(--sidebar-ring);
+  --color-sidebar-border:         var(--sidebar-border);
+  --color-sidebar-accent-foreground:         var(--sidebar-accent-foreground);
+  --color-sidebar-accent:         var(--sidebar-accent);
+  --color-sidebar-primary-foreground:         var(--sidebar-primary-foreground);
+  --color-sidebar-primary:         var(--sidebar-primary);
+  --color-sidebar-foreground:         var(--sidebar-foreground);
+  --color-sidebar:         var(--sidebar);
+  --color-chart-5:         var(--chart-5);
+  --color-chart-4:         var(--chart-4);
+  --color-chart-3:         var(--chart-3);
+  --color-chart-2:         var(--chart-2);
+  --color-chart-1:         var(--chart-1);
+  --color-ring:         var(--ring);
+  --color-input:         var(--input);
+  --color-border:         var(--border);
+  --color-destructive:         var(--destructive);
+  --color-accent-foreground:         var(--accent-foreground);
+  --color-accent:         var(--accent);
+  --color-muted-foreground:         var(--muted-foreground);
+  --color-muted:         var(--muted);
+  --color-secondary-foreground:         var(--secondary-foreground);
+  --color-secondary:         var(--secondary);
+  --color-primary-foreground:         var(--primary-foreground);
+  --color-primary:         var(--primary);
+  --color-popover-foreground:         var(--popover-foreground);
+  --color-popover:         var(--popover);
+  --color-card-foreground:         var(--card-foreground);
+  --color-card:         var(--card);
+  --color-foreground:         var(--foreground);
+  --color-background:         var(--background);
+  --radius-sm:         calc(var(--radius) * 0.6);
+  --radius-md:         calc(var(--radius) * 0.8);
+  --radius-lg:         var(--radius);
+  --radius-xl:         calc(var(--radius) * 1.4);
+  --radius-2xl:         calc(var(--radius) * 1.8);
+  --radius-3xl:         calc(var(--radius) * 2.2);
+  --radius-4xl:         calc(var(--radius) * 2.6);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -150,3 +245,91 @@ body {
   color: var(--teal); background: #fff; transition: all .15s;
 }
 .btn-cta-white:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.12); }
+
+/* ── Dashboard ── */
+.dash-range {
+  -webkit-appearance: none; appearance: none;
+  background: transparent; cursor: pointer; width: 100%;
+}
+.dash-range::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 2px;
+  background: linear-gradient(to right, var(--teal) var(--val, 50%), var(--border) var(--val, 50%));
+}
+.dash-range::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px;
+  border-radius: 50%; background: var(--teal); margin-top: -7px;
+  box-shadow: 0 1px 6px rgba(58,90,90,.3); cursor: pointer;
+}
+
+.dark {
+  --background:         oklch(0.145 0 0);
+  --foreground:         oklch(0.985 0 0);
+  --card:         oklch(0.205 0 0);
+  --card-foreground:         oklch(0.985 0 0);
+  --popover:         oklch(0.205 0 0);
+  --popover-foreground:         oklch(0.985 0 0);
+  --primary:         oklch(0.922 0 0);
+  --primary-foreground:         oklch(0.205 0 0);
+  --secondary:         oklch(0.269 0 0);
+  --secondary-foreground:         oklch(0.985 0 0);
+  --muted:         oklch(0.269 0 0);
+  --muted-foreground:         oklch(0.708 0 0);
+  --accent:         oklch(0.269 0 0);
+  --accent-foreground:         oklch(0.985 0 0);
+  --destructive:         oklch(0.704 0.191 22.216);
+  --border:         oklch(1 0 0 / 10%);
+  --input:         oklch(1 0 0 / 15%);
+  --ring:         oklch(0.556 0 0);
+  --chart-1:         oklch(0.87 0 0);
+  --chart-2:         oklch(0.556 0 0);
+  --chart-3:         oklch(0.439 0 0);
+  --chart-4:         oklch(0.371 0 0);
+  --chart-5:         oklch(0.269 0 0);
+  --sidebar:         oklch(0.205 0 0);
+  --sidebar-foreground:         oklch(0.985 0 0);
+  --sidebar-primary:         oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground:         oklch(0.985 0 0);
+  --sidebar-accent:         oklch(0.269 0 0);
+  --sidebar-accent-foreground:         oklch(0.985 0 0);
+  --sidebar-border:         oklch(1 0 0 / 10%);
+  --sidebar-ring:         oklch(0.556 0 0);
+}
+
+/* Nanny dashboard range slider */
+.nanny-range {
+  -webkit-appearance: none; appearance: none;
+  background: transparent; cursor: pointer; width: 100%;
+}
+.nanny-range::-webkit-slider-runnable-track {
+  height: 6px; border-radius: 3px;
+  background: linear-gradient(to right, var(--nanny-green) var(--val, 50%), var(--nanny-border) var(--val, 50%));
+}
+.nanny-range::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 20px; height: 20px;
+  border-radius: 50%; background: var(--nanny-green); margin-top: -7px;
+  box-shadow: 0 2px 8px rgba(45,90,61,.35), 0 0 0 4px #fff;
+  cursor: pointer;
+}
+
+@keyframes nanny-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes nanny-slide-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.nanny-fade-up   { animation: nanny-fade-up  .35s ease-out both; }
+.nanny-slide-in  { animation: nanny-slide-in .25s ease-out both; }
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

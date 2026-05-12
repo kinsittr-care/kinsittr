@@ -22,7 +22,7 @@ type RegisterNannyDTO struct {
 	Password    string             `json:"password"      validate:"required,min=8,max=72"`
 	Phone       string             `json:"phone"         validate:"omitempty,min=7,max=20"`
 	DisplayName string             `json:"display_name"  validate:"required,min=2,max=100"`
-	ServiceType models.ServiceType `json:"service_type"  validate:"required,oneof=nanny cleaner tutor"`
+	ServiceType models.ServiceType `json:"service_type"  validate:"omitempty,oneof=nanny"`
 	Bio         string             `json:"bio"           validate:"required,min=20,max=1000"`
 	RatePerHour float64            `json:"rate_per_hour" validate:"required,min=1"`
 	City        string             `json:"city"          validate:"required,max=100"`

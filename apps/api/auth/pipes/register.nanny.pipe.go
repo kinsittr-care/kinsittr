@@ -14,6 +14,7 @@ import (
 
 func (p *AuthPipe) RegisterNanny(ctx context.Context, dto dtos.RegisterNannyDTO) *shared.PipeRes[AuthTokenPair] {
 	dto.Email = strings.ToLower(strings.TrimSpace(dto.Email))
+	dto.ServiceType = models.NannyServiceType
 
 	exists, err := p.repo.UserExistsByEmail(ctx, dto.Email)
 	if err != nil || exists {
@@ -43,6 +44,7 @@ func (p *AuthPipe) RegisterNanny(ctx context.Context, dto dtos.RegisterNannyDTO)
 		DisplayName: strings.TrimSpace(dto.DisplayName),
 		Bio:         strings.TrimSpace(dto.Bio),
 		RatePerHour: dto.RatePerHour,
+		ServiceType: dto.ServiceType,
 		Currency:    models.CAD,
 		City:        strings.TrimSpace(dto.City),
 		Province:    strings.TrimSpace(dto.Province),

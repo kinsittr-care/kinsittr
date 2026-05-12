@@ -9,14 +9,27 @@ import (
 	auth_controller "github.com/kinsittr/kinsittr-api/auth/controllers"
 	auth_pipe "github.com/kinsittr/kinsittr-api/auth/pipes"
 	auth_router "github.com/kinsittr/kinsittr-api/auth/routers"
+	bookings_controller "github.com/kinsittr/kinsittr-api/bookings/controllers"
+	bookings_pipe "github.com/kinsittr/kinsittr-api/bookings/pipes"
+	bookings_router "github.com/kinsittr/kinsittr-api/bookings/routers"
 	"github.com/kinsittr/kinsittr-api/config"
 	contact_controller "github.com/kinsittr/kinsittr-api/contact/controllers"
 	contact_pipe "github.com/kinsittr/kinsittr-api/contact/pipes"
 	contact_router "github.com/kinsittr/kinsittr-api/contact/routers"
 	contact_services "github.com/kinsittr/kinsittr-api/contact/services"
+	conversations_controller "github.com/kinsittr/kinsittr-api/conversations/controllers"
+	conversations_pipe "github.com/kinsittr/kinsittr-api/conversations/pipes"
+	conversations_router "github.com/kinsittr/kinsittr-api/conversations/routers"
 	"github.com/kinsittr/kinsittr-api/db"
+	nanny_controller "github.com/kinsittr/kinsittr-api/nanny/controllers"
+	nanny_pipe "github.com/kinsittr/kinsittr-api/nanny/pipes"
+	nanny_router "github.com/kinsittr/kinsittr-api/nanny/routers"
 	"github.com/kinsittr/kinsittr-api/repositories"
 	"github.com/kinsittr/kinsittr-api/repositories/account"
+	bookings_repo "github.com/kinsittr/kinsittr-api/repositories/bookings"
+	messages_repo "github.com/kinsittr/kinsittr-api/repositories/messages"
+	nanny_repo "github.com/kinsittr/kinsittr-api/repositories/nanny"
+	profile_repo "github.com/kinsittr/kinsittr-api/repositories/profile"
 	"github.com/kinsittr/kinsittr-api/shared/api"
 	"github.com/kinsittr/kinsittr-api/shared/mail"
 )
@@ -31,7 +44,7 @@ func New(cfg *config.Config) (*fiber.App, error) {
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: cfg.WebOrigin,
-		AllowMethods: "GET,POST,PUT,PATCH,OPTIONS",
+		AllowMethods: "GET,POST,PUT,PATCH,OPTIONS,DELETE",
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 	}))
 
@@ -47,8 +60,20 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	repositories.InitRepositories(pool)
 
 	// auth
-	authPipe := auth_pipe.NewAuthPipe(account.AccountRepo, cfg.JWTSecret, cfg.JWTRefreshSecret)
+	authPipe := auth_pipe.NewAuthPipe(account.AccountRepo, profile_repo.ProfileRepo, cfg.JWTSecret, cfg.JWTRefreshSecret)
 	authController := auth_controller.NewAuthController(authPipe)
+
+	// nanny public
+	nannyPipe := nanny_pipe.NewNannyPipe(nanny_repo.NannyRepo, profile_repo.ProfileRepo)
+	nannyController := nanny_controller.NewNannyController(nannyPipe)
+
+	// bookings
+	bookingsPipe := bookings_pipe.NewBookingsPipe(bookings_repo.BookingsRepo, messages_repo.MessagesRepo, profile_repo.ProfileRepo, nanny_repo.NannyRepo)
+	bookingsController := bookings_controller.NewBookingsController(bookingsPipe)
+
+	// conversations
+	conversationsPipe := conversations_pipe.NewConversationsPipe(messages_repo.MessagesRepo, profile_repo.ProfileRepo)
+	conversationsController := conversations_controller.NewConversationsController(conversationsPipe)
 
 	apiGroup := app.Group("/api/v1")
 
@@ -64,6 +89,20 @@ func New(cfg *config.Config) (*fiber.App, error) {
 
 	authGroup := apiGroup.Group("/auth")
 	api.BaseRouter(authGroup, auth_router.AuthRoutes(authController, cfg.JWTSecret))
+
+	publicNannyGroup := apiGroup.Group("/nannies")
+	api.BaseRouter(publicNannyGroup, nanny_router.PublicNannyRoutes(nannyController))
+
+	nannyGroup := apiGroup.Group("/nanny")
+	nannyBookingsGroup := nannyGroup.Group("/bookings")
+	api.BaseRouter(nannyBookingsGroup, bookings_router.NannyBookingRoutes(bookingsController, cfg.JWTSecret))
+	api.BaseRouter(nannyGroup, nanny_router.NannyRoutes(nannyController, cfg.JWTSecret))
+
+	bookingsGroup := apiGroup.Group("/bookings")
+	api.BaseRouter(bookingsGroup, bookings_router.BookingRoutes(bookingsController, cfg.JWTSecret))
+
+	conversationsGroup := apiGroup.Group("/conversations")
+	api.BaseRouter(conversationsGroup, conversations_router.ConversationRoutes(conversationsController, cfg.JWTSecret))
 
 	return app, nil
 }

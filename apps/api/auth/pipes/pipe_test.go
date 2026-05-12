@@ -1,0 +1,383 @@
+package pipes
+
+import (
+	"context"
+	"errors"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/kinsittr/kinsittr-api/auth/dtos"
+	"github.com/kinsittr/kinsittr-api/auth/messages"
+	"github.com/kinsittr/kinsittr-api/auth/services"
+	"github.com/kinsittr/kinsittr-api/models"
+	accountrepo "github.com/kinsittr/kinsittr-api/repositories/account"
+	"github.com/kinsittr/kinsittr-api/shared/token"
+)
+
+const (
+	testJWTSecret        = "unit-test-jwt-secret"
+	testJWTRefreshSecret = "unit-test-jwt-refresh-secret"
+)
+
+type mockAccountRepo struct {
+	userExistsByEmail bool
+	userExistsErr     error
+	userByEmail       models.User
+	userByEmailErr    error
+	userByID          models.User
+	userByIDErr       error
+	createParentUser  models.User
+	createParentErr   error
+	createNannyUser   models.User
+	createNannyErr    error
+
+	createRefreshSessionErr error
+	getRefreshSession       models.RefreshSession
+	getRefreshSessionErr    error
+	rotateRefreshErr        error
+	deleteRefreshErr        error
+
+	createdRefreshSession models.RefreshSession
+	rotatedOldSessionID   uuid.UUID
+	rotatedNewSession     models.RefreshSession
+	deletedSessionID      uuid.UUID
+}
+
+func (m *mockAccountRepo) UserExistsByEmail(_ context.Context, _ string) (bool, error) {
+	return m.userExistsByEmail, m.userExistsErr
+}
+func (m *mockAccountRepo) CreateUser(_ context.Context, user models.User) (models.User, error) {
+	return user, nil
+}
+func (m *mockAccountRepo) GetUserByEmail(_ context.Context, _ string) (models.User, error) {
+	return m.userByEmail, m.userByEmailErr
+}
+func (m *mockAccountRepo) GetUserByID(_ context.Context, _ uuid.UUID) (models.User, error) {
+	return m.userByID, m.userByIDErr
+}
+func (m *mockAccountRepo) CreateParentAccount(_ context.Context, user models.User, _ models.ParentProfile) (models.User, error) {
+	if m.createParentUser.ID != uuid.Nil {
+		return m.createParentUser, m.createParentErr
+	}
+	return user, m.createParentErr
+}
+func (m *mockAccountRepo) CreateNannyAccount(_ context.Context, user models.User, _ models.NannyProfile) (models.User, error) {
+	if m.createNannyUser.ID != uuid.Nil {
+		return m.createNannyUser, m.createNannyErr
+	}
+	return user, m.createNannyErr
+}
+func (m *mockAccountRepo) CreateRefreshSession(_ context.Context, session models.RefreshSession) error {
+	m.createdRefreshSession = session
+	return m.createRefreshSessionErr
+}
+func (m *mockAccountRepo) GetRefreshSessionByID(_ context.Context, _ uuid.UUID) (models.RefreshSession, error) {
+	return m.getRefreshSession, m.getRefreshSessionErr
+}
+func (m *mockAccountRepo) RotateRefreshSession(_ context.Context, oldSessionID uuid.UUID, newSession models.RefreshSession) error {
+	m.rotatedOldSessionID = oldSessionID
+	m.rotatedNewSession = newSession
+	return m.rotateRefreshErr
+}
+func (m *mockAccountRepo) DeleteRefreshSession(_ context.Context, sessionID uuid.UUID) error {
+	m.deletedSessionID = sessionID
+	return m.deleteRefreshErr
+}
+
+type mockProfileRepo struct {
+	parentProfile    models.ParentProfile
+	parentProfileErr error
+	nannyProfile     models.NannyProfile
+	nannyProfileErr  error
+}
+
+func (m *mockProfileRepo) GetParentProfileByUserID(_ context.Context, _ uuid.UUID) (models.ParentProfile, error) {
+	return m.parentProfile, m.parentProfileErr
+}
+func (m *mockProfileRepo) GetNannyProfileByUserID(_ context.Context, _ uuid.UUID) (models.NannyProfile, error) {
+	return m.nannyProfile, m.nannyProfileErr
+}
+func (m *mockProfileRepo) CreateNannyProfile(_ context.Context, p models.NannyProfile) (models.NannyProfile, error) {
+	return p, nil
+}
+func (m *mockProfileRepo) CreateParentProfile(_ context.Context, p models.ParentProfile) (models.ParentProfile, error) {
+	return p, nil
+}
+func (m *mockProfileRepo) UpdateNannyProfile(_ context.Context, p models.NannyProfile) (models.NannyProfile, error) {
+	return p, nil
+}
+func (m *mockProfileRepo) UpdateParentProfile(_ context.Context, p models.ParentProfile) (models.ParentProfile, error) {
+	return p, nil
+}
+func (m *mockProfileRepo) DeleteNannyProfile(_ context.Context, _ uuid.UUID) error  { return nil }
+func (m *mockProfileRepo) DeleteParentProfile(_ context.Context, _ uuid.UUID) error { return nil }
+
+func newAuthPipeForTests(repo accountrepo.AccountRepository, profileRepo *mockProfileRepo) *AuthPipe {
+	return NewAuthPipe(repo, profileRepo, testJWTSecret, testJWTRefreshSecret)
+}
+
+func mustHashPassword(t *testing.T, password string) string {
+	t.Helper()
+	hash, err := services.HashPassword(password)
+	if err != nil {
+		t.Fatalf("failed to hash password: %v", err)
+	}
+	return hash
+}
+
+func validUser(role models.UserRole) models.User {
+	return models.User{
+		ID:          uuid.New(),
+		Firstname:   "Jordan",
+		Lastname:    "Lee",
+		Email:       "jordan@example.com",
+		Role:        role,
+		Phone:       "1234567890",
+		IsActive:    true,
+		CountryCode: "CA",
+	}
+}
+
+func TestAuthPipeLogin(t *testing.T) {
+	t.Run("success returns token pair and persists refresh session", func(t *testing.T) {
+		user := validUser(models.ParentUserRole)
+		user.Password = mustHashPassword(t, "verysecure")
+		repo := &mockAccountRepo{userByEmail: user}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+
+		res := pipe.Login(context.Background(), dtos.LoginDTO{
+			Email:    "  JORDAN@EXAMPLE.COM ",
+			Password: "verysecure",
+		})
+
+		if !res.Success {
+			t.Fatalf("expected success, got %s", res.Message)
+		}
+		if string(res.Message) != messages.Logged_In_Successfully {
+			t.Fatalf("unexpected message: %s", res.Message)
+		}
+		if res.Data == nil || res.Data.AccessToken == "" || res.Data.RefreshToken == "" {
+			t.Fatalf("expected tokens in response, got %+v", res.Data)
+		}
+		if repo.createdRefreshSession.ID == uuid.Nil {
+			t.Fatal("expected refresh session to be persisted")
+		}
+	})
+
+	t.Run("disabled account is rejected", func(t *testing.T) {
+		user := validUser(models.ParentUserRole)
+		user.IsActive = false
+		user.Password = mustHashPassword(t, "verysecure")
+		pipe := newAuthPipeForTests(&mockAccountRepo{userByEmail: user}, &mockProfileRepo{})
+
+		res := pipe.Login(context.Background(), dtos.LoginDTO{Email: user.Email, Password: "verysecure"})
+		if res.Success || string(res.Message) != messages.Account_Disabled {
+			t.Fatalf("expected %s, got success=%v message=%s", messages.Account_Disabled, res.Success, res.Message)
+		}
+	})
+
+	t.Run("wrong password is rejected", func(t *testing.T) {
+		user := validUser(models.ParentUserRole)
+		user.Password = mustHashPassword(t, "verysecure")
+		pipe := newAuthPipeForTests(&mockAccountRepo{userByEmail: user}, &mockProfileRepo{})
+
+		res := pipe.Login(context.Background(), dtos.LoginDTO{Email: user.Email, Password: "wrongpass"})
+		if res.Success || string(res.Message) != messages.Invalid_Email_Or_Password {
+			t.Fatalf("expected %s, got success=%v message=%s", messages.Invalid_Email_Or_Password, res.Success, res.Message)
+		}
+	})
+}
+
+func TestAuthPipeRegisterParent(t *testing.T) {
+	t.Run("duplicate email is rejected", func(t *testing.T) {
+		repo := &mockAccountRepo{userExistsByEmail: true}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+
+		res := pipe.RegisterParent(context.Background(), dtos.RegisterParentDTO{
+			Firstname:    "Jordan",
+			Lastname:     "Lee",
+			Email:        "jordan@example.com",
+			Password:     "verysecure",
+			DisplayName:  "Jordan",
+			NumChildren:  1,
+			ChildrenAges: []int{4},
+			City:         "Toronto",
+			Province:     "ON",
+		})
+
+		if res.Success || string(res.Message) != messages.Email_Already_In_Use {
+			t.Fatalf("expected %s, got success=%v message=%s", messages.Email_Already_In_Use, res.Success, res.Message)
+		}
+	})
+
+	t.Run("success returns registered token pair", func(t *testing.T) {
+		user := validUser(models.ParentUserRole)
+		repo := &mockAccountRepo{createParentUser: user}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+
+		res := pipe.RegisterParent(context.Background(), dtos.RegisterParentDTO{
+			Firstname:    "Jordan",
+			Lastname:     "Lee",
+			Email:        "  JORDAN@EXAMPLE.COM ",
+			Password:     "verysecure",
+			DisplayName:  "Jordan",
+			NumChildren:  1,
+			ChildrenAges: []int{4},
+			City:         "Toronto",
+			Province:     "ON",
+		})
+
+		if !res.Success || string(res.Message) != messages.Registered_Successfully {
+			t.Fatalf("expected success %s, got success=%v message=%s", messages.Registered_Successfully, res.Success, res.Message)
+		}
+		if res.Data == nil || res.Data.User.Role != models.ParentUserRole {
+			t.Fatalf("expected parent user in response, got %+v", res.Data)
+		}
+	})
+}
+
+func TestAuthPipeRegisterNanny(t *testing.T) {
+	t.Run("success forces nanny service type and returns tokens", func(t *testing.T) {
+		user := validUser(models.NannyUserRole)
+		repo := &mockAccountRepo{createNannyUser: user}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+
+		res := pipe.RegisterNanny(context.Background(), dtos.RegisterNannyDTO{
+			Firstname:   "Taylor",
+			Lastname:    "Smith",
+			Email:       "taylor@example.com",
+			Password:    "verysecure",
+			DisplayName: "Taylor",
+			ServiceType: "",
+			Bio:         "Experienced caregiver with over five years of childcare.",
+			RatePerHour: 30,
+			City:        "Toronto",
+			Province:    "ON",
+		})
+
+		if !res.Success || string(res.Message) != messages.Registered_Successfully {
+			t.Fatalf("expected success %s, got success=%v message=%s", messages.Registered_Successfully, res.Success, res.Message)
+		}
+		if res.Data == nil || res.Data.User.Role != models.NannyUserRole {
+			t.Fatalf("expected nanny user in response, got %+v", res.Data)
+		}
+	})
+}
+
+func TestAuthPipeRefresh(t *testing.T) {
+	t.Run("valid refresh rotates session and returns new tokens", func(t *testing.T) {
+		user := validUser(models.ParentUserRole)
+		oldSessionID := uuid.New()
+		repo := &mockAccountRepo{
+			getRefreshSession: models.RefreshSession{
+				ID:        oldSessionID,
+				UserID:    user.ID,
+				ExpiresAt: time.Now().Add(time.Hour),
+			},
+			userByID: user,
+		}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+		refreshToken, err := token.GenerateRefreshToken(user.ID, user.Role, oldSessionID, testJWTRefreshSecret)
+		if err != nil {
+			t.Fatalf("failed to create refresh token: %v", err)
+		}
+
+		res := pipe.Refresh(context.Background(), dtos.RefreshDTO{RefreshToken: refreshToken})
+		if !res.Success || string(res.Message) != messages.Token_Refreshed_Successfully {
+			t.Fatalf("expected success %s, got success=%v message=%s", messages.Token_Refreshed_Successfully, res.Success, res.Message)
+		}
+		if repo.rotatedOldSessionID != oldSessionID || repo.rotatedNewSession.ID == uuid.Nil {
+			t.Fatal("expected refresh session rotation to occur")
+		}
+	})
+
+	t.Run("expired stored session is rejected", func(t *testing.T) {
+		user := validUser(models.ParentUserRole)
+		oldSessionID := uuid.New()
+		repo := &mockAccountRepo{
+			getRefreshSession: models.RefreshSession{
+				ID:        oldSessionID,
+				UserID:    user.ID,
+				ExpiresAt: time.Now().Add(-time.Minute),
+			},
+			userByID: user,
+		}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+		refreshToken, err := token.GenerateRefreshToken(user.ID, user.Role, oldSessionID, testJWTRefreshSecret)
+		if err != nil {
+			t.Fatalf("failed to create refresh token: %v", err)
+		}
+
+		res := pipe.Refresh(context.Background(), dtos.RefreshDTO{RefreshToken: refreshToken})
+		if res.Success || string(res.Message) != messages.Invalid_Or_Expired_Token {
+			t.Fatalf("expected %s, got success=%v message=%s", messages.Invalid_Or_Expired_Token, res.Success, res.Message)
+		}
+	})
+}
+
+func TestAuthPipeMe(t *testing.T) {
+	t.Run("parent returns current user with parent profile", func(t *testing.T) {
+		user := validUser(models.ParentUserRole)
+		parentProfile := models.ParentProfile{ID: uuid.New(), UserID: user.ID, DisplayName: "Jordan"}
+		repo := &mockAccountRepo{userByID: user}
+		profileRepo := &mockProfileRepo{parentProfile: parentProfile}
+		pipe := newAuthPipeForTests(repo, profileRepo)
+
+		res := pipe.Me(context.Background(), user.ID)
+		if !res.Success || string(res.Message) != messages.Current_User_Fetched {
+			t.Fatalf("expected success %s, got success=%v message=%s", messages.Current_User_Fetched, res.Success, res.Message)
+		}
+		if res.Data == nil || res.Data.ParentProfile == nil || res.Data.ParentProfile.ID != parentProfile.ID {
+			t.Fatalf("expected parent profile in response, got %+v", res.Data)
+		}
+	})
+
+	t.Run("inactive user is rejected", func(t *testing.T) {
+		user := validUser(models.ParentUserRole)
+		user.IsActive = false
+		pipe := newAuthPipeForTests(&mockAccountRepo{userByID: user}, &mockProfileRepo{})
+
+		res := pipe.Me(context.Background(), user.ID)
+		if res.Success || string(res.Message) != messages.Invalid_Or_Expired_Token {
+			t.Fatalf("expected %s, got success=%v message=%s", messages.Invalid_Or_Expired_Token, res.Success, res.Message)
+		}
+	})
+}
+
+func TestAuthPipeLogout(t *testing.T) {
+	t.Run("valid refresh token deletes session", func(t *testing.T) {
+		user := validUser(models.ParentUserRole)
+		sessionID := uuid.New()
+		repo := &mockAccountRepo{}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+		refreshToken, err := token.GenerateRefreshToken(user.ID, user.Role, sessionID, testJWTRefreshSecret)
+		if err != nil {
+			t.Fatalf("failed to create refresh token: %v", err)
+		}
+
+		res := pipe.Logout(context.Background(), dtos.RefreshDTO{RefreshToken: refreshToken})
+		if !res.Success || string(res.Message) != messages.Logged_Out_Successfully {
+			t.Fatalf("expected success %s, got success=%v message=%s", messages.Logged_Out_Successfully, res.Success, res.Message)
+		}
+		if repo.deletedSessionID != sessionID {
+			t.Fatalf("expected session %s to be deleted, got %s", sessionID, repo.deletedSessionID)
+		}
+	})
+
+	t.Run("delete failure is rejected", func(t *testing.T) {
+		user := validUser(models.ParentUserRole)
+		sessionID := uuid.New()
+		repo := &mockAccountRepo{deleteRefreshErr: errors.New("redis down")}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+		refreshToken, err := token.GenerateRefreshToken(user.ID, user.Role, sessionID, testJWTRefreshSecret)
+		if err != nil {
+			t.Fatalf("failed to create refresh token: %v", err)
+		}
+
+		res := pipe.Logout(context.Background(), dtos.RefreshDTO{RefreshToken: refreshToken})
+		if res.Success || string(res.Message) != messages.Invalid_Or_Expired_Token {
+			t.Fatalf("expected %s, got success=%v message=%s", messages.Invalid_Or_Expired_Token, res.Success, res.Message)
+		}
+	})
+}

@@ -17,16 +17,6 @@ type AccountRepository interface {
 	CreateParentAccount(ctx context.Context, user models.User, profile models.ParentProfile) (models.User, error)
 	CreateNannyAccount(ctx context.Context, user models.User, profile models.NannyProfile) (models.User, error)
 
-	// profiles
-	CreateNannyProfile(ctx context.Context, profile models.NannyProfile) (models.NannyProfile, error)
-	CreateParentProfile(ctx context.Context, profile models.ParentProfile) (models.ParentProfile, error)
-	GetNannyProfileByUserID(ctx context.Context, userID uuid.UUID) (models.NannyProfile, error)
-	GetParentProfileByUserID(ctx context.Context, userID uuid.UUID) (models.ParentProfile, error)
-	UpdateNannyProfile(ctx context.Context, profile models.NannyProfile) (models.NannyProfile, error)
-	UpdateParentProfile(ctx context.Context, profile models.ParentProfile) (models.ParentProfile, error)
-	DeleteNannyProfile(ctx context.Context, userID uuid.UUID) error
-	DeleteParentProfile(ctx context.Context, userID uuid.UUID) error
-
 	// refresh sessions
 	CreateRefreshSession(ctx context.Context, session models.RefreshSession) error
 	GetRefreshSessionByID(ctx context.Context, sessionID uuid.UUID) (models.RefreshSession, error)

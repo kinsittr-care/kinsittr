@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/models"
 	"github.com/kinsittr/kinsittr-api/repositories/account"
+	"github.com/kinsittr/kinsittr-api/repositories/profile"
 	shared "github.com/kinsittr/kinsittr-api/shared"
 	"github.com/kinsittr/kinsittr-api/shared/token"
 )
@@ -25,13 +26,15 @@ type CurrentSessionData struct {
 
 type AuthPipe struct {
 	repo             account.AccountRepository
+	profileRepo      profile.ProfileRepository
 	jwtSecret        string
 	jwtRefreshSecret string
 }
 
-func NewAuthPipe(repo account.AccountRepository, jwtSecret, jwtRefreshSecret string) *AuthPipe {
+func NewAuthPipe(repo account.AccountRepository, profileRepo profile.ProfileRepository, jwtSecret, jwtRefreshSecret string) *AuthPipe {
 	return &AuthPipe{
 		repo:             repo,
+		profileRepo:      profileRepo,
 		jwtSecret:        jwtSecret,
 		jwtRefreshSecret: jwtRefreshSecret,
 	}
