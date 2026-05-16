@@ -65,6 +65,53 @@ export interface ParentProfile {
   updated_at: string;
 }
 
+export interface UpdateParentProfilePayload {
+  display_name: string;
+  num_children: number;
+  children_ages: number[];
+  city: string;
+  province: string;
+}
+
+export interface ParentSettings {
+  id: string;
+  user_id: string;
+  notify_messages: boolean;
+  notify_bookings: boolean;
+  notify_reminders: boolean;
+  notify_weekly_digest: boolean;
+  show_profile: boolean;
+  share_reviews: boolean;
+  analytics: boolean;
+  language: string;
+  currency: string;
+  timezone: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpdateParentSettingsPayload {
+  notify_messages: boolean;
+  notify_bookings: boolean;
+  notify_reminders: boolean;
+  notify_weekly_digest: boolean;
+  show_profile: boolean;
+  share_reviews: boolean;
+  analytics: boolean;
+  language: string;
+  currency: string;
+  timezone: string;
+}
+
+export interface ChangePasswordPayload {
+  current_password: string;
+  new_password: string;
+}
+
+export interface DeactivateAccountPayload {
+  password: string;
+}
+
 export interface NannyProfile {
   id: string;
   user_id: string;

@@ -1,12 +1,38 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import ProfileDetailsSection from "../profile/ProfileDetailsSection";
 import ChildrenSection from "../profile/ChildrenSection";
 import BookingHistorySection from "../profile/BookingHistorySection";
 import { useIsMobile } from "./useIsMobile";
+import type { ParentProfile, UpdateParentProfilePayload } from "@/src/types/api/api";
+import {
+  getParentProfile,
+  parentProfileQueryKey,
+  updateParentProfile,
+} from "@/src/utils/api/parent";
 
 export default function ProfileView() {
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
+  const profileQuery = useQuery({
+    queryKey: parentProfileQueryKey(),
+    queryFn: getParentProfile,
+  });
+  const updateMutation = useMutation({
+    mutationFn: updateParentProfile,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: parentProfileQueryKey() });
+    },
+  });
+
+  const profile = profileQuery.data?.data;
+
+  const saveProfile = async (payload: UpdateParentProfilePayload) => {
+    const response = await updateMutation.mutateAsync(payload);
+    return response.data;
+  };
+
   return (
     <div
       style={{
@@ -26,9 +52,50 @@ export default function ProfileView() {
         </p>
       </div>
 
-      <ProfileDetailsSection />
-      <ChildrenSection />
+      {profileQuery.isLoading && (
+        <div style={{ color: "var(--faint)", fontSize: 14 }}>Loading profile...</div>
+      )}
+
+      {profileQuery.isError && (
+        <div style={{ color: "#c0392b", fontSize: 14 }}>
+          {profileQuery.error instanceof Error ? profileQuery.error.message : "Unable to load profile."}
+        </div>
+      )}
+
+      {profile && (
+        <>
+          <ProfileDetailsSection
+            profile={profile}
+            isSaving={updateMutation.isPending}
+            errorMessage={updateMutation.error instanceof Error ? updateMutation.error.message : null}
+            onSave={saveProfile}
+          />
+          <ChildrenSection
+            key={`${profile.id}-${profile.updated_at}`}
+            profile={profile}
+            isSaving={updateMutation.isPending}
+            onSave={async (childrenAges: number[]) => {
+              const nextProfile = await saveProfile(profilePayload(profile, { children_ages: childrenAges }));
+              return nextProfile;
+            }}
+          />
+        </>
+      )}
       <BookingHistorySection />
     </div>
   );
+}
+
+function profilePayload(
+  profile: ParentProfile,
+  overrides: Partial<UpdateParentProfilePayload> = {},
+): UpdateParentProfilePayload {
+  return {
+    display_name: profile.display_name,
+    num_children: profile.num_children,
+    children_ages: profile.children_ages,
+    city: profile.city,
+    province: profile.province,
+    ...overrides,
+  };
 }

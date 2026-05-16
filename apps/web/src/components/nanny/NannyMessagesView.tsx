@@ -61,25 +61,23 @@ export default function NannyMessagesView() {
 
   const selectedConversation =
     conversations.find((c) => c.id === activeConversationId) ?? null;
+  const effectiveMessageLimit =
+    activeConversationId === selectedConversationId ? messageLimit : MESSAGES_PAGE_SIZE;
 
   const messagesQuery = useQuery({
     queryKey:
       activeConversationId === null
         ? ["nanny-conversation-messages-disabled"]
-        : conversationMessagesQueryKey(activeConversationId, { page: 1, limit: messageLimit }),
+        : conversationMessagesQueryKey(activeConversationId, { page: 1, limit: effectiveMessageLimit }),
     queryFn: async () => {
       if (!activeConversationId) throw new ApiRequestError("No conversation selected.");
-      return listConversationMessages(activeConversationId, { page: 1, limit: messageLimit });
+      return listConversationMessages(activeConversationId, { page: 1, limit: effectiveMessageLimit });
     },
     enabled: activeConversationId !== null,
   });
 
   const messages = messagesQuery.data?.data?.items ?? EMPTY_MESSAGES;
   const totalMessages = messagesQuery.data?.data?.total ?? 0;
-
-  useEffect(() => {
-    setMessageLimit(MESSAGES_PAGE_SIZE);
-  }, [activeConversationId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -98,7 +96,7 @@ export default function NannyMessagesView() {
         queryClient.invalidateQueries({
           queryKey: conversationMessagesQueryKey(activeConversationId, {
             page: 1,
-            limit: messageLimit,
+            limit: effectiveMessageLimit,
           }),
         }),
         queryClient.invalidateQueries({
@@ -145,6 +143,7 @@ export default function NannyMessagesView() {
           onRetry={() => conversationsQuery.refetch()}
           onSelectConversation={(id) => {
             setSelectedConversationId(id);
+            setMessageLimit(MESSAGES_PAGE_SIZE);
             if (isMobile) setMobileView("chat");
           }}
           onLoadMore={() => setConversationLimit((c) => c + CONVERSATIONS_PAGE_SIZE)}
