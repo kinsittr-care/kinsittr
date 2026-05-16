@@ -125,6 +125,77 @@ func (r *pgRepository) UpdateParentProfile(ctx context.Context, p models.ParentP
 	return updated, err
 }
 
+func scanParentSettings(row pgx.Row) (models.ParentSettings, error) {
+	var settings models.ParentSettings
+	err := row.Scan(
+		&settings.ID,
+		&settings.UserID,
+		&settings.NotifyMessages,
+		&settings.NotifyBookings,
+		&settings.NotifyReminders,
+		&settings.NotifyWeeklyDigest,
+		&settings.ShowProfile,
+		&settings.ShareReviews,
+		&settings.Analytics,
+		&settings.Language,
+		&settings.Currency,
+		&settings.Timezone,
+		&settings.CreatedAt,
+		&settings.UpdatedAt,
+	)
+	return settings, err
+}
+
+func (r *pgRepository) GetOrCreateParentSettings(ctx context.Context, userID uuid.UUID) (models.ParentSettings, error) {
+	settings, err := scanParentSettings(r.db.QueryRow(ctx, `
+		INSERT INTO parent_settings (id, user_id)
+		VALUES ($1, $2)
+		ON CONFLICT (user_id) DO UPDATE SET user_id = EXCLUDED.user_id
+		RETURNING id, user_id, notify_messages, notify_bookings, notify_reminders, notify_weekly_digest,
+		          show_profile, share_reviews, analytics, language, currency, timezone, created_at, updated_at
+	`, uuid.New(), userID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return models.ParentSettings{}, nil
+	}
+	return settings, err
+}
+
+func (r *pgRepository) UpdateParentSettings(ctx context.Context, settings models.ParentSettings) (models.ParentSettings, error) {
+	updated, err := scanParentSettings(r.db.QueryRow(ctx, `
+		UPDATE parent_settings
+		SET notify_messages = $1,
+		    notify_bookings = $2,
+		    notify_reminders = $3,
+		    notify_weekly_digest = $4,
+		    show_profile = $5,
+		    share_reviews = $6,
+		    analytics = $7,
+		    language = $8,
+		    currency = $9,
+		    timezone = $10,
+		    updated_at = NOW()
+		WHERE user_id = $11
+		RETURNING id, user_id, notify_messages, notify_bookings, notify_reminders, notify_weekly_digest,
+		          show_profile, share_reviews, analytics, language, currency, timezone, created_at, updated_at
+	`,
+		settings.NotifyMessages,
+		settings.NotifyBookings,
+		settings.NotifyReminders,
+		settings.NotifyWeeklyDigest,
+		settings.ShowProfile,
+		settings.ShareReviews,
+		settings.Analytics,
+		settings.Language,
+		settings.Currency,
+		settings.Timezone,
+		settings.UserID,
+	))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return models.ParentSettings{}, nil
+	}
+	return updated, err
+}
+
 func (r *pgRepository) DeleteNannyProfile(ctx context.Context, userID uuid.UUID) error {
 	_, err := r.db.Exec(ctx, `DELETE FROM nanny_profiles WHERE user_id = $1`, userID)
 	return err

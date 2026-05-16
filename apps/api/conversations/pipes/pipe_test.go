@@ -94,6 +94,15 @@ func (m *mockProfileRepo) UpdateNannyProfile(_ context.Context, p models.NannyPr
 func (m *mockProfileRepo) UpdateParentProfile(_ context.Context, p models.ParentProfile) (models.ParentProfile, error) {
 	return p, nil
 }
+func (m *mockProfileRepo) GetOrCreateParentSettings(_ context.Context, userID uuid.UUID) (models.ParentSettings, error) {
+	return models.ParentSettings{ID: uuid.New(), UserID: userID}, nil
+}
+func (m *mockProfileRepo) UpdateParentSettings(_ context.Context, settings models.ParentSettings) (models.ParentSettings, error) {
+	if settings.ID == uuid.Nil {
+		settings.ID = uuid.New()
+	}
+	return settings, nil
+}
 func (m *mockProfileRepo) DeleteNannyProfile(_ context.Context, _ uuid.UUID) error  { return nil }
 func (m *mockProfileRepo) DeleteParentProfile(_ context.Context, _ uuid.UUID) error { return nil }
 

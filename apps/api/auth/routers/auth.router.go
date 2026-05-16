@@ -46,5 +46,17 @@ func AuthRoutes(controller *controllers.AuthController, jwtSecret string) []api.
 			Middlewares: []typings.FiberMiddleware{middleware.RequireAuth(jwtSecret)},
 			Handler:     controller.Me,
 		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPatch),
+			Path:        "/password",
+			Middlewares: []typings.FiberMiddleware{middleware.RequireAuth(jwtSecret)},
+			Handler:     controller.ChangePassword,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodDelete),
+			Path:        "/account",
+			Middlewares: []typings.FiberMiddleware{middleware.RequireAuth(jwtSecret)},
+			Handler:     controller.DeactivateAccount,
+		},
 	}
 }

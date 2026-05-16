@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/models"
 	"github.com/kinsittr/kinsittr-api/repositories/bookings"
-	messagesrepo "github.com/kinsittr/kinsittr-api/repositories/messages"
 	"github.com/kinsittr/kinsittr-api/repositories/nanny"
 	"github.com/kinsittr/kinsittr-api/repositories/profile"
 	shared "github.com/kinsittr/kinsittr-api/shared"
@@ -39,18 +38,16 @@ type BookingListData struct {
 }
 
 type BookingsPipe struct {
-	repo         bookings.BookingsRepository
-	messagesRepo messagesrepo.MessagesRepository
-	profileRepo  profile.ProfileRepository
-	nannyRepo    nanny.NannyRepository
+	repo        bookings.BookingsRepository
+	profileRepo profile.ProfileRepository
+	nannyRepo   nanny.NannyRepository
 }
 
-func NewBookingsPipe(repo bookings.BookingsRepository, messagesRepo messagesrepo.MessagesRepository, profileRepo profile.ProfileRepository, nannyRepo nanny.NannyRepository) *BookingsPipe {
+func NewBookingsPipe(repo bookings.BookingsRepository, profileRepo profile.ProfileRepository, nannyRepo nanny.NannyRepository) *BookingsPipe {
 	return &BookingsPipe{
-		repo:         repo,
-		messagesRepo: messagesRepo,
-		profileRepo:  profileRepo,
-		nannyRepo:    nannyRepo,
+		repo:        repo,
+		profileRepo: profileRepo,
+		nannyRepo:   nannyRepo,
 	}
 }
 

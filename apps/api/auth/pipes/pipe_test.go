@@ -37,11 +37,15 @@ type mockAccountRepo struct {
 	getRefreshSessionErr    error
 	rotateRefreshErr        error
 	deleteRefreshErr        error
+	deleteRefreshByUserErr  error
+	updatePasswordErr       error
+	deactivateUserErr       error
 
 	createdRefreshSession models.RefreshSession
 	rotatedOldSessionID   uuid.UUID
 	rotatedNewSession     models.RefreshSession
 	deletedSessionID      uuid.UUID
+	deletedRefreshUserID  uuid.UUID
 }
 
 func (m *mockAccountRepo) UserExistsByEmail(_ context.Context, _ string) (bool, error) {
@@ -84,6 +88,16 @@ func (m *mockAccountRepo) DeleteRefreshSession(_ context.Context, sessionID uuid
 	m.deletedSessionID = sessionID
 	return m.deleteRefreshErr
 }
+func (m *mockAccountRepo) DeleteRefreshSessionsByUserID(_ context.Context, userID uuid.UUID) error {
+	m.deletedRefreshUserID = userID
+	return m.deleteRefreshByUserErr
+}
+func (m *mockAccountRepo) UpdateUserPassword(_ context.Context, _ uuid.UUID, _ string) error {
+	return m.updatePasswordErr
+}
+func (m *mockAccountRepo) DeactivateUser(_ context.Context, _ uuid.UUID) error {
+	return m.deactivateUserErr
+}
 
 type mockProfileRepo struct {
 	parentProfile    models.ParentProfile
@@ -109,6 +123,15 @@ func (m *mockProfileRepo) UpdateNannyProfile(_ context.Context, p models.NannyPr
 }
 func (m *mockProfileRepo) UpdateParentProfile(_ context.Context, p models.ParentProfile) (models.ParentProfile, error) {
 	return p, nil
+}
+func (m *mockProfileRepo) GetOrCreateParentSettings(_ context.Context, userID uuid.UUID) (models.ParentSettings, error) {
+	return models.ParentSettings{ID: uuid.New(), UserID: userID}, nil
+}
+func (m *mockProfileRepo) UpdateParentSettings(_ context.Context, settings models.ParentSettings) (models.ParentSettings, error) {
+	if settings.ID == uuid.Nil {
+		settings.ID = uuid.New()
+	}
+	return settings, nil
 }
 func (m *mockProfileRepo) DeleteNannyProfile(_ context.Context, _ uuid.UUID) error  { return nil }
 func (m *mockProfileRepo) DeleteParentProfile(_ context.Context, _ uuid.UUID) error { return nil }

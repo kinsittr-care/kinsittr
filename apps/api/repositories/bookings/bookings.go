@@ -43,6 +43,7 @@ type BookingsRepository interface {
 	ListNannyBookings(ctx context.Context, nannyProfileID uuid.UUID, filter ListBookingsFilter) ([]BookingRecord, int, error)
 	GetNannyBookingByID(ctx context.Context, nannyProfileID, bookingID uuid.UUID) (BookingRecord, error)
 	ApproveNannyBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) (BookingRecord, error)
+	ApproveNannyBookingWithConversation(ctx context.Context, nannyProfileID, bookingID uuid.UUID) (BookingRecord, error)
 	DeclineNannyBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) (BookingRecord, error)
 }
 

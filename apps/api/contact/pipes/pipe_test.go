@@ -14,8 +14,8 @@ import (
 // ── mock mail provider ────────────────────────────────────────────────────────
 
 type mockMailProvider struct {
-	err      error
-	lastMsg  mail.Message
+	err     error
+	lastMsg mail.Message
 }
 
 func (m *mockMailProvider) Send(_ context.Context, msg mail.Message) error {

@@ -16,12 +16,15 @@ type AccountRepository interface {
 	GetUserByID(ctx context.Context, userID uuid.UUID) (models.User, error)
 	CreateParentAccount(ctx context.Context, user models.User, profile models.ParentProfile) (models.User, error)
 	CreateNannyAccount(ctx context.Context, user models.User, profile models.NannyProfile) (models.User, error)
+	UpdateUserPassword(ctx context.Context, userID uuid.UUID, passwordHash string) error
+	DeactivateUser(ctx context.Context, userID uuid.UUID) error
 
 	// refresh sessions
 	CreateRefreshSession(ctx context.Context, session models.RefreshSession) error
 	GetRefreshSessionByID(ctx context.Context, sessionID uuid.UUID) (models.RefreshSession, error)
 	RotateRefreshSession(ctx context.Context, oldSessionID uuid.UUID, newSession models.RefreshSession) error
 	DeleteRefreshSession(ctx context.Context, sessionID uuid.UUID) error
+	DeleteRefreshSessionsByUserID(ctx context.Context, userID uuid.UUID) error
 }
 
 var AccountRepo AccountRepository

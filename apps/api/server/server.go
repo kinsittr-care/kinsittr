@@ -24,6 +24,9 @@ import (
 	nanny_controller "github.com/kinsittr/kinsittr-api/nanny/controllers"
 	nanny_pipe "github.com/kinsittr/kinsittr-api/nanny/pipes"
 	nanny_router "github.com/kinsittr/kinsittr-api/nanny/routers"
+	parent_controller "github.com/kinsittr/kinsittr-api/parent/controllers"
+	parent_pipe "github.com/kinsittr/kinsittr-api/parent/pipes"
+	parent_router "github.com/kinsittr/kinsittr-api/parent/routers"
 	"github.com/kinsittr/kinsittr-api/repositories"
 	"github.com/kinsittr/kinsittr-api/repositories/account"
 	bookings_repo "github.com/kinsittr/kinsittr-api/repositories/bookings"
@@ -67,8 +70,12 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	nannyPipe := nanny_pipe.NewNannyPipe(nanny_repo.NannyRepo, profile_repo.ProfileRepo)
 	nannyController := nanny_controller.NewNannyController(nannyPipe)
 
+	// parent
+	parentPipe := parent_pipe.NewParentPipe(profile_repo.ProfileRepo)
+	parentController := parent_controller.NewParentController(parentPipe)
+
 	// bookings
-	bookingsPipe := bookings_pipe.NewBookingsPipe(bookings_repo.BookingsRepo, messages_repo.MessagesRepo, profile_repo.ProfileRepo, nanny_repo.NannyRepo)
+	bookingsPipe := bookings_pipe.NewBookingsPipe(bookings_repo.BookingsRepo, profile_repo.ProfileRepo, nanny_repo.NannyRepo)
 	bookingsController := bookings_controller.NewBookingsController(bookingsPipe)
 
 	// conversations
@@ -97,6 +104,9 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	nannyBookingsGroup := nannyGroup.Group("/bookings")
 	api.BaseRouter(nannyBookingsGroup, bookings_router.NannyBookingRoutes(bookingsController, cfg.JWTSecret))
 	api.BaseRouter(nannyGroup, nanny_router.NannyRoutes(nannyController, cfg.JWTSecret))
+
+	parentGroup := apiGroup.Group("/parent")
+	api.BaseRouter(parentGroup, parent_router.ParentRoutes(parentController, cfg.JWTSecret))
 
 	bookingsGroup := apiGroup.Group("/bookings")
 	api.BaseRouter(bookingsGroup, bookings_router.BookingRoutes(bookingsController, cfg.JWTSecret))

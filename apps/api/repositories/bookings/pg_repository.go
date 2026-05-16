@@ -278,6 +278,54 @@ func (r *pgRepository) ApproveNannyBooking(ctx context.Context, nannyProfileID, 
 	return r.updateNannyBookingStatus(ctx, nannyProfileID, bookingID, models.ApprovedBookingStatus)
 }
 
+func (r *pgRepository) ApproveNannyBookingWithConversation(ctx context.Context, nannyProfileID, bookingID uuid.UUID) (BookingRecord, error) {
+	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return BookingRecord{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	var booking BookingRecord
+	err = tx.QueryRow(ctx, `
+		UPDATE bookings b
+		SET status = $1, updated_at = NOW()
+		FROM nanny_profiles np, parent_profiles pp
+		WHERE b.nanny_profile_id = np.id
+		  AND b.parent_profile_id = pp.id
+		  AND b.nanny_profile_id = $2
+		  AND b.id = $3
+		  AND b.status = $4
+		RETURNING b.id, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
+		          np.display_name, np.city, np.province,
+		          pp.display_name, pp.city, pp.province
+	`, models.ApprovedBookingStatus, nannyProfileID, bookingID, models.PendingBookingStatus).Scan(
+		&booking.ID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
+		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
+		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
+		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return BookingRecord{}, nil
+	}
+	if err != nil {
+		return BookingRecord{}, mapBookingWriteError(err)
+	}
+
+	_, err = tx.Exec(ctx, `
+		INSERT INTO conversations (id, booking_id, parent_profile_id, nanny_profile_id)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (booking_id) DO NOTHING
+	`, uuid.New(), booking.ID, booking.ParentProfileID, booking.NannyProfileID)
+	if err != nil {
+		return BookingRecord{}, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return BookingRecord{}, err
+	}
+	return booking, nil
+}
+
 func (r *pgRepository) DeclineNannyBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) (BookingRecord, error) {
 	return r.updateNannyBookingStatus(ctx, nannyProfileID, bookingID, models.DeclinedBookingStatus)
 }

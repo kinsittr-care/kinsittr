@@ -224,10 +224,14 @@ func (r *pgRepository) ListMessages(ctx context.Context, conversationID uuid.UUI
 
 	rows, err := r.db.Query(ctx, `
 		SELECT id, conversation_id, sender_user_id, sender_role, body, created_at, updated_at
-		FROM messages
-		WHERE conversation_id = $1
+		FROM (
+			SELECT id, conversation_id, sender_user_id, sender_role, body, created_at, updated_at
+			FROM messages
+			WHERE conversation_id = $1
+			ORDER BY created_at DESC
+			LIMIT $2 OFFSET $3
+		) latest_messages
 		ORDER BY created_at ASC
-		LIMIT $2 OFFSET $3
 	`, conversationID, filter.Limit, (filter.Page-1)*filter.Limit)
 	if err != nil {
 		return nil, 0, err
