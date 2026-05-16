@@ -230,6 +230,8 @@ export interface Conversation {
   other_participant_province?: string;
   last_message_preview?: string;
   last_message_at?: string | null;
+  unread_count: number;
+  last_read_at?: string | null;
   created_at: string;
   updated_at: string;
 }

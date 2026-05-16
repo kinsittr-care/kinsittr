@@ -82,3 +82,15 @@ export async function sendConversationMessage(
     },
   );
 }
+
+export async function markConversationRead(id: string) {
+  return apiRequest<Conversation>(
+    `/api/v1/conversations/${id}/read`,
+    {
+      method: "PATCH",
+    },
+    {
+      requiresAuth: true,
+    },
+  );
+}

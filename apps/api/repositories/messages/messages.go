@@ -17,6 +17,8 @@ type ConversationRecord struct {
 	OtherParticipantProvince string               `json:"other_participant_province"`
 	LastMessagePreview       string               `json:"last_message_preview"`
 	LastMessageAt            *time.Time           `json:"last_message_at"`
+	UnreadCount              int                  `json:"unread_count"`
+	LastReadAt               *time.Time           `json:"last_read_at"`
 }
 
 type MessageListFilter struct {
@@ -25,8 +27,9 @@ type MessageListFilter struct {
 }
 
 type ConversationListFilter struct {
-	Page  int
-	Limit int
+	Page   int
+	Limit  int
+	UserID uuid.UUID
 }
 
 type MessagesRepository interface {
@@ -34,10 +37,11 @@ type MessagesRepository interface {
 	CreateConversation(ctx context.Context, conversation models.Conversation) (models.Conversation, error)
 	ListParentConversations(ctx context.Context, parentProfileID uuid.UUID, filter ConversationListFilter) ([]ConversationRecord, int, error)
 	ListNannyConversations(ctx context.Context, nannyProfileID uuid.UUID, filter ConversationListFilter) ([]ConversationRecord, int, error)
-	GetParentConversationByID(ctx context.Context, conversationID, parentProfileID uuid.UUID) (ConversationRecord, error)
-	GetNannyConversationByID(ctx context.Context, conversationID, nannyProfileID uuid.UUID) (ConversationRecord, error)
+	GetParentConversationByID(ctx context.Context, conversationID, parentProfileID, userID uuid.UUID) (ConversationRecord, error)
+	GetNannyConversationByID(ctx context.Context, conversationID, nannyProfileID, userID uuid.UUID) (ConversationRecord, error)
 	ListMessages(ctx context.Context, conversationID uuid.UUID, filter MessageListFilter) ([]models.Message, int, error)
 	CreateMessage(ctx context.Context, message models.Message) (models.Message, error)
+	MarkConversationRead(ctx context.Context, conversationID, userID uuid.UUID) (models.ConversationRead, error)
 }
 
 var MessagesRepo MessagesRepository

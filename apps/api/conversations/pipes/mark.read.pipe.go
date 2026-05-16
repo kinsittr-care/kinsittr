@@ -10,7 +10,7 @@ import (
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
 
-func (p *ConversationsPipe) GetByID(ctx context.Context, userID uuid.UUID, role models.UserRole, conversationID uuid.UUID) *shared.PipeRes[ConversationData] {
+func (p *ConversationsPipe) MarkRead(ctx context.Context, userID uuid.UUID, role models.UserRole, conversationID uuid.UUID) *shared.PipeRes[ConversationData] {
 	var (
 		record messagesrepo.ConversationRecord
 		err    error
@@ -45,6 +45,13 @@ func (p *ConversationsPipe) GetByID(ctx context.Context, userID uuid.UUID, role 
 		return conversationNotFound[ConversationData]()
 	}
 
+	read, err := p.repo.MarkConversationRead(ctx, conversationID, userID)
+	if err != nil {
+		return pipeError[ConversationData](convmessages.Invalid_Message_Request)
+	}
+
+	record.UnreadCount = 0
+	record.LastReadAt = &read.LastReadAt
 	data := toConversationData(record)
-	return pipeSuccess(convmessages.Conversation_Found, &data)
+	return pipeSuccess(convmessages.Conversation_Read, &data)
 }

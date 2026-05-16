@@ -95,6 +95,7 @@ export default function NannyThreadList({
         !isError &&
         conversations.map((conversation) => {
           const isSelected = selectedConversationId === conversation.id;
+          const hasUnread = conversation.unread_count > 0;
           return (
             <div
               key={conversation.id}
@@ -124,20 +125,21 @@ export default function NannyThreadList({
               />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
-                  style={{
-                    fontWeight: 600,
-                    fontSize: 14,
-                    marginBottom: 2,
+	                  style={{
+	                    fontWeight: hasUnread ? 800 : 600,
+	                    fontSize: 14,
+	                    marginBottom: 2,
                     color: isSelected ? N.greenDk : N.inkSoft,
                   }}
                 >
                   {conversation.other_participant_name}
                 </div>
                 <div
-                  style={{
-                    fontSize: 12.5,
-                    color: N.inkFaint,
-                    overflow: "hidden",
+	                  style={{
+	                    fontSize: 12.5,
+	                    color: hasUnread ? N.inkSoft : N.inkFaint,
+	                    fontWeight: hasUnread ? 600 : 400,
+	                    overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
                   }}
@@ -145,9 +147,30 @@ export default function NannyThreadList({
                   {conversation.last_message_preview || "No messages yet"}
                 </div>
               </div>
-              <div style={{ fontSize: 11.5, color: N.inkFaint, flexShrink: 0 }}>
-                {formatThreadTimestamp(conversation.last_message_at)}
-              </div>
+	              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
+	                <div style={{ fontSize: 11.5, color: hasUnread ? N.green : N.inkFaint, fontWeight: hasUnread ? 700 : 400 }}>
+	                  {formatThreadTimestamp(conversation.last_message_at)}
+	                </div>
+	                {hasUnread && (
+	                  <span
+	                    style={{
+	                      minWidth: 20,
+	                      height: 20,
+	                      borderRadius: 999,
+	                      background: N.green,
+	                      color: "#fff",
+	                      display: "inline-flex",
+	                      alignItems: "center",
+	                      justifyContent: "center",
+	                      fontSize: 11,
+	                      fontWeight: 800,
+	                      padding: "0 6px",
+	                    }}
+	                  >
+	                    {conversation.unread_count > 99 ? "99+" : conversation.unread_count}
+	                  </span>
+	                )}
+	              </div>
             </div>
           );
         })}

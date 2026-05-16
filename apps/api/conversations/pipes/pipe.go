@@ -22,6 +22,8 @@ type ConversationData struct {
 	OtherParticipantProvince string               `json:"other_participant_province,omitempty"`
 	LastMessagePreview       string               `json:"last_message_preview,omitempty"`
 	LastMessageAt            *time.Time           `json:"last_message_at,omitempty"`
+	UnreadCount              int                  `json:"unread_count"`
+	LastReadAt               *time.Time           `json:"last_read_at,omitempty"`
 	CreatedAt                time.Time            `json:"created_at"`
 	UpdatedAt                time.Time            `json:"updated_at"`
 }
@@ -71,6 +73,8 @@ func toConversationData(record messagesrepo.ConversationRecord) ConversationData
 		OtherParticipantProvince: record.OtherParticipantProvince,
 		LastMessagePreview:       record.LastMessagePreview,
 		LastMessageAt:            record.LastMessageAt,
+		UnreadCount:              record.UnreadCount,
+		LastReadAt:               record.LastReadAt,
 		CreatedAt:                record.CreatedAt,
 		UpdatedAt:                record.UpdatedAt,
 	}

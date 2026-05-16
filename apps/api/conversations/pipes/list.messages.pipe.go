@@ -26,7 +26,7 @@ func (p *ConversationsPipe) ListMessages(ctx context.Context, userID uuid.UUID, 
 		if parentProfile.ID == uuid.Nil {
 			return conversationNotFound[MessageListData]()
 		}
-		record, err = p.repo.GetParentConversationByID(ctx, conversationID, parentProfile.ID)
+		record, err = p.repo.GetParentConversationByID(ctx, conversationID, parentProfile.ID, userID)
 	case models.NannyUserRole:
 		nannyProfile, profileErr := p.profileRepo.GetNannyProfileByUserID(ctx, userID)
 		if profileErr != nil {
@@ -35,7 +35,7 @@ func (p *ConversationsPipe) ListMessages(ctx context.Context, userID uuid.UUID, 
 		if nannyProfile.ID == uuid.Nil {
 			return conversationNotFound[MessageListData]()
 		}
-		record, err = p.repo.GetNannyConversationByID(ctx, conversationID, nannyProfile.ID)
+		record, err = p.repo.GetNannyConversationByID(ctx, conversationID, nannyProfile.ID, userID)
 	default:
 		return pipeError[MessageListData](convmessages.Forbidden_Conversation_Access)
 	}

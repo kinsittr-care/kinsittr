@@ -83,6 +83,7 @@ export default function MessagesThreadList({
         !isError &&
         conversations.map((conversation) => {
           const isSelected = selectedConversationId === conversation.id;
+          const hasUnread = conversation.unread_count > 0;
 
           return (
             <div
@@ -104,7 +105,7 @@ export default function MessagesThreadList({
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontWeight: 600,
+                    fontWeight: hasUnread ? 800 : 600,
                     fontSize: 14,
                     marginBottom: 2,
                     color: isSelected ? "var(--teal-dk)" : "var(--brand-text)",
@@ -115,7 +116,8 @@ export default function MessagesThreadList({
                 <div
                   style={{
                     fontSize: 12.5,
-                    color: "var(--faint)",
+                    color: hasUnread ? "var(--brand-text)" : "var(--faint)",
+                    fontWeight: hasUnread ? 600 : 400,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
@@ -124,14 +126,35 @@ export default function MessagesThreadList({
                   {conversation.last_message_preview || "No messages yet"}
                 </div>
               </div>
-              <div
-                style={{
-                  fontSize: 11.5,
-                  color: "var(--faint)",
-                  flexShrink: 0,
-                }}
-              >
-                {formatThreadTimestamp(conversation.last_message_at)}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
+                <div
+                  style={{
+                    fontSize: 11.5,
+                    color: hasUnread ? "var(--teal)" : "var(--faint)",
+                    fontWeight: hasUnread ? 700 : 400,
+                  }}
+                >
+                  {formatThreadTimestamp(conversation.last_message_at)}
+                </div>
+                {hasUnread && (
+                  <span
+                    style={{
+                      minWidth: 20,
+                      height: 20,
+                      borderRadius: 999,
+                      background: "var(--teal)",
+                      color: "#fff",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 11,
+                      fontWeight: 800,
+                      padding: "0 6px",
+                    }}
+                  >
+                    {conversation.unread_count > 99 ? "99+" : conversation.unread_count}
+                  </span>
+                )}
               </div>
             </div>
           );

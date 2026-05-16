@@ -13,6 +13,7 @@ import {
   conversationsQueryKey,
   listConversationMessages,
   listConversations,
+  markConversationRead,
   sendConversationMessage,
 } from "@/src/utils/api/conversations";
 import { ApiRequestError } from "@/src/utils/api/api";
@@ -42,6 +43,7 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
   const [input, setInput] = useState("");
   const [sendError, setSendError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const lastMarkedReadKeyRef = useRef<string | null>(null);
 
   const conversationsQuery = useQuery({
     queryKey: conversationsQueryKey({ page: 1, limit: conversationLimit }),
@@ -87,9 +89,47 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
   const messages = messagesQuery.data?.data?.items ?? EMPTY_MESSAGES;
   const totalMessages = messagesQuery.data?.data?.total ?? 0;
 
+  const markReadMutation = useMutation({
+    mutationFn: markConversationRead,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: conversationsQueryKey({ page: 1, limit: conversationLimit }),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: conversationsQueryKey({ page: 1, limit: 1 }),
+        }),
+      ]);
+    },
+  });
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [resolvedSelectedConversationId, messages]);
+
+  useEffect(() => {
+    if (
+      !resolvedSelectedConversationId ||
+      !messagesQuery.isSuccess ||
+      !selectedConversation ||
+      selectedConversation.unread_count < 1
+    ) {
+      return;
+    }
+
+    const markReadKey = `${resolvedSelectedConversationId}:${selectedConversation.last_message_at ?? "none"}:${selectedConversation.unread_count}`;
+    if (lastMarkedReadKeyRef.current === markReadKey || markReadMutation.isPending) {
+      return;
+    }
+
+    lastMarkedReadKeyRef.current = markReadKey;
+    markReadMutation.mutate(resolvedSelectedConversationId);
+  }, [
+    markReadMutation,
+    messagesQuery.isSuccess,
+    resolvedSelectedConversationId,
+    selectedConversation,
+  ]);
 
   const sendMessageMutation = useMutation({
     mutationFn: async (body: string) => {

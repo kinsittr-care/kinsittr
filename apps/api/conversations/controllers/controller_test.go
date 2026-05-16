@@ -37,10 +37,10 @@ func (m *mockMessagesRepo) ListParentConversations(_ context.Context, _ uuid.UUI
 func (m *mockMessagesRepo) ListNannyConversations(_ context.Context, _ uuid.UUID, _ messagesrepo.ConversationListFilter) ([]messagesrepo.ConversationRecord, int, error) {
 	return nil, 0, nil
 }
-func (m *mockMessagesRepo) GetParentConversationByID(_ context.Context, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
+func (m *mockMessagesRepo) GetParentConversationByID(_ context.Context, _, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
 	return m.parentConversation, nil
 }
-func (m *mockMessagesRepo) GetNannyConversationByID(_ context.Context, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
+func (m *mockMessagesRepo) GetNannyConversationByID(_ context.Context, _, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
 	return messagesrepo.ConversationRecord{}, nil
 }
 func (m *mockMessagesRepo) ListMessages(_ context.Context, _ uuid.UUID, _ messagesrepo.MessageListFilter) ([]models.Message, int, error) {
@@ -51,6 +51,9 @@ func (m *mockMessagesRepo) CreateMessage(_ context.Context, message models.Messa
 		return m.createdMessage, nil
 	}
 	return message, nil
+}
+func (m *mockMessagesRepo) MarkConversationRead(_ context.Context, conversationID, userID uuid.UUID) (models.ConversationRead, error) {
+	return models.ConversationRead{ConversationID: conversationID, UserID: userID, LastReadAt: time.Now().UTC()}, nil
 }
 
 type mockProfileRepo struct {

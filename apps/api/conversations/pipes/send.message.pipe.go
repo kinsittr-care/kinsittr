@@ -29,7 +29,7 @@ func (p *ConversationsPipe) SendMessage(ctx context.Context, userID uuid.UUID, r
 		if parentProfile.ID == uuid.Nil {
 			return conversationNotFound[MessageData]()
 		}
-		record, err = p.repo.GetParentConversationByID(ctx, conversationID, parentProfile.ID)
+		record, err = p.repo.GetParentConversationByID(ctx, conversationID, parentProfile.ID, userID)
 	case models.NannyUserRole:
 		nannyProfile, profileErr := p.profileRepo.GetNannyProfileByUserID(ctx, userID)
 		if profileErr != nil {
@@ -38,7 +38,7 @@ func (p *ConversationsPipe) SendMessage(ctx context.Context, userID uuid.UUID, r
 		if nannyProfile.ID == uuid.Nil {
 			return conversationNotFound[MessageData]()
 		}
-		record, err = p.repo.GetNannyConversationByID(ctx, conversationID, nannyProfile.ID)
+		record, err = p.repo.GetNannyConversationByID(ctx, conversationID, nannyProfile.ID, userID)
 	default:
 		return pipeError[MessageData](convmessages.Forbidden_Conversation_Access)
 	}
@@ -57,6 +57,9 @@ func (p *ConversationsPipe) SendMessage(ctx context.Context, userID uuid.UUID, r
 		Body:           body,
 	})
 	if err != nil {
+		return pipeError[MessageData](convmessages.Invalid_Message_Request)
+	}
+	if _, err := p.repo.MarkConversationRead(ctx, conversationID, userID); err != nil {
 		return pipeError[MessageData](convmessages.Invalid_Message_Request)
 	}
 

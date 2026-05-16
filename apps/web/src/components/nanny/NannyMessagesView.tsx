@@ -13,6 +13,7 @@ import {
   conversationsQueryKey,
   listConversationMessages,
   listConversations,
+  markConversationRead,
   sendConversationMessage,
 } from "@/src/utils/api/conversations";
 import { ApiRequestError } from "@/src/utils/api/api";
@@ -39,6 +40,7 @@ export default function NannyMessagesView() {
   const [input, setInput] = useState("");
   const [sendError, setSendError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const lastMarkedReadKeyRef = useRef<string | null>(null);
 
   const conversationsQuery = useQuery({
     queryKey: conversationsQueryKey({ page: 1, limit: conversationLimit }),
@@ -79,9 +81,42 @@ export default function NannyMessagesView() {
   const messages = messagesQuery.data?.data?.items ?? EMPTY_MESSAGES;
   const totalMessages = messagesQuery.data?.data?.total ?? 0;
 
+  const markReadMutation = useMutation({
+    mutationFn: markConversationRead,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: conversationsQueryKey({ page: 1, limit: conversationLimit }),
+      });
+    },
+  });
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeConversationId, messages]);
+
+  useEffect(() => {
+    if (
+      !activeConversationId ||
+      !messagesQuery.isSuccess ||
+      !selectedConversation ||
+      selectedConversation.unread_count < 1
+    ) {
+      return;
+    }
+
+    const markReadKey = `${activeConversationId}:${selectedConversation.last_message_at ?? "none"}:${selectedConversation.unread_count}`;
+    if (lastMarkedReadKeyRef.current === markReadKey || markReadMutation.isPending) {
+      return;
+    }
+
+    lastMarkedReadKeyRef.current = markReadKey;
+    markReadMutation.mutate(activeConversationId);
+  }, [
+    activeConversationId,
+    markReadMutation,
+    messagesQuery.isSuccess,
+    selectedConversation,
+  ]);
 
   const sendMessageMutation = useMutation({
     mutationFn: async (body: string) => {

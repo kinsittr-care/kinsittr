@@ -105,25 +105,35 @@ func (r *pgRepository) listConversations(ctx context.Context, column string, pro
 		       CASE WHEN $1 = c.parent_profile_id THEN np.display_name ELSE pp.display_name END AS other_name,
 		       CASE WHEN $1 = c.parent_profile_id THEN np.city ELSE pp.city END AS other_city,
 		       CASE WHEN $1 = c.parent_profile_id THEN np.province ELSE pp.province END AS other_province,
-		       COALESCE(LEFT(lm.body, 100), '') AS last_message_preview,
-		       lm.created_at
-		FROM conversations c
-		INNER JOIN bookings b ON b.id = c.booking_id
-		INNER JOIN parent_profiles pp ON pp.id = c.parent_profile_id
-		INNER JOIN nanny_profiles np ON np.id = c.nanny_profile_id
-		LEFT JOIN LATERAL (
-		    SELECT body, created_at
-		    FROM messages m
-		    WHERE m.conversation_id = c.id
-		    ORDER BY m.created_at DESC
-		    LIMIT 1
-		) lm ON true
-		WHERE c.%s = $1
-		ORDER BY COALESCE(lm.created_at, c.updated_at) DESC, c.created_at DESC
-		LIMIT $2 OFFSET $3
-	`, column)
+			       COALESCE(LEFT(lm.body, 100), '') AS last_message_preview,
+			       lm.created_at,
+			       COALESCE(unread.unread_count, 0) AS unread_count,
+			       cr.last_read_at
+			FROM conversations c
+			INNER JOIN bookings b ON b.id = c.booking_id
+			INNER JOIN parent_profiles pp ON pp.id = c.parent_profile_id
+			INNER JOIN nanny_profiles np ON np.id = c.nanny_profile_id
+			LEFT JOIN conversation_reads cr ON cr.conversation_id = c.id AND cr.user_id = $2
+			LEFT JOIN LATERAL (
+			    SELECT body, created_at
+			    FROM messages m
+			    WHERE m.conversation_id = c.id
+			    ORDER BY m.created_at DESC
+			    LIMIT 1
+			) lm ON true
+			LEFT JOIN LATERAL (
+			    SELECT COUNT(*)::int AS unread_count
+			    FROM messages m
+			    WHERE m.conversation_id = c.id
+			      AND m.sender_user_id <> $2
+			      AND (cr.last_read_at IS NULL OR m.created_at > cr.last_read_at)
+			) unread ON true
+			WHERE c.%s = $1
+			ORDER BY COALESCE(lm.created_at, c.updated_at) DESC, c.created_at DESC
+			LIMIT $3 OFFSET $4
+		`, column)
 
-	rows, err := r.db.Query(ctx, query, profileID, filter.Limit, (filter.Page-1)*filter.Limit)
+	rows, err := r.db.Query(ctx, query, profileID, filter.UserID, filter.Limit, (filter.Page-1)*filter.Limit)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -145,6 +155,8 @@ func (r *pgRepository) listConversations(ctx context.Context, column string, pro
 			&record.OtherParticipantProvince,
 			&record.LastMessagePreview,
 			&record.LastMessageAt,
+			&record.UnreadCount,
+			&record.LastReadAt,
 		); err != nil {
 			return nil, 0, err
 		}
@@ -162,7 +174,7 @@ func (r *pgRepository) ListNannyConversations(ctx context.Context, nannyProfileI
 	return r.listConversations(ctx, "nanny_profile_id", nannyProfileID, filter)
 }
 
-func (r *pgRepository) getConversationByID(ctx context.Context, conversationID uuid.UUID, column string, profileID uuid.UUID) (ConversationRecord, error) {
+func (r *pgRepository) getConversationByID(ctx context.Context, conversationID uuid.UUID, column string, profileID, userID uuid.UUID) (ConversationRecord, error) {
 	var record ConversationRecord
 	query := fmt.Sprintf(`
 		SELECT c.id, c.booking_id, c.parent_profile_id, c.nanny_profile_id, c.created_at, c.updated_at,
@@ -171,11 +183,14 @@ func (r *pgRepository) getConversationByID(ctx context.Context, conversationID u
 		       CASE WHEN $2 = c.parent_profile_id THEN np.city ELSE pp.city END AS other_city,
 		       CASE WHEN $2 = c.parent_profile_id THEN np.province ELSE pp.province END AS other_province,
 		       COALESCE(LEFT(lm.body, 100), '') AS last_message_preview,
-		       lm.created_at
+		       lm.created_at,
+		       COALESCE(unread.unread_count, 0) AS unread_count,
+		       cr.last_read_at
 		FROM conversations c
 		INNER JOIN bookings b ON b.id = c.booking_id
 		INNER JOIN parent_profiles pp ON pp.id = c.parent_profile_id
 		INNER JOIN nanny_profiles np ON np.id = c.nanny_profile_id
+		LEFT JOIN conversation_reads cr ON cr.conversation_id = c.id AND cr.user_id = $3
 		LEFT JOIN LATERAL (
 		    SELECT body, created_at
 		    FROM messages m
@@ -183,10 +198,17 @@ func (r *pgRepository) getConversationByID(ctx context.Context, conversationID u
 		    ORDER BY m.created_at DESC
 		    LIMIT 1
 		) lm ON true
+		LEFT JOIN LATERAL (
+		    SELECT COUNT(*)::int AS unread_count
+		    FROM messages m
+		    WHERE m.conversation_id = c.id
+		      AND m.sender_user_id <> $3
+		      AND (cr.last_read_at IS NULL OR m.created_at > cr.last_read_at)
+		) unread ON true
 		WHERE c.id = $1 AND c.%s = $2
 	`, column)
 
-	err := r.db.QueryRow(ctx, query, conversationID, profileID).Scan(
+	err := r.db.QueryRow(ctx, query, conversationID, profileID, userID).Scan(
 		&record.ID,
 		&record.BookingID,
 		&record.ParentProfileID,
@@ -199,6 +221,8 @@ func (r *pgRepository) getConversationByID(ctx context.Context, conversationID u
 		&record.OtherParticipantProvince,
 		&record.LastMessagePreview,
 		&record.LastMessageAt,
+		&record.UnreadCount,
+		&record.LastReadAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ConversationRecord{}, nil
@@ -206,12 +230,12 @@ func (r *pgRepository) getConversationByID(ctx context.Context, conversationID u
 	return record, err
 }
 
-func (r *pgRepository) GetParentConversationByID(ctx context.Context, conversationID, parentProfileID uuid.UUID) (ConversationRecord, error) {
-	return r.getConversationByID(ctx, conversationID, "parent_profile_id", parentProfileID)
+func (r *pgRepository) GetParentConversationByID(ctx context.Context, conversationID, parentProfileID, userID uuid.UUID) (ConversationRecord, error) {
+	return r.getConversationByID(ctx, conversationID, "parent_profile_id", parentProfileID, userID)
 }
 
-func (r *pgRepository) GetNannyConversationByID(ctx context.Context, conversationID, nannyProfileID uuid.UUID) (ConversationRecord, error) {
-	return r.getConversationByID(ctx, conversationID, "nanny_profile_id", nannyProfileID)
+func (r *pgRepository) GetNannyConversationByID(ctx context.Context, conversationID, nannyProfileID, userID uuid.UUID) (ConversationRecord, error) {
+	return r.getConversationByID(ctx, conversationID, "nanny_profile_id", nannyProfileID, userID)
 }
 
 func (r *pgRepository) ListMessages(ctx context.Context, conversationID uuid.UUID, filter MessageListFilter) ([]models.Message, int, error) {
@@ -292,4 +316,22 @@ func (r *pgRepository) CreateMessage(ctx context.Context, message models.Message
 	}
 
 	return created, nil
+}
+
+func (r *pgRepository) MarkConversationRead(ctx context.Context, conversationID, userID uuid.UUID) (models.ConversationRead, error) {
+	var read models.ConversationRead
+	err := r.db.QueryRow(ctx, `
+		INSERT INTO conversation_reads (conversation_id, user_id)
+		VALUES ($1, $2)
+		ON CONFLICT (conversation_id, user_id)
+		DO UPDATE SET last_read_at = NOW(), updated_at = NOW()
+		RETURNING conversation_id, user_id, last_read_at, created_at, updated_at
+	`, conversationID, userID).Scan(
+		&read.ConversationID,
+		&read.UserID,
+		&read.LastReadAt,
+		&read.CreatedAt,
+		&read.UpdatedAt,
+	)
+	return read, err
 }
