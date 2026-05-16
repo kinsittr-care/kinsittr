@@ -39,5 +39,11 @@ func (p *BookingsPipe) Complete(ctx context.Context, userID, bookingID uuid.UUID
 	}
 
 	data := toBookingRecordData(booking)
+	p.notifyParentProfile(ctx, booking.ParentProfileID, models.Notification{
+		Type:  models.BookingCompletedNotificationType,
+		Title: "Booking completed",
+		Body:  "Your nanny marked the booking as completed.",
+		Data:  notificationData(map[string]string{"booking_id": booking.ID.String()}),
+	})
 	return pipeSuccess(messages.Booking_Completed, &data)
 }

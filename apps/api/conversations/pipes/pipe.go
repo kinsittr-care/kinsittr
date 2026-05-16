@@ -7,6 +7,7 @@ import (
 	convmessages "github.com/kinsittr/kinsittr-api/conversations/messages"
 	"github.com/kinsittr/kinsittr-api/models"
 	messagesrepo "github.com/kinsittr/kinsittr-api/repositories/messages"
+	"github.com/kinsittr/kinsittr-api/repositories/notifications"
 	"github.com/kinsittr/kinsittr-api/repositories/profile"
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
@@ -55,10 +56,15 @@ type MessageListData struct {
 type ConversationsPipe struct {
 	repo        messagesrepo.MessagesRepository
 	profileRepo profile.ProfileRepository
+	notifyRepo  notifications.NotificationsRepository
 }
 
-func NewConversationsPipe(repo messagesrepo.MessagesRepository, profileRepo profile.ProfileRepository) *ConversationsPipe {
-	return &ConversationsPipe{repo: repo, profileRepo: profileRepo}
+func NewConversationsPipe(repo messagesrepo.MessagesRepository, profileRepo profile.ProfileRepository, notifyRepo ...notifications.NotificationsRepository) *ConversationsPipe {
+	var notificationsRepo notifications.NotificationsRepository
+	if len(notifyRepo) > 0 {
+		notificationsRepo = notifyRepo[0]
+	}
+	return &ConversationsPipe{repo: repo, profileRepo: profileRepo, notifyRepo: notificationsRepo}
 }
 
 func toConversationData(record messagesrepo.ConversationRecord) ConversationData {

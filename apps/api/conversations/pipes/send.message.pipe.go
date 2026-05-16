@@ -64,5 +64,20 @@ func (p *ConversationsPipe) SendMessage(ctx context.Context, userID uuid.UUID, r
 	}
 
 	data := toMessageData(message)
+	if role == models.ParentUserRole {
+		p.notifyNannyProfile(ctx, record.NannyProfileID, models.Notification{
+			Type:  models.MessageReceivedNotificationType,
+			Title: "New message",
+			Body:  "A parent sent you a message.",
+			Data:  notificationData(map[string]string{"conversation_id": conversationID.String(), "message_id": message.ID.String()}),
+		})
+	} else {
+		p.notifyParentProfile(ctx, record.ParentProfileID, models.Notification{
+			Type:  models.MessageReceivedNotificationType,
+			Title: "New message",
+			Body:  "A nanny sent you a message.",
+			Data:  notificationData(map[string]string{"conversation_id": conversationID.String(), "message_id": message.ID.String()}),
+		})
+	}
 	return pipeSuccess(convmessages.Message_Sent, &data)
 }

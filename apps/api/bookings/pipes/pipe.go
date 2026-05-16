@@ -7,6 +7,7 @@ import (
 	"github.com/kinsittr/kinsittr-api/models"
 	"github.com/kinsittr/kinsittr-api/repositories/bookings"
 	"github.com/kinsittr/kinsittr-api/repositories/nanny"
+	"github.com/kinsittr/kinsittr-api/repositories/notifications"
 	"github.com/kinsittr/kinsittr-api/repositories/profile"
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
@@ -67,13 +68,19 @@ type BookingsPipe struct {
 	repo        bookings.BookingsRepository
 	profileRepo profile.ProfileRepository
 	nannyRepo   nanny.NannyRepository
+	notifyRepo  notifications.NotificationsRepository
 }
 
-func NewBookingsPipe(repo bookings.BookingsRepository, profileRepo profile.ProfileRepository, nannyRepo nanny.NannyRepository) *BookingsPipe {
+func NewBookingsPipe(repo bookings.BookingsRepository, profileRepo profile.ProfileRepository, nannyRepo nanny.NannyRepository, notifyRepo ...notifications.NotificationsRepository) *BookingsPipe {
+	var notificationsRepo notifications.NotificationsRepository
+	if len(notifyRepo) > 0 {
+		notificationsRepo = notifyRepo[0]
+	}
 	return &BookingsPipe{
 		repo:        repo,
 		profileRepo: profileRepo,
 		nannyRepo:   nannyRepo,
+		notifyRepo:  notificationsRepo,
 	}
 }
 

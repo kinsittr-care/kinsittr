@@ -24,6 +24,9 @@ import (
 	nanny_controller "github.com/kinsittr/kinsittr-api/nanny/controllers"
 	nanny_pipe "github.com/kinsittr/kinsittr-api/nanny/pipes"
 	nanny_router "github.com/kinsittr/kinsittr-api/nanny/routers"
+	notifications_controller "github.com/kinsittr/kinsittr-api/notifications/controllers"
+	notifications_pipe "github.com/kinsittr/kinsittr-api/notifications/pipes"
+	notifications_router "github.com/kinsittr/kinsittr-api/notifications/routers"
 	parent_controller "github.com/kinsittr/kinsittr-api/parent/controllers"
 	parent_pipe "github.com/kinsittr/kinsittr-api/parent/pipes"
 	parent_router "github.com/kinsittr/kinsittr-api/parent/routers"
@@ -32,6 +35,7 @@ import (
 	bookings_repo "github.com/kinsittr/kinsittr-api/repositories/bookings"
 	messages_repo "github.com/kinsittr/kinsittr-api/repositories/messages"
 	nanny_repo "github.com/kinsittr/kinsittr-api/repositories/nanny"
+	notifications_repo "github.com/kinsittr/kinsittr-api/repositories/notifications"
 	profile_repo "github.com/kinsittr/kinsittr-api/repositories/profile"
 	"github.com/kinsittr/kinsittr-api/shared/api"
 	"github.com/kinsittr/kinsittr-api/shared/mail"
@@ -75,12 +79,16 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	parentController := parent_controller.NewParentController(parentPipe)
 
 	// bookings
-	bookingsPipe := bookings_pipe.NewBookingsPipe(bookings_repo.BookingsRepo, profile_repo.ProfileRepo, nanny_repo.NannyRepo)
+	bookingsPipe := bookings_pipe.NewBookingsPipe(bookings_repo.BookingsRepo, profile_repo.ProfileRepo, nanny_repo.NannyRepo, notifications_repo.NotificationsRepo)
 	bookingsController := bookings_controller.NewBookingsController(bookingsPipe)
 
 	// conversations
-	conversationsPipe := conversations_pipe.NewConversationsPipe(messages_repo.MessagesRepo, profile_repo.ProfileRepo)
+	conversationsPipe := conversations_pipe.NewConversationsPipe(messages_repo.MessagesRepo, profile_repo.ProfileRepo, notifications_repo.NotificationsRepo)
 	conversationsController := conversations_controller.NewConversationsController(conversationsPipe)
+
+	// notifications
+	notificationsPipe := notifications_pipe.NewNotificationsPipe(notifications_repo.NotificationsRepo)
+	notificationsController := notifications_controller.NewNotificationsController(notificationsPipe)
 
 	apiGroup := app.Group("/api/v1")
 
@@ -113,6 +121,9 @@ func New(cfg *config.Config) (*fiber.App, error) {
 
 	conversationsGroup := apiGroup.Group("/conversations")
 	api.BaseRouter(conversationsGroup, conversations_router.ConversationRoutes(conversationsController, cfg.JWTSecret))
+
+	notificationsGroup := apiGroup.Group("/notifications")
+	api.BaseRouter(notificationsGroup, notifications_router.NotificationRoutes(notificationsController, cfg.JWTSecret))
 
 	return app, nil
 }

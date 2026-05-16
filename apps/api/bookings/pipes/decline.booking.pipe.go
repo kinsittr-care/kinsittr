@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/bookings/messages"
+	"github.com/kinsittr/kinsittr-api/models"
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
 
@@ -26,5 +27,11 @@ func (p *BookingsPipe) Decline(ctx context.Context, userID, bookingID uuid.UUID)
 	}
 
 	data := toBookingRecordData(booking)
+	p.notifyParentProfile(ctx, booking.ParentProfileID, models.Notification{
+		Type:  models.BookingDeclinedNotificationType,
+		Title: "Booking declined",
+		Body:  "Your booking request was declined.",
+		Data:  notificationData(map[string]string{"booking_id": booking.ID.String()}),
+	})
 	return pipeSuccess(messages.Booking_Declined, &data)
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/bookings/messages"
+	"github.com/kinsittr/kinsittr-api/models"
 	"github.com/kinsittr/kinsittr-api/repositories/bookings"
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
@@ -31,5 +32,11 @@ func (p *BookingsPipe) Approve(ctx context.Context, userID, bookingID uuid.UUID)
 	}
 
 	data := toBookingRecordData(booking)
+	p.notifyParentProfile(ctx, booking.ParentProfileID, models.Notification{
+		Type:  models.BookingApprovedNotificationType,
+		Title: "Booking approved",
+		Body:  "Your booking request was approved.",
+		Data:  notificationData(map[string]string{"booking_id": booking.ID.String()}),
+	})
 	return pipeSuccess(messages.Booking_Approved, &data)
 }

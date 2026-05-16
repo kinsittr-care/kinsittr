@@ -77,6 +77,21 @@ func (p *BookingsPipe) CreateChangeRequest(ctx context.Context, userID uuid.UUID
 	}
 
 	data := toBookingChangeRequestData(created)
+	if role == models.ParentUserRole {
+		p.notifyNannyProfile(ctx, booking.NannyProfileID, models.Notification{
+			Type:  models.BookingChangeRequestedNotificationType,
+			Title: "Booking change requested",
+			Body:  "A parent requested a booking change.",
+			Data:  notificationData(map[string]string{"booking_id": booking.ID.String(), "change_request_id": created.ID.String()}),
+		})
+	} else {
+		p.notifyParentProfile(ctx, booking.ParentProfileID, models.Notification{
+			Type:  models.BookingChangeRequestedNotificationType,
+			Title: "Booking change requested",
+			Body:  "A nanny requested a booking change.",
+			Data:  notificationData(map[string]string{"booking_id": booking.ID.String(), "change_request_id": created.ID.String()}),
+		})
+	}
 	return pipeSuccess(messages.Booking_Change_Request_Created, &data)
 }
 
@@ -141,6 +156,14 @@ func (p *BookingsPipe) AcceptChangeRequest(ctx context.Context, userID uuid.UUID
 		Booking: toBookingRecordData(updatedBooking),
 		Request: toBookingChangeRequestData(accepted),
 	}
+	p.notifyUser(ctx, models.Notification{
+		UserID: request.RequestedByUserID,
+		Role:   request.RequestedByRole,
+		Type:   models.BookingChangeAcceptedNotificationType,
+		Title:  "Booking change accepted",
+		Body:   "Your booking change request was accepted.",
+		Data:   notificationData(map[string]string{"booking_id": booking.ID.String(), "change_request_id": accepted.ID.String()}),
+	})
 	return pipeSuccess(messages.Booking_Change_Request_Accepted, &data)
 }
 
@@ -161,6 +184,14 @@ func (p *BookingsPipe) DeclineChangeRequest(ctx context.Context, userID uuid.UUI
 	}
 
 	data := toBookingChangeRequestData(declined)
+	p.notifyUser(ctx, models.Notification{
+		UserID: request.RequestedByUserID,
+		Role:   request.RequestedByRole,
+		Type:   models.BookingChangeDeclinedNotificationType,
+		Title:  "Booking change declined",
+		Body:   "Your booking change request was declined.",
+		Data:   notificationData(map[string]string{"booking_id": booking.ID.String(), "change_request_id": declined.ID.String()}),
+	})
 	return pipeSuccess(messages.Booking_Change_Request_Declined, &data)
 }
 
