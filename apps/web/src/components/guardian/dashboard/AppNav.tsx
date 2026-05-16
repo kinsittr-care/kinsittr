@@ -10,7 +10,7 @@ import { BrandMarkIcon } from "@/src/components/icons";
 import {
   conversationsQueryKey,
   listConversations,
-} from "@/src/utils/conversations";
+} from "@/src/utils/api/conversations";
 
 const NAV_TABS = [
   { id: "browse", label: "Browse", href: "/parent" },

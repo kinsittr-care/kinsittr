@@ -16,7 +16,7 @@ export default function NannyShell({ children }: { children: ReactNode }) {
       <main
         style={{
           flex: 1,
-          overflowY: "auto",
+          overflow: "hidden",
           display: "flex",
           flexDirection: "column",
         }}

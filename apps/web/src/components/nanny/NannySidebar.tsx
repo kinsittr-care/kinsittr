@@ -1,7 +1,11 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { getCurrentSession } from "@/src/utils/api/auth";
+import { listNannyBookings, nannyBookingsQueryKey } from "@/src/utils/api/bookings";
+import { conversationsQueryKey, listConversations } from "@/src/utils/api/conversations";
 import { N } from "./tokens";
 import NannyAvatar from "./NannyAvatar";
 import { useIsMobile } from "@/src/components/guardian/dashboard/useIsMobile";
@@ -22,10 +26,18 @@ const navItems = [
   {
     href: "/nanny/requests",
     label: "Requests",
-    badge: 2,
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M3 5h12M3 9h8M3 13h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    href: "/nanny/messages",
+    label: "Messages",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M2 3h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5l-4 3V4a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -63,6 +75,26 @@ const navItems = [
 export default function NannySidebar() {
   const pathname = usePathname();
   const isMobile = useIsMobile();
+  const sessionQuery = useQuery({
+    queryKey: ["auth-me"],
+    queryFn: getCurrentSession,
+  });
+  const pendingParams = { page: 1, limit: 1, status: "pending" as const };
+  const pendingBookingsQuery = useQuery({
+    queryKey: nannyBookingsQueryKey(pendingParams),
+    queryFn: async () => listNannyBookings(pendingParams),
+  });
+  const session = sessionQuery.data?.data;
+  const displayName =
+    session?.nanny_profile?.display_name ||
+    [session?.user.firstname, session?.user.lastname].filter(Boolean).join(" ") ||
+    "Nanny";
+  const pendingCount = pendingBookingsQuery.data?.data?.total ?? 0;
+  const conversationsQuery = useQuery({
+    queryKey: conversationsQueryKey({ page: 1, limit: 1 }),
+    queryFn: async () => listConversations({ page: 1, limit: 1 }),
+  });
+  const hasConversations = (conversationsQuery.data?.data?.total ?? 0) > 0;
 
   const isActive = (href: string) =>
     href === "/nanny" ? pathname === "/nanny" : pathname.startsWith(href);
@@ -169,7 +201,18 @@ export default function NannySidebar() {
             >
               <span style={{ display: "flex" }}>{item.icon}</span>
               <span style={{ flex: 1 }}>{item.label}</span>
-              {item.badge && (
+              {item.href === "/nanny/messages" && hasConversations && (
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: N.green,
+                    display: "inline-block",
+                  }}
+                />
+              )}
+              {item.href === "/nanny/requests" && pendingCount > 0 && (
                 <span
                   style={{
                     minWidth: 20,
@@ -185,7 +228,7 @@ export default function NannySidebar() {
                     justifyContent: "center",
                   }}
                 >
-                  {item.badge}
+                  {pendingCount}
                 </span>
               )}
             </Link>
@@ -204,10 +247,12 @@ export default function NannySidebar() {
           gap: 12,
         }}
       >
-        <NannyAvatar initials="AK" size={40} tone="cream" />
+        <NannyAvatar initials={displayName.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()} size={40} tone="cream" />
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: N.greenDk }}>Amara Kofi</div>
-          <div style={{ fontSize: 12, color: N.inkMute, marginTop: 1 }}>Verified caregiver</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: N.greenDk }}>{displayName}</div>
+          <div style={{ fontSize: 12, color: N.inkMute, marginTop: 1 }}>
+            {session?.nanny_profile?.verification_status === "verified" ? "Verified caregiver" : "Caregiver"}
+          </div>
         </div>
       </div>
     </aside>

@@ -39,7 +39,7 @@ function EarningsStat({ label, value, sub }: { label: string; value: string; sub
 
 export default function NannyEarningsView() {
   return (
-    <div style={{ padding: "40px 48px 80px" }}>
+    <div style={{ padding: "40px 48px 80px", overflowY: "auto", flex: 1 }}>
       <div style={{ marginBottom: 32 }}>
         <h1
           style={{

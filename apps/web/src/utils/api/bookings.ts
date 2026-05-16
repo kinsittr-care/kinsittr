@@ -4,7 +4,7 @@ import type {
   CreateBookingPayload,
   ListBookingsParams,
 } from "@/src/types/api/api";
-import { apiRequest } from "@/src/utils/api";
+import { apiRequest } from "@/src/utils/api/api";
 
 function buildListBookingsQuery(params: ListBookingsParams) {
   const query = new URLSearchParams();
@@ -25,6 +25,14 @@ export function parentBookingsQueryKey(params: ListBookingsParams) {
 
 export function parentBookingQueryKey(id: string) {
   return ["parent-booking", id] as const;
+}
+
+export function nannyBookingsQueryKey(params: ListBookingsParams) {
+  return ["nanny-bookings", params] as const;
+}
+
+export function nannyBookingQueryKey(id: string) {
+  return ["nanny-booking", id] as const;
 }
 
 export async function createBooking(payload: CreateBookingPayload) {
@@ -61,6 +69,48 @@ export async function getParentBookingById(id: string) {
 export async function cancelParentBooking(id: string) {
   return apiRequest<Booking>(
     `/api/v1/bookings/${id}/cancel`,
+    {
+      method: "PATCH",
+    },
+    {
+      requiresAuth: true,
+    },
+  );
+}
+
+export async function listNannyBookings(params: ListBookingsParams) {
+  const queryString = buildListBookingsQuery(params);
+
+  return apiRequest<BookingListData>(
+    `/api/v1/nanny/bookings${queryString}`,
+    undefined,
+    {
+      requiresAuth: true,
+    },
+  );
+}
+
+export async function getNannyBookingById(id: string) {
+  return apiRequest<Booking>(`/api/v1/nanny/bookings/${id}`, undefined, {
+    requiresAuth: true,
+  });
+}
+
+export async function approveNannyBooking(id: string) {
+  return apiRequest<Booking>(
+    `/api/v1/nanny/bookings/${id}/approve`,
+    {
+      method: "PATCH",
+    },
+    {
+      requiresAuth: true,
+    },
+  );
+}
+
+export async function declineNannyBooking(id: string) {
+  return apiRequest<Booking>(
+    `/api/v1/nanny/bookings/${id}/decline`,
     {
       method: "PATCH",
     },

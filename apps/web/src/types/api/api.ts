@@ -70,6 +70,7 @@ export interface NannyProfile {
   user_id: string;
   display_name: string;
   bio: string;
+  specialties: string[];
   rate_per_hour: number;
   service_type: "nanny";
   currency: string;
@@ -83,6 +84,15 @@ export interface NannyProfile {
   province: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface UpdateNannyProfilePayload {
+  display_name: string;
+  bio: string;
+  specialties: string[];
+  rate_per_hour: number;
+  city: string;
+  province: string;
 }
 
 export interface PublicNannyCard {

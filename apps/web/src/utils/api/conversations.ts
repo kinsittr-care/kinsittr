@@ -7,7 +7,7 @@ import type {
   MessageListData,
   SendMessagePayload,
 } from "@/src/types/api/api";
-import { apiRequest } from "@/src/utils/api";
+import { apiRequest } from "@/src/utils/api/api";
 
 function buildListQuery(params?: ListConversationsParams | ListMessagesParams) {
   const query = new URLSearchParams();

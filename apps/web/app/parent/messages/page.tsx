@@ -5,7 +5,7 @@ import MessagesView from "@/src/components/guardian/dashboard/MessagesView";
 import {
   conversationsQueryKey,
   listConversations,
-} from "@/src/utils/conversations";
+} from "@/src/utils/api/conversations";
 
 export default function ParentMessagesPage() {
   const { data } = useQuery({

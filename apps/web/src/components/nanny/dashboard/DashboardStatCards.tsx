@@ -1,3 +1,4 @@
+import type { Booking } from "@/src/types/api/api";
 import { N } from "../tokens";
 
 type Tone = "green" | "gold" | "rose" | "amber";
@@ -62,7 +63,19 @@ function StatCard({
   );
 }
 
-export default function DashboardStatCards() {
+export default function DashboardStatCards({
+  bookings,
+  isLoading,
+}: {
+  bookings: Booking[];
+  isLoading: boolean;
+}) {
+  const approvedCount = bookings.filter((booking) => booking.status === "approved").length;
+  const pendingCount = bookings.filter((booking) => booking.status === "pending").length;
+  const estimatedEarnings = bookings
+    .filter((booking) => booking.status === "approved")
+    .reduce((sum, booking) => sum + booking.total_amount, 0);
+
   return (
     <div
       style={{
@@ -71,10 +84,20 @@ export default function DashboardStatCards() {
         gap: 18,
       }}
     >
-      <StatCard label="Earnings this month" value="$1,840"  sub="↑ 12% vs last month"   tone="green" />
-      <StatCard label="Bookings this month" value="11"      sub="3 upcoming"             tone="gold"  />
-      <StatCard label="Your rating"         value="4.9 ★"   sub="Based on 47 reviews"    tone="gold"  />
-      <StatCard label="Response rate"       value="98%"     sub="Within 2 hrs avg"       tone="green" />
+      <StatCard
+        label="Approved value"
+        value={isLoading ? "..." : `$${estimatedEarnings.toFixed(0)}`}
+        sub={`${approvedCount} approved bookings`}
+        tone="green"
+      />
+      <StatCard
+        label="Pending requests"
+        value={isLoading ? "..." : String(pendingCount)}
+        sub="Awaiting your response"
+        tone="amber"
+      />
+      <StatCard label="Your rating" value="4.9" sub="Profile rating coming soon" tone="gold" />
+      <StatCard label="Response rate" value="98%" sub="Manual metric for now" tone="green" />
     </div>
   );
 }

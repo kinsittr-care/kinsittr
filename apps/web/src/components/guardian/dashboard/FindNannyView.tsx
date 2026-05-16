@@ -8,7 +8,7 @@ import NannyCard from "./NannyCard";
 import { TinyCheckIcon } from "@/src/components/icons";
 import FilterDrawer from "../compositions/FilterDrawer";
 import type { PublicNannyCard } from "@/src/types/api/api";
-import { listPublicNannies, publicNanniesQueryKey } from "@/src/utils/nanny";
+import { listPublicNannies, publicNanniesQueryKey } from "@/src/utils/api/nanny";
 import type { Nanny } from "./types";
 
 const CITIES = ["All cities", "Toronto, ON", "Vancouver, BC", "Calgary, AB", "Ottawa, ON", "Montreal, QC"];

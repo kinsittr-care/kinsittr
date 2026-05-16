@@ -8,7 +8,7 @@ import {
   cancelParentBooking,
   listParentBookings,
   parentBookingsQueryKey,
-} from "@/src/utils/bookings";
+} from "@/src/utils/api/bookings";
 import Avatar from "../dashboard/Avatar";
 import SectionCard from "../profile/SectionCard";
 import BookingDetailCard from "./BookingDetailCard";

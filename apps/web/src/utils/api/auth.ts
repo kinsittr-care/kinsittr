@@ -6,13 +6,13 @@ import {
   RegisterNannyPayload,
   RegisterParentPayload,
 } from "@/src/types/api/api";
+import { apiRequest } from "./api";
 import {
   buildSessionFromTokenPair,
   clearAuthSession,
   mergeSessionWithPayload,
   saveAuthSession,
-} from "@/src/utils/auth";
-import { apiRequest } from "../api";
+} from "./session";
 
 export async function loginUser(payload: LoginPayload) {
   return apiRequest<AuthTokenPair>("/api/v1/auth/login", {

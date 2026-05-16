@@ -4,7 +4,7 @@ import {
   clearAuthSession,
   getStoredAuthSession,
   saveAuthSession,
-} from "@/src/utils/auth";
+} from "./session";
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:4006";

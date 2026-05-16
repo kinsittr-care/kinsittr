@@ -2,9 +2,9 @@
 
 import { ChangeEvent, FormEventHandler, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ApiRequestError } from "@/src/utils/api";
+import { ApiRequestError } from "@/src/utils/api/api";
 import { establishAuthSession, loginUser } from "@/src/utils/api/auth";
-import { getPostAuthRedirectPath } from "@/src/utils/auth-routing";
+import { getPostAuthRedirectPath } from "@/src/utils/api/auth-routing";
 import { LoginPayload } from "@/src/types/api/api";
 
 const inputClass = `
