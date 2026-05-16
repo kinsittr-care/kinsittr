@@ -36,6 +36,30 @@ func BookingRoutes(controller *controllers.BookingsController, jwtSecret string)
 			Middlewares: []typings.FiberMiddleware{auth},
 			Handler:     controller.Cancel,
 		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPost),
+			Path:        "/:id/change-requests",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.CreateParentChangeRequest,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/:id/change-requests",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.ListParentChangeRequests,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPatch),
+			Path:        "/:id/change-requests/:requestId/accept",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.AcceptParentChangeRequest,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPatch),
+			Path:        "/:id/change-requests/:requestId/decline",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.DeclineParentChangeRequest,
+		},
 	}
 }
 
@@ -66,6 +90,36 @@ func NannyBookingRoutes(controller *controllers.BookingsController, jwtSecret st
 			Path:        "/:id/decline",
 			Middlewares: []typings.FiberMiddleware{auth},
 			Handler:     controller.Decline,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPatch),
+			Path:        "/:id/complete",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.Complete,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPost),
+			Path:        "/:id/change-requests",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.CreateNannyChangeRequest,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/:id/change-requests",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.ListNannyChangeRequests,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPatch),
+			Path:        "/:id/change-requests/:requestId/accept",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.AcceptNannyChangeRequest,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPatch),
+			Path:        "/:id/change-requests/:requestId/decline",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.DeclineNannyChangeRequest,
 		},
 	}
 }

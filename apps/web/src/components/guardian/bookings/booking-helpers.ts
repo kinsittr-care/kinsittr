@@ -26,6 +26,8 @@ export function formatBookingStatus(status: BookingStatus) {
       return "Declined";
     case "cancelled":
       return "Cancelled";
+    case "completed":
+      return "Completed";
     default:
       return status;
   }

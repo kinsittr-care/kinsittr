@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	ErrBookingAlreadyExists = errors.New("booking_already_exists")
-	ErrNannyTimeUnavailable = errors.New("nanny_time_unavailable")
+	ErrBookingAlreadyExists       = errors.New("booking_already_exists")
+	ErrNannyTimeUnavailable       = errors.New("nanny_time_unavailable")
+	ErrPendingChangeRequestExists = errors.New("pending_change_request_exists")
 )
 
 type BookingRecord struct {
@@ -36,6 +37,7 @@ type ListBookingsFilter struct {
 type BookingsRepository interface {
 	HasParentActiveBookingWithNanny(ctx context.Context, parentProfileID, nannyProfileID uuid.UUID, startTime time.Time, duration int) (bool, error)
 	HasNannyApprovedBookingConflict(ctx context.Context, nannyProfileID uuid.UUID, startTime time.Time, duration int) (bool, error)
+	HasNannyApprovedBookingConflictExcluding(ctx context.Context, nannyProfileID uuid.UUID, startTime time.Time, duration int, excludeBookingID uuid.UUID) (bool, error)
 	CreateBooking(ctx context.Context, booking models.Booking) (models.Booking, error)
 	ListParentBookings(ctx context.Context, parentProfileID uuid.UUID, filter ListBookingsFilter) ([]BookingRecord, int, error)
 	GetParentBookingByID(ctx context.Context, parentProfileID, bookingID uuid.UUID) (BookingRecord, error)
@@ -45,6 +47,12 @@ type BookingsRepository interface {
 	ApproveNannyBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) (BookingRecord, error)
 	ApproveNannyBookingWithConversation(ctx context.Context, nannyProfileID, bookingID uuid.UUID) (BookingRecord, error)
 	DeclineNannyBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) (BookingRecord, error)
+	CreateBookingChangeRequest(ctx context.Context, request models.BookingChangeRequest) (models.BookingChangeRequest, error)
+	ListBookingChangeRequests(ctx context.Context, bookingID uuid.UUID) ([]models.BookingChangeRequest, error)
+	GetBookingChangeRequestByID(ctx context.Context, bookingID, requestID uuid.UUID) (models.BookingChangeRequest, error)
+	AcceptBookingChangeRequest(ctx context.Context, bookingID, requestID uuid.UUID, responseNote string) (BookingRecord, models.BookingChangeRequest, error)
+	DeclineBookingChangeRequest(ctx context.Context, bookingID, requestID uuid.UUID, responseNote string) (models.BookingChangeRequest, error)
+	CompleteNannyBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) (BookingRecord, error)
 }
 
 var BookingsRepo BookingsRepository

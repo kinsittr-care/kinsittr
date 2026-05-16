@@ -183,7 +183,7 @@ export interface CreateBookingPayload {
   duration: number;
 }
 
-export type BookingStatus = "pending" | "approved" | "declined" | "cancelled";
+export type BookingStatus = "pending" | "approved" | "declined" | "cancelled" | "completed";
 
 export interface Booking {
   id: string;
