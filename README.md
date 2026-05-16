@@ -42,7 +42,7 @@ Key routes:
 
 ### API (`apps/api`)
 
-Built with Go, Fiber, pgx, PostgreSQL, JWT auth, and Resend for contact email when configured.
+Built with Go, Fiber, pgx, PostgreSQL, JWT auth, and Resend for contact email.
 
 Implemented API areas:
 
