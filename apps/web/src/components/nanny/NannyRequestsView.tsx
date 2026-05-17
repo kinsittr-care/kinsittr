@@ -10,7 +10,7 @@ import {
   listNannyBookings,
   nannyBookingsQueryKey,
 } from "@/src/utils/api/bookings";
-import { N } from "./tokens";
+import { cn } from "@/lib/utils";
 import BookingRequestCard from "./requests/BookingRequestCard";
 import type { BookingRequest } from "./requests/BookingRequestCard";
 
@@ -24,15 +24,13 @@ function getInitials(name?: string) {
     .split(" ")
     .filter(Boolean)
     .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
+    .map((p) => p[0]?.toUpperCase() ?? "")
     .join("");
 }
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-CA", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
+    weekday: "short", month: "short", day: "numeric",
   }).format(new Date(`${value}T00:00:00`));
 }
 
@@ -41,11 +39,8 @@ function formatTimeRange(startTime: string, duration: number) {
   const start = new Date();
   start.setHours(hour || 0, minute || 0, 0, 0);
   const end = new Date(start.getTime() + duration * 60 * 60 * 1000);
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${formatter.format(start)} - ${formatter.format(end)}`;
+  const fmt = new Intl.DateTimeFormat("en-CA", { hour: "numeric", minute: "2-digit" });
+  return `${fmt.format(start)} - ${fmt.format(end)}`;
 }
 
 function toBookingRequest(booking: Booking): BookingRequest {
@@ -72,12 +67,8 @@ export default function NannyRequestsView() {
   const [filter, setFilter] = useState<Filter>("all");
   const [page, setPage] = useState(1);
   const [updatingID, setUpdatingID] = useState<string | null>(null);
-  const queryParams = {
-    page,
-    limit: PAGE_SIZE,
-    status: filter === "all" ? undefined : filter,
-  };
 
+  const queryParams = { page, limit: PAGE_SIZE, status: filter === "all" ? undefined : filter };
   const bookingsQuery = useQuery({
     queryKey: nannyBookingsQueryKey(queryParams),
     queryFn: async () => listNannyBookings(queryParams),
@@ -99,87 +90,64 @@ export default function NannyRequestsView() {
   const total = data?.total ?? 0;
   const pendingCount = filter === "pending" ? total : undefined;
 
+  const changeFilter = (f: Filter) => { setFilter(f); setPage(1); };
+
   return (
-    <div style={{ padding: "40px 48px 80px", overflowY: "auto", flex: 1 }}>
+    <div className="flex-1 overflow-y-auto px-4 pt-6 pb-16 md:px-12 md:pt-10 md:pb-20">
       {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <h1
-          style={{
-            fontFamily: "DM Serif Display, var(--font-dm-serif), serif",
-            fontSize: 36,
-            fontWeight: 400,
-            color: N.greenDk,
-            lineHeight: 1.1,
-          }}
-        >
+      <div className="mb-6 md:mb-7">
+        <h1 className="font-display text-[28px] md:text-[36px] font-normal text-nanny-green-dk leading-tight">
           Booking Requests
         </h1>
-        <p style={{ marginTop: 8, fontSize: 14.5, color: N.inkMute }}>
+        <p className="mt-2 text-sm md:text-[14.5px] text-nanny-ink-mute">
           {pendingCount !== undefined ? `${pendingCount} pending` : `${total} total`}
         </p>
       </div>
 
-      {/* Filter tabs */}
-      <div
-        style={{
-          display: "flex",
-          gap: 6,
-          marginBottom: 24,
-          background: N.cardSoft,
-          border: `1px solid ${N.border}`,
-          borderRadius: 12,
-          padding: 4,
-          alignSelf: "flex-start",
-          width: "fit-content",
-        }}
-      >
-        {FILTERS.map((f) => (
-          <button
-            key={f}
-            onClick={() => {
-              setFilter(f);
-              setPage(1);
-            }}
-            style={{
-              padding: "8px 18px",
-              borderRadius: 9,
-              fontSize: 13.5,
-              fontWeight: filter === f ? 600 : 500,
-              color: filter === f ? N.green : N.inkMute,
-              background: filter === f ? N.card : "transparent",
-              border: filter === f ? `1px solid ${N.border}` : "1px solid transparent",
-              boxShadow: filter === f ? N.shadow : "none",
-              cursor: "pointer",
-              transition: "all .15s",
-              textTransform: "capitalize",
-            }}
-          >
-            {f}
-          </button>
-        ))}
+      {/* Filter — select on mobile, pill tabs on desktop */}
+      <div className="mb-6">
+        {/* Mobile select */}
+        <select
+          value={filter}
+          onChange={(e) => changeFilter(e.target.value as Filter)}
+          className="md:hidden w-full bg-nanny-card-soft border border-nanny-border rounded-xl px-3 py-2.5 text-sm text-nanny-ink-mute font-medium capitalize focus:outline-none focus:ring-2 focus:ring-nanny-green/30"
+        >
+          {FILTERS.map((f) => (
+            <option key={f} value={f} className="capitalize">{f}</option>
+          ))}
+        </select>
+
+        {/* Desktop pill tabs */}
+        <div className="hidden md:flex gap-1.5 bg-nanny-card-soft border border-nanny-border rounded-xl p-1 w-fit">
+          {FILTERS.map((f) => (
+            <button
+              key={f}
+              onClick={() => changeFilter(f)}
+              className={cn(
+                "px-4 py-2 rounded-[9px] text-[13.5px] capitalize transition-all cursor-pointer",
+                filter === f
+                  ? "bg-nanny-card border border-nanny-border text-nanny-green font-semibold shadow-[var(--nanny-shadow)]"
+                  : "text-nanny-ink-mute font-medium hover:text-nanny-ink border border-transparent"
+              )}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Cards */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div className="flex flex-col gap-4">
         {bookingsQuery.isLoading ? (
-          <div style={{ textAlign: "center", padding: "60px 0", color: N.inkFaint, fontSize: 15 }}>
-            Loading requests...
-          </div>
+          <p className="text-center py-14 text-nanny-ink-faint text-[15px]">Loading requests...</p>
         ) : bookingsQuery.isError ? (
-          <div style={{ textAlign: "center", padding: "60px 0", color: N.rose, fontSize: 15 }}>
+          <p className="text-center py-14 text-nanny-rose text-[15px]">
             {bookingsQuery.error instanceof Error ? bookingsQuery.error.message : "Unable to load requests."}
-          </div>
+          </p>
         ) : visible.length === 0 ? (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "60px 0",
-              color: N.inkFaint,
-              fontSize: 15,
-            }}
-          >
+          <p className="text-center py-14 text-nanny-ink-faint text-[15px] capitalize">
             No {filter} requests
-          </div>
+          </p>
         ) : (
           visible.map((r) => (
             <BookingRequestCard
@@ -194,19 +162,20 @@ export default function NannyRequestsView() {
         )}
       </div>
 
+      {/* Pagination */}
       {data && data.total > data.limit && (
-        <div style={{ display: "flex", justifyContent: "center", gap: 10, marginTop: 24 }}>
+        <div className="flex justify-center gap-2.5 mt-6">
           <button
-            style={btnLikePagination}
             disabled={page <= 1}
-            onClick={() => setPage((current) => Math.max(1, current - 1))}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className="px-4 py-2 bg-nanny-card border border-nanny-border rounded-[10px] text-[13.5px] font-semibold text-nanny-ink-mute disabled:opacity-40 cursor-pointer hover:bg-nanny-card-soft transition-colors"
           >
             Previous
           </button>
           <button
-            style={btnLikePagination}
             disabled={page * data.limit >= data.total}
-            onClick={() => setPage((current) => current + 1)}
+            onClick={() => setPage((p) => p + 1)}
+            className="px-4 py-2 bg-nanny-card border border-nanny-border rounded-[10px] text-[13.5px] font-semibold text-nanny-ink-mute disabled:opacity-40 cursor-pointer hover:bg-nanny-card-soft transition-colors"
           >
             Next
           </button>
@@ -215,14 +184,3 @@ export default function NannyRequestsView() {
     </div>
   );
 }
-
-const btnLikePagination = {
-  padding: "9px 16px",
-  background: N.card,
-  color: N.inkSoft,
-  border: `1px solid ${N.border}`,
-  borderRadius: 10,
-  fontSize: 13.5,
-  fontWeight: 600,
-  cursor: "pointer",
-};

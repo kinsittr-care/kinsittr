@@ -1,13 +1,13 @@
 import type { Booking } from "@/src/types/api/api";
-import { N } from "../tokens";
+import { cn } from "@/lib/utils";
 
 type Tone = "green" | "gold" | "rose" | "amber";
 
-const toneColors: Record<Tone, string> = {
-  green: N.green,
-  gold:  N.gold,
-  rose:  N.rose,
-  amber: N.amber,
+const toneClass: Record<Tone, string> = {
+  green: "text-nanny-green",
+  gold:  "text-[var(--nanny-gold)]",
+  rose:  "text-nanny-rose",
+  amber: "text-nanny-amber",
 };
 
 function StatCard({
@@ -22,43 +22,14 @@ function StatCard({
   tone?: Tone;
 }) {
   return (
-    <div
-      style={{
-        background: N.card,
-        border: `1px solid ${N.border}`,
-        borderRadius: 18,
-        padding: "22px 24px",
-        minHeight: 138,
-        boxShadow: N.shadow,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <div
-        style={{
-          fontSize: 11,
-          fontWeight: 600,
-          letterSpacing: ".1em",
-          textTransform: "uppercase",
-          color: N.inkMute,
-        }}
-      >
+    <div className="w-[min(220px,72vw)] shrink-0 md:w-auto md:shrink-0 bg-nanny-card border border-nanny-border rounded-[18px] p-5 min-h-[130px] flex flex-col shadow-[var(--nanny-shadow)]">
+      <p className="text-[11px] font-semibold tracking-widest uppercase text-nanny-ink-mute">
         {label}
-      </div>
-      <div
-        style={{
-          marginTop: "auto",
-          fontFamily: "DM Serif Display, var(--font-dm-serif), serif",
-          fontSize: 42,
-          lineHeight: 1,
-          color: toneColors[tone],
-          letterSpacing: "-.01em",
-          paddingTop: 16,
-        }}
-      >
+      </p>
+      <p className={cn("mt-auto pt-3 font-display text-[42px] leading-none tracking-tight", toneClass[tone])}>
         {value}
-      </div>
-      <div style={{ marginTop: 10, fontSize: 13, color: N.inkMute }}>{sub}</div>
+      </p>
+      <p className="mt-2.5 text-[13px] text-nanny-ink-mute">{sub}</p>
     </div>
   );
 }
@@ -70,20 +41,15 @@ export default function DashboardStatCards({
   bookings: Booking[];
   isLoading: boolean;
 }) {
-  const approvedCount = bookings.filter((booking) => booking.status === "approved").length;
-  const pendingCount = bookings.filter((booking) => booking.status === "pending").length;
+  const approvedCount = bookings.filter((b) => b.status === "approved").length;
+  const pendingCount  = bookings.filter((b) => b.status === "pending").length;
   const estimatedEarnings = bookings
-    .filter((booking) => booking.status === "approved")
-    .reduce((sum, booking) => sum + booking.total_amount, 0);
+    .filter((b) => b.status === "approved")
+    .reduce((sum, b) => sum + b.total_amount, 0);
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(4, 1fr)",
-        gap: 18,
-      }}
-    >
+    /* Mobile: horizontal scroll strip. Desktop: 4-col grid */
+    <div className="flex gap-3 overflow-x-auto pb-0.5 [scrollbar-width:none] [-ms-overflow-style:none] md:grid md:grid-cols-4 md:overflow-visible md:gap-4">
       <StatCard
         label="Approved value"
         value={isLoading ? "..." : `$${estimatedEarnings.toFixed(0)}`}
@@ -96,8 +62,8 @@ export default function DashboardStatCards({
         sub="Awaiting your response"
         tone="amber"
       />
-      <StatCard label="Your rating" value="4.9" sub="Profile rating coming soon" tone="gold" />
-      <StatCard label="Response rate" value="98%" sub="Manual metric for now" tone="green" />
+      <StatCard label="Your rating"     value="4.9"  sub="Profile rating coming soon" tone="gold" />
+      <StatCard label="Response rate"   value="98%"  sub="Manual metric for now"      tone="green" />
     </div>
   );
 }
