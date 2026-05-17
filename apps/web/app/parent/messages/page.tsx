@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import MessagesView from "@/src/components/guardian/dashboard/MessagesView";
 import {
@@ -13,5 +14,9 @@ export default function ParentMessagesPage() {
     queryFn: async () => listConversations({ page: 1, limit: 1 }),
   });
 
-  return <MessagesView hasMessages={(data?.data?.total ?? 0) > 0} />;
+  return (
+    <Suspense fallback={null}>
+      <MessagesView hasMessages={(data?.data?.total ?? 0) > 0} />
+    </Suspense>
+  );
 }

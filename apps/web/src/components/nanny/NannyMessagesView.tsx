@@ -6,7 +6,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Conversation, Message } from "@/src/types/api/api";
 import {
   conversationMessagesQueryKey,
@@ -31,12 +31,16 @@ const EMPTY_MESSAGES: Message[] = [];
 
 export default function NannyMessagesView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const notifiedConversationID = searchParams.get("conversation_id");
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [conversationLimit, setConversationLimit] = useState(CONVERSATIONS_PAGE_SIZE);
   const [messageLimit, setMessageLimit] = useState(MESSAGES_PAGE_SIZE);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-  const [mobileView, setMobileView] = useState<"list" | "chat">("list");
+  const [mobileView, setMobileView] = useState<"list" | "chat">(
+    notifiedConversationID ? "chat" : "list",
+  );
   const [input, setInput] = useState("");
   const [sendError, setSendError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -52,14 +56,15 @@ export default function NannyMessagesView() {
     [conversationsQuery.data],
   );
   const totalConversations = conversationsQuery.data?.data?.total ?? 0;
+  const requestedConversationId = selectedConversationId ?? notifiedConversationID;
 
   const activeConversationId = useMemo(() => {
     if (!conversations.length) return null;
-    if (selectedConversationId && conversations.some((c) => c.id === selectedConversationId)) {
-      return selectedConversationId;
+    if (requestedConversationId && conversations.some((c) => c.id === requestedConversationId)) {
+      return requestedConversationId;
     }
     return conversations[0]?.id ?? null;
-  }, [conversations, selectedConversationId]);
+  }, [conversations, requestedConversationId]);
 
   const selectedConversation =
     conversations.find((c) => c.id === activeConversationId) ?? null;

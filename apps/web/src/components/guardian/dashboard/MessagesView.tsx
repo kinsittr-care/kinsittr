@@ -6,7 +6,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Conversation, Message } from "@/src/types/api/api";
 import {
   conversationMessagesQueryKey,
@@ -34,12 +34,16 @@ const EMPTY_MESSAGES: Message[] = [];
 
 export default function MessagesView({ hasMessages }: MessagesViewProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const notifiedConversationID = searchParams.get("conversation_id");
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [conversationLimit, setConversationLimit] = useState(CONVERSATIONS_PAGE_SIZE);
   const [messageLimit, setMessageLimit] = useState(MESSAGES_PAGE_SIZE);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-  const [mobileView, setMobileView] = useState<"list" | "chat">("list");
+  const [mobileView, setMobileView] = useState<"list" | "chat">(
+    notifiedConversationID ? "chat" : "list",
+  );
   const [input, setInput] = useState("");
   const [sendError, setSendError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -52,10 +56,11 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
 
   const conversations = conversationsQuery.data?.data?.items ?? EMPTY_CONVERSATIONS;
   const totalConversations = conversationsQuery.data?.data?.total ?? 0;
+  const requestedConversationId = selectedConversationId ?? notifiedConversationID;
   const resolvedSelectedConversationId =
-    selectedConversationId !== null &&
-    conversations.some((conversation) => conversation.id === selectedConversationId)
-      ? selectedConversationId
+    requestedConversationId !== null &&
+    conversations.some((conversation) => conversation.id === requestedConversationId)
+      ? requestedConversationId
       : (conversations[0]?.id ?? null);
   const effectiveMessageLimit =
     resolvedSelectedConversationId === selectedConversationId
@@ -208,7 +213,7 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
               : undefined
           }
           isMobile={isMobile}
-          selectedConversationId={selectedConversationId}
+          selectedConversationId={resolvedSelectedConversationId}
           onRetry={() => conversationsQuery.refetch()}
           onSelectConversation={(id) => {
             setSelectedConversationId(id);

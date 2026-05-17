@@ -3,11 +3,13 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { getCurrentSession } from "@/src/utils/api/auth";
 import { listNannyBookings, nannyBookingsQueryKey } from "@/src/utils/api/bookings";
 import { conversationsQueryKey, listConversations } from "@/src/utils/api/conversations";
 import { N } from "./tokens";
 import NannyAvatar from "./NannyAvatar";
+import NannyNotificationsPanel from "./notifications/NannyNotificationsPanel";
 import { useIsMobile } from "@/src/components/guardian/dashboard/useIsMobile";
 
 const navItems = [
@@ -75,6 +77,7 @@ const navItems = [
 export default function NannySidebar() {
   const pathname = usePathname();
   const isMobile = useIsMobile();
+  const [notifOpen, setNotifOpen] = useState(false);
   const sessionQuery = useQuery({
     queryKey: ["auth-me"],
     queryFn: getCurrentSession,
@@ -102,6 +105,13 @@ export default function NannySidebar() {
   if (isMobile) return null;
 
   return (
+    <>
+    {notifOpen && (
+      <div
+        style={{ position: "fixed", inset: 0, zIndex: 199 }}
+        onClick={() => setNotifOpen(false)}
+      />
+    )}
     <aside
       style={{
         width: 260,
@@ -236,7 +246,7 @@ export default function NannySidebar() {
         })}
       </nav>
 
-      {/* User */}
+      {/* User + notifications */}
       <div
         style={{
           padding: "18px 18px 12px",
@@ -245,16 +255,22 @@ export default function NannySidebar() {
           display: "flex",
           alignItems: "center",
           gap: 12,
+          position: "relative",
         }}
       >
         <NannyAvatar initials={displayName.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()} size={40} tone="cream" />
-        <div style={{ minWidth: 0 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: N.greenDk }}>{displayName}</div>
           <div style={{ fontSize: 12, color: N.inkMute, marginTop: 1 }}>
             {session?.nanny_profile?.verification_status === "verified" ? "Verified caregiver" : "Caregiver"}
           </div>
         </div>
+        <NannyNotificationsPanel
+          open={notifOpen}
+          onClose={() => setNotifOpen((v) => !v)}
+        />
       </div>
     </aside>
+    </>
   );
 }

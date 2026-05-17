@@ -11,6 +11,7 @@ import {
   conversationsQueryKey,
   listConversations,
 } from "@/src/utils/api/conversations";
+import ParentNotificationsPanel from "@/src/components/guardian/notifications/ParentNotificationsPanel";
 
 const NAV_TABS = [
   { id: "browse", label: "Browse", href: "/parent" },
@@ -21,6 +22,7 @@ export default function AppNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const isMobile = useIsMobile();
   const { data: conversationsData } = useQuery({
     queryKey: conversationsQueryKey({ page: 1, limit: 1 }),
@@ -113,6 +115,14 @@ export default function AppNav() {
           })}
         </div>
 
+        {/* Notifications bell */}
+        <div style={{ position: "relative", marginLeft: 4 }}>
+          <ParentNotificationsPanel
+            open={notifOpen}
+            onClose={() => setNotifOpen((v) => !v)}
+          />
+        </div>
+
         {/* User avatar */}
         <div style={{ position: "relative" }}>
           <button
@@ -200,11 +210,11 @@ export default function AppNav() {
         </div>
       </nav>
 
-      {/* Dismiss dropdown on outside click */}
-      {dropdownOpen && (
+      {/* Dismiss dropdowns on outside click */}
+      {(dropdownOpen || notifOpen) && (
         <div
           style={{ position: "fixed", inset: 0, zIndex: 9 }}
-          onClick={() => setDropdownOpen(false)}
+          onClick={() => { setDropdownOpen(false); setNotifOpen(false); }}
         />
       )}
     </>

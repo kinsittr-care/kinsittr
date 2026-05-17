@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { Booking, BookingStatus } from "@/src/types/api/api";
 import {
   approveNannyBooking,
@@ -66,6 +67,8 @@ function toBookingRequest(booking: Booking): BookingRequest {
 
 export default function NannyRequestsView() {
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const notifiedBookingID = searchParams.get("booking_id");
   const [filter, setFilter] = useState<Filter>("all");
   const [page, setPage] = useState(1);
   const [updatingID, setUpdatingID] = useState<string | null>(null);
@@ -183,6 +186,7 @@ export default function NannyRequestsView() {
               key={r.id}
               booking={r}
               isUpdating={updatingID === r.id}
+              isHighlighted={r.id === notifiedBookingID}
               onApprove={() => updateMutation.mutate({ id: r.id, action: "approve" })}
               onDecline={() => updateMutation.mutate({ id: r.id, action: "decline" })}
             />

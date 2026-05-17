@@ -21,11 +21,13 @@ export default function BookingRequestCard({
   onApprove,
   onDecline,
   isUpdating = false,
+  isHighlighted = false,
 }: {
   booking: BookingRequest;
   onApprove?: () => void;
   onDecline?: () => void;
   isUpdating?: boolean;
+  isHighlighted?: boolean;
 }) {
   const isPending = booking.status === "pending";
 
@@ -33,10 +35,10 @@ export default function BookingRequestCard({
     <div
       style={{
         background: N.card,
-        border: `1px solid ${N.border}`,
+        border: isHighlighted ? `2px solid ${N.green}` : `1px solid ${N.border}`,
         borderRadius: 18,
         padding: "22px 24px",
-        boxShadow: N.shadow,
+        boxShadow: isHighlighted ? "0 0 0 4px rgba(45,90,61,.08)" : N.shadow,
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>

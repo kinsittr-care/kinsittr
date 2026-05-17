@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import ParentBookingsView from "../bookings/ParentBookingsView";
 
 export default function BookingHistorySection() {
-  return <ParentBookingsView compact showViewAllLink />;
+  return (
+    <Suspense fallback={null}>
+      <ParentBookingsView compact showViewAllLink />
+    </Suspense>
+  );
 }
