@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Nanny } from "./types";
 import Avatar from "./Avatar";
-import { ApiRequestError } from "@/src/utils/api";
-import { createBooking } from "@/src/utils/bookings";
+import { ApiRequestError } from "@/src/utils/api/api";
+import { createBooking } from "@/src/utils/api/bookings";
 import type { Booking } from "@/src/types/api/api";
 
 const inputStyle: React.CSSProperties = {

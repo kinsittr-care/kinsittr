@@ -31,6 +31,9 @@ type mockMessagesRepo struct {
 	createdMessage           models.Message
 	createMessageErr         error
 	lastMessage              models.Message
+	readConversationID       uuid.UUID
+	readUserID               uuid.UUID
+	markReadErr              error
 }
 
 func (m *mockMessagesRepo) GetConversationByBookingID(_ context.Context, _ uuid.UUID) (models.Conversation, error) {
@@ -49,11 +52,11 @@ func (m *mockMessagesRepo) ListNannyConversations(_ context.Context, _ uuid.UUID
 	return m.nannyConversations, m.nannyConversationsTotal, m.nannyConversationsErr
 }
 
-func (m *mockMessagesRepo) GetParentConversationByID(_ context.Context, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
+func (m *mockMessagesRepo) GetParentConversationByID(_ context.Context, _, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
 	return m.parentConversation, m.parentConversationErr
 }
 
-func (m *mockMessagesRepo) GetNannyConversationByID(_ context.Context, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
+func (m *mockMessagesRepo) GetNannyConversationByID(_ context.Context, _, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
 	return m.nannyConversation, m.nannyConversationErr
 }
 
@@ -67,6 +70,12 @@ func (m *mockMessagesRepo) CreateMessage(_ context.Context, message models.Messa
 		return m.createdMessage, m.createMessageErr
 	}
 	return message, m.createMessageErr
+}
+
+func (m *mockMessagesRepo) MarkConversationRead(_ context.Context, conversationID, userID uuid.UUID) (models.ConversationRead, error) {
+	m.readConversationID = conversationID
+	m.readUserID = userID
+	return models.ConversationRead{ConversationID: conversationID, UserID: userID, LastReadAt: time.Now().UTC()}, m.markReadErr
 }
 
 type mockProfileRepo struct {
@@ -93,6 +102,15 @@ func (m *mockProfileRepo) UpdateNannyProfile(_ context.Context, p models.NannyPr
 }
 func (m *mockProfileRepo) UpdateParentProfile(_ context.Context, p models.ParentProfile) (models.ParentProfile, error) {
 	return p, nil
+}
+func (m *mockProfileRepo) GetOrCreateParentSettings(_ context.Context, userID uuid.UUID) (models.ParentSettings, error) {
+	return models.ParentSettings{ID: uuid.New(), UserID: userID}, nil
+}
+func (m *mockProfileRepo) UpdateParentSettings(_ context.Context, settings models.ParentSettings) (models.ParentSettings, error) {
+	if settings.ID == uuid.Nil {
+		settings.ID = uuid.New()
+	}
+	return settings, nil
 }
 func (m *mockProfileRepo) DeleteNannyProfile(_ context.Context, _ uuid.UUID) error  { return nil }
 func (m *mockProfileRepo) DeleteParentProfile(_ context.Context, _ uuid.UUID) error { return nil }
@@ -275,6 +293,9 @@ func TestConversationsPipeSendMessage(t *testing.T) {
 		if repo.lastMessage.SenderUserID != userID {
 			t.Fatalf("expected sender user id %s, got %s", userID, repo.lastMessage.SenderUserID)
 		}
+		if repo.readConversationID != record.ID || repo.readUserID != userID {
+			t.Fatalf("expected sender conversation read marker, got conversation=%s user=%s", repo.readConversationID, repo.readUserID)
+		}
 	})
 
 	t.Run("whitespace only body is rejected", func(t *testing.T) {
@@ -291,6 +312,43 @@ func TestConversationsPipeSendMessage(t *testing.T) {
 
 		if res.Success || string(res.Message) != convmessages.Invalid_Message_Request {
 			t.Fatalf("expected %s, got success=%v message=%s", convmessages.Invalid_Message_Request, res.Success, res.Message)
+		}
+	})
+}
+
+func TestConversationsPipeMarkRead(t *testing.T) {
+	t.Run("parent success marks conversation read", func(t *testing.T) {
+		record := validConversationRecord()
+		userID := uuid.New()
+		repo := &mockMessagesRepo{
+			parentConversation: record,
+		}
+		pipe := newConversationsPipe(repo, &mockProfileRepo{
+			parentProfile: models.ParentProfile{ID: record.ParentProfileID},
+		})
+
+		res := pipe.MarkRead(context.Background(), userID, models.ParentUserRole, record.ID)
+
+		if !res.Success || string(res.Message) != convmessages.Conversation_Read {
+			t.Fatalf("expected success %s, got success=%v message=%s", convmessages.Conversation_Read, res.Success, res.Message)
+		}
+		if repo.readConversationID != record.ID || repo.readUserID != userID {
+			t.Fatalf("expected read marker for conversation=%s user=%s, got conversation=%s user=%s", record.ID, userID, repo.readConversationID, repo.readUserID)
+		}
+		if res.Data == nil || res.Data.UnreadCount != 0 || res.Data.LastReadAt == nil {
+			t.Fatalf("expected read conversation data, got %+v", res.Data)
+		}
+	})
+
+	t.Run("missing conversation returns not found", func(t *testing.T) {
+		pipe := newConversationsPipe(&mockMessagesRepo{}, &mockProfileRepo{
+			parentProfile: models.ParentProfile{ID: uuid.New()},
+		})
+
+		res := pipe.MarkRead(context.Background(), uuid.New(), models.ParentUserRole, uuid.New())
+
+		if res.Success || string(res.Message) != convmessages.Conversation_Not_Found {
+			t.Fatalf("expected %s, got success=%v message=%s", convmessages.Conversation_Not_Found, res.Success, res.Message)
 		}
 	})
 }

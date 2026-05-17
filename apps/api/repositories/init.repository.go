@@ -6,6 +6,7 @@ import (
 	"github.com/kinsittr/kinsittr-api/repositories/bookings"
 	"github.com/kinsittr/kinsittr-api/repositories/messages"
 	"github.com/kinsittr/kinsittr-api/repositories/nanny"
+	"github.com/kinsittr/kinsittr-api/repositories/notifications"
 	"github.com/kinsittr/kinsittr-api/repositories/profile"
 )
 
@@ -14,5 +15,6 @@ func InitRepositories(db *pgxpool.Pool) {
 	bookings.InitBookingsRepo(db)
 	messages.InitMessagesRepo(db)
 	nanny.InitNannyRepo(db)
+	notifications.InitNotificationsRepo(db)
 	profile.InitProfileRepo(db)
 }

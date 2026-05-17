@@ -15,6 +15,8 @@ type ProfileRepository interface {
 	GetParentProfileByUserID(ctx context.Context, userID uuid.UUID) (models.ParentProfile, error)
 	UpdateNannyProfile(ctx context.Context, profile models.NannyProfile) (models.NannyProfile, error)
 	UpdateParentProfile(ctx context.Context, profile models.ParentProfile) (models.ParentProfile, error)
+	GetOrCreateParentSettings(ctx context.Context, userID uuid.UUID) (models.ParentSettings, error)
+	UpdateParentSettings(ctx context.Context, settings models.ParentSettings) (models.ParentSettings, error)
 	DeleteNannyProfile(ctx context.Context, userID uuid.UUID) error
 	DeleteParentProfile(ctx context.Context, userID uuid.UUID) error
 }

@@ -37,10 +37,10 @@ func (m *mockMessagesRepo) ListParentConversations(_ context.Context, _ uuid.UUI
 func (m *mockMessagesRepo) ListNannyConversations(_ context.Context, _ uuid.UUID, _ messagesrepo.ConversationListFilter) ([]messagesrepo.ConversationRecord, int, error) {
 	return nil, 0, nil
 }
-func (m *mockMessagesRepo) GetParentConversationByID(_ context.Context, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
+func (m *mockMessagesRepo) GetParentConversationByID(_ context.Context, _, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
 	return m.parentConversation, nil
 }
-func (m *mockMessagesRepo) GetNannyConversationByID(_ context.Context, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
+func (m *mockMessagesRepo) GetNannyConversationByID(_ context.Context, _, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
 	return messagesrepo.ConversationRecord{}, nil
 }
 func (m *mockMessagesRepo) ListMessages(_ context.Context, _ uuid.UUID, _ messagesrepo.MessageListFilter) ([]models.Message, int, error) {
@@ -51,6 +51,9 @@ func (m *mockMessagesRepo) CreateMessage(_ context.Context, message models.Messa
 		return m.createdMessage, nil
 	}
 	return message, nil
+}
+func (m *mockMessagesRepo) MarkConversationRead(_ context.Context, conversationID, userID uuid.UUID) (models.ConversationRead, error) {
+	return models.ConversationRead{ConversationID: conversationID, UserID: userID, LastReadAt: time.Now().UTC()}, nil
 }
 
 type mockProfileRepo struct {
@@ -75,6 +78,15 @@ func (m *mockProfileRepo) UpdateNannyProfile(_ context.Context, p models.NannyPr
 }
 func (m *mockProfileRepo) UpdateParentProfile(_ context.Context, p models.ParentProfile) (models.ParentProfile, error) {
 	return p, nil
+}
+func (m *mockProfileRepo) GetOrCreateParentSettings(_ context.Context, userID uuid.UUID) (models.ParentSettings, error) {
+	return models.ParentSettings{ID: uuid.New(), UserID: userID}, nil
+}
+func (m *mockProfileRepo) UpdateParentSettings(_ context.Context, settings models.ParentSettings) (models.ParentSettings, error) {
+	if settings.ID == uuid.Nil {
+		settings.ID = uuid.New()
+	}
+	return settings, nil
 }
 func (m *mockProfileRepo) DeleteNannyProfile(_ context.Context, _ uuid.UUID) error  { return nil }
 func (m *mockProfileRepo) DeleteParentProfile(_ context.Context, _ uuid.UUID) error { return nil }

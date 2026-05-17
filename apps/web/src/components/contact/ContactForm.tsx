@@ -2,7 +2,7 @@
 
 import { ArrowRightIcon } from "@/src/components/icons";
 import { ContactFormPayload } from "@/src/types/api/api";
-import { ApiRequestError } from "@/src/utils/api";
+import { ApiRequestError } from "@/src/utils/api/api";
 import { sendContactMessage } from "@/src/utils/api/contact";
 import { ChangeEvent, useState } from "react";
 

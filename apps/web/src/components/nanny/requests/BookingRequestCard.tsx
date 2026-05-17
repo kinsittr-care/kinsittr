@@ -5,7 +5,7 @@ import type { PillTone } from "../NannyPill";
 import { btnAccept, btnDecline, btnGhost } from "../nanny-styles";
 
 export type BookingRequest = {
-  id: number;
+  id: string;
   parent: string;
   initials: string;
   date: string;
@@ -16,17 +16,29 @@ export type BookingRequest = {
   children: string;
 };
 
-export default function BookingRequestCard({ booking }: { booking: BookingRequest }) {
+export default function BookingRequestCard({
+  booking,
+  onApprove,
+  onDecline,
+  isUpdating = false,
+  isHighlighted = false,
+}: {
+  booking: BookingRequest;
+  onApprove?: () => void;
+  onDecline?: () => void;
+  isUpdating?: boolean;
+  isHighlighted?: boolean;
+}) {
   const isPending = booking.status === "pending";
 
   return (
     <div
       style={{
         background: N.card,
-        border: `1px solid ${N.border}`,
+        border: isHighlighted ? `2px solid ${N.green}` : `1px solid ${N.border}`,
         borderRadius: 18,
         padding: "22px 24px",
-        boxShadow: N.shadow,
+        boxShadow: isHighlighted ? "0 0 0 4px rgba(45,90,61,.08)" : N.shadow,
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
@@ -70,8 +82,12 @@ export default function BookingRequestCard({ booking }: { booking: BookingReques
 
       {isPending && (
         <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
-          <button style={btnAccept}>Accept</button>
-          <button style={btnDecline}>Decline</button>
+          <button style={btnAccept} onClick={onApprove} disabled={isUpdating}>
+            {isUpdating ? "Updating..." : "Accept"}
+          </button>
+          <button style={btnDecline} onClick={onDecline} disabled={isUpdating}>
+            Decline
+          </button>
           <button style={btnGhost}>Message parent</button>
         </div>
       )}

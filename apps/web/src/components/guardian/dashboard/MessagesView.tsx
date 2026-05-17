@@ -6,16 +6,17 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Conversation, Message } from "@/src/types/api/api";
 import {
   conversationMessagesQueryKey,
   conversationsQueryKey,
   listConversationMessages,
   listConversations,
+  markConversationRead,
   sendConversationMessage,
-} from "@/src/utils/conversations";
-import { ApiRequestError } from "@/src/utils/api";
+} from "@/src/utils/api/conversations";
+import { ApiRequestError } from "@/src/utils/api/api";
 import { useIsMobile } from "./useIsMobile";
 import MessagesChatHeader from "./messages/MessagesChatHeader";
 import MessagesComposer from "./messages/MessagesComposer";
@@ -33,15 +34,20 @@ const EMPTY_MESSAGES: Message[] = [];
 
 export default function MessagesView({ hasMessages }: MessagesViewProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const notifiedConversationID = searchParams.get("conversation_id");
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [conversationLimit, setConversationLimit] = useState(CONVERSATIONS_PAGE_SIZE);
   const [messageLimit, setMessageLimit] = useState(MESSAGES_PAGE_SIZE);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-  const [mobileView, setMobileView] = useState<"list" | "chat">("list");
+  const [mobileView, setMobileView] = useState<"list" | "chat">(
+    notifiedConversationID ? "chat" : "list",
+  );
   const [input, setInput] = useState("");
   const [sendError, setSendError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const lastMarkedReadKeyRef = useRef<string | null>(null);
 
   const conversationsQuery = useQuery({
     queryKey: conversationsQueryKey({ page: 1, limit: conversationLimit }),
@@ -50,10 +56,11 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
 
   const conversations = conversationsQuery.data?.data?.items ?? EMPTY_CONVERSATIONS;
   const totalConversations = conversationsQuery.data?.data?.total ?? 0;
+  const requestedConversationId = selectedConversationId ?? notifiedConversationID;
   const resolvedSelectedConversationId =
-    selectedConversationId !== null &&
-    conversations.some((conversation) => conversation.id === selectedConversationId)
-      ? selectedConversationId
+    requestedConversationId !== null &&
+    conversations.some((conversation) => conversation.id === requestedConversationId)
+      ? requestedConversationId
       : (conversations[0]?.id ?? null);
   const effectiveMessageLimit =
     resolvedSelectedConversationId === selectedConversationId
@@ -87,9 +94,47 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
   const messages = messagesQuery.data?.data?.items ?? EMPTY_MESSAGES;
   const totalMessages = messagesQuery.data?.data?.total ?? 0;
 
+  const markReadMutation = useMutation({
+    mutationFn: markConversationRead,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: conversationsQueryKey({ page: 1, limit: conversationLimit }),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: conversationsQueryKey({ page: 1, limit: 1 }),
+        }),
+      ]);
+    },
+  });
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [resolvedSelectedConversationId, messages]);
+
+  useEffect(() => {
+    if (
+      !resolvedSelectedConversationId ||
+      !messagesQuery.isSuccess ||
+      !selectedConversation ||
+      selectedConversation.unread_count < 1
+    ) {
+      return;
+    }
+
+    const markReadKey = `${resolvedSelectedConversationId}:${selectedConversation.last_message_at ?? "none"}:${selectedConversation.unread_count}`;
+    if (lastMarkedReadKeyRef.current === markReadKey || markReadMutation.isPending) {
+      return;
+    }
+
+    lastMarkedReadKeyRef.current = markReadKey;
+    markReadMutation.mutate(resolvedSelectedConversationId);
+  }, [
+    markReadMutation,
+    messagesQuery.isSuccess,
+    resolvedSelectedConversationId,
+    selectedConversation,
+  ]);
 
   const sendMessageMutation = useMutation({
     mutationFn: async (body: string) => {
@@ -168,7 +213,7 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
               : undefined
           }
           isMobile={isMobile}
-          selectedConversationId={selectedConversationId}
+          selectedConversationId={resolvedSelectedConversationId}
           onRetry={() => conversationsQuery.refetch()}
           onSelectConversation={(id) => {
             setSelectedConversationId(id);

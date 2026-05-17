@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import ParentBookingsView from "@/src/components/guardian/bookings/ParentBookingsView";
 
 export const metadata = { title: "Bookings — KinSittr" };
@@ -14,7 +15,9 @@ export default function ParentBookingsPage() {
             Review your booking requests, track status updates, and manage pending requests.
           </p>
         </div>
-        <ParentBookingsView />
+        <Suspense fallback={<p style={{ color: "var(--muted)", fontSize: 14 }}>Loading bookings…</p>}>
+          <ParentBookingsView />
+        </Suspense>
       </div>
     </div>
   );

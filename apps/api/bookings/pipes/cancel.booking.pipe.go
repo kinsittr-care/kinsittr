@@ -41,5 +41,11 @@ func (p *BookingsPipe) Cancel(ctx context.Context, userID, bookingID uuid.UUID) 
 	}
 
 	data := toBookingRecordData(booking)
+	p.notifyNannyProfile(ctx, booking.NannyProfileID, models.Notification{
+		Type:  models.BookingCancelledNotificationType,
+		Title: "Booking cancelled",
+		Body:  "A parent cancelled a pending booking.",
+		Data:  notificationData(map[string]string{"booking_id": booking.ID.String()}),
+	})
 	return pipeSuccess(messages.Booking_Cancelled, &data)
 }

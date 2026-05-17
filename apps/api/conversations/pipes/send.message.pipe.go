@@ -29,7 +29,7 @@ func (p *ConversationsPipe) SendMessage(ctx context.Context, userID uuid.UUID, r
 		if parentProfile.ID == uuid.Nil {
 			return conversationNotFound[MessageData]()
 		}
-		record, err = p.repo.GetParentConversationByID(ctx, conversationID, parentProfile.ID)
+		record, err = p.repo.GetParentConversationByID(ctx, conversationID, parentProfile.ID, userID)
 	case models.NannyUserRole:
 		nannyProfile, profileErr := p.profileRepo.GetNannyProfileByUserID(ctx, userID)
 		if profileErr != nil {
@@ -38,7 +38,7 @@ func (p *ConversationsPipe) SendMessage(ctx context.Context, userID uuid.UUID, r
 		if nannyProfile.ID == uuid.Nil {
 			return conversationNotFound[MessageData]()
 		}
-		record, err = p.repo.GetNannyConversationByID(ctx, conversationID, nannyProfile.ID)
+		record, err = p.repo.GetNannyConversationByID(ctx, conversationID, nannyProfile.ID, userID)
 	default:
 		return pipeError[MessageData](convmessages.Forbidden_Conversation_Access)
 	}
@@ -59,7 +59,25 @@ func (p *ConversationsPipe) SendMessage(ctx context.Context, userID uuid.UUID, r
 	if err != nil {
 		return pipeError[MessageData](convmessages.Invalid_Message_Request)
 	}
+	if _, err := p.repo.MarkConversationRead(ctx, conversationID, userID); err != nil {
+		return pipeError[MessageData](convmessages.Invalid_Message_Request)
+	}
 
 	data := toMessageData(message)
+	if role == models.ParentUserRole {
+		p.notifyNannyProfile(ctx, record.NannyProfileID, models.Notification{
+			Type:  models.MessageReceivedNotificationType,
+			Title: "New message",
+			Body:  "A parent sent you a message.",
+			Data:  notificationData(map[string]string{"conversation_id": conversationID.String(), "message_id": message.ID.String()}),
+		})
+	} else {
+		p.notifyParentProfile(ctx, record.ParentProfileID, models.Notification{
+			Type:  models.MessageReceivedNotificationType,
+			Title: "New message",
+			Body:  "A nanny sent you a message.",
+			Data:  notificationData(map[string]string{"conversation_id": conversationID.String(), "message_id": message.ID.String()}),
+		})
+	}
 	return pipeSuccess(convmessages.Message_Sent, &data)
 }

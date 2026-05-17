@@ -7,7 +7,7 @@ import type {
   MessageListData,
   SendMessagePayload,
 } from "@/src/types/api/api";
-import { apiRequest } from "@/src/utils/api";
+import { apiRequest } from "@/src/utils/api/api";
 
 function buildListQuery(params?: ListConversationsParams | ListMessagesParams) {
   const query = new URLSearchParams();
@@ -76,6 +76,18 @@ export async function sendConversationMessage(
     {
       method: "POST",
       body: JSON.stringify(payload),
+    },
+    {
+      requiresAuth: true,
+    },
+  );
+}
+
+export async function markConversationRead(id: string) {
+  return apiRequest<Conversation>(
+    `/api/v1/conversations/${id}/read`,
+    {
+      method: "PATCH",
     },
     {
       requiresAuth: true,

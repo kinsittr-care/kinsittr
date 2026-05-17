@@ -156,6 +156,58 @@ func (r *pgRepository) CreateNannyAccount(ctx context.Context, user models.User,
 	return created, nil
 }
 
+func (r *pgRepository) UpdateUserPassword(ctx context.Context, userID uuid.UUID, passwordHash string) error {
+	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	tag, err := tx.Exec(ctx, `
+		UPDATE users
+		SET password_hash = $1, updated_at = NOW()
+		WHERE id = $2 AND is_active = TRUE
+	`, passwordHash, userID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+
+	if _, err := tx.Exec(ctx, `DELETE FROM refresh_sessions WHERE user_id = $1`, userID); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (r *pgRepository) DeactivateUser(ctx context.Context, userID uuid.UUID) error {
+	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	tag, err := tx.Exec(ctx, `
+		UPDATE users
+		SET is_active = FALSE, updated_at = NOW()
+		WHERE id = $1 AND is_active = TRUE
+	`, userID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+
+	if _, err := tx.Exec(ctx, `DELETE FROM refresh_sessions WHERE user_id = $1`, userID); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
 func (r *pgRepository) CreateRefreshSession(ctx context.Context, session models.RefreshSession) error {
 	_, err := r.db.Exec(ctx, `
 		INSERT INTO refresh_sessions (id, user_id, expires_at)
@@ -202,6 +254,11 @@ func (r *pgRepository) RotateRefreshSession(ctx context.Context, oldSessionID uu
 
 func (r *pgRepository) DeleteRefreshSession(ctx context.Context, sessionID uuid.UUID) error {
 	_, err := r.db.Exec(ctx, `DELETE FROM refresh_sessions WHERE id = $1`, sessionID)
+	return err
+}
+
+func (r *pgRepository) DeleteRefreshSessionsByUserID(ctx context.Context, userID uuid.UUID) error {
+	_, err := r.db.Exec(ctx, `DELETE FROM refresh_sessions WHERE user_id = $1`, userID)
 	return err
 }
 

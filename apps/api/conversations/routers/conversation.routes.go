@@ -31,6 +31,12 @@ func ConversationRoutes(controller *controllers.ConversationsController, jwtSecr
 			Handler:     controller.ListMessages,
 		},
 		{
+			RouteMethod: api.RouteMethod(fiber.MethodPatch),
+			Path:        "/:id/read",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.MarkRead,
+		},
+		{
 			RouteMethod: api.RouteMethod(fiber.MethodPost),
 			Path:        "/:id/messages",
 			Middlewares: []typings.FiberMiddleware{auth},

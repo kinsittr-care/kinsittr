@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { Booking } from "@/src/types/api/api";
-import { getParentBookingById, parentBookingQueryKey } from "@/src/utils/bookings";
+import { getParentBookingById, parentBookingQueryKey } from "@/src/utils/api/bookings";
 import SectionCard from "../profile/SectionCard";
 import BookingStatusBadge from "./BookingStatusBadge";
 import { describeBookingTime, formatBookingTotal } from "./booking-helpers";

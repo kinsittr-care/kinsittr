@@ -1,4 +1,8 @@
-import type { AuthSession, AuthSessionPayload, AuthTokenPair } from "@/src/types/api/api";
+import type {
+  AuthSession,
+  AuthSessionPayload,
+  AuthTokenPair,
+} from "@/src/types/api/api";
 
 const AUTH_STORAGE_KEY = "kinsittr.auth.session";
 

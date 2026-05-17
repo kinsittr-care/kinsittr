@@ -95,5 +95,12 @@ func (p *BookingsPipe) Create(ctx context.Context, userID uuid.UUID, dto dtos.Cr
 	data.NannyCity = nannyProfile.City
 	data.NannyProvince = nannyProfile.Province
 
+	p.notifyNannyProfile(ctx, nannyProfile.ID, models.Notification{
+		Type:  models.BookingRequestedNotificationType,
+		Title: "New booking request",
+		Body:  "A parent sent you a booking request.",
+		Data:  notificationData(map[string]string{"booking_id": booking.ID.String()}),
+	})
+
 	return pipeSuccess(messages.Booking_Created, &data)
 }

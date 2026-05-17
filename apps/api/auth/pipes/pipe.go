@@ -66,3 +66,11 @@ func pipeError[T any](message string) *shared.PipeRes[T] {
 		Message: shared.CreatePipeMessage(message),
 	}
 }
+
+func pipeSuccess[T any](message string, data *T) *shared.PipeRes[T] {
+	return &shared.PipeRes[T]{
+		Success: true,
+		Message: shared.CreatePipeMessage(message),
+		Data:    data,
+	}
+}

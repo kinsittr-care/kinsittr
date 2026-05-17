@@ -28,18 +28,23 @@ func mapBookingWriteError(err error) error {
 		return err
 	}
 
-	if pgErr.Code != "23P01" {
-		return err
+	switch pgErr.Code {
+	case "23P01":
+		switch pgErr.ConstraintName {
+		case "bookings_parent_nanny_slot_excl":
+			return ErrBookingAlreadyExists
+		case "bookings_nanny_approved_slot_excl":
+			return ErrNannyTimeUnavailable
+		default:
+			return err
+		}
+	case "23505":
+		if pgErr.ConstraintName == "idx_booking_change_requests_one_pending" {
+			return ErrPendingChangeRequestExists
+		}
 	}
 
-	switch pgErr.ConstraintName {
-	case "bookings_parent_nanny_slot_excl":
-		return ErrBookingAlreadyExists
-	case "bookings_nanny_approved_slot_excl":
-		return ErrNannyTimeUnavailable
-	default:
-		return err
-	}
+	return err
 }
 
 func (r *pgRepository) HasParentActiveBookingWithNanny(ctx context.Context, parentProfileID, nannyProfileID uuid.UUID, startTime time.Time, duration int) (bool, error) {
@@ -70,6 +75,22 @@ func (r *pgRepository) HasNannyApprovedBookingConflict(ctx context.Context, nann
 			  AND (start_time + (duration * INTERVAL '1 hour')) > $2
 		)
 	`, nannyProfileID, startTime, duration).Scan(&exists)
+	return exists, err
+}
+
+func (r *pgRepository) HasNannyApprovedBookingConflictExcluding(ctx context.Context, nannyProfileID uuid.UUID, startTime time.Time, duration int, excludeBookingID uuid.UUID) (bool, error) {
+	var exists bool
+	err := r.db.QueryRow(ctx, `
+		SELECT EXISTS(
+			SELECT 1
+			FROM bookings
+			WHERE nanny_profile_id = $1
+			  AND id <> $4
+			  AND status = 'approved'
+			  AND start_time < ($2 + ($3 * INTERVAL '1 hour'))
+			  AND (start_time + (duration * INTERVAL '1 hour')) > $2
+		)
+	`, nannyProfileID, startTime, duration, excludeBookingID).Scan(&exists)
 	return exists, err
 }
 
@@ -278,6 +299,54 @@ func (r *pgRepository) ApproveNannyBooking(ctx context.Context, nannyProfileID, 
 	return r.updateNannyBookingStatus(ctx, nannyProfileID, bookingID, models.ApprovedBookingStatus)
 }
 
+func (r *pgRepository) ApproveNannyBookingWithConversation(ctx context.Context, nannyProfileID, bookingID uuid.UUID) (BookingRecord, error) {
+	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return BookingRecord{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	var booking BookingRecord
+	err = tx.QueryRow(ctx, `
+		UPDATE bookings b
+		SET status = $1, updated_at = NOW()
+		FROM nanny_profiles np, parent_profiles pp
+		WHERE b.nanny_profile_id = np.id
+		  AND b.parent_profile_id = pp.id
+		  AND b.nanny_profile_id = $2
+		  AND b.id = $3
+		  AND b.status = $4
+		RETURNING b.id, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
+		          np.display_name, np.city, np.province,
+		          pp.display_name, pp.city, pp.province
+	`, models.ApprovedBookingStatus, nannyProfileID, bookingID, models.PendingBookingStatus).Scan(
+		&booking.ID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
+		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
+		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
+		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return BookingRecord{}, nil
+	}
+	if err != nil {
+		return BookingRecord{}, mapBookingWriteError(err)
+	}
+
+	_, err = tx.Exec(ctx, `
+		INSERT INTO conversations (id, booking_id, parent_profile_id, nanny_profile_id)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (booking_id) DO NOTHING
+	`, uuid.New(), booking.ID, booking.ParentProfileID, booking.NannyProfileID)
+	if err != nil {
+		return BookingRecord{}, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return BookingRecord{}, err
+	}
+	return booking, nil
+}
+
 func (r *pgRepository) DeclineNannyBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) (BookingRecord, error) {
 	return r.updateNannyBookingStatus(ctx, nannyProfileID, bookingID, models.DeclinedBookingStatus)
 }
@@ -306,4 +375,198 @@ func (r *pgRepository) updateNannyBookingStatus(ctx context.Context, nannyProfil
 		return BookingRecord{}, nil
 	}
 	return booking, mapBookingWriteError(err)
+}
+
+func scanBookingChangeRequest(row pgx.Row) (models.BookingChangeRequest, error) {
+	var request models.BookingChangeRequest
+	err := row.Scan(
+		&request.ID,
+		&request.BookingID,
+		&request.RequestedByUserID,
+		&request.RequestedByRole,
+		&request.Type,
+		&request.Status,
+		&request.ProposedDate,
+		&request.ProposedStartTime,
+		&request.ProposedDuration,
+		&request.Reason,
+		&request.ResponseNote,
+		&request.CreatedAt,
+		&request.UpdatedAt,
+		&request.ResolvedAt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return models.BookingChangeRequest{}, nil
+	}
+	return request, err
+}
+
+func (r *pgRepository) CreateBookingChangeRequest(ctx context.Context, request models.BookingChangeRequest) (models.BookingChangeRequest, error) {
+	created, err := scanBookingChangeRequest(r.db.QueryRow(ctx, `
+		INSERT INTO booking_change_requests (
+			id, booking_id, requested_by_user_id, requested_by_role, type, status,
+			proposed_date, proposed_start_time, proposed_duration, reason
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		RETURNING id, booking_id, requested_by_user_id, requested_by_role, type, status,
+		          proposed_date, proposed_start_time, proposed_duration, reason, COALESCE(response_note, ''),
+		          created_at, updated_at, resolved_at
+	`,
+		request.ID,
+		request.BookingID,
+		request.RequestedByUserID,
+		request.RequestedByRole,
+		request.Type,
+		request.Status,
+		request.ProposedDate,
+		request.ProposedStartTime,
+		request.ProposedDuration,
+		request.Reason,
+	))
+	return created, mapBookingWriteError(err)
+}
+
+func (r *pgRepository) ListBookingChangeRequests(ctx context.Context, bookingID uuid.UUID) ([]models.BookingChangeRequest, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT id, booking_id, requested_by_user_id, requested_by_role, type, status,
+		       proposed_date, proposed_start_time, proposed_duration, reason, COALESCE(response_note, ''),
+		       created_at, updated_at, resolved_at
+		FROM booking_change_requests
+		WHERE booking_id = $1
+		ORDER BY created_at DESC
+	`, bookingID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var requests []models.BookingChangeRequest
+	for rows.Next() {
+		request, err := scanBookingChangeRequest(rows)
+		if err != nil {
+			return nil, err
+		}
+		requests = append(requests, request)
+	}
+	return requests, rows.Err()
+}
+
+func (r *pgRepository) GetBookingChangeRequestByID(ctx context.Context, bookingID, requestID uuid.UUID) (models.BookingChangeRequest, error) {
+	return scanBookingChangeRequest(r.db.QueryRow(ctx, `
+		SELECT id, booking_id, requested_by_user_id, requested_by_role, type, status,
+		       proposed_date, proposed_start_time, proposed_duration, reason, COALESCE(response_note, ''),
+		       created_at, updated_at, resolved_at
+		FROM booking_change_requests
+		WHERE booking_id = $1 AND id = $2
+	`, bookingID, requestID))
+}
+
+func (r *pgRepository) AcceptBookingChangeRequest(ctx context.Context, bookingID, requestID uuid.UUID, responseNote string) (BookingRecord, models.BookingChangeRequest, error) {
+	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return BookingRecord{}, models.BookingChangeRequest{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	request, err := scanBookingChangeRequest(tx.QueryRow(ctx, `
+		UPDATE booking_change_requests
+		SET status = $1, response_note = NULLIF($2, ''), resolved_at = NOW(), updated_at = NOW()
+		WHERE booking_id = $3 AND id = $4 AND status = $5
+		RETURNING id, booking_id, requested_by_user_id, requested_by_role, type, status,
+		          proposed_date, proposed_start_time, proposed_duration, reason, COALESCE(response_note, ''),
+		          created_at, updated_at, resolved_at
+	`, models.AcceptedBookingChangeRequestStatus, responseNote, bookingID, requestID, models.PendingBookingChangeRequestStatus))
+	if err != nil {
+		return BookingRecord{}, models.BookingChangeRequest{}, err
+	}
+	if request.ID == uuid.Nil {
+		return BookingRecord{}, models.BookingChangeRequest{}, nil
+	}
+
+	var booking BookingRecord
+	if request.Type == models.CancelBookingChangeRequestType {
+		err = tx.QueryRow(ctx, `
+			UPDATE bookings b
+			SET status = $1, updated_at = NOW()
+			FROM nanny_profiles np, parent_profiles pp
+			WHERE b.nanny_profile_id = np.id
+			  AND b.parent_profile_id = pp.id
+			  AND b.id = $2
+			  AND b.status = $3
+			RETURNING b.id, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
+			          np.display_name, np.city, np.province,
+			          pp.display_name, pp.city, pp.province
+		`, models.CancelledBookingStatus, bookingID, models.ApprovedBookingStatus).Scan(
+			&booking.ID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
+			&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
+			&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
+			&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince,
+		)
+	} else {
+		err = tx.QueryRow(ctx, `
+			UPDATE bookings b
+			SET date = $1,
+			    start_time = $2,
+			    duration = $3,
+			    total_amount = np.rate_per_hour * $3,
+			    updated_at = NOW()
+			FROM nanny_profiles np, parent_profiles pp
+			WHERE b.nanny_profile_id = np.id
+			  AND b.parent_profile_id = pp.id
+			  AND b.id = $4
+			  AND b.status IN ($5, $6)
+			RETURNING b.id, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
+			          np.display_name, np.city, np.province,
+			          pp.display_name, pp.city, pp.province
+		`, *request.ProposedDate, *request.ProposedStartTime, *request.ProposedDuration, bookingID, models.PendingBookingStatus, models.ApprovedBookingStatus).Scan(
+			&booking.ID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
+			&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
+			&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
+			&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince,
+		)
+	}
+	if err != nil {
+		return BookingRecord{}, models.BookingChangeRequest{}, mapBookingWriteError(err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return BookingRecord{}, models.BookingChangeRequest{}, err
+	}
+	return booking, request, nil
+}
+
+func (r *pgRepository) DeclineBookingChangeRequest(ctx context.Context, bookingID, requestID uuid.UUID, responseNote string) (models.BookingChangeRequest, error) {
+	return scanBookingChangeRequest(r.db.QueryRow(ctx, `
+		UPDATE booking_change_requests
+		SET status = $1, response_note = NULLIF($2, ''), resolved_at = NOW(), updated_at = NOW()
+		WHERE booking_id = $3 AND id = $4 AND status = $5
+		RETURNING id, booking_id, requested_by_user_id, requested_by_role, type, status,
+		          proposed_date, proposed_start_time, proposed_duration, reason, COALESCE(response_note, ''),
+		          created_at, updated_at, resolved_at
+	`, models.DeclinedBookingChangeRequestStatus, responseNote, bookingID, requestID, models.PendingBookingChangeRequestStatus))
+}
+
+func (r *pgRepository) CompleteNannyBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) (BookingRecord, error) {
+	var booking BookingRecord
+	err := r.db.QueryRow(ctx, `
+		UPDATE bookings b
+		SET status = $1, updated_at = NOW()
+		FROM nanny_profiles np, parent_profiles pp
+		WHERE b.nanny_profile_id = np.id
+		  AND b.parent_profile_id = pp.id
+		  AND b.nanny_profile_id = $2
+		  AND b.id = $3
+		  AND b.status = $4
+		RETURNING b.id, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
+		          np.display_name, np.city, np.province,
+		          pp.display_name, pp.city, pp.province
+	`, models.CompletedBookingStatus, nannyProfileID, bookingID, models.ApprovedBookingStatus).Scan(
+		&booking.ID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
+		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
+		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
+		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return BookingRecord{}, nil
+	}
+	return booking, err
 }

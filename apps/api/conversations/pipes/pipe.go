@@ -7,6 +7,7 @@ import (
 	convmessages "github.com/kinsittr/kinsittr-api/conversations/messages"
 	"github.com/kinsittr/kinsittr-api/models"
 	messagesrepo "github.com/kinsittr/kinsittr-api/repositories/messages"
+	"github.com/kinsittr/kinsittr-api/repositories/notifications"
 	"github.com/kinsittr/kinsittr-api/repositories/profile"
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
@@ -22,6 +23,8 @@ type ConversationData struct {
 	OtherParticipantProvince string               `json:"other_participant_province,omitempty"`
 	LastMessagePreview       string               `json:"last_message_preview,omitempty"`
 	LastMessageAt            *time.Time           `json:"last_message_at,omitempty"`
+	UnreadCount              int                  `json:"unread_count"`
+	LastReadAt               *time.Time           `json:"last_read_at,omitempty"`
 	CreatedAt                time.Time            `json:"created_at"`
 	UpdatedAt                time.Time            `json:"updated_at"`
 }
@@ -53,10 +56,15 @@ type MessageListData struct {
 type ConversationsPipe struct {
 	repo        messagesrepo.MessagesRepository
 	profileRepo profile.ProfileRepository
+	notifyRepo  notifications.NotificationsRepository
 }
 
-func NewConversationsPipe(repo messagesrepo.MessagesRepository, profileRepo profile.ProfileRepository) *ConversationsPipe {
-	return &ConversationsPipe{repo: repo, profileRepo: profileRepo}
+func NewConversationsPipe(repo messagesrepo.MessagesRepository, profileRepo profile.ProfileRepository, notifyRepo ...notifications.NotificationsRepository) *ConversationsPipe {
+	var notificationsRepo notifications.NotificationsRepository
+	if len(notifyRepo) > 0 {
+		notificationsRepo = notifyRepo[0]
+	}
+	return &ConversationsPipe{repo: repo, profileRepo: profileRepo, notifyRepo: notificationsRepo}
 }
 
 func toConversationData(record messagesrepo.ConversationRecord) ConversationData {
@@ -71,6 +79,8 @@ func toConversationData(record messagesrepo.ConversationRecord) ConversationData
 		OtherParticipantProvince: record.OtherParticipantProvince,
 		LastMessagePreview:       record.LastMessagePreview,
 		LastMessageAt:            record.LastMessageAt,
+		UnreadCount:              record.UnreadCount,
+		LastReadAt:               record.LastReadAt,
 		CreatedAt:                record.CreatedAt,
 		UpdatedAt:                record.UpdatedAt,
 	}

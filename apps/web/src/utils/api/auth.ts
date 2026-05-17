@@ -2,17 +2,19 @@ import {
   AuthSession,
   AuthSessionPayload,
   AuthTokenPair,
+  ChangePasswordPayload,
+  DeactivateAccountPayload,
   LoginPayload,
   RegisterNannyPayload,
   RegisterParentPayload,
 } from "@/src/types/api/api";
+import { apiRequest } from "./api";
 import {
   buildSessionFromTokenPair,
   clearAuthSession,
   mergeSessionWithPayload,
   saveAuthSession,
-} from "@/src/utils/auth";
-import { apiRequest } from "../api";
+} from "./session";
 
 export async function loginUser(payload: LoginPayload) {
   return apiRequest<AuthTokenPair>("/api/v1/auth/login", {
@@ -46,6 +48,32 @@ export async function logoutUser(refreshToken: string) {
     method: "POST",
     body: JSON.stringify({ refresh_token: refreshToken }),
   });
+}
+
+export async function changePassword(payload: ChangePasswordPayload) {
+  return apiRequest(
+    "/api/v1/auth/password",
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+    {
+      requiresAuth: true,
+    },
+  );
+}
+
+export async function deactivateAccount(payload: DeactivateAccountPayload) {
+  return apiRequest(
+    "/api/v1/auth/account",
+    {
+      method: "DELETE",
+      body: JSON.stringify(payload),
+    },
+    {
+      requiresAuth: true,
+    },
+  );
 }
 
 export async function establishAuthSession(auth: AuthTokenPair): Promise<AuthSession> {

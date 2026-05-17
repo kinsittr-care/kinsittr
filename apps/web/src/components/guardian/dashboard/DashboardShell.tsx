@@ -7,7 +7,7 @@ import AppNav from "./AppNav";
 import BookingSheet from "../compositions/BookingSheet";
 import type { ReactNode } from "react";
 import type { Booking } from "@/src/types/api/api";
-import { parentBookingQueryKey } from "@/src/utils/bookings";
+import { parentBookingQueryKey } from "@/src/utils/api/bookings";
 
 function ShellInner({ children }: { children: ReactNode }) {
   const { bookingNanny, setBookingNanny } = useDashboard();

@@ -22,6 +22,11 @@ const statusStyles: Record<BookingStatus, React.CSSProperties> = {
     color: "var(--muted)",
     border: "1px solid var(--border)",
   },
+  completed: {
+    background: "#edf3ec",
+    color: "#557a50",
+    border: "1px solid #cbdcc7",
+  },
 };
 
 export default function BookingStatusBadge({ status }: { status: BookingStatus }) {

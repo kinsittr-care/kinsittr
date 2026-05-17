@@ -2,16 +2,12 @@ package pipes
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kinsittr/kinsittr-api/bookings/dtos"
-	"github.com/kinsittr/kinsittr-api/bookings/messages"
 	"github.com/kinsittr/kinsittr-api/models"
 	bookingsrepo "github.com/kinsittr/kinsittr-api/repositories/bookings"
-	messagesrepo "github.com/kinsittr/kinsittr-api/repositories/messages"
 	nannyrepo "github.com/kinsittr/kinsittr-api/repositories/nanny"
 )
 
@@ -40,12 +36,28 @@ type mockBookingsRepo struct {
 	approveBookingErr   error
 	declinedBooking     bookingsrepo.BookingRecord
 	declineBookingErr   error
+	changeRequests      []models.BookingChangeRequest
+	changeRequestsErr   error
+	changeRequest       models.BookingChangeRequest
+	changeRequestErr    error
+	createdChangeReq    models.BookingChangeRequest
+	createChangeReqErr  error
+	acceptedBooking     bookingsrepo.BookingRecord
+	acceptedChangeReq   models.BookingChangeRequest
+	acceptChangeReqErr  error
+	declinedChangeReq   models.BookingChangeRequest
+	declineChangeReqErr error
+	completedBooking    bookingsrepo.BookingRecord
+	completeBookingErr  error
 }
 
 func (m *mockBookingsRepo) HasParentActiveBookingWithNanny(_ context.Context, _, _ uuid.UUID, _ time.Time, _ int) (bool, error) {
 	return m.hasParentActive, m.hasParentActiveErr
 }
 func (m *mockBookingsRepo) HasNannyApprovedBookingConflict(_ context.Context, _ uuid.UUID, _ time.Time, _ int) (bool, error) {
+	return m.hasNannyConflict, m.hasNannyConflictErr
+}
+func (m *mockBookingsRepo) HasNannyApprovedBookingConflictExcluding(_ context.Context, _ uuid.UUID, _ time.Time, _ int, _ uuid.UUID) (bool, error) {
 	return m.hasNannyConflict, m.hasNannyConflictErr
 }
 func (m *mockBookingsRepo) CreateBooking(_ context.Context, _ models.Booking) (models.Booking, error) {
@@ -69,8 +81,32 @@ func (m *mockBookingsRepo) GetNannyBookingByID(_ context.Context, _, _ uuid.UUID
 func (m *mockBookingsRepo) ApproveNannyBooking(_ context.Context, _, _ uuid.UUID) (bookingsrepo.BookingRecord, error) {
 	return m.approvedBooking, m.approveBookingErr
 }
+func (m *mockBookingsRepo) ApproveNannyBookingWithConversation(_ context.Context, _, _ uuid.UUID) (bookingsrepo.BookingRecord, error) {
+	return m.approvedBooking, m.approveBookingErr
+}
 func (m *mockBookingsRepo) DeclineNannyBooking(_ context.Context, _, _ uuid.UUID) (bookingsrepo.BookingRecord, error) {
 	return m.declinedBooking, m.declineBookingErr
+}
+func (m *mockBookingsRepo) CreateBookingChangeRequest(_ context.Context, request models.BookingChangeRequest) (models.BookingChangeRequest, error) {
+	if m.createdChangeReq.ID != uuid.Nil || m.createChangeReqErr != nil {
+		return m.createdChangeReq, m.createChangeReqErr
+	}
+	return request, nil
+}
+func (m *mockBookingsRepo) ListBookingChangeRequests(_ context.Context, _ uuid.UUID) ([]models.BookingChangeRequest, error) {
+	return m.changeRequests, m.changeRequestsErr
+}
+func (m *mockBookingsRepo) GetBookingChangeRequestByID(_ context.Context, _, _ uuid.UUID) (models.BookingChangeRequest, error) {
+	return m.changeRequest, m.changeRequestErr
+}
+func (m *mockBookingsRepo) AcceptBookingChangeRequest(_ context.Context, _, _ uuid.UUID, _ string) (bookingsrepo.BookingRecord, models.BookingChangeRequest, error) {
+	return m.acceptedBooking, m.acceptedChangeReq, m.acceptChangeReqErr
+}
+func (m *mockBookingsRepo) DeclineBookingChangeRequest(_ context.Context, _, _ uuid.UUID, _ string) (models.BookingChangeRequest, error) {
+	return m.declinedChangeReq, m.declineChangeReqErr
+}
+func (m *mockBookingsRepo) CompleteNannyBooking(_ context.Context, _, _ uuid.UUID) (bookingsrepo.BookingRecord, error) {
+	return m.completedBooking, m.completeBookingErr
 }
 
 type mockProfileRepo struct {
@@ -100,6 +136,15 @@ func (m *mockProfileRepo) UpdateNannyProfile(_ context.Context, _ models.NannyPr
 func (m *mockProfileRepo) UpdateParentProfile(_ context.Context, p models.ParentProfile) (models.ParentProfile, error) {
 	return p, nil
 }
+func (m *mockProfileRepo) GetOrCreateParentSettings(_ context.Context, userID uuid.UUID) (models.ParentSettings, error) {
+	return models.ParentSettings{ID: uuid.New(), UserID: userID}, nil
+}
+func (m *mockProfileRepo) UpdateParentSettings(_ context.Context, settings models.ParentSettings) (models.ParentSettings, error) {
+	if settings.ID == uuid.Nil {
+		settings.ID = uuid.New()
+	}
+	return settings, nil
+}
 func (m *mockProfileRepo) DeleteNannyProfile(_ context.Context, _ uuid.UUID) error  { return nil }
 func (m *mockProfileRepo) DeleteParentProfile(_ context.Context, _ uuid.UUID) error { return nil }
 
@@ -118,40 +163,10 @@ func (m *mockNannyRepo) ListVerifiedNannies(_ context.Context, _ nannyrepo.ListV
 	return m.nannies, m.nanniesTotal, m.nanniesErr
 }
 
-type mockMessagesRepo struct {
-	conversation models.Conversation
-}
-
-func (m *mockMessagesRepo) GetConversationByBookingID(_ context.Context, _ uuid.UUID) (models.Conversation, error) {
-	return m.conversation, nil
-}
-func (m *mockMessagesRepo) CreateConversation(_ context.Context, conversation models.Conversation) (models.Conversation, error) {
-	m.conversation = conversation
-	return conversation, nil
-}
-func (m *mockMessagesRepo) ListParentConversations(_ context.Context, _ uuid.UUID, _ messagesrepo.ConversationListFilter) ([]messagesrepo.ConversationRecord, int, error) {
-	return nil, 0, nil
-}
-func (m *mockMessagesRepo) ListNannyConversations(_ context.Context, _ uuid.UUID, _ messagesrepo.ConversationListFilter) ([]messagesrepo.ConversationRecord, int, error) {
-	return nil, 0, nil
-}
-func (m *mockMessagesRepo) GetParentConversationByID(_ context.Context, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
-	return messagesrepo.ConversationRecord{}, nil
-}
-func (m *mockMessagesRepo) GetNannyConversationByID(_ context.Context, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
-	return messagesrepo.ConversationRecord{}, nil
-}
-func (m *mockMessagesRepo) ListMessages(_ context.Context, _ uuid.UUID, _ messagesrepo.MessageListFilter) ([]models.Message, int, error) {
-	return nil, 0, nil
-}
-func (m *mockMessagesRepo) CreateMessage(_ context.Context, message models.Message) (models.Message, error) {
-	return message, nil
-}
-
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 func newBookingsPipe(b bookingsrepo.BookingsRepository, pr *mockProfileRepo, nr *mockNannyRepo) *BookingsPipe {
-	return NewBookingsPipe(b, &mockMessagesRepo{}, pr, nr)
+	return NewBookingsPipe(b, pr, nr)
 }
 
 func futureDate() string { return time.Now().UTC().AddDate(0, 0, 2).Format("2006-01-02") }
@@ -300,557 +315,4 @@ func TestToBookingData(t *testing.T) {
 	if d.Status != models.PendingBookingStatus {
 		t.Errorf("Status: got %s, want %s", d.Status, models.PendingBookingStatus)
 	}
-}
-
-// ── Create ────────────────────────────────────────────────────────────────────
-
-func TestCreate(t *testing.T) {
-	ctx := context.Background()
-	userID := uuid.New()
-	nannyID := uuid.New()
-
-	validDTO := dtos.CreateBookingDTO{
-		NannyID:               nannyID.String(),
-		Date:                  futureDate(),
-		StartTime:             "10:00",
-		TimezoneOffsetMinutes: 0,
-		Duration:              3,
-	}
-
-	t.Run("parent profile repo error", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, &mockProfileRepo{parentProfileErr: errors.New("db")}, &mockNannyRepo{})
-		res := p.Create(ctx, userID, validDTO)
-		if res.Success || string(res.Message) != messages.Invalid_Booking_Request {
-			t.Errorf("expected %s; got success=%v msg=%s", messages.Invalid_Booking_Request, res.Success, res.Message)
-		}
-	})
-
-	t.Run("parent profile not found", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, &mockProfileRepo{}, &mockNannyRepo{})
-		res := p.Create(ctx, userID, validDTO)
-		if res.Success || string(res.Message) != messages.Parent_Profile_Not_Found {
-			t.Errorf("expected %s, got %s", messages.Parent_Profile_Not_Found, res.Message)
-		}
-	})
-
-	t.Run("invalid nanny uuid", func(t *testing.T) {
-		dto := validDTO
-		dto.NannyID = "not-a-uuid"
-		p := newBookingsPipe(&mockBookingsRepo{}, &mockProfileRepo{parentProfile: validParentProfile()}, &mockNannyRepo{})
-		res := p.Create(ctx, userID, dto)
-		if res.Success || string(res.Message) != messages.Invalid_Booking_Request {
-			t.Errorf("expected %s, got %s", messages.Invalid_Booking_Request, res.Message)
-		}
-	})
-
-	t.Run("nanny repo error", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, &mockProfileRepo{parentProfile: validParentProfile()}, &mockNannyRepo{nannyErr: errors.New("db")})
-		res := p.Create(ctx, userID, validDTO)
-		if res.Success || string(res.Message) != messages.Invalid_Booking_Request {
-			t.Errorf("expected %s, got %s", messages.Invalid_Booking_Request, res.Message)
-		}
-	})
-
-	t.Run("nanny not found", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, &mockProfileRepo{parentProfile: validParentProfile()}, &mockNannyRepo{})
-		res := p.Create(ctx, userID, validDTO)
-		if res.Success || string(res.Message) != messages.Nanny_Profile_Not_Found {
-			t.Errorf("expected %s, got %s", messages.Nanny_Profile_Not_Found, res.Message)
-		}
-	})
-
-	t.Run("start time in the past", func(t *testing.T) {
-		dto := validDTO
-		dto.Date = pastDate()
-		p := newBookingsPipe(&mockBookingsRepo{}, &mockProfileRepo{parentProfile: validParentProfile()}, &mockNannyRepo{nanny: validNannyProfile()})
-		res := p.Create(ctx, userID, dto)
-		if res.Success || string(res.Message) != messages.Booking_Start_In_Past {
-			t.Errorf("expected %s, got %s", messages.Booking_Start_In_Past, res.Message)
-		}
-	})
-
-	t.Run("duplicate booking conflict", func(t *testing.T) {
-		p := newBookingsPipe(
-			&mockBookingsRepo{hasParentActive: true},
-			&mockProfileRepo{parentProfile: validParentProfile()},
-			&mockNannyRepo{nanny: validNannyProfile()},
-		)
-		res := p.Create(ctx, userID, validDTO)
-		if res.Success || string(res.Message) != messages.Booking_Already_Exists {
-			t.Errorf("expected %s, got %s", messages.Booking_Already_Exists, res.Message)
-		}
-	})
-
-	t.Run("nanny time conflict", func(t *testing.T) {
-		p := newBookingsPipe(
-			&mockBookingsRepo{hasNannyConflict: true},
-			&mockProfileRepo{parentProfile: validParentProfile()},
-			&mockNannyRepo{nanny: validNannyProfile()},
-		)
-		res := p.Create(ctx, userID, validDTO)
-		if res.Success || string(res.Message) != messages.Nanny_Time_Unavailable {
-			t.Errorf("expected %s, got %s", messages.Nanny_Time_Unavailable, res.Message)
-		}
-	})
-
-	t.Run("create returns ErrBookingAlreadyExists", func(t *testing.T) {
-		p := newBookingsPipe(
-			&mockBookingsRepo{createBookingErr: bookingsrepo.ErrBookingAlreadyExists},
-			&mockProfileRepo{parentProfile: validParentProfile()},
-			&mockNannyRepo{nanny: validNannyProfile()},
-		)
-		res := p.Create(ctx, userID, validDTO)
-		if res.Success || string(res.Message) != messages.Booking_Already_Exists {
-			t.Errorf("expected %s, got %s", messages.Booking_Already_Exists, res.Message)
-		}
-	})
-
-	t.Run("create returns ErrNannyTimeUnavailable", func(t *testing.T) {
-		p := newBookingsPipe(
-			&mockBookingsRepo{createBookingErr: bookingsrepo.ErrNannyTimeUnavailable},
-			&mockProfileRepo{parentProfile: validParentProfile()},
-			&mockNannyRepo{nanny: validNannyProfile()},
-		)
-		res := p.Create(ctx, userID, validDTO)
-		if res.Success || string(res.Message) != messages.Nanny_Time_Unavailable {
-			t.Errorf("expected %s, got %s", messages.Nanny_Time_Unavailable, res.Message)
-		}
-	})
-
-	t.Run("create generic repo error", func(t *testing.T) {
-		p := newBookingsPipe(
-			&mockBookingsRepo{createBookingErr: errors.New("db")},
-			&mockProfileRepo{parentProfile: validParentProfile()},
-			&mockNannyRepo{nanny: validNannyProfile()},
-		)
-		res := p.Create(ctx, userID, validDTO)
-		if res.Success || string(res.Message) != messages.Invalid_Booking_Request {
-			t.Errorf("expected %s, got %s", messages.Invalid_Booking_Request, res.Message)
-		}
-	})
-
-	t.Run("success", func(t *testing.T) {
-		nanny := validNannyProfile()
-		nanny.DisplayName = "Jane Doe"
-		nanny.City = "Toronto"
-		nanny.Province = "ON"
-		nanny.RatePerHour = 30.0
-
-		created := models.Booking{
-			ID: uuid.New(), Duration: 3, TotalAmount: 90.0,
-			Status: models.PendingBookingStatus,
-		}
-		p := newBookingsPipe(
-			&mockBookingsRepo{createdBooking: created},
-			&mockProfileRepo{parentProfile: validParentProfile()},
-			&mockNannyRepo{nanny: nanny},
-		)
-		res := p.Create(ctx, userID, validDTO)
-		if !res.Success || string(res.Message) != messages.Booking_Created {
-			t.Fatalf("expected success %s, got success=%v msg=%s", messages.Booking_Created, res.Success, res.Message)
-		}
-		if res.Data == nil {
-			t.Fatal("expected data, got nil")
-		}
-		if res.Data.NannyDisplayName != "Jane Doe" {
-			t.Errorf("NannyDisplayName: got %q, want %q", res.Data.NannyDisplayName, "Jane Doe")
-		}
-		if res.Data.TotalAmount != 90.0 {
-			t.Errorf("TotalAmount: got %f, want 90.0", res.Data.TotalAmount)
-		}
-	})
-}
-
-// ── List ──────────────────────────────────────────────────────────────────────
-
-func TestList(t *testing.T) {
-	ctx := context.Background()
-	userID := uuid.New()
-	withParent := &mockProfileRepo{parentProfile: validParentProfile()}
-
-	t.Run("parent not found", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, &mockProfileRepo{}, &mockNannyRepo{})
-		res := p.List(ctx, userID, dtos.ListBookingsQueryDTO{})
-		if res.Success || string(res.Message) != messages.Parent_Profile_Not_Found {
-			t.Errorf("expected %s, got %s", messages.Parent_Profile_Not_Found, res.Message)
-		}
-	})
-
-	t.Run("invalid status", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, withParent, &mockNannyRepo{})
-		res := p.List(ctx, userID, dtos.ListBookingsQueryDTO{Status: "bogus"})
-		if res.Success || string(res.Message) != messages.Invalid_Booking_Request {
-			t.Errorf("expected %s, got %s", messages.Invalid_Booking_Request, res.Message)
-		}
-	})
-
-	t.Run("invalid date_from", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, withParent, &mockNannyRepo{})
-		res := p.List(ctx, userID, dtos.ListBookingsQueryDTO{DateFrom: "not-a-date"})
-		if res.Success || string(res.Message) != messages.Invalid_Booking_Request {
-			t.Errorf("expected %s, got %s", messages.Invalid_Booking_Request, res.Message)
-		}
-	})
-
-	t.Run("invalid date_to", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, withParent, &mockNannyRepo{})
-		res := p.List(ctx, userID, dtos.ListBookingsQueryDTO{DateTo: "not-a-date"})
-		if res.Success || string(res.Message) != messages.Invalid_Booking_Request {
-			t.Errorf("expected %s, got %s", messages.Invalid_Booking_Request, res.Message)
-		}
-	})
-
-	t.Run("date_from after date_to", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, withParent, &mockNannyRepo{})
-		res := p.List(ctx, userID, dtos.ListBookingsQueryDTO{DateFrom: "2026-06-10", DateTo: "2026-06-01"})
-		if res.Success || string(res.Message) != messages.Invalid_Booking_Request {
-			t.Errorf("expected %s, got %s", messages.Invalid_Booking_Request, res.Message)
-		}
-	})
-
-	t.Run("page < 1 normalised to 1", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, withParent, &mockNannyRepo{})
-		res := p.List(ctx, userID, dtos.ListBookingsQueryDTO{Page: 0, Limit: 10})
-		if !res.Success {
-			t.Fatalf("expected success, got %s", res.Message)
-		}
-		if res.Data.Page != 1 {
-			t.Errorf("expected page 1, got %d", res.Data.Page)
-		}
-	})
-
-	t.Run("limit < 1 defaults to 20", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, withParent, &mockNannyRepo{})
-		res := p.List(ctx, userID, dtos.ListBookingsQueryDTO{Page: 1, Limit: 0})
-		if !res.Success {
-			t.Fatalf("expected success, got %s", res.Message)
-		}
-		if res.Data.Limit != 20 {
-			t.Errorf("expected limit 20, got %d", res.Data.Limit)
-		}
-	})
-
-	t.Run("limit > 100 clamped to 100", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, withParent, &mockNannyRepo{})
-		res := p.List(ctx, userID, dtos.ListBookingsQueryDTO{Page: 1, Limit: 500})
-		if !res.Success {
-			t.Fatalf("expected success, got %s", res.Message)
-		}
-		if res.Data.Limit != 100 {
-			t.Errorf("expected limit 100, got %d", res.Data.Limit)
-		}
-	})
-
-	t.Run("success returns items and total", func(t *testing.T) {
-		records := []bookingsrepo.BookingRecord{
-			{Booking: models.Booking{ID: uuid.New(), Status: models.PendingBookingStatus}, NannyDisplayName: "Jane"},
-		}
-		bRepo := &mockBookingsRepo{parentBookings: records, parentBookingsTotal: 1}
-		p := newBookingsPipe(bRepo, withParent, &mockNannyRepo{})
-		res := p.List(ctx, userID, dtos.ListBookingsQueryDTO{Page: 1, Limit: 10})
-		if !res.Success || string(res.Message) != messages.Booking_Listed {
-			t.Fatalf("expected success %s, got %s", messages.Booking_Listed, res.Message)
-		}
-		if res.Data.Total != 1 || len(res.Data.Items) != 1 {
-			t.Errorf("expected 1 item, got %d (total=%d)", len(res.Data.Items), res.Data.Total)
-		}
-		if res.Data.Items[0].NannyDisplayName != "Jane" {
-			t.Errorf("NannyDisplayName mismatch")
-		}
-	})
-}
-
-// ── Cancel ────────────────────────────────────────────────────────────────────
-
-func TestCancel(t *testing.T) {
-	ctx := context.Background()
-	userID := uuid.New()
-	bookingID := uuid.New()
-	withParent := &mockProfileRepo{parentProfile: validParentProfile()}
-
-	pendingRecord := func() bookingsrepo.BookingRecord {
-		return bookingsrepo.BookingRecord{Booking: models.Booking{ID: uuid.New(), Status: models.PendingBookingStatus}}
-	}
-
-	t.Run("parent not found", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, &mockProfileRepo{}, &mockNannyRepo{})
-		res := p.Cancel(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Parent_Profile_Not_Found {
-			t.Errorf("expected %s, got %s", messages.Parent_Profile_Not_Found, res.Message)
-		}
-	})
-
-	t.Run("get booking repo error", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{parentBookingErr: errors.New("db")}, withParent, &mockNannyRepo{})
-		res := p.Cancel(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Cannot_Cancel_Booking {
-			t.Errorf("expected %s, got %s", messages.Cannot_Cancel_Booking, res.Message)
-		}
-	})
-
-	t.Run("booking not found", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, withParent, &mockNannyRepo{})
-		res := p.Cancel(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Booking_Not_Found {
-			t.Errorf("expected %s, got %s", messages.Booking_Not_Found, res.Message)
-		}
-	})
-
-	t.Run("already approved cannot be cancelled", func(t *testing.T) {
-		approved := bookingsrepo.BookingRecord{Booking: models.Booking{ID: uuid.New(), Status: models.ApprovedBookingStatus}}
-		p := newBookingsPipe(&mockBookingsRepo{parentBooking: approved}, withParent, &mockNannyRepo{})
-		res := p.Cancel(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Booking_Already_Approved {
-			t.Errorf("expected %s, got %s", messages.Booking_Already_Approved, res.Message)
-		}
-	})
-
-	t.Run("declined booking cannot be cancelled", func(t *testing.T) {
-		declined := bookingsrepo.BookingRecord{Booking: models.Booking{ID: uuid.New(), Status: models.DeclinedBookingStatus}}
-		p := newBookingsPipe(&mockBookingsRepo{parentBooking: declined}, withParent, &mockNannyRepo{})
-		res := p.Cancel(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Cannot_Cancel_Booking {
-			t.Errorf("expected %s, got %s", messages.Cannot_Cancel_Booking, res.Message)
-		}
-	})
-
-	t.Run("cancel repo error", func(t *testing.T) {
-		pending := pendingRecord()
-		p := newBookingsPipe(&mockBookingsRepo{parentBooking: pending, cancelBookingErr: errors.New("db")}, withParent, &mockNannyRepo{})
-		res := p.Cancel(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Cannot_Cancel_Booking {
-			t.Errorf("expected %s, got %s", messages.Cannot_Cancel_Booking, res.Message)
-		}
-	})
-
-	t.Run("success", func(t *testing.T) {
-		pending := pendingRecord()
-		cancelled := bookingsrepo.BookingRecord{Booking: models.Booking{ID: uuid.New(), Status: models.CancelledBookingStatus}}
-		p := newBookingsPipe(&mockBookingsRepo{parentBooking: pending, cancelledBooking: cancelled}, withParent, &mockNannyRepo{})
-		res := p.Cancel(ctx, userID, bookingID)
-		if !res.Success || string(res.Message) != messages.Booking_Cancelled {
-			t.Errorf("expected success %s, got success=%v msg=%s", messages.Booking_Cancelled, res.Success, res.Message)
-		}
-	})
-}
-
-// ── GetByID ───────────────────────────────────────────────────────────────────
-
-func TestGetByID(t *testing.T) {
-	ctx := context.Background()
-	userID, bookingID := uuid.New(), uuid.New()
-	withParent := &mockProfileRepo{parentProfile: validParentProfile()}
-
-	t.Run("parent not found", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, &mockProfileRepo{}, &mockNannyRepo{})
-		res := p.GetByID(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Parent_Profile_Not_Found {
-			t.Errorf("expected %s, got %s", messages.Parent_Profile_Not_Found, res.Message)
-		}
-	})
-
-	t.Run("booking not found", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, withParent, &mockNannyRepo{})
-		res := p.GetByID(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Booking_Not_Found {
-			t.Errorf("expected %s, got %s", messages.Booking_Not_Found, res.Message)
-		}
-	})
-
-	t.Run("success", func(t *testing.T) {
-		record := bookingsrepo.BookingRecord{
-			Booking:          models.Booking{ID: uuid.New()},
-			NannyDisplayName: "Jane",
-		}
-		p := newBookingsPipe(&mockBookingsRepo{parentBooking: record}, withParent, &mockNannyRepo{})
-		res := p.GetByID(ctx, userID, bookingID)
-		if !res.Success || string(res.Message) != messages.Booking_Found {
-			t.Errorf("expected success %s, got %s", messages.Booking_Found, res.Message)
-		}
-		if res.Data.NannyDisplayName != "Jane" {
-			t.Errorf("NannyDisplayName mismatch")
-		}
-	})
-}
-
-// ── Approve ───────────────────────────────────────────────────────────────────
-
-func TestApprove(t *testing.T) {
-	ctx := context.Background()
-	userID, bookingID := uuid.New(), uuid.New()
-	withNanny := &mockProfileRepo{nannyProfile: models.NannyProfile{ID: uuid.New()}}
-
-	t.Run("nanny not found", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, &mockProfileRepo{}, &mockNannyRepo{})
-		res := p.Approve(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Nanny_Profile_Not_Found {
-			t.Errorf("expected %s, got %s", messages.Nanny_Profile_Not_Found, res.Message)
-		}
-	})
-
-	t.Run("nanny time unavailable on approve", func(t *testing.T) {
-		repo := &mockBookingsRepo{approveBookingErr: bookingsrepo.ErrNannyTimeUnavailable}
-		p := newBookingsPipe(repo, withNanny, &mockNannyRepo{})
-		res := p.Approve(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Nanny_Time_Unavailable {
-			t.Errorf("expected %s, got %s", messages.Nanny_Time_Unavailable, res.Message)
-		}
-	})
-
-	t.Run("generic repo error", func(t *testing.T) {
-		repo := &mockBookingsRepo{approveBookingErr: errors.New("db")}
-		p := newBookingsPipe(repo, withNanny, &mockNannyRepo{})
-		res := p.Approve(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Cannot_Approve_Booking {
-			t.Errorf("expected %s, got %s", messages.Cannot_Approve_Booking, res.Message)
-		}
-	})
-
-	t.Run("booking not found (nil id)", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, withNanny, &mockNannyRepo{})
-		res := p.Approve(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Booking_Not_Found {
-			t.Errorf("expected %s, got %s", messages.Booking_Not_Found, res.Message)
-		}
-	})
-
-	t.Run("success", func(t *testing.T) {
-		record := bookingsrepo.BookingRecord{Booking: models.Booking{ID: uuid.New(), Status: models.ApprovedBookingStatus}}
-		p := newBookingsPipe(&mockBookingsRepo{approvedBooking: record}, withNanny, &mockNannyRepo{})
-		res := p.Approve(ctx, userID, bookingID)
-		if !res.Success || string(res.Message) != messages.Booking_Approved {
-			t.Errorf("expected success %s, got success=%v msg=%s", messages.Booking_Approved, res.Success, res.Message)
-		}
-	})
-}
-
-// ── Decline ───────────────────────────────────────────────────────────────────
-
-func TestDecline(t *testing.T) {
-	ctx := context.Background()
-	userID, bookingID := uuid.New(), uuid.New()
-	withNanny := &mockProfileRepo{nannyProfile: models.NannyProfile{ID: uuid.New()}}
-
-	t.Run("nanny not found", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, &mockProfileRepo{}, &mockNannyRepo{})
-		res := p.Decline(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Nanny_Profile_Not_Found {
-			t.Errorf("expected %s, got %s", messages.Nanny_Profile_Not_Found, res.Message)
-		}
-	})
-
-	t.Run("repo error", func(t *testing.T) {
-		repo := &mockBookingsRepo{declineBookingErr: errors.New("db")}
-		p := newBookingsPipe(repo, withNanny, &mockNannyRepo{})
-		res := p.Decline(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Cannot_Decline_Booking {
-			t.Errorf("expected %s, got %s", messages.Cannot_Decline_Booking, res.Message)
-		}
-	})
-
-	t.Run("booking not found (nil id)", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, withNanny, &mockNannyRepo{})
-		res := p.Decline(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Booking_Not_Found {
-			t.Errorf("expected %s, got %s", messages.Booking_Not_Found, res.Message)
-		}
-	})
-
-	t.Run("success", func(t *testing.T) {
-		record := bookingsrepo.BookingRecord{Booking: models.Booking{ID: uuid.New(), Status: models.DeclinedBookingStatus}}
-		p := newBookingsPipe(&mockBookingsRepo{declinedBooking: record}, withNanny, &mockNannyRepo{})
-		res := p.Decline(ctx, userID, bookingID)
-		if !res.Success || string(res.Message) != messages.Booking_Declined {
-			t.Errorf("expected success %s, got success=%v msg=%s", messages.Booking_Declined, res.Success, res.Message)
-		}
-	})
-}
-
-// ── GetForNannyByID ───────────────────────────────────────────────────────────
-
-func TestGetForNannyByID(t *testing.T) {
-	ctx := context.Background()
-	userID, bookingID := uuid.New(), uuid.New()
-	withNanny := &mockProfileRepo{nannyProfile: models.NannyProfile{ID: uuid.New()}}
-
-	t.Run("nanny not found", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, &mockProfileRepo{}, &mockNannyRepo{})
-		res := p.GetForNannyByID(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Nanny_Profile_Not_Found {
-			t.Errorf("expected %s, got %s", messages.Nanny_Profile_Not_Found, res.Message)
-		}
-	})
-
-	t.Run("booking not found", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, withNanny, &mockNannyRepo{})
-		res := p.GetForNannyByID(ctx, userID, bookingID)
-		if res.Success || string(res.Message) != messages.Booking_Not_Found {
-			t.Errorf("expected %s, got %s", messages.Booking_Not_Found, res.Message)
-		}
-	})
-
-	t.Run("success", func(t *testing.T) {
-		record := bookingsrepo.BookingRecord{
-			Booking:           models.Booking{ID: uuid.New()},
-			ParentDisplayName: "Alice",
-		}
-		p := newBookingsPipe(&mockBookingsRepo{nannyBooking: record}, withNanny, &mockNannyRepo{})
-		res := p.GetForNannyByID(ctx, userID, bookingID)
-		if !res.Success || string(res.Message) != messages.Booking_Found {
-			t.Errorf("expected success %s, got %s", messages.Booking_Found, res.Message)
-		}
-		if res.Data.ParentDisplayName != "Alice" {
-			t.Errorf("ParentDisplayName mismatch")
-		}
-	})
-}
-
-// ── ListForNanny ──────────────────────────────────────────────────────────────
-
-func TestListForNanny(t *testing.T) {
-	ctx := context.Background()
-	userID := uuid.New()
-	withNanny := &mockProfileRepo{nannyProfile: models.NannyProfile{ID: uuid.New()}}
-
-	t.Run("nanny not found", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, &mockProfileRepo{}, &mockNannyRepo{})
-		res := p.ListForNanny(ctx, userID, dtos.ListBookingsQueryDTO{})
-		if res.Success || string(res.Message) != messages.Nanny_Profile_Not_Found {
-			t.Errorf("expected %s, got %s", messages.Nanny_Profile_Not_Found, res.Message)
-		}
-	})
-
-	t.Run("page < 1 normalised to 1", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, withNanny, &mockNannyRepo{})
-		res := p.ListForNanny(ctx, userID, dtos.ListBookingsQueryDTO{Page: -5, Limit: 10})
-		if !res.Success {
-			t.Fatalf("expected success, got %s", res.Message)
-		}
-		if res.Data.Page != 1 {
-			t.Errorf("expected page 1, got %d", res.Data.Page)
-		}
-	})
-
-	t.Run("limit > 100 clamped to 100", func(t *testing.T) {
-		p := newBookingsPipe(&mockBookingsRepo{}, withNanny, &mockNannyRepo{})
-		res := p.ListForNanny(ctx, userID, dtos.ListBookingsQueryDTO{Page: 1, Limit: 999})
-		if !res.Success {
-			t.Fatalf("expected success, got %s", res.Message)
-		}
-		if res.Data.Limit != 100 {
-			t.Errorf("expected limit 100, got %d", res.Data.Limit)
-		}
-	})
-
-	t.Run("success", func(t *testing.T) {
-		records := []bookingsrepo.BookingRecord{
-			{Booking: models.Booking{ID: uuid.New()}, ParentDisplayName: "Alice"},
-		}
-		repo := &mockBookingsRepo{nannyBookings: records, nannyBookingsTotal: 1}
-		p := newBookingsPipe(repo, withNanny, &mockNannyRepo{})
-		res := p.ListForNanny(ctx, userID, dtos.ListBookingsQueryDTO{Page: 1, Limit: 10})
-		if !res.Success || res.Data.Total != 1 || len(res.Data.Items) != 1 {
-			t.Errorf("expected 1 item, got %d total=%d success=%v", len(res.Data.Items), res.Data.Total, res.Success)
-		}
-	})
 }

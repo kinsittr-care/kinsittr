@@ -1,100 +1,186 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { N } from "./tokens";
+import { useSearchParams } from "next/navigation";
+import type { Booking, BookingStatus } from "@/src/types/api/api";
+import {
+  approveNannyBooking,
+  declineNannyBooking,
+  listNannyBookings,
+  nannyBookingsQueryKey,
+} from "@/src/utils/api/bookings";
+import { cn } from "@/lib/utils";
 import BookingRequestCard from "./requests/BookingRequestCard";
 import type { BookingRequest } from "./requests/BookingRequestCard";
 
-const REQUESTS: BookingRequest[] = [
-  { id: 1, parent: "Jordan Lee",   initials: "JL", date: "Fri Apr 18",  time: "9:00–13:00",  hours: 4, amount: "$112", status: "pending",   children: "2 kids, ages 3 & 6" },
-  { id: 2, parent: "Maya Patel",   initials: "MP", date: "Sat Apr 19",  time: "14:00–18:00", hours: 4, amount: "$96",  status: "approved",  children: "1 kid, age 2" },
-  { id: 3, parent: "Chris Nguyen", initials: "CN", date: "Mon Apr 21",  time: "8:00–12:00",  hours: 4, amount: "$108", status: "pending",   children: "2 kids, ages 4 & 7" },
-  { id: 4, parent: "Sara Kim",     initials: "SK", date: "Wed Apr 9",   time: "10:00–14:00", hours: 4, amount: "$100", status: "completed", children: "1 kid, age 5" },
-  { id: 5, parent: "Tom Bradley",  initials: "TB", date: "Mon Apr 7",   time: "8:00–16:00",  hours: 8, amount: "$224", status: "declined",  children: "3 kids, ages 2, 5 & 8" },
-];
+const PAGE_SIZE = 20;
 
-type Filter = "all" | "pending" | "approved" | "completed";
-const FILTERS: Filter[] = ["all", "pending", "approved", "completed"];
+type Filter = "all" | BookingStatus;
+const FILTERS: Filter[] = ["all", "pending", "approved", "declined", "cancelled"];
+
+function getInitials(name?: string) {
+  return (name || "Parent")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en-CA", {
+    weekday: "short", month: "short", day: "numeric",
+  }).format(new Date(`${value}T00:00:00`));
+}
+
+function formatTimeRange(startTime: string, duration: number) {
+  const [hour, minute] = startTime.split(":").map(Number);
+  const start = new Date();
+  start.setHours(hour || 0, minute || 0, 0, 0);
+  const end = new Date(start.getTime() + duration * 60 * 60 * 1000);
+  const fmt = new Intl.DateTimeFormat("en-CA", { hour: "numeric", minute: "2-digit" });
+  return `${fmt.format(start)} - ${fmt.format(end)}`;
+}
+
+function toBookingRequest(booking: Booking): BookingRequest {
+  const parent = booking.parent_display_name || "Parent";
+  return {
+    id: booking.id,
+    parent,
+    initials: getInitials(parent),
+    date: formatDate(booking.date),
+    time: formatTimeRange(booking.start_time, booking.duration),
+    hours: booking.duration,
+    amount: `$${booking.total_amount.toFixed(0)}`,
+    status: booking.status === "cancelled" ? "neutral" : booking.status,
+    children: booking.parent_city
+      ? `${booking.parent_city}${booking.parent_province ? `, ${booking.parent_province}` : ""}`
+      : "Family details",
+  };
+}
 
 export default function NannyRequestsView() {
+  const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const notifiedBookingID = searchParams.get("booking_id");
   const [filter, setFilter] = useState<Filter>("all");
+  const [page, setPage] = useState(1);
+  const [updatingID, setUpdatingID] = useState<string | null>(null);
 
-  const visible = REQUESTS.filter((r) => filter === "all" || r.status === filter);
+  const queryParams = { page, limit: PAGE_SIZE, status: filter === "all" ? undefined : filter };
+  const bookingsQuery = useQuery({
+    queryKey: nannyBookingsQueryKey(queryParams),
+    queryFn: async () => listNannyBookings(queryParams),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, action }: { id: string; action: "approve" | "decline" }) => {
+      setUpdatingID(id);
+      return action === "approve" ? approveNannyBooking(id) : declineNannyBooking(id);
+    },
+    onSettled: async () => {
+      setUpdatingID(null);
+      await queryClient.invalidateQueries({ queryKey: ["nanny-bookings"] });
+    },
+  });
+
+  const data = bookingsQuery.data?.data;
+  const visible = (data?.items ?? []).map(toBookingRequest);
+  const total = data?.total ?? 0;
+  const pendingCount = filter === "pending" ? total : undefined;
+
+  const changeFilter = (f: Filter) => { setFilter(f); setPage(1); };
 
   return (
-    <div style={{ padding: "40px 48px 80px" }}>
+    <div className="flex-1 overflow-y-auto px-4 pt-6 pb-16 md:px-12 md:pt-10 md:pb-20">
       {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <h1
-          style={{
-            fontFamily: "DM Serif Display, var(--font-dm-serif), serif",
-            fontSize: 36,
-            fontWeight: 400,
-            color: N.greenDk,
-            lineHeight: 1.1,
-          }}
-        >
+      <div className="mb-6 md:mb-7">
+        <h1 className="font-display text-[28px] md:text-[36px] font-normal text-nanny-green-dk leading-tight">
           Booking Requests
         </h1>
-        <p style={{ marginTop: 8, fontSize: 14.5, color: N.inkMute }}>
-          {REQUESTS.filter((r) => r.status === "pending").length} pending · {REQUESTS.length} total
+        <p className="mt-2 text-sm md:text-[14.5px] text-nanny-ink-mute">
+          {pendingCount !== undefined ? `${pendingCount} pending` : `${total} total`}
         </p>
       </div>
 
-      {/* Filter tabs */}
-      <div
-        style={{
-          display: "flex",
-          gap: 6,
-          marginBottom: 24,
-          background: N.cardSoft,
-          border: `1px solid ${N.border}`,
-          borderRadius: 12,
-          padding: 4,
-          alignSelf: "flex-start",
-          width: "fit-content",
-        }}
-      >
-        {FILTERS.map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            style={{
-              padding: "8px 18px",
-              borderRadius: 9,
-              fontSize: 13.5,
-              fontWeight: filter === f ? 600 : 500,
-              color: filter === f ? N.green : N.inkMute,
-              background: filter === f ? N.card : "transparent",
-              border: filter === f ? `1px solid ${N.border}` : "1px solid transparent",
-              boxShadow: filter === f ? N.shadow : "none",
-              cursor: "pointer",
-              transition: "all .15s",
-              textTransform: "capitalize",
-            }}
-          >
-            {f}
-          </button>
-        ))}
+      {/* Filter — select on mobile, pill tabs on desktop */}
+      <div className="mb-6">
+        {/* Mobile select */}
+        <select
+          value={filter}
+          onChange={(e) => changeFilter(e.target.value as Filter)}
+          className="md:hidden w-full bg-nanny-card-soft border border-nanny-border rounded-xl px-3 py-2.5 text-sm text-nanny-ink-mute font-medium capitalize focus:outline-none focus:ring-2 focus:ring-nanny-green/30"
+        >
+          {FILTERS.map((f) => (
+            <option key={f} value={f} className="capitalize">{f}</option>
+          ))}
+        </select>
+
+        {/* Desktop pill tabs */}
+        <div className="hidden md:flex gap-1.5 bg-nanny-card-soft border border-nanny-border rounded-xl p-1 w-fit">
+          {FILTERS.map((f) => (
+            <button
+              key={f}
+              onClick={() => changeFilter(f)}
+              className={cn(
+                "px-4 py-2 rounded-[9px] text-[13.5px] capitalize transition-all cursor-pointer",
+                filter === f
+                  ? "bg-nanny-card border border-nanny-border text-nanny-green font-semibold shadow-[var(--nanny-shadow)]"
+                  : "text-nanny-ink-mute font-medium hover:text-nanny-ink border border-transparent"
+              )}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Cards */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        {visible.length === 0 ? (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "60px 0",
-              color: N.inkFaint,
-              fontSize: 15,
-            }}
-          >
+      <div className="flex flex-col gap-4">
+        {bookingsQuery.isLoading ? (
+          <p className="text-center py-14 text-nanny-ink-faint text-[15px]">Loading requests...</p>
+        ) : bookingsQuery.isError ? (
+          <p className="text-center py-14 text-nanny-rose text-[15px]">
+            {bookingsQuery.error instanceof Error ? bookingsQuery.error.message : "Unable to load requests."}
+          </p>
+        ) : visible.length === 0 ? (
+          <p className="text-center py-14 text-nanny-ink-faint text-[15px] capitalize">
             No {filter} requests
-          </div>
+          </p>
         ) : (
-          visible.map((r) => <BookingRequestCard key={r.id} booking={r} />)
+          visible.map((r) => (
+            <BookingRequestCard
+              key={r.id}
+              booking={r}
+              isUpdating={updatingID === r.id}
+              isHighlighted={r.id === notifiedBookingID}
+              onApprove={() => updateMutation.mutate({ id: r.id, action: "approve" })}
+              onDecline={() => updateMutation.mutate({ id: r.id, action: "decline" })}
+            />
+          ))
         )}
       </div>
+
+      {/* Pagination */}
+      {data && data.total > data.limit && (
+        <div className="flex justify-center gap-2.5 mt-6">
+          <button
+            disabled={page <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className="px-4 py-2 bg-nanny-card border border-nanny-border rounded-[10px] text-[13.5px] font-semibold text-nanny-ink-mute disabled:opacity-40 cursor-pointer hover:bg-nanny-card-soft transition-colors"
+          >
+            Previous
+          </button>
+          <button
+            disabled={page * data.limit >= data.total}
+            onClick={() => setPage((p) => p + 1)}
+            className="px-4 py-2 bg-nanny-card border border-nanny-border rounded-[10px] text-[13.5px] font-semibold text-nanny-ink-mute disabled:opacity-40 cursor-pointer hover:bg-nanny-card-soft transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }

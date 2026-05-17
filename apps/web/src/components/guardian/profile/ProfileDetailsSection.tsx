@@ -4,6 +4,8 @@ import { useState } from "react";
 import Avatar from "../dashboard/Avatar";
 import SectionCard from "./SectionCard";
 import { useIsMobile } from "../dashboard/useIsMobile";
+import type { ParentProfile, UpdateParentProfilePayload } from "@/src/types/api/api";
+import { getStoredAuthSession } from "@/src/utils/api/session";
 
 const labelStyle: React.CSSProperties = {
   fontSize: 12,
@@ -28,18 +30,34 @@ const inputStyle: React.CSSProperties = {
   marginBottom: 16,
 };
 
-type Profile = { name: string; email: string; phone: string; city: string };
+type ProfileDraft = {
+  display_name: string;
+  city: string;
+  province: string;
+};
 
-export default function ProfileDetailsSection() {
+interface ProfileDetailsSectionProps {
+  profile: ParentProfile;
+  isSaving: boolean;
+  errorMessage: string | null;
+  onSave: (payload: UpdateParentProfilePayload) => Promise<ParentProfile | undefined>;
+}
+
+export default function ProfileDetailsSection({
+  profile,
+  isSaving,
+  errorMessage,
+  onSave,
+}: ProfileDetailsSectionProps) {
   const isMobile = useIsMobile();
   const [editProfile, setEditProfile] = useState(false);
-  const [profile, setProfile] = useState<Profile>({
-    name: "Jordan Lee",
-    email: "jordan.lee@email.com",
-    phone: "+1 (647) 555-0182",
-    city: "Toronto, ON",
-  });
-  const [profileDraft, setProfileDraft] = useState<Profile>({ ...profile });
+  const [profileDraft, setProfileDraft] = useState<ProfileDraft>(() => draftFromProfile(profile));
+  const session = getStoredAuthSession();
+  const user = session?.user;
+  const displayEmail = user?.email ?? "Not provided";
+  const displayPhone = user?.phone || "Not provided";
+  const displayCity = `${profile.city}, ${profile.province}`;
+  const initials = initialsFromName(profile.display_name);
 
   return (
     <SectionCard title="Profile">
@@ -51,10 +69,10 @@ export default function ProfileDetailsSection() {
             paddingBottom: 20,
           }}
         >
-          <Avatar initials="JL" size={68} />
+          <Avatar initials={initials} size={68} />
           <div className="">
-            <div style={{ fontWeight: 700, fontSize: 20 }}>{profile.name}</div>
-            <div style={{ color: "var(--faint)", fontSize: 14, marginTop: 2 }}>{profile.email}</div>
+            <div style={{ fontWeight: 700, fontSize: 20 }}>{profile.display_name}</div>
+            <div style={{ color: "var(--faint)", fontSize: 14, marginTop: 2 }}>{displayEmail}</div>
             <div className="flex flex-col md:flex-row items-start gap-[6px] mt-3.5">
               <span
                 style={{
@@ -69,28 +87,35 @@ export default function ProfileDetailsSection() {
               >
                 Verified parent
               </span>
-              <span style={{ fontSize: 12, color: "var(--faint)" }}>Member since Jan 2025</span>
+              <span style={{ fontSize: 12, color: "var(--faint)" }}>
+                Member since {formatMonthYear(profile.created_at)}
+              </span>
             </div>
           </div>
         </div>
         <button
           className="btn-outline"
           style={{ padding: "8px 16px", fontSize: 13 }}
-          onClick={() => setEditProfile((prev) => !prev)}
+          onClick={() => {
+            if (!editProfile) {
+              setProfileDraft(draftFromProfile(profile));
+            }
+            setEditProfile((prev) => !prev);
+          }}
         >
           {editProfile ? "Cancel" : "Edit profile"}
         </button>
       </div>
-      
+
 
       {!editProfile ? (
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr" }}>
           {(
             [
-              ["Full name", profile.name],
-              ["Email", profile.email],
-              ["Phone", profile.phone],
-              ["City", profile.city],
+              ["Display name", profile.display_name],
+              ["Email", displayEmail],
+              ["Phone", displayPhone],
+              ["City", displayCity],
             ] as const
           ).map(([label, value]) => (
             <div key={label} style={{ padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
@@ -113,11 +138,10 @@ export default function ProfileDetailsSection() {
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "0 16px" }}>
           {(
             [
-              ["Full name", "name"],
-              ["Email", "email"],
-              ["Phone", "phone"],
+              ["Display name", "display_name"],
               ["City", "city"],
-            ] as [string, keyof Profile][]
+              ["Province", "province"],
+            ] as [string, keyof ProfileDraft][]
           ).map(([label, key]) => (
             <div key={key}>
               <label style={labelStyle}>{label}</label>
@@ -133,15 +157,48 @@ export default function ProfileDetailsSection() {
           <button
             className="btn-cta"
             style={{ gridColumn: isMobile ? "span 1" : "span 2", width: "fit-content", fontSize: 14, padding: "10px 20px" }}
-            onClick={() => {
-              setProfile(profileDraft);
-              setEditProfile(false);
+            disabled={isSaving}
+            onClick={async () => {
+              const updated = await onSave({
+                display_name: profileDraft.display_name,
+                num_children: profile.num_children,
+                children_ages: profile.children_ages,
+                city: profileDraft.city,
+                province: profileDraft.province,
+              });
+              if (updated) {
+                setEditProfile(false);
+              }
             }}
           >
-            Save changes
+            {isSaving ? "Saving..." : "Save changes"}
           </button>
+          {errorMessage && (
+            <div style={{ gridColumn: isMobile ? "span 1" : "span 2", color: "#c0392b", fontSize: 13 }}>
+              {errorMessage}
+            </div>
+          )}
         </div>
       )}
     </SectionCard>
   );
+}
+
+function draftFromProfile(profile: ParentProfile): ProfileDraft {
+  return {
+    display_name: profile.display_name,
+    city: profile.city,
+    province: profile.province,
+  };
+}
+
+function initialsFromName(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return `${parts[0]?.[0] ?? "P"}${parts[1]?.[0] ?? ""}`.toUpperCase();
+}
+
+function formatMonthYear(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "recently";
+  return new Intl.DateTimeFormat("en", { month: "short", year: "numeric" }).format(date);
 }

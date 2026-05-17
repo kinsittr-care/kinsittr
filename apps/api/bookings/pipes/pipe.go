@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/models"
 	"github.com/kinsittr/kinsittr-api/repositories/bookings"
-	messagesrepo "github.com/kinsittr/kinsittr-api/repositories/messages"
 	"github.com/kinsittr/kinsittr-api/repositories/nanny"
+	"github.com/kinsittr/kinsittr-api/repositories/notifications"
 	"github.com/kinsittr/kinsittr-api/repositories/profile"
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
@@ -38,19 +38,49 @@ type BookingListData struct {
 	Total int           `json:"total"`
 }
 
-type BookingsPipe struct {
-	repo         bookings.BookingsRepository
-	messagesRepo messagesrepo.MessagesRepository
-	profileRepo  profile.ProfileRepository
-	nannyRepo    nanny.NannyRepository
+type BookingChangeRequestData struct {
+	ID                string                            `json:"id"`
+	BookingID         string                            `json:"booking_id"`
+	RequestedByUserID string                            `json:"requested_by_user_id"`
+	RequestedByRole   models.UserRole                   `json:"requested_by_role"`
+	Type              models.BookingChangeRequestType   `json:"type"`
+	Status            models.BookingChangeRequestStatus `json:"status"`
+	ProposedDate      string                            `json:"proposed_date,omitempty"`
+	ProposedStartTime string                            `json:"proposed_start_time,omitempty"`
+	ProposedDuration  *int                              `json:"proposed_duration,omitempty"`
+	Reason            string                            `json:"reason"`
+	ResponseNote      string                            `json:"response_note,omitempty"`
+	CreatedAt         time.Time                         `json:"created_at"`
+	UpdatedAt         time.Time                         `json:"updated_at"`
+	ResolvedAt        *time.Time                        `json:"resolved_at,omitempty"`
 }
 
-func NewBookingsPipe(repo bookings.BookingsRepository, messagesRepo messagesrepo.MessagesRepository, profileRepo profile.ProfileRepository, nannyRepo nanny.NannyRepository) *BookingsPipe {
+type BookingChangeRequestListData struct {
+	Items []BookingChangeRequestData `json:"items"`
+}
+
+type BookingChangeRequestResolutionData struct {
+	Booking BookingData              `json:"booking"`
+	Request BookingChangeRequestData `json:"request"`
+}
+
+type BookingsPipe struct {
+	repo        bookings.BookingsRepository
+	profileRepo profile.ProfileRepository
+	nannyRepo   nanny.NannyRepository
+	notifyRepo  notifications.NotificationsRepository
+}
+
+func NewBookingsPipe(repo bookings.BookingsRepository, profileRepo profile.ProfileRepository, nannyRepo nanny.NannyRepository, notifyRepo ...notifications.NotificationsRepository) *BookingsPipe {
+	var notificationsRepo notifications.NotificationsRepository
+	if len(notifyRepo) > 0 {
+		notificationsRepo = notifyRepo[0]
+	}
 	return &BookingsPipe{
-		repo:         repo,
-		messagesRepo: messagesRepo,
-		profileRepo:  profileRepo,
-		nannyRepo:    nannyRepo,
+		repo:        repo,
+		profileRepo: profileRepo,
+		nannyRepo:   nannyRepo,
+		notifyRepo:  notificationsRepo,
 	}
 }
 
@@ -77,6 +107,30 @@ func toBookingRecordData(booking bookings.BookingRecord) BookingData {
 	data.NannyDisplayName = booking.NannyDisplayName
 	data.NannyCity = booking.NannyCity
 	data.NannyProvince = booking.NannyProvince
+	return data
+}
+
+func toBookingChangeRequestData(request models.BookingChangeRequest) BookingChangeRequestData {
+	data := BookingChangeRequestData{
+		ID:                request.ID.String(),
+		BookingID:         request.BookingID.String(),
+		RequestedByUserID: request.RequestedByUserID.String(),
+		RequestedByRole:   request.RequestedByRole,
+		Type:              request.Type,
+		Status:            request.Status,
+		ProposedDuration:  request.ProposedDuration,
+		Reason:            request.Reason,
+		ResponseNote:      request.ResponseNote,
+		CreatedAt:         request.CreatedAt,
+		UpdatedAt:         request.UpdatedAt,
+		ResolvedAt:        request.ResolvedAt,
+	}
+	if request.ProposedDate != nil {
+		data.ProposedDate = request.ProposedDate.Format("2006-01-02")
+	}
+	if request.ProposedStartTime != nil {
+		data.ProposedStartTime = request.ProposedStartTime.Format("15:04")
+	}
 	return data
 }
 
@@ -131,7 +185,7 @@ func parseBookingListStatus(value string) (models.BookingStatus, bool) {
 	switch models.BookingStatus(value) {
 	case "":
 		return "", true
-	case models.PendingBookingStatus, models.ApprovedBookingStatus, models.DeclinedBookingStatus, models.CancelledBookingStatus:
+	case models.PendingBookingStatus, models.ApprovedBookingStatus, models.DeclinedBookingStatus, models.CancelledBookingStatus, models.CompletedBookingStatus:
 		return models.BookingStatus(value), true
 	default:
 		return "", false

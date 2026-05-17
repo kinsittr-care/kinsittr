@@ -120,6 +120,25 @@
   --color-brand-muted:  var(--muted);
   --color-brand-faint:  var(--faint);
   --color-brand-border: var(--border);
+
+  /* Nanny palette */
+  --color-nanny-green:       var(--nanny-green);
+  --color-nanny-green-dk:    var(--nanny-green-dk);
+  --color-nanny-green-lt:    var(--nanny-green-lt);
+  --color-nanny-green-mid:   var(--nanny-green-mid);
+  --color-nanny-bg:          var(--nanny-bg-deep);
+  --color-nanny-card:        var(--nanny-card);
+  --color-nanny-card-soft:   var(--nanny-card-soft);
+  --color-nanny-border:      var(--nanny-border);
+  --color-nanny-border-soft: var(--nanny-border-soft);
+  --color-nanny-ink:         var(--nanny-ink-soft);
+  --color-nanny-ink-mute:    var(--nanny-ink-mute);
+  --color-nanny-ink-faint:   var(--nanny-ink-faint);
+  --color-nanny-amber:       var(--nanny-amber);
+  --color-nanny-amber-lt:    var(--nanny-amber-lt);
+  --color-nanny-rose:        var(--nanny-rose);
+  --color-nanny-rose-lt:     var(--nanny-rose-lt);
+
   --font-heading:         var(--font-sans);
   --color-sidebar-ring:         var(--sidebar-ring);
   --color-sidebar-border:         var(--sidebar-border);

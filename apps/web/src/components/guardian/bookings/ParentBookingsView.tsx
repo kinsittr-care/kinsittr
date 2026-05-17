@@ -3,12 +3,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { BookingStatus, ListBookingsParams } from "@/src/types/api/api";
 import {
   cancelParentBooking,
   listParentBookings,
   parentBookingsQueryKey,
-} from "@/src/utils/bookings";
+} from "@/src/utils/api/bookings";
 import Avatar from "../dashboard/Avatar";
 import SectionCard from "../profile/SectionCard";
 import BookingDetailCard from "./BookingDetailCard";
@@ -51,6 +52,8 @@ export default function ParentBookingsView({
   showViewAllLink = true,
 }: ParentBookingsViewProps) {
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const notifiedBookingID = searchParams.get("booking_id");
   const [status, setStatus] = useState<BookingStatus | "">("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -92,6 +95,7 @@ export default function ParentBookingsView({
   const cancelError = cancelMutation.error instanceof Error
     ? cancelMutation.error.message
     : null;
+  const effectiveSelectedBookingId = selectedBookingId ?? notifiedBookingID;
 
   const handleStatusChange = (value: BookingStatus | "") => {
     setStatus(value);
@@ -278,7 +282,7 @@ export default function ParentBookingsView({
         )}
       </SectionCard>
 
-      {!compact && <BookingDetailCard bookingId={selectedBookingId} />}
+      {!compact && <BookingDetailCard bookingId={effectiveSelectedBookingId} />}
     </div>
   );
 }
