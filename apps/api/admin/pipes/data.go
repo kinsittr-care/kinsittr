@@ -47,6 +47,17 @@ type AdminNannyListData struct {
 	Total int              `json:"total"`
 }
 
+type AdminNannyEarningsData struct {
+	CompletedBookings int     `json:"completed_bookings"`
+	TotalEarnings     float64 `json:"total_earnings"`
+}
+
+type AdminNannyDetailData struct {
+	Nanny    AdminNannyData         `json:"nanny"`
+	Bookings AdminBookingListData   `json:"bookings"`
+	Earnings AdminNannyEarningsData `json:"earnings"`
+}
+
 type AdminParentData struct {
 	ID               string    `json:"id"`
 	UserID           string    `json:"user_id"`
@@ -272,6 +283,13 @@ func toAdminNannyData(record repository.NannyRecord) AdminNannyData {
 		WaitingDays: waitingDays,
 		CreatedAt:   record.CreatedAt,
 		UpdatedAt:   record.UpdatedAt,
+	}
+}
+
+func toAdminNannyEarningsData(summary repository.NannyBookingSummary) AdminNannyEarningsData {
+	return AdminNannyEarningsData{
+		CompletedBookings: summary.CompletedCount,
+		TotalEarnings:     summary.TotalEarnings,
 	}
 }
 

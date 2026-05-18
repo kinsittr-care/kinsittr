@@ -49,14 +49,61 @@ func (p *AdminPipe) ListScreeningNannies(ctx context.Context, dto dtos.ListAdmin
 	return res
 }
 
-func (p *AdminPipe) GetNanny(ctx context.Context, nannyProfileID uuid.UUID) *shared.PipeRes[AdminNannyData] {
+func (p *AdminPipe) GetNanny(ctx context.Context, nannyProfileID uuid.UUID, dto dtos.ListAdminBookingsQueryDTO) *shared.PipeRes[AdminNannyDetailData] {
 	record, err := p.repo.GetNannyByID(ctx, nannyProfileID)
 	if err != nil {
-		return pipeError[AdminNannyData](messages.Invalid_Admin_Request)
+		return pipeError[AdminNannyDetailData](messages.Invalid_Admin_Request)
 	}
 	if record.ID == uuid.Nil {
-		return notFoundNanny[AdminNannyData]()
+		return notFoundNanny[AdminNannyDetailData]()
 	}
-	data := toAdminNannyData(record)
+
+	page, limit := normalizePageLimit(dto.Page, dto.Limit)
+	status, ok := parseBookingStatus(dto.Status)
+	if !ok {
+		return pipeError[AdminNannyDetailData](messages.Invalid_Admin_Request)
+	}
+	dateFrom, err := parseDate(dto.DateFrom, false)
+	if err != nil {
+		return pipeError[AdminNannyDetailData](messages.Invalid_Admin_Request)
+	}
+	dateTo, err := parseDate(dto.DateTo, true)
+	if err != nil {
+		return pipeError[AdminNannyDetailData](messages.Invalid_Admin_Request)
+	}
+	if dateFrom != nil && dateTo != nil && dateFrom.After(*dateTo) {
+		return pipeError[AdminNannyDetailData](messages.Invalid_Admin_Request)
+	}
+
+	bookingsRaw, total, err := p.repo.ListNannyBookingHistory(ctx, nannyProfileID, repository.ListBookingsFilter{
+		Page:     page,
+		Limit:    limit,
+		Status:   status,
+		DateFrom: dateFrom,
+		DateTo:   dateTo,
+	})
+	if err != nil {
+		return pipeError[AdminNannyDetailData](messages.Invalid_Admin_Request)
+	}
+	summary, err := p.repo.GetNannyBookingSummary(ctx, nannyProfileID)
+	if err != nil {
+		return pipeError[AdminNannyDetailData](messages.Invalid_Admin_Request)
+	}
+
+	bookings := make([]AdminBookingData, 0, len(bookingsRaw))
+	for _, item := range bookingsRaw {
+		bookings = append(bookings, toAdminBookingData(item))
+	}
+
+	data := AdminNannyDetailData{
+		Nanny: toAdminNannyData(record),
+		Bookings: AdminBookingListData{
+			Items: bookings,
+			Page:  page,
+			Limit: limit,
+			Total: total,
+		},
+		Earnings: toAdminNannyEarningsData(summary),
+	}
 	return pipeSuccess(messages.Admin_Nanny_Fetched, &data)
 }

@@ -41,6 +41,12 @@ func (m *mockAdminRepo) ResetNannyScreeningWithAction(context.Context, repositor
 func (m *mockAdminRepo) SuspendNannyAccount(context.Context, repository.AdminAccountActionParams) (repository.NannyRecord, error) {
 	return m.updatedNanny, nil
 }
+func (m *mockAdminRepo) ListNannyBookingHistory(context.Context, uuid.UUID, repository.ListBookingsFilter) ([]repository.BookingRecord, int, error) {
+	return nil, 0, nil
+}
+func (m *mockAdminRepo) GetNannyBookingSummary(context.Context, uuid.UUID) (repository.NannyBookingSummary, error) {
+	return repository.NannyBookingSummary{}, nil
+}
 func (m *mockAdminRepo) ListParents(context.Context, repository.ListParentsFilter) ([]repository.ParentRecord, int, error) {
 	return nil, 0, nil
 }

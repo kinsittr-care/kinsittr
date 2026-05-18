@@ -114,6 +114,11 @@ type BookingRecord struct {
 	ParentProvince    string
 }
 
+type NannyBookingSummary struct {
+	CompletedCount int
+	TotalEarnings  float64
+}
+
 type AdminBookingActionRecord struct {
 	models.AdminBookingAction
 	AdminEmail *string
@@ -209,6 +214,8 @@ type AdminRepository interface {
 	ResetNannyScreening(ctx context.Context, nannyProfileID uuid.UUID) (NannyRecord, error)
 	ResetNannyScreeningWithAction(ctx context.Context, params AdminNannyActionParams) (NannyRecord, error)
 	SuspendNannyAccount(ctx context.Context, params AdminAccountActionParams) (NannyRecord, error)
+	ListNannyBookingHistory(ctx context.Context, nannyProfileID uuid.UUID, filter ListBookingsFilter) ([]BookingRecord, int, error)
+	GetNannyBookingSummary(ctx context.Context, nannyProfileID uuid.UUID) (NannyBookingSummary, error)
 	ListParents(ctx context.Context, filter ListParentsFilter) ([]ParentRecord, int, error)
 	GetParentByID(ctx context.Context, parentProfileID uuid.UUID) (ParentRecord, error)
 	SuspendParentAccount(ctx context.Context, params AdminAccountActionParams) (ParentRecord, error)
