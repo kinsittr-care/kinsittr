@@ -20,7 +20,7 @@ func adminPipeError(ctx *fiber.Ctx, message string) error {
 	switch message {
 	case messages.Admin_Nanny_Not_Found, messages.Admin_Parent_Not_Found, messages.Admin_Booking_Not_Found, messages.Admin_Conversation_Not_Found, messages.Admin_Message_Not_Found, messages.Admin_User_Not_Found:
 		status = fiber.StatusNotFound
-	case messages.Admin_Screening_Closed, messages.Admin_Booking_Action_Blocked, messages.Admin_Nanny_Action_Blocked, messages.Admin_Account_Action_Blocked:
+	case messages.Admin_Screening_Closed, messages.Admin_Screening_Not_Started, messages.Admin_Booking_Action_Blocked, messages.Admin_Nanny_Action_Blocked, messages.Admin_Account_Action_Blocked:
 		status = fiber.StatusConflict
 	}
 	return ctx.Status(status).JSON(fiber.Map{

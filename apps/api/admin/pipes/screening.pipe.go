@@ -23,9 +23,13 @@ func (p *AdminPipe) UpdateScreeningSteps(ctx context.Context, nannyProfileID uui
 	if current.ID == uuid.Nil {
 		return notFoundNanny[AdminNannyData]()
 	}
-	if !isScreeningEditable(current.VerificationStatus) {
+	if current.VerificationStatus == models.PendingVerificationStatus {
+		return pipeError[AdminNannyData](messages.Admin_Screening_Not_Started)
+	}
+	if current.VerificationStatus != models.UnderReviewVerificationStatus {
 		return pipeError[AdminNannyData](messages.Admin_Screening_Closed)
 	}
+
 	record, err := p.repo.UpdateScreeningSteps(ctx, nannyProfileID, repository.UpdateScreeningStepsParams{
 		DocsReviewed:      dto.DocsReviewed,
 		ReferencesChecked: dto.ReferencesChecked,
@@ -49,14 +53,18 @@ func (p *AdminPipe) StartScreening(ctx context.Context, adminUserID, nannyProfil
 	if current.ID == uuid.Nil {
 		return notFoundNanny[AdminNannyData]()
 	}
-	if !isScreeningEditable(current.VerificationStatus) {
-		return pipeError[AdminNannyData](messages.Admin_Screening_Closed)
+	if current.VerificationStatus != models.PendingVerificationStatus {
+		if !isScreeningEditable(current.VerificationStatus) {
+			return pipeError[AdminNannyData](messages.Admin_Screening_Closed)
+		}
+		return pipeError[AdminNannyData](messages.Admin_Nanny_Action_Blocked)
 	}
+
 	record, err := p.repo.UpdateNannyVerificationStatusWithAction(ctx, repository.AdminNannyActionParams{
 		NannyProfileID: nannyProfileID,
 		AdminUserID:    adminUserID,
 		Action:         models.AdminUnderReviewNannyAction,
-		FromStatuses:   []string{string(models.PendingVerificationStatus), string(models.UnderReviewVerificationStatus)},
+		FromStatuses:   []string{string(models.PendingVerificationStatus)},
 		ToStatus:       models.UnderReviewVerificationStatus,
 	})
 	if err != nil {
@@ -84,6 +92,7 @@ func (p *AdminPipe) ResetScreening(ctx context.Context, adminUserID, nannyProfil
 	if current.VerificationStatus != models.RejectedVerificationStatus {
 		return pipeError[AdminNannyData](messages.Invalid_Admin_Request)
 	}
+
 	record, err := p.repo.ResetNannyScreeningWithAction(ctx, repository.AdminNannyActionParams{
 		NannyProfileID: nannyProfileID,
 		AdminUserID:    adminUserID,

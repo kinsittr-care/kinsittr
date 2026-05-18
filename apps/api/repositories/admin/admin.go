@@ -91,10 +91,17 @@ type AdminConversationActionParams struct {
 }
 
 type InviteAdminParams struct {
-	ID           uuid.UUID
-	Firstname    string
-	Lastname     string
-	Email        string
+	ID        uuid.UUID
+	Firstname string
+	Lastname  string
+	Email     string
+	TokenHash string
+	InvitedBy uuid.UUID
+	ExpiresAt time.Time
+}
+
+type AcceptAdminInviteParams struct {
+	TokenHash    string
 	PasswordHash string
 }
 
@@ -232,7 +239,8 @@ type AdminRepository interface {
 	UnlockConversation(ctx context.Context, params AdminConversationActionParams) (ConversationRecord, error)
 	HideMessage(ctx context.Context, params AdminConversationActionParams) (MessageRecord, error)
 	ListAdmins(ctx context.Context, page, limit int) ([]AdminUserRecord, int, error)
-	CreateAdmin(ctx context.Context, params InviteAdminParams) (AdminUserRecord, error)
+	CreateAdminInvite(ctx context.Context, params InviteAdminParams) (models.AdminInvite, error)
+	AcceptAdminInvite(ctx context.Context, params AcceptAdminInviteParams) (AdminUserRecord, error)
 	DisableAdmin(ctx context.Context, adminUserID uuid.UUID) (AdminUserRecord, error)
 	GetAnalyticsSummary(ctx context.Context, filter AnalyticsRangeFilter) (AnalyticsSummary, error)
 }

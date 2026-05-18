@@ -13,8 +13,10 @@ import (
 )
 
 type mockAdminRepo struct {
-	nanny        repository.NannyRecord
-	updatedNanny repository.NannyRecord
+	nanny               repository.NannyRecord
+	updatedNanny        repository.NannyRecord
+	stepsUpdated        bool
+	statusActionUpdated bool
 }
 
 func (m *mockAdminRepo) ListNannies(context.Context, repository.ListNanniesFilter) ([]repository.NannyRecord, int, error) {
@@ -24,12 +26,14 @@ func (m *mockAdminRepo) GetNannyByID(context.Context, uuid.UUID) (repository.Nan
 	return m.nanny, nil
 }
 func (m *mockAdminRepo) UpdateScreeningSteps(context.Context, uuid.UUID, repository.UpdateScreeningStepsParams) (repository.NannyRecord, error) {
+	m.stepsUpdated = true
 	return m.updatedNanny, nil
 }
 func (m *mockAdminRepo) UpdateNannyVerificationStatus(context.Context, uuid.UUID, models.VerificationStatus) (repository.NannyRecord, error) {
 	return m.updatedNanny, nil
 }
 func (m *mockAdminRepo) UpdateNannyVerificationStatusWithAction(context.Context, repository.AdminNannyActionParams) (repository.NannyRecord, error) {
+	m.statusActionUpdated = true
 	return m.updatedNanny, nil
 }
 func (m *mockAdminRepo) ResetNannyScreening(context.Context, uuid.UUID) (repository.NannyRecord, error) {
@@ -95,7 +99,10 @@ func (m *mockAdminRepo) HideMessage(context.Context, repository.AdminConversatio
 func (m *mockAdminRepo) ListAdmins(context.Context, int, int) ([]repository.AdminUserRecord, int, error) {
 	return nil, 0, nil
 }
-func (m *mockAdminRepo) CreateAdmin(context.Context, repository.InviteAdminParams) (repository.AdminUserRecord, error) {
+func (m *mockAdminRepo) CreateAdminInvite(context.Context, repository.InviteAdminParams) (models.AdminInvite, error) {
+	return models.AdminInvite{}, nil
+}
+func (m *mockAdminRepo) AcceptAdminInvite(context.Context, repository.AcceptAdminInviteParams) (repository.AdminUserRecord, error) {
 	return repository.AdminUserRecord{}, nil
 }
 func (m *mockAdminRepo) DisableAdmin(context.Context, uuid.UUID) (repository.AdminUserRecord, error) {
@@ -143,6 +150,51 @@ func TestAdminVerifyNannySucceedsWhenScreeningComplete(t *testing.T) {
 	res := pipe.VerifyNanny(context.Background(), uuid.New(), nanny.ID)
 	if !res.Success || string(res.Message) != messages.Admin_Nanny_Verified {
 		t.Fatalf("expected verification success, got success=%v message=%s", res.Success, res.Message)
+	}
+}
+
+func TestAdminUpdateScreeningStepsRequiresStartedScreening(t *testing.T) {
+	nanny := adminNanny(models.PendingVerificationStatus, false)
+	repo := &mockAdminRepo{nanny: nanny, updatedNanny: nanny}
+	pipe := NewAdminPipe(repo, 0.10)
+	checked := true
+
+	res := pipe.UpdateScreeningSteps(context.Background(), nanny.ID, dtos.UpdateScreeningStepsDTO{DocsReviewed: &checked})
+	if res.Success || string(res.Message) != messages.Admin_Screening_Not_Started {
+		t.Fatalf("expected screening not started, got success=%v message=%s", res.Success, res.Message)
+	}
+	if repo.stepsUpdated {
+		t.Fatal("expected pending screening step update to be blocked before repository mutation")
+	}
+}
+
+func TestAdminStartScreeningIsOnlyPendingToUnderReviewTransition(t *testing.T) {
+	nanny := adminNanny(models.PendingVerificationStatus, false)
+	updated := nanny
+	updated.VerificationStatus = models.UnderReviewVerificationStatus
+	repo := &mockAdminRepo{nanny: nanny, updatedNanny: updated}
+	pipe := NewAdminPipe(repo, 0.10)
+
+	res := pipe.StartScreening(context.Background(), uuid.New(), nanny.ID)
+	if !res.Success || string(res.Message) != messages.Admin_Screening_Started {
+		t.Fatalf("expected screening start success, got success=%v message=%s", res.Success, res.Message)
+	}
+	if !repo.statusActionUpdated {
+		t.Fatal("expected explicit start screening action to be audited")
+	}
+}
+
+func TestAdminStartScreeningBlocksAlreadyStartedScreening(t *testing.T) {
+	nanny := adminNanny(models.UnderReviewVerificationStatus, false)
+	repo := &mockAdminRepo{nanny: nanny, updatedNanny: nanny}
+	pipe := NewAdminPipe(repo, 0.10)
+
+	res := pipe.StartScreening(context.Background(), uuid.New(), nanny.ID)
+	if res.Success || string(res.Message) != messages.Admin_Nanny_Action_Blocked {
+		t.Fatalf("expected duplicate start to be blocked, got success=%v message=%s", res.Success, res.Message)
+	}
+	if repo.statusActionUpdated {
+		t.Fatal("expected duplicate screening start to avoid audit mutation")
 	}
 }
 

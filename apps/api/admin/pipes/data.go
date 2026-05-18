@@ -249,6 +249,16 @@ type AdminUserListData struct {
 	Total int             `json:"total"`
 }
 
+type AdminInviteData struct {
+	ID        string    `json:"id"`
+	Firstname string    `json:"firstname"`
+	Lastname  string    `json:"lastname"`
+	Email     string    `json:"email"`
+	Token     string    `json:"token,omitempty"`
+	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 func toAdminNannyData(record repository.NannyRecord) AdminNannyData {
 	waitingDays := int(time.Since(record.CreatedAt).Hours() / 24)
 	if waitingDays < 0 {
@@ -422,6 +432,18 @@ func toAdminUserData(record repository.AdminUserRecord) AdminUserData {
 		IsActive:  record.IsActive,
 		CreatedAt: record.CreatedAt,
 		UpdatedAt: record.UpdatedAt,
+	}
+}
+
+func toAdminInviteData(invite models.AdminInvite, token string) AdminInviteData {
+	return AdminInviteData{
+		ID:        invite.ID.String(),
+		Firstname: invite.Firstname,
+		Lastname:  invite.Lastname,
+		Email:     invite.Email,
+		Token:     token,
+		ExpiresAt: invite.ExpiresAt,
+		CreatedAt: invite.CreatedAt,
 	}
 }
 

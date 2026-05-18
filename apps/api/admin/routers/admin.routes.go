@@ -75,6 +75,12 @@ func AdminRoutes(controller *controllers.AdminController, jwtSecret string) []ap
 			Handler:     controller.InviteAdmin,
 		},
 		{
+			RouteMethod: api.RouteMethod(fiber.MethodPost),
+			Path:        "/admins/accept-invite",
+			Middlewares: nil,
+			Handler:     controller.AcceptAdminInvite,
+		},
+		{
 			RouteMethod: api.RouteMethod(fiber.MethodPatch),
 			Path:        "/admins/:id/disable",
 			Middlewares: adminAuth,

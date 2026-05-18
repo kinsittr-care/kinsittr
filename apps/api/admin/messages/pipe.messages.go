@@ -25,6 +25,7 @@ const (
 	Admin_Booking_Actions_Listed = "admin_booking_actions_listed"
 	Admin_Admins_Listed          = "admin_admins_listed"
 	Admin_Admin_Invited          = "admin_admin_invited"
+	Admin_Admin_Invite_Accepted  = "admin_admin_invite_accepted"
 	Admin_Admin_Disabled         = "admin_admin_disabled"
 	Admin_Analytics_Fetched      = "admin_analytics_fetched"
 
@@ -33,6 +34,7 @@ const (
 	Forbidden_Admin_Access       = "forbidden_admin_access"
 	Invalid_Admin_Request        = "invalid_admin_request"
 	Admin_Screening_Closed       = "admin_screening_closed"
+	Admin_Screening_Not_Started  = "admin_screening_not_started"
 	Admin_Booking_Action_Blocked = "admin_booking_action_blocked"
 	Admin_Nanny_Action_Blocked   = "admin_nanny_action_blocked"
 	Admin_Account_Action_Blocked = "admin_account_action_blocked"

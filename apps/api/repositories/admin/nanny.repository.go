@@ -163,15 +163,6 @@ func (r *pgRepository) UpdateScreeningSteps(ctx context.Context, nannyProfileID 
 	`, nannyProfileID, docsReviewed, referencesChecked, interviewDone); err != nil {
 		return NannyRecord{}, err
 	}
-	if current.VerificationStatus == models.PendingVerificationStatus {
-		if _, err := r.db.Exec(ctx, `
-			UPDATE nanny_profiles
-			SET verification_status = $1, updated_at = NOW()
-			WHERE id = $2
-		`, models.UnderReviewVerificationStatus, nannyProfileID); err != nil {
-			return NannyRecord{}, err
-		}
-	}
 	return r.GetNannyByID(ctx, nannyProfileID)
 }
 

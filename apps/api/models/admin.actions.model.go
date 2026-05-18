@@ -78,3 +78,16 @@ type AdminAccountAction struct {
 	Reason          string                 `json:"reason"`
 	CreatedAt       time.Time              `json:"created_at"`
 }
+
+type AdminInvite struct {
+	ID         uuid.UUID  `json:"id"`
+	Firstname  string     `json:"firstname"`
+	Lastname   string     `json:"lastname"`
+	Email      string     `json:"email"`
+	TokenHash  string     `json:"-"`
+	InvitedBy  *uuid.UUID `json:"invited_by,omitempty"`
+	AcceptedBy *uuid.UUID `json:"accepted_by,omitempty"`
+	AcceptedAt *time.Time `json:"accepted_at,omitempty"`
+	ExpiresAt  time.Time  `json:"expires_at"`
+	CreatedAt  time.Time  `json:"created_at"`
+}

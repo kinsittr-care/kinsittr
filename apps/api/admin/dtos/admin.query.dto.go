@@ -56,7 +56,11 @@ type InviteAdminDTO struct {
 	Firstname string `json:"firstname"`
 	Lastname  string `json:"lastname"`
 	Email     string `json:"email"`
-	Password  string `json:"password"`
+}
+
+type AcceptAdminInviteDTO struct {
+	Token    string `json:"token"`
+	Password string `json:"password"`
 }
 
 type AdminAnalyticsQueryDTO struct {
