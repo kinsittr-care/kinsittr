@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEventHandler, useState } from "react";
+import { ChangeEvent, SyntheticEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ApiRequestError } from "@/src/utils/api/api";
 import { establishAuthSession, loginUser } from "@/src/utils/api/auth";
@@ -33,7 +33,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
     setValues((v) => ({ ...v, [name]: value }));
   };
 
-  const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
+  const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);

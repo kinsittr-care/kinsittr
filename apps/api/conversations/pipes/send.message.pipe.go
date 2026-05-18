@@ -48,6 +48,9 @@ func (p *ConversationsPipe) SendMessage(ctx context.Context, userID uuid.UUID, r
 	if record.ID == uuid.Nil {
 		return conversationNotFound[MessageData]()
 	}
+	if record.LockedAt != nil {
+		return pipeError[MessageData](convmessages.Forbidden_Conversation_Access)
+	}
 
 	message, err := p.repo.CreateMessage(ctx, models.Message{
 		ID:             uuid.New(),

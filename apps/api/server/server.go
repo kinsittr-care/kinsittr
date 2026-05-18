@@ -6,6 +6,9 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	admin_controller "github.com/kinsittr/kinsittr-api/admin/controllers"
+	admin_pipe "github.com/kinsittr/kinsittr-api/admin/pipes"
+	admin_router "github.com/kinsittr/kinsittr-api/admin/routers"
 	auth_controller "github.com/kinsittr/kinsittr-api/auth/controllers"
 	auth_pipe "github.com/kinsittr/kinsittr-api/auth/pipes"
 	auth_router "github.com/kinsittr/kinsittr-api/auth/routers"
@@ -32,6 +35,7 @@ import (
 	parent_router "github.com/kinsittr/kinsittr-api/parent/routers"
 	"github.com/kinsittr/kinsittr-api/repositories"
 	"github.com/kinsittr/kinsittr-api/repositories/account"
+	admin_repo "github.com/kinsittr/kinsittr-api/repositories/admin"
 	bookings_repo "github.com/kinsittr/kinsittr-api/repositories/bookings"
 	messages_repo "github.com/kinsittr/kinsittr-api/repositories/messages"
 	nanny_repo "github.com/kinsittr/kinsittr-api/repositories/nanny"
@@ -90,6 +94,10 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	notificationsPipe := notifications_pipe.NewNotificationsPipe(notifications_repo.NotificationsRepo)
 	notificationsController := notifications_controller.NewNotificationsController(notificationsPipe)
 
+	// admin
+	adminPipe := admin_pipe.NewAdminPipe(admin_repo.AdminRepo, cfg.PlatformFeeRate, notifications_repo.NotificationsRepo)
+	adminController := admin_controller.NewAdminController(adminPipe)
+
 	apiGroup := app.Group("/api/v1")
 
 	if cfg.ContactConfigured() {
@@ -124,6 +132,9 @@ func New(cfg *config.Config) (*fiber.App, error) {
 
 	notificationsGroup := apiGroup.Group("/notifications")
 	api.BaseRouter(notificationsGroup, notifications_router.NotificationRoutes(notificationsController, cfg.JWTSecret))
+
+	adminGroup := apiGroup.Group("/admin")
+	api.BaseRouter(adminGroup, admin_router.AdminRoutes(adminController, cfg.JWTSecret))
 
 	return app, nil
 }
