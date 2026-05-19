@@ -41,6 +41,10 @@ import (
 	nanny_repo "github.com/kinsittr/kinsittr-api/repositories/nanny"
 	notifications_repo "github.com/kinsittr/kinsittr-api/repositories/notifications"
 	profile_repo "github.com/kinsittr/kinsittr-api/repositories/profile"
+	reviews_repo "github.com/kinsittr/kinsittr-api/repositories/reviews"
+	reviews_controller "github.com/kinsittr/kinsittr-api/reviews/controllers"
+	reviews_pipe "github.com/kinsittr/kinsittr-api/reviews/pipes"
+	reviews_router "github.com/kinsittr/kinsittr-api/reviews/routers"
 	"github.com/kinsittr/kinsittr-api/shared/api"
 	"github.com/kinsittr/kinsittr-api/shared/mail"
 )
@@ -94,6 +98,10 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	notificationsPipe := notifications_pipe.NewNotificationsPipe(notifications_repo.NotificationsRepo)
 	notificationsController := notifications_controller.NewNotificationsController(notificationsPipe)
 
+	// reviews
+	reviewsPipe := reviews_pipe.NewReviewsPipe(reviews_repo.ReviewsRepo, bookings_repo.BookingsRepo, profile_repo.ProfileRepo)
+	reviewsController := reviews_controller.NewReviewsController(reviewsPipe)
+
 	// admin
 	adminPipe := admin_pipe.NewAdminPipe(admin_repo.AdminRepo, cfg.PlatformFeeRate, notifications_repo.NotificationsRepo)
 	adminController := admin_controller.NewAdminController(adminPipe)
@@ -114,11 +122,15 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	api.BaseRouter(authGroup, auth_router.AuthRoutes(authController, cfg.JWTSecret))
 
 	publicNannyGroup := apiGroup.Group("/nannies")
+	api.BaseRouter(publicNannyGroup, reviews_router.PublicNannyReviewRoutes(reviewsController))
 	api.BaseRouter(publicNannyGroup, nanny_router.PublicNannyRoutes(nannyController))
 
 	nannyGroup := apiGroup.Group("/nanny")
 	nannyBookingsGroup := nannyGroup.Group("/bookings")
 	api.BaseRouter(nannyBookingsGroup, bookings_router.NannyBookingRoutes(bookingsController, cfg.JWTSecret))
+	api.BaseRouter(nannyBookingsGroup, reviews_router.NannyBookingReviewRoutes(reviewsController, cfg.JWTSecret))
+	nannyReviewsGroup := nannyGroup.Group("/reviews")
+	api.BaseRouter(nannyReviewsGroup, reviews_router.NannyReviewRoutes(reviewsController, cfg.JWTSecret))
 	api.BaseRouter(nannyGroup, nanny_router.NannyRoutes(nannyController, cfg.JWTSecret))
 
 	parentGroup := apiGroup.Group("/parent")
@@ -126,6 +138,10 @@ func New(cfg *config.Config) (*fiber.App, error) {
 
 	bookingsGroup := apiGroup.Group("/bookings")
 	api.BaseRouter(bookingsGroup, bookings_router.BookingRoutes(bookingsController, cfg.JWTSecret))
+	api.BaseRouter(bookingsGroup, reviews_router.BookingReviewRoutes(reviewsController, cfg.JWTSecret))
+
+	reviewsGroup := apiGroup.Group("/reviews")
+	api.BaseRouter(reviewsGroup, reviews_router.ParentReviewRoutes(reviewsController, cfg.JWTSecret))
 
 	conversationsGroup := apiGroup.Group("/conversations")
 	api.BaseRouter(conversationsGroup, conversations_router.ConversationRoutes(conversationsController, cfg.JWTSecret))
@@ -135,6 +151,7 @@ func New(cfg *config.Config) (*fiber.App, error) {
 
 	adminGroup := apiGroup.Group("/admin")
 	api.BaseRouter(adminGroup, admin_router.AdminRoutes(adminController, cfg.JWTSecret))
+	api.BaseRouter(adminGroup, reviews_router.AdminReviewRoutes(reviewsController, cfg.JWTSecret))
 
 	return app, nil
 }
