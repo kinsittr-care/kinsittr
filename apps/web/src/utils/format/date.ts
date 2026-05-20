@@ -129,3 +129,7 @@ export function formatNannyDashboardDate(value: DateInput) {
     day: "numeric",
   }).format(toDate(value));
 }
+
+export function formatDateParam(value: DateInput) {
+  return toDate(value).toISOString().slice(0, 10);
+}

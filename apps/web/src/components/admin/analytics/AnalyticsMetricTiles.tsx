@@ -2,6 +2,13 @@ import { A } from "../tokens";
 
 type MetricTone = "clay" | "green" | "plum" | "amber";
 
+export interface AnalyticsMetricTile {
+  label: string;
+  value: string;
+  sub: React.ReactNode;
+  tone?: MetricTone;
+}
+
 const metricColors: Record<MetricTone, string> = {
   clay:  A.clay,
   green: A.green,
@@ -58,7 +65,13 @@ function MetricCard({
   );
 }
 
-export default function AnalyticsMetricTiles() {
+export default function AnalyticsMetricTiles({
+  metrics,
+  isLoading,
+}: {
+  metrics: AnalyticsMetricTile[];
+  isLoading: boolean;
+}) {
   return (
     <div
       style={{
@@ -67,15 +80,15 @@ export default function AnalyticsMetricTiles() {
         gap: 18,
       }}
     >
-      <MetricCard
-        label="Total Revenue"
-        value="$24,820"
-        sub={<span style={{ color: A.green, fontWeight: 600 }}>↑ 22% vs Mar</span>}
-        tone="clay"
-      />
-      <MetricCard label="Platform Fee"     value="$2,482" sub="10% take rate"    tone="green" />
-      <MetricCard label="Active Bookings"  value="138"    sub="64 this week"     tone="plum"  />
-      <MetricCard label="Verified Nannies" value="42"     sub="5 pending review" tone="amber" />
+      {metrics.map((metric) => (
+        <MetricCard
+          key={metric.label}
+          label={metric.label}
+          value={isLoading ? "..." : metric.value}
+          sub={isLoading ? "Loading analytics..." : metric.sub}
+          tone={metric.tone}
+        />
+      ))}
     </div>
   );
 }
