@@ -1,8 +1,13 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Nanny } from "./types";
 import Avatar from "./Avatar";
 import { ApiRequestError } from "@/src/utils/api/api";
 import { createBooking } from "@/src/utils/api/bookings";
+import {
+  listPublicNannyReviews,
+  publicNannyReviewsQueryKey,
+} from "@/src/utils/api/reviews";
 import type { Booking } from "@/src/types/api/api";
 
 const inputStyle: React.CSSProperties = {
@@ -45,6 +50,11 @@ export default function BookingFormContent({ nanny, onClose, onBooked }: FormPro
     const [error, setError] = useState<string | null>(null);
     const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
     const total = nanny.rate * hours;
+    const reviewsParams = { page: 1, limit: 3 };
+    const reviewsQuery = useQuery({
+      queryKey: publicNannyReviewsQueryKey(nanny.id, reviewsParams),
+      queryFn: async () => listPublicNannyReviews(nanny.id, reviewsParams),
+    });
 
     const getTimezoneOffsetMinutes = () => {
       const [year, month, day] = date.split("-").map(Number);
@@ -167,6 +177,35 @@ export default function BookingFormContent({ nanny, onClose, onBooked }: FormPro
         >
           ⏳ Your request will be sent for nanny approval before messaging unlocks.
         </div>
+
+        {reviewsQuery.data?.data?.items.length ? (
+          <div style={{ marginBottom: 20 }}>
+            <div style={labelStyle}>Recent reviews</div>
+            <div style={{ display: "grid", gap: 10 }}>
+              {reviewsQuery.data.data.items.map((review) => (
+                <div
+                  key={review.id}
+                  style={{
+                    border: "1px solid var(--border)",
+                    borderRadius: 12,
+                    background: "var(--bg-warm)",
+                    padding: "10px 12px",
+                  }}
+                >
+                  <div style={{ color: "var(--gold)", fontSize: 12, marginBottom: 4 }}>
+                    {"★".repeat(review.rating)}
+                  </div>
+                  <p style={{ margin: 0, fontSize: 13, color: "var(--brand-text)", lineHeight: 1.5 }}>
+                    {review.comment}
+                  </p>
+                  <div style={{ marginTop: 6, fontSize: 12, color: "var(--faint)" }}>
+                    {review.parent_display_name || "KinSittr parent"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
   
         <div style={{ marginBottom: 16 }}>
           <label style={labelStyle}>Date</label>

@@ -20,16 +20,21 @@ export default function BookingRequestCard({
   booking,
   onApprove,
   onDecline,
+  onReview,
   isUpdating = false,
   isHighlighted = false,
+  isReviewed = false,
 }: {
   booking: BookingRequest;
   onApprove?: () => void;
   onDecline?: () => void;
+  onReview?: () => void;
   isUpdating?: boolean;
   isHighlighted?: boolean;
+  isReviewed?: boolean;
 }) {
   const isPending = booking.status === "pending";
+  const isCompleted = booking.status === "completed";
 
   return (
     <div
@@ -92,8 +97,13 @@ export default function BookingRequestCard({
         </div>
       )}
       {!isPending && (
-        <div style={{ marginTop: 16 }}>
+        <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button style={btnGhost}>View details</button>
+          {isCompleted && (
+            <button style={btnGhost} onClick={onReview} disabled={isReviewed}>
+              {isReviewed ? "Reviewed" : "Review parent"}
+            </button>
+          )}
         </div>
       )}
     </div>

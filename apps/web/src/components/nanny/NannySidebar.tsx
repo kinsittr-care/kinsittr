@@ -53,6 +53,15 @@ export const navItems = [
     ),
   },
   {
+    href: "/nanny/reviews",
+    label: "Reviews",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M9 2.5l1.9 3.9 4.3.6-3.1 3 .7 4.3L9 12.3l-3.8 2 .7-4.3-3.1-3 4.3-.6L9 2.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     href: "/nanny/earnings",
     label: "Earnings",
     icon: (

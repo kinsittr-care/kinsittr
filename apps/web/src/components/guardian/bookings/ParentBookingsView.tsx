@@ -10,6 +10,13 @@ import {
   listParentBookings,
   parentBookingsQueryKey,
 } from "@/src/utils/api/bookings";
+import ReviewDialog from "@/src/components/shared/ReviewDialog";
+import {
+  createParentReview,
+  findParentReviewedBookingIds,
+  parentReviewedBookingIdsQueryKey,
+  publicNannyReviewsQueryKey,
+} from "@/src/utils/api/reviews";
 import Avatar from "../dashboard/Avatar";
 import SectionCard from "../profile/SectionCard";
 import BookingDetailCard from "./BookingDetailCard";
@@ -59,6 +66,7 @@ export default function ParentBookingsView({
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [reviewBookingId, setReviewBookingId] = useState<string | null>(null);
 
   const queryParams = useMemo<ListBookingsParams>(
     () => ({
@@ -87,7 +95,31 @@ export default function ParentBookingsView({
     },
   });
 
-  const bookings = data?.data?.items ?? [];
+  const reviewMutation = useMutation({
+    mutationFn: async ({
+      bookingId,
+      rating,
+      comment,
+    }: {
+      bookingId: string;
+      rating: number;
+      comment: string;
+    }) => createParentReview(bookingId, { rating, comment }),
+    onSuccess: async (response, variables) => {
+      setReviewBookingId(null);
+      await queryClient.invalidateQueries({ queryKey: ["parent-reviews"] });
+      await queryClient.invalidateQueries({ queryKey: ["parent-reviewed-booking-ids"] });
+      await queryClient.invalidateQueries({ queryKey: ["parent-bookings"] });
+      await queryClient.invalidateQueries({ queryKey: ["parent-booking", variables.bookingId] });
+      if (response.data?.nanny_profile_id) {
+        await queryClient.invalidateQueries({
+          queryKey: publicNannyReviewsQueryKey(response.data.nanny_profile_id),
+        });
+      }
+    },
+  });
+
+  const bookings = useMemo(() => data?.data?.items ?? [], [data?.data?.items]);
   const total = data?.data?.total ?? 0;
   const currentPage = data?.data?.page ?? page;
   const currentLimit = data?.data?.limit ?? queryParams.limit ?? 10;
@@ -96,6 +128,18 @@ export default function ParentBookingsView({
     ? cancelMutation.error.message
     : null;
   const effectiveSelectedBookingId = selectedBookingId ?? notifiedBookingID;
+  const completedBookingIds = useMemo(
+    () => bookings.filter((booking) => booking.status === "completed").map((booking) => booking.id),
+    [bookings],
+  );
+  const reviewedBookingIdsQuery = useQuery({
+    queryKey: parentReviewedBookingIdsQueryKey(completedBookingIds),
+    queryFn: async () => findParentReviewedBookingIds(completedBookingIds),
+    enabled: completedBookingIds.length > 0,
+  });
+  const reviewedBookingIds = reviewedBookingIdsQuery.data ?? new Set<string>();
+  const reviewBooking = bookings.find((booking) => booking.id === reviewBookingId) ?? null;
+  const reviewError = reviewMutation.error instanceof Error ? reviewMutation.error.message : null;
 
   const handleStatusChange = (value: BookingStatus | "") => {
     setStatus(value);
@@ -135,6 +179,7 @@ export default function ParentBookingsView({
                 <option value="approved">Approved</option>
                 <option value="declined">Declined</option>
                 <option value="cancelled">Cancelled</option>
+                <option value="completed">Completed</option>
               </select>
             </div>
             <div>
@@ -249,6 +294,25 @@ export default function ParentBookingsView({
                           {cancelMutation.isPending ? "Cancelling..." : "Cancel"}
                         </button>
                       )}
+                      {booking.status === "completed" && (
+                        <button
+                          style={{
+                            padding: "8px 14px",
+                            fontSize: 13,
+                            borderRadius: 10,
+                            background: reviewedBookingIds.has(booking.id) ? "var(--bg-warm)" : "var(--teal)",
+                            color: reviewedBookingIds.has(booking.id) ? "var(--muted)" : "#fff",
+                            border: reviewedBookingIds.has(booking.id) ? "1.5px solid var(--border)" : "none",
+                            cursor: reviewedBookingIds.has(booking.id) ? "default" : "pointer",
+                            fontFamily: "inherit",
+                            fontWeight: 600,
+                          }}
+                          disabled={reviewedBookingIds.has(booking.id)}
+                          onClick={() => setReviewBookingId(booking.id)}
+                        >
+                          {reviewedBookingIds.has(booking.id) ? "Reviewed" : "Leave review"}
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -283,6 +347,22 @@ export default function ParentBookingsView({
       </SectionCard>
 
       {!compact && <BookingDetailCard bookingId={effectiveSelectedBookingId} />}
+
+      <ReviewDialog
+        open={!!reviewBooking}
+        title={`Review ${reviewBooking?.nanny_display_name ?? "your nanny"}`}
+        description="Share feedback about this completed booking. Your review will appear on the nanny's public profile unless moderated."
+        submitLabel="Submit review"
+        isSubmitting={reviewMutation.isPending}
+        error={reviewError}
+        onClose={() => {
+          if (!reviewMutation.isPending) setReviewBookingId(null);
+        }}
+        onSubmit={(payload) => {
+          if (!reviewBooking) return;
+          reviewMutation.mutate({ bookingId: reviewBooking.id, ...payload });
+        }}
+      />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { Booking, BookingStatus } from "@/src/types/api/api";
 import {
@@ -10,6 +10,12 @@ import {
   listNannyBookings,
   nannyBookingsQueryKey,
 } from "@/src/utils/api/bookings";
+import ReviewDialog from "@/src/components/shared/ReviewDialog";
+import {
+  createNannyReview,
+  findNannyReviewedBookingIds,
+  nannyReviewedBookingIdsQueryKey,
+} from "@/src/utils/api/reviews";
 import { cn } from "@/lib/utils";
 import BookingRequestCard from "./requests/BookingRequestCard";
 import type { BookingRequest } from "./requests/BookingRequestCard";
@@ -17,7 +23,7 @@ import type { BookingRequest } from "./requests/BookingRequestCard";
 const PAGE_SIZE = 20;
 
 type Filter = "all" | BookingStatus;
-const FILTERS: Filter[] = ["all", "pending", "approved", "declined", "cancelled"];
+const FILTERS: Filter[] = ["all", "pending", "approved", "completed", "declined", "cancelled"];
 
 function getInitials(name?: string) {
   return (name || "Parent")
@@ -67,6 +73,7 @@ export default function NannyRequestsView() {
   const [filter, setFilter] = useState<Filter>("all");
   const [page, setPage] = useState(1);
   const [updatingID, setUpdatingID] = useState<string | null>(null);
+  const [reviewBookingId, setReviewBookingId] = useState<string | null>(null);
 
   const queryParams = { page, limit: PAGE_SIZE, status: filter === "all" ? undefined : filter };
   const bookingsQuery = useQuery({
@@ -85,10 +92,41 @@ export default function NannyRequestsView() {
     },
   });
 
+  const reviewMutation = useMutation({
+    mutationFn: async ({
+      bookingId,
+      rating,
+      comment,
+    }: {
+      bookingId: string;
+      rating: number;
+      comment: string;
+    }) => createNannyReview(bookingId, { rating, comment }),
+    onSuccess: async () => {
+      setReviewBookingId(null);
+      await queryClient.invalidateQueries({ queryKey: ["nanny-reviews"] });
+      await queryClient.invalidateQueries({ queryKey: ["nanny-reviewed-booking-ids"] });
+      await queryClient.invalidateQueries({ queryKey: ["nanny-bookings"] });
+    },
+  });
+
   const data = bookingsQuery.data?.data;
-  const visible = (data?.items ?? []).map(toBookingRequest);
+  const bookings = useMemo(() => data?.items ?? [], [data?.items]);
+  const visible = bookings.map(toBookingRequest);
   const total = data?.total ?? 0;
   const pendingCount = filter === "pending" ? total : undefined;
+  const completedBookingIds = useMemo(
+    () => bookings.filter((booking) => booking.status === "completed").map((booking) => booking.id),
+    [bookings],
+  );
+  const reviewedBookingIdsQuery = useQuery({
+    queryKey: nannyReviewedBookingIdsQueryKey(completedBookingIds),
+    queryFn: async () => findNannyReviewedBookingIds(completedBookingIds),
+    enabled: completedBookingIds.length > 0,
+  });
+  const reviewedBookingIds = reviewedBookingIdsQuery.data ?? new Set<string>();
+  const reviewBooking = bookings.find((booking) => booking.id === reviewBookingId) ?? null;
+  const reviewError = reviewMutation.error instanceof Error ? reviewMutation.error.message : null;
 
   const changeFilter = (f: Filter) => { setFilter(f); setPage(1); };
 
@@ -157,6 +195,8 @@ export default function NannyRequestsView() {
               isHighlighted={r.id === notifiedBookingID}
               onApprove={() => updateMutation.mutate({ id: r.id, action: "approve" })}
               onDecline={() => updateMutation.mutate({ id: r.id, action: "decline" })}
+              onReview={() => setReviewBookingId(r.id)}
+              isReviewed={reviewedBookingIds.has(r.id)}
             />
           ))
         )}
@@ -181,6 +221,22 @@ export default function NannyRequestsView() {
           </button>
         </div>
       )}
+
+      <ReviewDialog
+        open={!!reviewBooking}
+        title={`Review ${reviewBooking?.parent_display_name ?? "this parent"}`}
+        description="Share feedback about this completed booking. The parent cannot edit or delete the review after it is submitted."
+        submitLabel="Submit review"
+        isSubmitting={reviewMutation.isPending}
+        error={reviewError}
+        onClose={() => {
+          if (!reviewMutation.isPending) setReviewBookingId(null);
+        }}
+        onSubmit={(payload) => {
+          if (!reviewBooking) return;
+          reviewMutation.mutate({ bookingId: reviewBooking.id, ...payload });
+        }}
+      />
     </div>
   );
 }
