@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AdminPageHeader from "./AdminPageHeader";
+import AdminPagination from "./AdminPagination";
 import ScreeningCard, { type ScreeningApplicant, type Steps } from "./screening/ScreeningCard";
 import { btnGhost } from "./admin-styles";
 import type { AdminNanny, ListAdminScreeningNanniesParams } from "@/src/types/api/admin";
@@ -20,6 +21,8 @@ const statusFilters = [
   { label: "Under review", value: "under_review" },
   { label: "Rejected", value: "rejected" },
 ] as const;
+
+const PAGE_SIZE = 20;
 
 function initialsFor(nanny: AdminNanny) {
   const source = `${nanny.user_firstname[0] ?? ""}${nanny.user_lastname[0] ?? ""}`;
@@ -55,9 +58,10 @@ function stepPayload(key: keyof Steps, value: boolean) {
 export default function ScreeningQueueView() {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<ListAdminScreeningNanniesParams["status"]>("pending");
+  const [page, setPage] = useState(1);
   const params = useMemo<ListAdminScreeningNanniesParams>(
-    () => ({ page: 1, limit: 20, status }),
-    [status],
+    () => ({ page, limit: PAGE_SIZE, status }),
+    [page, status],
   );
   const queryKey = adminScreeningNanniesQueryKey(params);
 
@@ -121,7 +125,10 @@ export default function ScreeningQueueView() {
             {statusFilters.map((item) => (
               <button
                 key={item.value}
-                onClick={() => setStatus(item.value)}
+                onClick={() => {
+                  setPage(1);
+                  setStatus(item.value);
+                }}
                 style={{
                   ...btnGhost,
                   borderColor: status === item.value ? "var(--admin-clay)" : undefined,
@@ -164,6 +171,7 @@ export default function ScreeningQueueView() {
             />
           ))
         )}
+        <AdminPagination page={page} total={total} limit={PAGE_SIZE} onPageChange={setPage} />
       </div>
     </>
   );

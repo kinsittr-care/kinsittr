@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { A } from "./tokens";
 import AdminPageHeader from "./AdminPageHeader";
+import AdminPagination from "./AdminPagination";
 import AdminPill from "./AdminPill";
 import { btnApprove, btnDanger, btnGhost } from "./admin-styles";
 import type {
@@ -33,6 +34,8 @@ const statusFilters: Array<{ label: string; value: BookingStatus | "" }> = [
   { label: "Declined", value: "declined" },
 ];
 
+const PAGE_SIZE = 20;
+
 function senderName(message: AdminMessage) {
   return `${message.sender_firstname} ${message.sender_lastname}`.trim() || message.sender_email;
 }
@@ -46,16 +49,17 @@ export default function ConversationsModerationView() {
   const [status, setStatus] = useState<BookingStatus | "">("");
   const [search, setSearch] = useState("");
   const [submittedSearch, setSubmittedSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
 
   const params = useMemo<ListAdminConversationsParams>(
     () => ({
-      page: 1,
-      limit: 20,
+      page,
+      limit: PAGE_SIZE,
       search: submittedSearch || undefined,
       status: status || undefined,
     }),
-    [status, submittedSearch],
+    [page, status, submittedSearch],
   );
   const messageParams = useMemo<ListAdminMessagesParams>(() => ({ page: 1, limit: 50 }), []);
 
@@ -117,7 +121,9 @@ export default function ConversationsModerationView() {
           <form
             onSubmit={(event) => {
               event.preventDefault();
+              setPage(1);
               setSubmittedSearch(search.trim());
+              setSelectedConversationId(null);
             }}
             style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}
           >
@@ -140,6 +146,7 @@ export default function ConversationsModerationView() {
                 key={item.label}
                 type="button"
                 onClick={() => {
+                  setPage(1);
                   setStatus(item.value);
                   setSelectedConversationId(null);
                 }}
@@ -203,6 +210,7 @@ export default function ConversationsModerationView() {
               ))
             )}
           </div>
+          <AdminPagination page={page} total={total} limit={PAGE_SIZE} onPageChange={setPage} />
         </div>
 
         {selectedConversation && (

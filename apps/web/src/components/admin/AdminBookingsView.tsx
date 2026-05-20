@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { A } from "./tokens";
 import AdminPageHeader from "./AdminPageHeader";
+import AdminPagination from "./AdminPagination";
 import AdminPill from "./AdminPill";
 import type { PillTone } from "./AdminPill";
 import { btnDanger, btnGhost, btnApprove } from "./admin-styles";
@@ -27,6 +28,7 @@ import {
 import { formatDateOnlyShort, formatShortDateTime } from "@/src/utils/format";
 
 const colTemplate = ".95fr 1.55fr 1.35fr 1.05fr .7fr .9fr 1fr";
+const PAGE_SIZE = 20;
 
 const statusFilters: Array<{ label: string; value: BookingStatus | "" }> = [
   { label: "All", value: "" },
@@ -69,10 +71,11 @@ function canComplete(booking: AdminBooking) {
 export default function AdminBookingsView() {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<BookingStatus | "">("");
+  const [page, setPage] = useState(1);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const params = useMemo<ListAdminBookingsParams>(
-    () => ({ page: 1, limit: 20, status: status || undefined }),
-    [status],
+    () => ({ page, limit: PAGE_SIZE, status: status || undefined }),
+    [page, status],
   );
   const actionParams = useMemo<ListAdminBookingActionsParams>(() => ({ page: 1, limit: 20 }), []);
 
@@ -137,6 +140,7 @@ export default function AdminBookingsView() {
               <button
                 key={item.label}
                 onClick={() => {
+                  setPage(1);
                   setStatus(item.value);
                   setSelectedBookingId(null);
                 }}
@@ -218,6 +222,7 @@ export default function AdminBookingsView() {
               ))
             )}
           </div>
+          <AdminPagination page={page} total={total} limit={PAGE_SIZE} onPageChange={setPage} />
         </div>
 
         {selectedBooking && (

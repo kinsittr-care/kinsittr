@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { A } from "./tokens";
 import AdminPageHeader from "./AdminPageHeader";
+import AdminPagination from "./AdminPagination";
 import AdminPill from "./AdminPill";
 import AdminStars from "./AdminStars";
 import { btnApprove, btnDanger, btnGhost, card } from "./admin-styles";
@@ -40,6 +41,8 @@ const statusFilters: Array<{ label: string; value: ReviewStatusFilter }> = [
   { label: "All", value: "all" },
 ];
 
+const PAGE_SIZE = 20;
+
 function paramsForStatus(status: ReviewStatusFilter): Pick<ListAdminReviewsParams, "flagged" | "visible"> {
   if (status === "flagged") return { flagged: true };
   if (status === "visible") return { visible: true };
@@ -59,16 +62,17 @@ export default function FlaggedReviewsView() {
   const queryClient = useQueryClient();
   const [target, setTarget] = useState<ReviewTarget | "">("");
   const [status, setStatus] = useState<ReviewStatusFilter>("flagged");
+  const [page, setPage] = useState(1);
   const [selectedReview, setSelectedReview] = useState<{ id: string; target: ReviewTarget } | null>(null);
 
   const params = useMemo<ListAdminReviewsParams>(
     () => ({
-      page: 1,
-      limit: 20,
+      page,
+      limit: PAGE_SIZE,
       target: target || undefined,
       ...paramsForStatus(status),
     }),
-    [status, target],
+    [page, status, target],
   );
   const actionParams = useMemo<ListAdminReviewActionsParams>(() => ({ page: 1, limit: 20 }), []);
 
@@ -142,6 +146,7 @@ export default function FlaggedReviewsView() {
               <button
                 key={item.label}
                 onClick={() => {
+                  setPage(1);
                   setTarget(item.value);
                   setSelectedReview(null);
                 }}
@@ -158,6 +163,7 @@ export default function FlaggedReviewsView() {
               <button
                 key={item.value}
                 onClick={() => {
+                  setPage(1);
                   setStatus(item.value);
                   setSelectedReview(null);
                 }}
@@ -269,6 +275,7 @@ export default function FlaggedReviewsView() {
               </button>
             ))
           )}
+          <AdminPagination page={page} total={total} limit={PAGE_SIZE} onPageChange={setPage} />
         </div>
 
         {currentReview && (
