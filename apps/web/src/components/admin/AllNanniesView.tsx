@@ -1,35 +1,123 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { A } from "./tokens";
 import AdminPageHeader from "./AdminPageHeader";
 import AdminAvatar from "./AdminAvatar";
-import AdminPill from "./AdminPill";
+import AdminPill, { type PillTone } from "./AdminPill";
 import AdminStars from "./AdminStars";
 import { SearchIcon } from "./admin-icons";
-import { btnGhost, btnGhostSm } from "./admin-styles";
+import { btnDanger, btnGhost, btnGhostSm, btnApprove } from "./admin-styles";
+import type { AdminNanny, AdminVerificationStatus, ListAdminNanniesParams } from "@/src/types/api/admin";
+import {
+  adminNanniesQueryKey,
+  listAdminNannies,
+  rejectAdminNanny,
+  suspendAdminNanny,
+  verifyAdminNanny,
+} from "@/src/utils/api/admin/nannies";
 
-const NANNIES = [
-  { id: 1, name: "Sarah Okonkwo",         initials: "SO", city: "Toronto, ON",   rate: 28, rating: 4.9, status: "Verified" },
-  { id: 2, name: "Marie-Claire Beaumont", initials: "MB", city: "Vancouver, BC", rate: 32, rating: 4.8, status: "Verified" },
-  { id: 3, name: "Priya Sharma",          initials: "PS", city: "Toronto, ON",   rate: 25, rating: 4.7, status: "Verified" },
-  { id: 4, name: "Aisha Mensah",          initials: "AM", city: "Calgary, AB",   rate: 30, rating: 5.0, status: "Verified" },
-  { id: 5, name: "Tanya Volkov",          initials: "TV", city: "Ottawa, ON",    rate: 22, rating: 4.6, status: "Pending"  },
-  { id: 6, name: "Jennifer Walsh",        initials: "JW", city: "Montreal, QC",  rate: 27, rating: 4.8, status: "Verified" },
-  { id: 7, name: "Mei Tanaka",            initials: "MT", city: "Vancouver, BC", rate: 34, rating: 4.9, status: "Verified" },
-  { id: 8, name: "Olivia Brennan",        initials: "OB", city: "Halifax, NS",   rate: 24, rating: 4.5, status: "Verified" },
+const colTemplate = "2.1fr 1.35fr .85fr 1.1fr 1fr 1.45fr";
+
+const statusFilters: Array<{ label: string; value: AdminVerificationStatus | "" }> = [
+  { label: "All", value: "" },
+  { label: "Verified", value: "verified" },
+  { label: "Pending", value: "pending" },
+  { label: "Under review", value: "under_review" },
+  { label: "Rejected", value: "rejected" },
 ];
 
-const colTemplate = "2.2fr 1.4fr .9fr 1.2fr 1fr .8fr";
+function initialsFor(nanny: AdminNanny) {
+  const source = `${nanny.user_firstname[0] ?? ""}${nanny.user_lastname[0] ?? ""}`;
+  return source.toUpperCase() || nanny.display_name.slice(0, 2).toUpperCase() || "NA";
+}
+
+function statusLabel(status: AdminVerificationStatus) {
+  return status.replace("_", " ");
+}
+
+function statusTone(nanny: AdminNanny): PillTone {
+  if (!nanny.user_is_active) return "red";
+  if (nanny.verification_status === "verified") return "green";
+  if (nanny.verification_status === "rejected") return "red";
+  if (nanny.verification_status === "under_review") return "clay";
+  return "amber";
+}
+
+function canVerify(nanny: AdminNanny) {
+  return (
+    nanny.user_is_active &&
+    nanny.verification_status === "under_review" &&
+    nanny.screening_steps.docs_reviewed &&
+    nanny.screening_steps.references_checked &&
+    nanny.screening_steps.interview_done
+  );
+}
 
 export default function AllNanniesView() {
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [submittedSearch, setSubmittedSearch] = useState("");
+  const [status, setStatus] = useState<AdminVerificationStatus | "">("");
+  const params = useMemo<ListAdminNanniesParams>(
+    () => ({
+      page: 1,
+      limit: 20,
+      search: submittedSearch || undefined,
+      status: status || undefined,
+    }),
+    [status, submittedSearch],
+  );
+
+  const nanniesQuery = useQuery({
+    queryKey: adminNanniesQueryKey(params),
+    queryFn: () => listAdminNannies(params),
+  });
+  const nannies = nanniesQuery.data?.data?.items ?? [];
+  const total = nanniesQuery.data?.data?.total ?? 0;
+
+  const invalidate = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["admin", "nannies"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "screening", "nannies"] });
+  };
+
+  const verifyMutation = useMutation({ mutationFn: verifyAdminNanny, onSuccess: invalidate });
+  const rejectMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      rejectAdminNanny(id, { reason }),
+    onSuccess: invalidate,
+  });
+  const suspendMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      suspendAdminNanny(id, { reason }),
+    onSuccess: invalidate,
+  });
+
+  const busyIds = new Set<string>();
+  if (verifyMutation.isPending && verifyMutation.variables) busyIds.add(verifyMutation.variables);
+  if (rejectMutation.isPending && rejectMutation.variables) busyIds.add(rejectMutation.variables.id);
+  if (suspendMutation.isPending && suspendMutation.variables) busyIds.add(suspendMutation.variables.id);
+
+  const askReason = (label: string) => window.prompt(`Reason for ${label}?`)?.trim();
+
+  const actionError =
+    nanniesQuery.error || verifyMutation.error || rejectMutation.error || suspendMutation.error;
+
   return (
     <>
       <AdminPageHeader
         title="All Nannies"
-        subtitle="42 verified caregivers · 5 pending review"
+        subtitle={`${total} caregivers found`}
         right={
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <div
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              setSubmittedSearch(search.trim());
+            }}
+            style={{ display: "flex", gap: 10, alignItems: "center" }}
+          >
+            <label
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -40,19 +128,46 @@ export default function AllNanniesView() {
                 borderRadius: 10,
                 color: A.inkSoft,
                 fontSize: 13.5,
-                minWidth: 240,
+                minWidth: 260,
               }}
             >
               <span style={{ display: "flex" }}>
                 <SearchIcon />
               </span>
-              <span>Search by name, city or rate…</span>
-            </div>
-            <button style={btnGhost}>Filter</button>
-          </div>
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search by name, email or city..."
+                style={{ all: "unset", flex: 1, color: A.ink }}
+              />
+            </label>
+            <button type="submit" style={btnGhost}>Search</button>
+          </form>
         }
       />
-      <div style={{ padding: "24px 40px 40px" }}>
+      <div style={{ padding: "24px 40px 40px", display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {statusFilters.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => setStatus(item.value)}
+              style={{
+                ...btnGhost,
+                borderColor: status === item.value ? A.clay : A.border,
+                color: status === item.value ? A.clay : A.inkMid,
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        {actionError && (
+          <p style={{ color: A.red, fontSize: 14, margin: 0 }}>
+            {actionError instanceof Error ? actionError.message : "Unable to update nanny moderation."}
+          </p>
+        )}
+
         <div
           style={{
             background: A.card,
@@ -62,7 +177,6 @@ export default function AllNanniesView() {
             boxShadow: A.shadow,
           }}
         >
-          {/* Table header */}
           <div
             style={{
               display: "grid",
@@ -82,51 +196,90 @@ export default function AllNanniesView() {
             <div>Rate</div>
             <div>Rating</div>
             <div>Status</div>
-            <div style={{ textAlign: "right" }}>Action</div>
+            <div style={{ textAlign: "right" }}>Actions</div>
           </div>
 
-          {/* Rows */}
-          {NANNIES.map((n, i) => (
-            <div
-              key={n.id}
-              className="admin-table-row"
-              style={{
-                display: "grid",
-                gridTemplateColumns: colTemplate,
-                alignItems: "center",
-                padding: "16px 24px",
-                gap: 12,
-                borderBottom: i < NANNIES.length - 1 ? `1px solid ${A.borderSoft}` : "none",
-                transition: "background .15s",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <AdminAvatar
-                  initials={n.initials}
-                  size={40}
-                  tone={n.status === "Pending" ? "muted" : "clay"}
-                />
-                <div style={{ fontSize: 15, fontWeight: 600, color: A.ink }}>{n.name}</div>
-              </div>
-              <div style={{ fontSize: 14, color: A.inkMid }}>{n.city}</div>
-              <div>
-                <span style={{ fontFamily: "var(--font-dm-serif), serif", fontSize: 18, color: A.ink }}>
-                  ${n.rate}
-                </span>
-                <span style={{ fontSize: 13, color: A.inkSoft, fontWeight: 400 }}>/hr</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <AdminStars value={Math.round(n.rating)} />
-                <span style={{ fontSize: 13.5, color: A.inkMid, fontWeight: 500 }}>{n.rating}</span>
-              </div>
-              <div>
-                <AdminPill tone={n.status === "Verified" ? "green" : "amber"}>{n.status}</AdminPill>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <button style={btnGhostSm}>View</button>
-              </div>
-            </div>
-          ))}
+          {nanniesQuery.isLoading ? (
+            <div style={{ padding: 24, color: A.inkSoft }}>Loading nannies...</div>
+          ) : nannies.length === 0 ? (
+            <div style={{ padding: 24, color: A.inkSoft }}>No nannies found.</div>
+          ) : (
+            nannies.map((nanny, i) => {
+              const isBusy = busyIds.has(nanny.id);
+              return (
+                <div
+                  key={nanny.id}
+                  className="admin-table-row"
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: colTemplate,
+                    alignItems: "center",
+                    padding: "16px 24px",
+                    gap: 12,
+                    borderBottom: i < nannies.length - 1 ? `1px solid ${A.borderSoft}` : "none",
+                    transition: "background .15s",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                    <AdminAvatar
+                      initials={initialsFor(nanny)}
+                      size={40}
+                      tone={nanny.user_is_active ? "clay" : "muted"}
+                    />
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: A.ink }}>{nanny.display_name}</div>
+                      <div style={{ fontSize: 12.5, color: A.inkSoft }}>{nanny.user_email}</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 14, color: A.inkMid }}>{nanny.city}, {nanny.province}</div>
+                  <div>
+                    <span style={{ fontFamily: "var(--font-dm-serif), serif", fontSize: 18, color: A.ink }}>
+                      ${nanny.rate_per_hour}
+                    </span>
+                    <span style={{ fontSize: 13, color: A.inkSoft, fontWeight: 400 }}>/hr</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <AdminStars value={Math.round(nanny.rating_avg)} />
+                    <span style={{ fontSize: 13.5, color: A.inkMid, fontWeight: 500 }}>{nanny.rating_avg.toFixed(1)}</span>
+                  </div>
+                  <div>
+                    <AdminPill tone={statusTone(nanny)}>
+                      {nanny.user_is_active ? statusLabel(nanny.verification_status) : "suspended"}
+                    </AdminPill>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, flexWrap: "wrap" }}>
+                    <button
+                      disabled={!canVerify(nanny) || isBusy}
+                      onClick={() => verifyMutation.mutate(nanny.id)}
+                      style={{ ...btnApprove, opacity: canVerify(nanny) && !isBusy ? 1 : 0.55 }}
+                    >
+                      Verify
+                    </button>
+                    <button
+                      disabled={!nanny.user_is_active || isBusy}
+                      onClick={() => {
+                        const reason = askReason("rejecting this nanny");
+                        if (reason) rejectMutation.mutate({ id: nanny.id, reason });
+                      }}
+                      style={{ ...btnGhostSm, opacity: nanny.user_is_active && !isBusy ? 1 : 0.55 }}
+                    >
+                      Reject
+                    </button>
+                    <button
+                      disabled={!nanny.user_is_active || isBusy}
+                      onClick={() => {
+                        const reason = askReason("suspending this nanny");
+                        if (reason) suspendMutation.mutate({ id: nanny.id, reason });
+                      }}
+                      style={{ ...btnDanger, opacity: nanny.user_is_active && !isBusy ? 1 : 0.55 }}
+                    >
+                      Suspend
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </>

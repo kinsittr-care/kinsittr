@@ -356,6 +356,22 @@ func TestAuthPipeMe(t *testing.T) {
 		}
 	})
 
+	t.Run("admin returns current user without requiring a profile", func(t *testing.T) {
+		user := validUser(models.AdminUserRole)
+		pipe := newAuthPipeForTests(&mockAccountRepo{userByID: user}, &mockProfileRepo{})
+
+		res := pipe.Me(context.Background(), user.ID)
+		if !res.Success || string(res.Message) != messages.Current_User_Fetched {
+			t.Fatalf("expected success %s, got success=%v message=%s", messages.Current_User_Fetched, res.Success, res.Message)
+		}
+		if res.Data == nil || res.Data.User.ID != user.ID {
+			t.Fatalf("expected admin user in response, got %+v", res.Data)
+		}
+		if res.Data.ParentProfile != nil || res.Data.NannyProfile != nil {
+			t.Fatalf("expected no role profile for admin, got parent=%+v nanny=%+v", res.Data.ParentProfile, res.Data.NannyProfile)
+		}
+	})
+
 	t.Run("inactive user is rejected", func(t *testing.T) {
 		user := validUser(models.ParentUserRole)
 		user.IsActive = false

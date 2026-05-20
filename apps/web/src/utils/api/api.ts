@@ -24,6 +24,7 @@ export class ApiRequestError extends Error {
 
 interface ApiRequestOptions {
   requiresAuth?: boolean;
+  refreshPath?: string;
   retryOnUnauthorized?: boolean;
 }
 
@@ -33,13 +34,13 @@ async function parseApiResponse<TResponse>(
   return (await response.json()) as ApiResponse<TResponse>;
 }
 
-async function refreshStoredSession() {
+async function refreshStoredSession(refreshPath = "/api/v1/auth/refresh") {
   const session = getStoredAuthSession();
   if (!session?.refreshToken) {
     throw new ApiRequestError("Your session has expired. Please sign in again.");
   }
 
-  const response = await fetch(`${apiBaseUrl}/api/v1/auth/refresh`, {
+  const response = await fetch(`${apiBaseUrl}${refreshPath}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -90,7 +91,7 @@ export async function apiRequest<TResponse>(
     response.status === 401 &&
     options.retryOnUnauthorized !== false
   ) {
-    const refreshed = await refreshStoredSession();
+    const refreshed = await refreshStoredSession(options.refreshPath);
     const retryHeaders = new Headers(init?.headers);
     if (!retryHeaders.has("Content-Type")) {
       retryHeaders.set("Content-Type", "application/json");

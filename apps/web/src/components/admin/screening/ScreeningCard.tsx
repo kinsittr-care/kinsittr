@@ -2,29 +2,39 @@ import { A } from "../tokens";
 import AdminAvatar from "../AdminAvatar";
 import AdminStepChip from "../AdminStepChip";
 import { TimerIcon, PinIcon, ArrowSmIcon } from "../admin-icons";
-import { btnPrimary } from "../admin-styles";
+import { btnGhostSm, btnPrimary } from "../admin-styles";
+import type { AdminVerificationStatus } from "@/src/types/api/admin";
 
 export type Steps = { docs: boolean; refs: boolean; interview: boolean };
 
 export type ScreeningApplicant = {
-  id: number;
+  id: string;
   name: string;
   initials: string;
   city: string;
   submitted: string;
   waiting: number;
+  status: AdminVerificationStatus;
 };
 
 export default function ScreeningCard({
   applicant,
+  isBusy = false,
+  onReset,
+  onStart,
   steps,
   onToggle,
 }: {
   applicant: ScreeningApplicant;
+  isBusy?: boolean;
+  onReset: () => void;
+  onStart: () => void;
   steps: Steps;
   onToggle: (key: keyof Steps) => void;
 }) {
   const urgent = applicant.waiting >= 3;
+  const canUpdateSteps = applicant.status === "under_review";
+  const canReset = applicant.status === "rejected";
 
   return (
     <div
@@ -77,8 +87,13 @@ export default function ScreeningCard({
             {(["docs", "refs", "interview"] as const).map((key) => (
               <button
                 key={key}
+                disabled={!canUpdateSteps || isBusy}
                 onClick={() => onToggle(key)}
-                style={{ all: "unset", cursor: "pointer" }}
+                style={{
+                  all: "unset",
+                  cursor: canUpdateSteps && !isBusy ? "pointer" : "not-allowed",
+                  opacity: canUpdateSteps ? 1 : 0.6,
+                }}
               >
                 <AdminStepChip
                   label={key === "docs" ? "Docs reviewed" : key === "refs" ? "References checked" : "Interview done"}
@@ -112,9 +127,19 @@ export default function ScreeningCard({
             </span>
             Waiting {applicant.waiting} day{applicant.waiting > 1 ? "s" : ""}
           </div>
-          <button style={btnPrimary}>
-            Review <ArrowSmIcon />
-          </button>
+          {applicant.status === "pending" ? (
+            <button disabled={isBusy} onClick={onStart} style={{ ...btnPrimary, opacity: isBusy ? 0.65 : 1 }}>
+              Start review <ArrowSmIcon />
+            </button>
+          ) : canReset ? (
+            <button disabled={isBusy} onClick={onReset} style={{ ...btnGhostSm, opacity: isBusy ? 0.65 : 1 }}>
+              Reset
+            </button>
+          ) : (
+            <button disabled style={{ ...btnPrimary, opacity: 0.65, cursor: "not-allowed" }}>
+              In review <ArrowSmIcon />
+            </button>
+          )}
         </div>
       </div>
     </div>

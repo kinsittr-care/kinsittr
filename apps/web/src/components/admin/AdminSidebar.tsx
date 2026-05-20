@@ -11,6 +11,7 @@ import {
   FlagIcon,
   ChartIcon,
 } from "./admin-icons";
+import type { AuthUser } from "@/src/types/api/api";
 
 const navItems = [
   {
@@ -26,9 +27,19 @@ const navItems = [
     icon: <DiamondIcon />,
   },
   {
+    href: "/admin/parents",
+    label: "Parents",
+    icon: <GridIcon />,
+  },
+  {
     href: "/admin/bookings",
     label: "Bookings",
     icon: <ClockIcon />,
+  },
+  {
+    href: "/admin/conversations",
+    label: "Conversations",
+    icon: <FlagIcon />,
   },
   {
     href: "/admin/flags",
@@ -42,6 +53,11 @@ const navItems = [
     label: "Analytics",
     icon: <ChartIcon />,
   },
+  {
+    href: "/admin/admins",
+    label: "Admin Management",
+    icon: <GridIcon />,
+  },
 ];
 
 const badgeColors = {
@@ -49,8 +65,12 @@ const badgeColors = {
   amber: { bg: A.amber, fg: "#fff" },
 };
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ user }: { user: AuthUser | null }) {
   const pathname = usePathname();
+  const displayName = user ? `${user.firstname} ${user.lastname}`.trim() : "Admin";
+  const initials = user
+    ? `${user.firstname[0] ?? ""}${user.lastname[0] ?? ""}`.toUpperCase()
+    : "AD";
   const isActive = (href: string) =>
     href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
 
@@ -188,10 +208,10 @@ export default function AdminSidebar() {
           gap: 12,
         }}
       >
-        <AdminAvatar initials="AD" size={40} tone="clay" />
+        <AdminAvatar initials={initials} size={40} tone="clay" />
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: A.ink }}>Admin User</div>
-          <div style={{ fontSize: 12, color: A.inkSoft, marginTop: 1 }}>Super admin</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: A.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</div>
+          <div style={{ fontSize: 12, color: A.inkSoft, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user?.email ?? ""}</div>
         </div>
       </div>
     </aside>

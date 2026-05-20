@@ -1,11 +1,12 @@
 "use client";
 
-import { ChangeEvent, FormEventHandler, useState } from "react";
+import { ChangeEvent, SyntheticEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ApiRequestError } from "@/src/utils/api/api";
+import { ApiRequestError, ApiResponse } from "@/src/utils/api/api";
 import { establishAuthSession, loginUser } from "@/src/utils/api/auth";
 import { getPostAuthRedirectPath } from "@/src/utils/api/auth-routing";
-import { LoginPayload } from "@/src/types/api/api";
+import { clearAuthSession } from "@/src/utils/api/session";
+import { AuthSession, AuthTokenPair, AuthUser, LoginPayload } from "@/src/types/api/api";
 
 const inputClass = `
   w-full border-[1.5px] rounded-[10px] px-[14px] py-3 text-[14px] outline-none transition-all
@@ -19,10 +20,18 @@ const inputStyle = {
 };
 
 interface LoginFormProps {
+  establishSession?: (auth: AuthTokenPair) => Promise<AuthSession>;
+  login?: (payload: LoginPayload) => Promise<ApiResponse<AuthTokenPair>>;
   onSuccess?: () => void;
+  requiredRole?: AuthUser["role"];
 }
 
-export default function LoginForm({ onSuccess }: LoginFormProps) {
+export default function LoginForm({
+  establishSession = establishAuthSession,
+  login = loginUser,
+  onSuccess,
+  requiredRole,
+}: LoginFormProps) {
   const router = useRouter();
   const [values, setValues] = useState<LoginPayload>({ email: "", password: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,13 +42,18 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
     setValues((v) => ({ ...v, [name]: value }));
   };
 
-  const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
+  const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
     try {
-      const response = await loginUser(values);
-      const session = await establishAuthSession(response.data as NonNullable<typeof response.data>);
+      const response = await login(values);
+      const session = await establishSession(response.data as NonNullable<typeof response.data>);
+      if (requiredRole && session.user.role !== requiredRole) {
+        clearAuthSession();
+        setError("Use an authorized admin account to sign in.");
+        return;
+      }
       onSuccess?.();
       router.push(getPostAuthRedirectPath(session.user));
     } catch (err) {
@@ -58,7 +72,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
       <div>
         <label
           className="block text-[12px] font-semibold uppercase tracking-[0.07em] mb-[7px]"
-          style={{ color: "var(--muted)" }}
+          style={{ color: "var(--faint)" }}
         >
           Email
         </label>
@@ -77,7 +91,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
       <div>
         <label
           className="block text-[12px] font-semibold uppercase tracking-[0.07em] mb-[7px]"
-          style={{ color: "var(--muted)" }}
+          style={{ color: "var(--faint)" }}
         >
           Password
         </label>

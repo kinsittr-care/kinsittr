@@ -26,6 +26,18 @@ func newApp() *fiber.App {
 	return app
 }
 
+func newAdminApp() *fiber.App {
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Use(RequireAuth(testSecret), RequireAdmin())
+	app.Get("/admin", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"user_id": c.Locals("auth.user_id"),
+			"role":    c.Locals("auth.role"),
+		})
+	})
+	return app
+}
+
 func validToken(t *testing.T, userID uuid.UUID, role models.UserRole) string {
 	t.Helper()
 	tok, err := token.GenerateAccessToken(userID, role, testSecret)
@@ -136,6 +148,62 @@ func TestRequireAuth(t *testing.T) {
 		if resp.StatusCode != http.StatusOK {
 			t.Errorf("expected 200 for lowercase bearer, got %d", resp.StatusCode)
 		}
+	})
+}
+
+func TestRequireAdmin(t *testing.T) {
+	app := newAdminApp()
+
+	t.Run("missing token returns 401 from auth middleware", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodGet, "/admin", nil)
+		resp, err := app.Test(req, -1)
+		if err != nil {
+			t.Fatalf("request error: %v", err)
+		}
+		if resp.StatusCode != http.StatusUnauthorized {
+			t.Fatalf("expected 401, got %d", resp.StatusCode)
+		}
+		assertMessage(t, resp, "missing_authorization_header")
+	})
+
+	t.Run("parent token returns 403", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodGet, "/admin", nil)
+		req.Header.Set("Authorization", "Bearer "+validToken(t, uuid.New(), models.ParentUserRole))
+		resp, err := app.Test(req, -1)
+		if err != nil {
+			t.Fatalf("request error: %v", err)
+		}
+		if resp.StatusCode != http.StatusForbidden {
+			t.Fatalf("expected 403, got %d", resp.StatusCode)
+		}
+		assertMessage(t, resp, "forbidden_access")
+	})
+
+	t.Run("nanny token returns 403", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodGet, "/admin", nil)
+		req.Header.Set("Authorization", "Bearer "+validToken(t, uuid.New(), models.NannyUserRole))
+		resp, err := app.Test(req, -1)
+		if err != nil {
+			t.Fatalf("request error: %v", err)
+		}
+		if resp.StatusCode != http.StatusForbidden {
+			t.Fatalf("expected 403, got %d", resp.StatusCode)
+		}
+		assertMessage(t, resp, "forbidden_access")
+	})
+
+	t.Run("admin token passes", func(t *testing.T) {
+		userID := uuid.New()
+		req, _ := http.NewRequest(http.MethodGet, "/admin", nil)
+		req.Header.Set("Authorization", "Bearer "+validToken(t, userID, models.AdminUserRole))
+		resp, err := app.Test(req, -1)
+		if err != nil {
+			t.Fatalf("request error: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("expected 200, got %d", resp.StatusCode)
+		}
+		assertAuthPayload(t, resp, userID, models.AdminUserRole)
 	})
 }
 

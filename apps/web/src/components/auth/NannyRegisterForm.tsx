@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEventHandler, useState } from "react";
+import { ChangeEvent, SyntheticEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ApiRequestError } from "@/src/utils/api/api";
 import { establishAuthSession, registerNanny } from "@/src/utils/api/auth";
@@ -52,7 +52,7 @@ export default function NannyRegisterForm({ onSuccess }: NannyRegisterFormProps)
     }));
   };
 
-  const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
+  const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);

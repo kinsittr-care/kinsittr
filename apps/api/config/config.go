@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 type Config struct {
@@ -14,6 +15,7 @@ type Config struct {
 	ResendAPIKey     string
 	ContactToEmail   string
 	ContactFromEmail string
+	PlatformFeeRate  float64
 }
 
 func Load() (*Config, error) {
@@ -27,6 +29,7 @@ func Load() (*Config, error) {
 		ContactToEmail:   os.Getenv("CONTACT_TO_EMAIL"),
 		ContactFromEmail: os.Getenv("CONTACT_FROM_EMAIL"),
 	}
+	cfg.PlatformFeeRate = getFloatEnv("PLATFORM_FEE_RATE", 0.10)
 
 	if cfg.DatabaseURL == "" {
 		return nil, fmt.Errorf("DATABASE_URL is required")
@@ -50,4 +53,16 @@ func getEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func getFloatEnv(key string, fallback float64) float64 {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return fallback
+	}
+	return parsed
 }

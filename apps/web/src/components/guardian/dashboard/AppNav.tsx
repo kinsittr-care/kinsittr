@@ -101,6 +101,7 @@ export default function AppNav() {
               {/* Menu items */}
               {[
                 { label: "Profile", href: "/parent/profile", icon: "👤" },
+                { label: "Reviews", href: "/parent/reviews", icon: "★" },
                 { label: "Billing", href: "/parent/billing", icon: "💳" },
                 { label: "Settings", href: "/parent/settings", icon: "⚙" },
               ].map(({ label, href, icon }) => (

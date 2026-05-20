@@ -19,6 +19,7 @@ type ConversationRecord struct {
 	LastMessageAt            *time.Time           `json:"last_message_at"`
 	UnreadCount              int                  `json:"unread_count"`
 	LastReadAt               *time.Time           `json:"last_read_at"`
+	LockedAt                 *time.Time           `json:"locked_at"`
 }
 
 type MessageListFilter struct {

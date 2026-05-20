@@ -1,0 +1,26 @@
+package controllers
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"github.com/kinsittr/kinsittr-api/admin/dtos"
+	"github.com/kinsittr/kinsittr-api/admin/messages"
+)
+
+func (c *AdminController) GetParent(ctx *fiber.Ctx) error {
+	parentID, err := parseAdminID(ctx, "id")
+	if err != nil {
+		return adminPipeError(ctx, messages.Invalid_Admin_Request)
+	}
+
+	dto := dtos.ListAdminBookingsQueryDTO{Page: 1, Limit: 10}
+	if err := ctx.QueryParser(&dto); err != nil {
+		return adminPipeError(ctx, messages.Invalid_Admin_Request)
+	}
+
+	res := c.pipe.GetParent(ctx.Context(), parentID, dto)
+	if !res.Success {
+		return adminPipeError(ctx, string(res.Message))
+	}
+
+	return adminSuccess(ctx, string(res.Message), res.Data)
+}

@@ -1,15 +1,7 @@
 import { A } from "../tokens";
 
-const cities = [
-  { city: "Toronto",   count: 58 },
-  { city: "Vancouver", count: 31 },
-  { city: "Calgary",   count: 24 },
-  { city: "Ottawa",    count: 16 },
-  { city: "Montreal",  count: 9  },
-];
-
 function CityBar({ city, count, max }: { city: string; count: number; max: number }) {
-  const pct = Math.round((count / max) * 100);
+  const pct = max > 0 ? Math.round((count / max) * 100) : 0;
   return (
     <div>
       <div
@@ -52,7 +44,15 @@ const titleSerif = {
   letterSpacing: "-.005em",
 };
 
-export default function AnalyticsCityBars() {
+export default function AnalyticsCityBars({
+  cities,
+  isLoading,
+}: {
+  cities: Array<{ city: string; count: number }>;
+  isLoading: boolean;
+}) {
+  const max = cities[0]?.count ?? 0;
+
   return (
     <div
       style={{
@@ -72,9 +72,14 @@ export default function AnalyticsCityBars() {
           gap: 18,
         }}
       >
-        {cities.map((c) => (
-          <CityBar key={c.city} city={c.city} count={c.count} max={cities[0].count} />
-        ))}
+        {isLoading && <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>Loading city data...</p>}
+        {!isLoading && cities.length === 0 && (
+          <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>No city booking data yet.</p>
+        )}
+        {!isLoading &&
+          cities.map((c) => (
+            <CityBar key={c.city} city={c.city} count={c.count} max={max} />
+          ))}
       </div>
     </div>
   );

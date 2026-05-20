@@ -1,57 +1,136 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AdminPageHeader from "./AdminPageHeader";
-import ScreeningCard, { type Steps } from "./screening/ScreeningCard";
+import ScreeningCard, { type ScreeningApplicant, type Steps } from "./screening/ScreeningCard";
 import { btnGhost } from "./admin-styles";
+import type { AdminNanny, ListAdminScreeningNanniesParams } from "@/src/types/api/admin";
+import { formatShortDate } from "@/src/utils/format";
+import {
+  adminScreeningNanniesQueryKey,
+  listAdminScreeningNannies,
+  resetAdminNannyScreening,
+  startAdminNannyScreening,
+  updateAdminNannyScreeningSteps,
+} from "@/src/utils/api/admin/screening";
 
-const SCREENING = [
-  {
-    id: 1,
-    name: "Tanya Volkov",
-    initials: "TV",
-    city: "Ottawa, ON",
-    submitted: "Apr 6, 2026",
-    waiting: 2,
-    steps: { docs: true, refs: false, interview: false },
-  },
-  {
-    id: 2,
-    name: "James Adeyemi",
-    initials: "JA",
-    city: "Toronto, ON",
-    submitted: "Apr 5, 2026",
-    waiting: 3,
-    steps: { docs: true, refs: true, interview: false },
-  },
-  {
-    id: 3,
-    name: "Sophie Tremblay",
-    initials: "ST",
-    city: "Quebec City, QC",
-    submitted: "Apr 4, 2026",
-    waiting: 4,
-    steps: { docs: false, refs: false, interview: false },
-  },
-];
+const statusFilters = [
+  { label: "Pending", value: "pending" },
+  { label: "Under review", value: "under_review" },
+  { label: "Rejected", value: "rejected" },
+] as const;
+
+function initialsFor(nanny: AdminNanny) {
+  const source = `${nanny.user_firstname[0] ?? ""}${nanny.user_lastname[0] ?? ""}`;
+  return source.toUpperCase() || nanny.display_name.slice(0, 2).toUpperCase() || "NA";
+}
+
+function mapApplicant(nanny: AdminNanny): ScreeningApplicant {
+  return {
+    id: nanny.id,
+    name: nanny.display_name,
+    initials: initialsFor(nanny),
+    city: `${nanny.city}, ${nanny.province}`,
+    submitted: formatShortDate(nanny.created_at),
+    waiting: nanny.waiting_days,
+    status: nanny.verification_status,
+  };
+}
+
+function mapSteps(nanny: AdminNanny): Steps {
+  return {
+    docs: nanny.screening_steps.docs_reviewed,
+    refs: nanny.screening_steps.references_checked,
+    interview: nanny.screening_steps.interview_done,
+  };
+}
+
+function stepPayload(key: keyof Steps, value: boolean) {
+  if (key === "docs") return { docs_reviewed: value };
+  if (key === "refs") return { references_checked: value };
+  return { interview_done: value };
+}
 
 export default function ScreeningQueueView() {
-  const [steps, setSteps] = useState<Record<number, Steps>>(
-    Object.fromEntries(SCREENING.map((n) => [n.id, { ...n.steps }])),
+  const queryClient = useQueryClient();
+  const [status, setStatus] = useState<ListAdminScreeningNanniesParams["status"]>("pending");
+  const params = useMemo<ListAdminScreeningNanniesParams>(
+    () => ({ page: 1, limit: 20, status }),
+    [status],
   );
+  const queryKey = adminScreeningNanniesQueryKey(params);
 
-  const toggle = (id: number, key: keyof Steps) =>
-    setSteps((s) => ({ ...s, [id]: { ...s[id], [key]: !s[id][key] } }));
+  const screeningQuery = useQuery({
+    queryKey,
+    queryFn: () => listAdminScreeningNannies(params),
+  });
+  const nannies = screeningQuery.data?.data?.items ?? [];
+  const total = screeningQuery.data?.data?.total ?? 0;
+
+  const invalidateScreening = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["admin", "screening", "nannies"] });
+  };
+
+  const startMutation = useMutation({
+    mutationFn: startAdminNannyScreening,
+    onSuccess: invalidateScreening,
+  });
+
+  const stepMutation = useMutation({
+    mutationFn: ({ id, key, next }: { id: string; key: keyof Steps; next: boolean }) =>
+      updateAdminNannyScreeningSteps(id, stepPayload(key, next)),
+    onSuccess: invalidateScreening,
+  });
+
+  const resetMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      resetAdminNannyScreening(id, { reason }),
+    onSuccess: invalidateScreening,
+  });
+
+  const busyIds = new Set<string>();
+  if (startMutation.isPending && startMutation.variables) busyIds.add(startMutation.variables);
+  if (stepMutation.isPending && stepMutation.variables) busyIds.add(stepMutation.variables.id);
+  if (resetMutation.isPending && resetMutation.variables) busyIds.add(resetMutation.variables.id);
+
+  const toggle = (nanny: AdminNanny, key: keyof Steps) => {
+    const current = mapSteps(nanny)[key];
+    stepMutation.mutate({ id: nanny.id, key, next: !current });
+  };
+
+  const reset = (nanny: AdminNanny) => {
+    const reason = window.prompt("Reason for resetting this screening?");
+    if (!reason?.trim()) return;
+    resetMutation.mutate({ id: nanny.id, reason: reason.trim() });
+  };
+
+  const actionError =
+    startMutation.error ||
+    stepMutation.error ||
+    resetMutation.error ||
+    screeningQuery.error;
 
   return (
     <>
       <AdminPageHeader
         title="Screening Queue"
-        subtitle="3 nannies awaiting review · Target: 24–48hr turnaround"
+        subtitle={`${total} nannies in ${status?.replace("_", " ")} · Target: 24–48hr turnaround`}
         right={
           <div style={{ display: "flex", gap: 10 }}>
-            <button style={btnGhost}>Filter</button>
-            <button style={btnGhost}>Export CSV</button>
+            {statusFilters.map((item) => (
+              <button
+                key={item.value}
+                onClick={() => setStatus(item.value)}
+                style={{
+                  ...btnGhost,
+                  borderColor: status === item.value ? "var(--admin-clay)" : undefined,
+                  color: status === item.value ? "var(--admin-clay)" : undefined,
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         }
       />
@@ -63,14 +142,28 @@ export default function ScreeningQueueView() {
           gap: 16,
         }}
       >
-        {SCREENING.map((n) => (
-          <ScreeningCard
-            key={n.id}
-            applicant={n}
-            steps={steps[n.id]}
-            onToggle={(key) => toggle(n.id, key)}
-          />
-        ))}
+        {actionError && (
+          <p style={{ color: "#b34b39", fontSize: 14, margin: 0 }}>
+            {actionError instanceof Error ? actionError.message : "Unable to update screening queue."}
+          </p>
+        )}
+        {screeningQuery.isLoading ? (
+          <p style={{ color: "var(--admin-ink-soft)", margin: 0 }}>Loading screening queue...</p>
+        ) : nannies.length === 0 ? (
+          <p style={{ color: "var(--admin-ink-soft)", margin: 0 }}>No nannies found for this status.</p>
+        ) : (
+          nannies.map((nanny) => (
+            <ScreeningCard
+              key={nanny.id}
+              applicant={mapApplicant(nanny)}
+              isBusy={busyIds.has(nanny.id)}
+              onReset={() => reset(nanny)}
+              onStart={() => startMutation.mutate(nanny.id)}
+              steps={mapSteps(nanny)}
+              onToggle={(key) => toggle(nanny, key)}
+            />
+          ))
+        )}
       </div>
     </>
   );

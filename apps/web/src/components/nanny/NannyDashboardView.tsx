@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Booking } from "@/src/types/api/api";
 import { getCurrentSession } from "@/src/utils/api/auth";
 import { listNannyBookings, nannyBookingsQueryKey } from "@/src/utils/api/bookings";
+import { formatNannyDashboardDate } from "@/src/utils/format";
 import DashboardStatCards from "./dashboard/DashboardStatCards";
 import DashboardUpcoming from "./dashboard/DashboardUpcoming";
 import DashboardChecklist from "./dashboard/DashboardChecklist";
@@ -22,9 +23,7 @@ export default function NannyDashboardView() {
     sessionQuery.data?.data?.nanny_profile?.display_name ||
     sessionQuery.data?.data?.user.firstname ||
     "there";
-  const today = new Intl.DateTimeFormat("en-CA", {
-    weekday: "long", month: "long", day: "numeric",
-  }).format(new Date());
+  const today = formatNannyDashboardDate(new Date());
   const bookings = bookingsQuery.data?.data?.items ?? EMPTY_BOOKINGS;
   const bookingError =
     bookingsQuery.error instanceof Error ? bookingsQuery.error.message : "Unable to load bookings.";

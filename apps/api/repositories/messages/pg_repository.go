@@ -108,7 +108,8 @@ func (r *pgRepository) listConversations(ctx context.Context, column string, pro
 			       COALESCE(LEFT(lm.body, 100), '') AS last_message_preview,
 			       lm.created_at,
 			       COALESCE(unread.unread_count, 0) AS unread_count,
-			       cr.last_read_at
+			       cr.last_read_at,
+			       c.locked_at
 			FROM conversations c
 			INNER JOIN bookings b ON b.id = c.booking_id
 			INNER JOIN parent_profiles pp ON pp.id = c.parent_profile_id
@@ -118,6 +119,7 @@ func (r *pgRepository) listConversations(ctx context.Context, column string, pro
 			    SELECT body, created_at
 			    FROM messages m
 			    WHERE m.conversation_id = c.id
+			      AND m.hidden_at IS NULL
 			    ORDER BY m.created_at DESC
 			    LIMIT 1
 			) lm ON true
@@ -125,6 +127,7 @@ func (r *pgRepository) listConversations(ctx context.Context, column string, pro
 			    SELECT COUNT(*)::int AS unread_count
 			    FROM messages m
 			    WHERE m.conversation_id = c.id
+			      AND m.hidden_at IS NULL
 			      AND m.sender_user_id <> $2
 			      AND (cr.last_read_at IS NULL OR m.created_at > cr.last_read_at)
 			) unread ON true
@@ -157,6 +160,7 @@ func (r *pgRepository) listConversations(ctx context.Context, column string, pro
 			&record.LastMessageAt,
 			&record.UnreadCount,
 			&record.LastReadAt,
+			&record.LockedAt,
 		); err != nil {
 			return nil, 0, err
 		}
@@ -185,7 +189,8 @@ func (r *pgRepository) getConversationByID(ctx context.Context, conversationID u
 		       COALESCE(LEFT(lm.body, 100), '') AS last_message_preview,
 		       lm.created_at,
 		       COALESCE(unread.unread_count, 0) AS unread_count,
-		       cr.last_read_at
+		       cr.last_read_at,
+		       c.locked_at
 		FROM conversations c
 		INNER JOIN bookings b ON b.id = c.booking_id
 		INNER JOIN parent_profiles pp ON pp.id = c.parent_profile_id
@@ -195,6 +200,7 @@ func (r *pgRepository) getConversationByID(ctx context.Context, conversationID u
 		    SELECT body, created_at
 		    FROM messages m
 		    WHERE m.conversation_id = c.id
+		      AND m.hidden_at IS NULL
 		    ORDER BY m.created_at DESC
 		    LIMIT 1
 		) lm ON true
@@ -202,6 +208,7 @@ func (r *pgRepository) getConversationByID(ctx context.Context, conversationID u
 		    SELECT COUNT(*)::int AS unread_count
 		    FROM messages m
 		    WHERE m.conversation_id = c.id
+		      AND m.hidden_at IS NULL
 		      AND m.sender_user_id <> $3
 		      AND (cr.last_read_at IS NULL OR m.created_at > cr.last_read_at)
 		) unread ON true
@@ -223,6 +230,7 @@ func (r *pgRepository) getConversationByID(ctx context.Context, conversationID u
 		&record.LastMessageAt,
 		&record.UnreadCount,
 		&record.LastReadAt,
+		&record.LockedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ConversationRecord{}, nil
@@ -242,7 +250,7 @@ func (r *pgRepository) ListMessages(ctx context.Context, conversationID uuid.UUI
 	filter = normalizeMessageFilter(filter)
 
 	var total int
-	if err := r.db.QueryRow(ctx, `SELECT COUNT(*) FROM messages WHERE conversation_id = $1`, conversationID).Scan(&total); err != nil {
+	if err := r.db.QueryRow(ctx, `SELECT COUNT(*) FROM messages WHERE conversation_id = $1 AND hidden_at IS NULL`, conversationID).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
@@ -251,7 +259,7 @@ func (r *pgRepository) ListMessages(ctx context.Context, conversationID uuid.UUI
 		FROM (
 			SELECT id, conversation_id, sender_user_id, sender_role, body, created_at, updated_at
 			FROM messages
-			WHERE conversation_id = $1
+			WHERE conversation_id = $1 AND hidden_at IS NULL
 			ORDER BY created_at DESC
 			LIMIT $2 OFFSET $3
 		) latest_messages
