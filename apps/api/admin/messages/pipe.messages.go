@@ -27,6 +27,10 @@ const (
 	Admin_Admin_Invited          = "admin_admin_invited"
 	Admin_Admin_Invite_Accepted  = "admin_admin_invite_accepted"
 	Admin_Admin_Disabled         = "admin_admin_disabled"
+	Admin_Logged_In              = "admin_logged_in"
+	Admin_Current_User_Fetched   = "admin_current_user_fetched"
+	Admin_Token_Refreshed        = "admin_token_refreshed"
+	Admin_Logged_Out             = "admin_logged_out"
 	Admin_Analytics_Fetched      = "admin_analytics_fetched"
 
 	// -
@@ -44,4 +48,7 @@ const (
 	Admin_Conversation_Not_Found = "admin_conversation_not_found"
 	Admin_Message_Not_Found      = "admin_message_not_found"
 	Admin_User_Not_Found         = "admin_user_not_found"
+	Invalid_Admin_Credentials    = "invalid_admin_credentials"
+	Invalid_Admin_Session        = "invalid_admin_session"
+	Admin_Account_Disabled       = "admin_account_disabled"
 )

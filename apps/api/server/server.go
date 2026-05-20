@@ -6,6 +6,9 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	admin_auth_controller "github.com/kinsittr/kinsittr-api/admin/auth/controllers"
+	admin_auth_pipe "github.com/kinsittr/kinsittr-api/admin/auth/pipes"
+	admin_auth_router "github.com/kinsittr/kinsittr-api/admin/auth/routers"
 	admin_controller "github.com/kinsittr/kinsittr-api/admin/controllers"
 	admin_pipe "github.com/kinsittr/kinsittr-api/admin/pipes"
 	admin_router "github.com/kinsittr/kinsittr-api/admin/routers"
@@ -103,6 +106,8 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	reviewsController := reviews_controller.NewReviewsController(reviewsPipe)
 
 	// admin
+	adminAuthPipe := admin_auth_pipe.NewAdminAuthPipe(account.AccountRepo, cfg.JWTSecret, cfg.JWTRefreshSecret)
+	adminAuthController := admin_auth_controller.NewAdminAuthController(adminAuthPipe)
 	adminPipe := admin_pipe.NewAdminPipe(admin_repo.AdminRepo, cfg.PlatformFeeRate, notifications_repo.NotificationsRepo)
 	adminController := admin_controller.NewAdminController(adminPipe)
 
@@ -150,6 +155,8 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	api.BaseRouter(notificationsGroup, notifications_router.NotificationRoutes(notificationsController, cfg.JWTSecret))
 
 	adminGroup := apiGroup.Group("/admin")
+	adminAuthGroup := adminGroup.Group("/auth")
+	api.BaseRouter(adminAuthGroup, admin_auth_router.AdminAuthRoutes(adminAuthController, cfg.JWTSecret))
 	api.BaseRouter(adminGroup, admin_router.AdminRoutes(adminController, cfg.JWTSecret))
 	api.BaseRouter(adminGroup, reviews_router.AdminReviewRoutes(reviewsController, cfg.JWTSecret))
 
