@@ -5,6 +5,7 @@ import type {
   LoginPayload,
 } from "@/src/types/api/api";
 import { apiRequest } from "../api";
+import { adminApiRequest } from "./client";
 import {
   buildSessionFromTokenPair,
   clearAuthSession,
@@ -20,10 +21,7 @@ export async function loginAdmin(payload: LoginPayload) {
 }
 
 export async function getCurrentAdminSession() {
-  return apiRequest<AuthSessionPayload>("/api/v1/admin/auth/me", undefined, {
-    requiresAuth: true,
-    refreshPath: "/api/v1/admin/auth/refresh",
-  });
+  return adminApiRequest<AuthSessionPayload>("/api/v1/admin/auth/me");
 }
 
 export async function logoutAdmin(refreshToken: string) {
