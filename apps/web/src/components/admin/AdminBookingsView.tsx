@@ -25,7 +25,7 @@ import {
   listAdminBookingActions,
   listAdminBookings,
 } from "@/src/utils/api/admin/bookings";
-import { formatDateOnlyShort, formatShortDateTime } from "@/src/utils/format";
+import { formatCurrency, formatDateOnlyShort, formatShortDateTime } from "@/src/utils/format";
 
 const colTemplate = ".95fr 1.55fr 1.35fr 1.05fr .7fr .9fr 1fr";
 const PAGE_SIZE = 20;
@@ -52,6 +52,15 @@ const thStyle: CSSProperties = {
   color: A.inkSoft,
 };
 
+const filterInputStyle: CSSProperties = {
+  padding: "10px 14px",
+  background: A.card,
+  border: `1px solid ${A.border}`,
+  borderRadius: 10,
+  color: A.ink,
+  minWidth: 150,
+};
+
 function statusTone(status: BookingStatus): PillTone {
   if (status === "approved") return "green";
   if (status === "pending") return "amber";
@@ -71,11 +80,22 @@ function canComplete(booking: AdminBooking) {
 export default function AdminBookingsView() {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<BookingStatus | "">("");
+  const [search, setSearch] = useState("");
+  const [submittedSearch, setSubmittedSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const params = useMemo<ListAdminBookingsParams>(
-    () => ({ page, limit: PAGE_SIZE, status: status || undefined }),
-    [page, status],
+    () => ({
+      page,
+      limit: PAGE_SIZE,
+      search: submittedSearch || undefined,
+      status: status || undefined,
+      date_from: dateFrom || undefined,
+      date_to: dateTo || undefined,
+    }),
+    [dateFrom, dateTo, page, status, submittedSearch],
   );
   const actionParams = useMemo<ListAdminBookingActionsParams>(() => ({ page: 1, limit: 20 }), []);
 
@@ -135,10 +155,48 @@ export default function AdminBookingsView() {
         title="Bookings"
         subtitle={`${total} bookings found`}
         right={
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              setPage(1);
+              setSubmittedSearch(search.trim());
+              setSelectedBookingId(null);
+            }}
+            style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end", maxWidth: 760 }}
+          >
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search bookings..."
+              style={filterInputStyle}
+            />
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(event) => {
+                setPage(1);
+                setDateFrom(event.target.value);
+                setSelectedBookingId(null);
+              }}
+              style={filterInputStyle}
+              aria-label="Booking date from"
+            />
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(event) => {
+                setPage(1);
+                setDateTo(event.target.value);
+                setSelectedBookingId(null);
+              }}
+              style={filterInputStyle}
+              aria-label="Booking date to"
+            />
+            <button type="submit" style={btnGhost}>Search</button>
             {statusFilters.map((item) => (
               <button
                 key={item.label}
+                type="button"
                 onClick={() => {
                   setPage(1);
                   setStatus(item.value);
@@ -153,7 +211,7 @@ export default function AdminBookingsView() {
                 {item.label}
               </button>
             ))}
-          </div>
+          </form>
         }
       />
       <div style={{ padding: "24px 40px 40px", display: "grid", gridTemplateColumns: selectedBooking ? "1fr 360px" : "1fr", gap: 18 }}>
@@ -213,7 +271,7 @@ export default function AdminBookingsView() {
                   <div style={{ fontSize: 13.5, color: A.inkSoft }}>{formatDateOnlyShort(booking.date)}</div>
                   <div style={{ fontSize: 14.5, color: A.ink, fontWeight: 500 }}>{booking.duration}h</div>
                   <div style={{ fontFamily: "var(--font-dm-serif), serif", fontSize: 18, color: A.clay }}>
-                    ${booking.total_amount}
+                    {formatCurrency(booking.total_amount)}
                   </div>
                   <div>
                     <AdminPill tone={statusTone(booking.status)}>{booking.status}</AdminPill>
@@ -256,7 +314,7 @@ export default function AdminBookingsView() {
               <div><strong style={{ color: A.ink }}>Nanny:</strong> {selectedBooking.nanny_display_name}</div>
               <div><strong style={{ color: A.ink }}>Date:</strong> {formatDateOnlyShort(selectedBooking.date)} at {selectedBooking.start_time}</div>
               <div><strong style={{ color: A.ink }}>Duration:</strong> {selectedBooking.duration} hours</div>
-              <div><strong style={{ color: A.ink }}>Total:</strong> ${selectedBooking.total_amount}</div>
+              <div><strong style={{ color: A.ink }}>Total:</strong> {formatCurrency(selectedBooking.total_amount)}</div>
             </div>
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>

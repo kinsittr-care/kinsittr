@@ -35,6 +35,7 @@ const statusFilters: Array<{ label: string; value: BookingStatus | "" }> = [
 ];
 
 const PAGE_SIZE = 20;
+const MESSAGE_PAGE_SIZE = 50;
 
 function senderName(message: AdminMessage) {
   return `${message.sender_firstname} ${message.sender_lastname}`.trim() || message.sender_email;
@@ -50,6 +51,7 @@ export default function ConversationsModerationView() {
   const [search, setSearch] = useState("");
   const [submittedSearch, setSubmittedSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [messagePage, setMessagePage] = useState(1);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
 
   const params = useMemo<ListAdminConversationsParams>(
@@ -61,7 +63,10 @@ export default function ConversationsModerationView() {
     }),
     [page, status, submittedSearch],
   );
-  const messageParams = useMemo<ListAdminMessagesParams>(() => ({ page: 1, limit: 50 }), []);
+  const messageParams = useMemo<ListAdminMessagesParams>(
+    () => ({ page: messagePage, limit: MESSAGE_PAGE_SIZE }),
+    [messagePage],
+  );
 
   const conversationsQuery = useQuery({
     queryKey: adminConversationsQueryKey(params),
@@ -80,6 +85,7 @@ export default function ConversationsModerationView() {
   });
   const selectedConversation = messagesQuery.data?.data?.conversation ?? fallbackConversation ?? null;
   const messages = messagesQuery.data?.data?.items ?? [];
+  const messageTotal = messagesQuery.data?.data?.total ?? 0;
 
   const invalidateConversation = async (conversationId: string) => {
     await queryClient.invalidateQueries({ queryKey: ["admin", "conversations"] });
@@ -122,6 +128,7 @@ export default function ConversationsModerationView() {
             onSubmit={(event) => {
               event.preventDefault();
               setPage(1);
+              setMessagePage(1);
               setSubmittedSearch(search.trim());
               setSelectedConversationId(null);
             }}
@@ -147,6 +154,7 @@ export default function ConversationsModerationView() {
                 type="button"
                 onClick={() => {
                   setPage(1);
+                  setMessagePage(1);
                   setStatus(item.value);
                   setSelectedConversationId(null);
                 }}
@@ -180,7 +188,10 @@ export default function ConversationsModerationView() {
               conversations.map((conversation, index) => (
                 <button
                   key={conversation.id}
-                  onClick={() => setSelectedConversationId(conversation.id)}
+                  onClick={() => {
+                    setMessagePage(1);
+                    setSelectedConversationId(conversation.id);
+                  }}
                   style={{
                     all: "unset",
                     display: "block",
@@ -253,64 +264,72 @@ export default function ConversationsModerationView() {
               </div>
             </div>
 
-            <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12, maxHeight: "calc(100dvh - 230px)", overflow: "auto" }}>
-              {messagesQuery.isLoading ? (
-                <p style={{ margin: 0, color: A.inkSoft }}>Loading messages...</p>
-              ) : messages.length === 0 ? (
-                <p style={{ margin: 0, color: A.inkSoft }}>No messages in this conversation.</p>
-              ) : (
-                messages.map((message) => {
-                  const hidden = Boolean(message.hidden_at);
-                  const isBusy =
-                    hideMessageMutation.isPending &&
-                    hideMessageMutation.variables?.messageId === message.id;
+            <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, maxHeight: "calc(100dvh - 290px)", overflow: "auto" }}>
+                {messagesQuery.isLoading ? (
+                  <p style={{ margin: 0, color: A.inkSoft }}>Loading messages...</p>
+                ) : messages.length === 0 ? (
+                  <p style={{ margin: 0, color: A.inkSoft }}>No messages in this conversation.</p>
+                ) : (
+                  messages.map((message) => {
+                    const hidden = Boolean(message.hidden_at);
+                    const isBusy =
+                      hideMessageMutation.isPending &&
+                      hideMessageMutation.variables?.messageId === message.id;
 
-                  return (
-                    <div
-                      key={message.id}
-                      style={{
-                        padding: 14,
-                        border: `1px solid ${hidden ? A.red : A.borderSoft}`,
-                        background: hidden ? A.redLight : A.bgSoft,
-                        borderRadius: 12,
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                        <div style={{ color: A.ink, fontWeight: 700, fontSize: 13.5 }}>
-                          {senderName(message)} <span style={{ color: A.inkSoft, fontWeight: 500 }}>({message.sender_role})</span>
+                    return (
+                      <div
+                        key={message.id}
+                        style={{
+                          padding: 14,
+                          border: `1px solid ${hidden ? A.red : A.borderSoft}`,
+                          background: hidden ? A.redLight : A.bgSoft,
+                          borderRadius: 12,
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                          <div style={{ color: A.ink, fontWeight: 700, fontSize: 13.5 }}>
+                            {senderName(message)} <span style={{ color: A.inkSoft, fontWeight: 500 }}>({message.sender_role})</span>
+                          </div>
+                          <div style={{ color: A.inkSoft, fontSize: 12.5 }}>{formatShortDateTime(message.created_at)}</div>
                         </div>
-                        <div style={{ color: A.inkSoft, fontSize: 12.5 }}>{formatShortDateTime(message.created_at)}</div>
-                      </div>
-                      <p style={{ margin: "10px 0 0", color: hidden ? A.red : A.inkMid, lineHeight: 1.5, fontSize: 14 }}>
-                        {hidden ? "Hidden message" : message.body}
-                      </p>
-                      {message.hidden_reason && (
-                        <p style={{ margin: "8px 0 0", color: A.red, fontSize: 13 }}>
-                          Hidden reason: {message.hidden_reason}
+                        <p style={{ margin: "10px 0 0", color: hidden ? A.red : A.inkMid, lineHeight: 1.5, fontSize: 14 }}>
+                          {hidden ? "Hidden message" : message.body}
                         </p>
-                      )}
-                      <div style={{ marginTop: 10 }}>
-                        <button
-                          disabled={hidden || isBusy}
-                          onClick={() => {
-                            const reason = askReason("hiding this message");
-                            if (reason) {
-                              hideMessageMutation.mutate({
-                                conversationId: selectedConversation.id,
-                                messageId: message.id,
-                                reason,
-                              });
-                            }
-                          }}
-                          style={{ ...btnGhost, opacity: !hidden && !isBusy ? 1 : 0.55 }}
-                        >
-                          Hide message
-                        </button>
+                        {message.hidden_reason && (
+                          <p style={{ margin: "8px 0 0", color: A.red, fontSize: 13 }}>
+                            Hidden reason: {message.hidden_reason}
+                          </p>
+                        )}
+                        <div style={{ marginTop: 10 }}>
+                          <button
+                            disabled={hidden || isBusy}
+                            onClick={() => {
+                              const reason = askReason("hiding this message");
+                              if (reason) {
+                                hideMessageMutation.mutate({
+                                  conversationId: selectedConversation.id,
+                                  messageId: message.id,
+                                  reason,
+                                });
+                              }
+                            }}
+                            style={{ ...btnGhost, opacity: !hidden && !isBusy ? 1 : 0.55 }}
+                          >
+                            Hide message
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })
-              )}
+                    );
+                  })
+                )}
+              </div>
+              <AdminPagination
+                page={messagePage}
+                total={messageTotal}
+                limit={MESSAGE_PAGE_SIZE}
+                onPageChange={setMessagePage}
+              />
             </div>
           </section>
         )}

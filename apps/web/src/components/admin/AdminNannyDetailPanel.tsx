@@ -2,15 +2,7 @@ import AdminPill, { type PillTone } from "./AdminPill";
 import AdminStars from "./AdminStars";
 import { A } from "./tokens";
 import type { AdminNannyDetailData, AdminVerificationStatus } from "@/src/types/api/admin";
-import { formatDateOnlyShort } from "@/src/utils/format";
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+import { formatCurrency, formatDateOnlyShort } from "@/src/utils/format";
 
 function statusTone(status: AdminVerificationStatus, active: boolean): PillTone {
   if (!active) return "red";

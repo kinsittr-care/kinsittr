@@ -16,7 +16,7 @@ import {
   findNannyReviewedBookingIds,
   nannyReviewedBookingIdsQueryKey,
 } from "@/src/utils/api/reviews";
-import { formatTimeRange, formatWeekdayDateOnly } from "@/src/utils/format";
+import { formatCurrency, formatTimeRange, formatWeekdayDateOnly } from "@/src/utils/format";
 import { cn } from "@/lib/utils";
 import BookingRequestCard from "./requests/BookingRequestCard";
 import type { BookingRequest } from "./requests/BookingRequestCard";
@@ -44,7 +44,7 @@ function toBookingRequest(booking: Booking): BookingRequest {
     date: formatWeekdayDateOnly(booking.date),
     time: formatTimeRange(booking.start_time, booking.duration),
     hours: booking.duration,
-    amount: `$${booking.total_amount.toFixed(0)}`,
+    amount: formatCurrency(booking.total_amount),
     status: booking.status === "cancelled" ? "neutral" : booking.status,
     children: booking.parent_city
       ? `${booking.parent_city}${booking.parent_province ? `, ${booking.parent_province}` : ""}`

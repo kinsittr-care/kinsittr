@@ -1,15 +1,7 @@
 import AdminPill from "./AdminPill";
 import { A } from "./tokens";
 import type { AdminParentDetailData } from "@/src/types/api/admin";
-import { formatDateOnlyShort } from "@/src/utils/format";
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+import { formatCurrency, formatDateOnlyShort } from "@/src/utils/format";
 
 export default function AdminParentDetailPanel({
   detail,

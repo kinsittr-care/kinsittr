@@ -4,6 +4,7 @@ import { Nanny } from "./types";
 import Avatar from "./Avatar";
 import { ApiRequestError } from "@/src/utils/api/api";
 import { createBooking } from "@/src/utils/api/bookings";
+import { formatCurrency } from "@/src/utils/format";
 import {
   listPublicNannyReviews,
   publicNannyReviewsQueryKey,
@@ -100,7 +101,7 @@ export default function BookingFormContent({ nanny, onClose, onBooked }: FormPro
               <div><strong>Date:</strong> {createdBooking.date}</div>
               <div><strong>Start:</strong> {createdBooking.start_time}</div>
               <div><strong>Duration:</strong> {createdBooking.duration}h</div>
-              <div><strong>Total:</strong> ${createdBooking.total_amount}</div>
+              <div><strong>Total:</strong> {formatCurrency(createdBooking.total_amount)}</div>
             </div>
           )}
           <button

@@ -10,7 +10,7 @@ import { btnGhost } from "./admin-styles";
 import { A } from "./tokens";
 import type { AdminAnalyticsBucket, AdminAnalyticsData, AdminAnalyticsParams } from "@/src/types/api/admin";
 import { adminAnalyticsQueryKey, getAdminAnalytics } from "@/src/utils/api/admin/analytics";
-import { formatDateParam, formatShortDate } from "@/src/utils/format";
+import { formatCurrency, formatDateParam, formatNumber, formatShortDate } from "@/src/utils/format";
 
 type RangeKey = "30d" | "90d" | "year";
 
@@ -24,18 +24,6 @@ function subtractDays(value: Date, days: number) {
   const next = new Date(value);
   next.setDate(next.getDate() - days);
   return next;
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
-function formatNumber(value: number) {
-  return new Intl.NumberFormat("en-CA").format(value);
 }
 
 function formatPercent(value: number) {

@@ -43,6 +43,15 @@ const statusFilters: Array<{ label: string; value: ReviewStatusFilter }> = [
 
 const PAGE_SIZE = 20;
 
+const filterInputStyle: React.CSSProperties = {
+  padding: "10px 14px",
+  background: A.card,
+  border: `1px solid ${A.border}`,
+  borderRadius: 10,
+  color: A.ink,
+  minWidth: 140,
+};
+
 function paramsForStatus(status: ReviewStatusFilter): Pick<ListAdminReviewsParams, "flagged" | "visible"> {
   if (status === "flagged") return { flagged: true };
   if (status === "visible") return { visible: true };
@@ -62,6 +71,13 @@ export default function FlaggedReviewsView() {
   const queryClient = useQueryClient();
   const [target, setTarget] = useState<ReviewTarget | "">("");
   const [status, setStatus] = useState<ReviewStatusFilter>("flagged");
+  const [search, setSearch] = useState("");
+  const [submittedSearch, setSubmittedSearch] = useState("");
+  const [rating, setRating] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [nannyId, setNannyId] = useState("");
+  const [parentId, setParentId] = useState("");
   const [page, setPage] = useState(1);
   const [selectedReview, setSelectedReview] = useState<{ id: string; target: ReviewTarget } | null>(null);
 
@@ -70,9 +86,15 @@ export default function FlaggedReviewsView() {
       page,
       limit: PAGE_SIZE,
       target: target || undefined,
+      search: submittedSearch || undefined,
+      rating: rating ? Number(rating) : undefined,
+      date_from: dateFrom || undefined,
+      date_to: dateTo || undefined,
+      nanny_id: nannyId.trim() || undefined,
+      parent_id: parentId.trim() || undefined,
       ...paramsForStatus(status),
     }),
-    [page, status, target],
+    [dateFrom, dateTo, nannyId, page, parentId, rating, status, submittedSearch, target],
   );
   const actionParams = useMemo<ListAdminReviewActionsParams>(() => ({ page: 1, limit: 20 }), []);
 
@@ -141,10 +163,83 @@ export default function FlaggedReviewsView() {
         title="Flagged Reviews"
         subtitle={`${total} reviews found`}
         right={
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              setPage(1);
+              setSubmittedSearch(search.trim());
+              setSelectedReview(null);
+            }}
+            style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end", maxWidth: 900 }}
+          >
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search reviews..."
+              style={filterInputStyle}
+            />
+            <select
+              value={rating}
+              onChange={(event) => {
+                setPage(1);
+                setRating(event.target.value);
+                setSelectedReview(null);
+              }}
+              style={filterInputStyle}
+              aria-label="Review rating"
+            >
+              <option value="">All ratings</option>
+              {[5, 4, 3, 2, 1].map((value) => (
+                <option key={value} value={value}>{value} star</option>
+              ))}
+            </select>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(event) => {
+                setPage(1);
+                setDateFrom(event.target.value);
+                setSelectedReview(null);
+              }}
+              style={filterInputStyle}
+              aria-label="Review date from"
+            />
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(event) => {
+                setPage(1);
+                setDateTo(event.target.value);
+                setSelectedReview(null);
+              }}
+              style={filterInputStyle}
+              aria-label="Review date to"
+            />
+            <input
+              value={nannyId}
+              onChange={(event) => {
+                setPage(1);
+                setNannyId(event.target.value);
+                setSelectedReview(null);
+              }}
+              placeholder="Nanny ID"
+              style={filterInputStyle}
+            />
+            <input
+              value={parentId}
+              onChange={(event) => {
+                setPage(1);
+                setParentId(event.target.value);
+                setSelectedReview(null);
+              }}
+              placeholder="Parent ID"
+              style={filterInputStyle}
+            />
+            <button type="submit" style={btnGhost}>Search</button>
             {targetFilters.map((item) => (
               <button
                 key={item.label}
+                type="button"
                 onClick={() => {
                   setPage(1);
                   setTarget(item.value);
@@ -162,6 +257,7 @@ export default function FlaggedReviewsView() {
             {statusFilters.map((item) => (
               <button
                 key={item.value}
+                type="button"
                 onClick={() => {
                   setPage(1);
                   setStatus(item.value);
@@ -176,7 +272,7 @@ export default function FlaggedReviewsView() {
                 {item.label}
               </button>
             ))}
-          </div>
+          </form>
         }
       />
       <div

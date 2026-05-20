@@ -1,5 +1,5 @@
 import type { Booking } from "@/src/types/api/api";
-import { formatTimeRange, formatWeekdayDateOnly } from "@/src/utils/format";
+import { formatCurrency, formatTimeRange, formatWeekdayDateOnly } from "@/src/utils/format";
 import { N } from "../tokens";
 import NannyAvatar from "../NannyAvatar";
 import NannyPill from "../NannyPill";
@@ -89,7 +89,7 @@ export default function DashboardUpcoming({
                   color: N.green,
                 }}
               >
-                ${b.total_amount.toFixed(0)}
+                {formatCurrency(b.total_amount)}
               </div>
               <div style={{ marginTop: 5 }}>
                 <NannyPill tone={b.status === "cancelled" ? "neutral" : b.status}>{b.status.charAt(0).toUpperCase() + b.status.slice(1)}</NannyPill>

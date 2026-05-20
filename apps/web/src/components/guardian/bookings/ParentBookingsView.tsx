@@ -21,11 +21,8 @@ import Avatar from "../dashboard/Avatar";
 import SectionCard from "../profile/SectionCard";
 import BookingDetailCard from "./BookingDetailCard";
 import BookingStatusBadge from "./BookingStatusBadge";
-import {
-  formatBookingTotal,
-  getBookingInitials,
-} from "./booking-helpers";
-import { describeBookingTime } from "@/src/utils/format";
+import { getBookingInitials } from "./booking-helpers";
+import { describeBookingTime, formatCurrency } from "@/src/utils/format";
 
 const filterLabelStyle: React.CSSProperties = {
   fontSize: 12,
@@ -264,7 +261,7 @@ export default function ParentBookingsView({
                   style={{ marginLeft: compact ? 0 : "auto" }}
                 >
                   <div style={{ textAlign: compact ? "left" : "right" }}>
-                    <div style={{ fontWeight: 700, fontSize: 15 }}>{formatBookingTotal(booking.total_amount)}</div>
+                    <div style={{ fontWeight: 700, fontSize: 15 }}>{formatCurrency(booking.total_amount)}</div>
                     <BookingStatusBadge status={booking.status} />
                   </div>
                   {!compact && (
