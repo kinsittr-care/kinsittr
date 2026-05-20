@@ -27,6 +27,11 @@ const navItems = [
     icon: <DiamondIcon />,
   },
   {
+    href: "/admin/parents",
+    label: "Parents",
+    icon: <GridIcon />,
+  },
+  {
     href: "/admin/bookings",
     label: "Bookings",
     icon: <ClockIcon />,

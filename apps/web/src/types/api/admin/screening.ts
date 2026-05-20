@@ -53,7 +53,3 @@ export interface UpdateScreeningStepsPayload {
   references_checked?: boolean;
   interview_done?: boolean;
 }
-
-export interface AdminReasonPayload {
-  reason: string;
-}

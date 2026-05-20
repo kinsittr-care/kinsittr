@@ -72,7 +72,7 @@ export default function LoginForm({
       <div>
         <label
           className="block text-[12px] font-semibold uppercase tracking-[0.07em] mb-[7px]"
-          style={{ color: "var(--muted)" }}
+          style={{ color: "var(--faint)" }}
         >
           Email
         </label>
@@ -91,7 +91,7 @@ export default function LoginForm({
       <div>
         <label
           className="block text-[12px] font-semibold uppercase tracking-[0.07em] mb-[7px]"
-          style={{ color: "var(--muted)" }}
+          style={{ color: "var(--faint)" }}
         >
           Password
         </label>
