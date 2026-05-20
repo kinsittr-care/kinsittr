@@ -37,6 +37,11 @@ const navItems = [
     icon: <ClockIcon />,
   },
   {
+    href: "/admin/conversations",
+    label: "Conversations",
+    icon: <FlagIcon />,
+  },
+  {
     href: "/admin/flags",
     label: "Flagged Reviews",
     badge: 2,

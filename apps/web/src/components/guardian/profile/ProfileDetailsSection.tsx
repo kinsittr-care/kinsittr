@@ -6,6 +6,7 @@ import SectionCard from "./SectionCard";
 import { useIsMobile } from "../dashboard/useIsMobile";
 import type { ParentProfile, UpdateParentProfilePayload } from "@/src/types/api/api";
 import { getStoredAuthSession } from "@/src/utils/api/session";
+import { formatMonthYear } from "@/src/utils/format";
 
 const labelStyle: React.CSSProperties = {
   fontSize: 12,
@@ -195,10 +196,4 @@ function draftFromProfile(profile: ParentProfile): ProfileDraft {
 function initialsFromName(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   return `${parts[0]?.[0] ?? "P"}${parts[1]?.[0] ?? ""}`.toUpperCase();
-}
-
-function formatMonthYear(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "recently";
-  return new Intl.DateTimeFormat("en", { month: "short", year: "numeric" }).format(date);
 }

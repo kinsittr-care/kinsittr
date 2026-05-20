@@ -1,12 +1,4 @@
-import type { Booking, BookingStatus } from "@/src/types/api/api";
-
-export function formatBookingDate(value: string) {
-  return new Intl.DateTimeFormat("en-CA", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(`${value}T00:00:00Z`));
-}
+import type { BookingStatus } from "@/src/types/api/api";
 
 export function formatBookingTotal(value: number) {
   return new Intl.NumberFormat("en-CA", {
@@ -41,8 +33,4 @@ export function getBookingInitials(name?: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
-}
-
-export function describeBookingTime(booking: Booking) {
-  return `${formatBookingDate(booking.date)} · ${booking.start_time} · ${booking.duration}h`;
 }

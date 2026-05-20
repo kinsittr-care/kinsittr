@@ -24,6 +24,7 @@ import {
   listAdminBookingActions,
   listAdminBookings,
 } from "@/src/utils/api/admin/bookings";
+import { formatDateOnlyShort, formatShortDateTime } from "@/src/utils/format";
 
 const colTemplate = ".95fr 1.55fr 1.35fr 1.05fr .7fr .9fr 1fr";
 
@@ -55,24 +56,6 @@ function statusTone(status: BookingStatus): PillTone {
   if (status === "completed") return "completed";
   if (status === "cancelled" || status === "declined") return "red";
   return "neutral";
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(`${value}T00:00:00`));
-}
-
-function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
 }
 
 function canCancel(booking: AdminBooking) {
@@ -223,7 +206,7 @@ export default function AdminBookingsView() {
                   </div>
                   <div style={{ fontSize: 14.5, fontWeight: 600, color: A.ink }}>{booking.nanny_display_name}</div>
                   <div style={{ fontSize: 14, color: A.inkMid }}>{booking.parent_display_name}</div>
-                  <div style={{ fontSize: 13.5, color: A.inkSoft }}>{formatDate(booking.date)}</div>
+                  <div style={{ fontSize: 13.5, color: A.inkSoft }}>{formatDateOnlyShort(booking.date)}</div>
                   <div style={{ fontSize: 14.5, color: A.ink, fontWeight: 500 }}>{booking.duration}h</div>
                   <div style={{ fontFamily: "var(--font-dm-serif), serif", fontSize: 18, color: A.clay }}>
                     ${booking.total_amount}
@@ -266,7 +249,7 @@ export default function AdminBookingsView() {
             <div style={{ display: "grid", gap: 10, fontSize: 14, color: A.inkMid }}>
               <div><strong style={{ color: A.ink }}>Parent:</strong> {selectedBooking.parent_display_name}</div>
               <div><strong style={{ color: A.ink }}>Nanny:</strong> {selectedBooking.nanny_display_name}</div>
-              <div><strong style={{ color: A.ink }}>Date:</strong> {formatDate(selectedBooking.date)} at {selectedBooking.start_time}</div>
+              <div><strong style={{ color: A.ink }}>Date:</strong> {formatDateOnlyShort(selectedBooking.date)} at {selectedBooking.start_time}</div>
               <div><strong style={{ color: A.ink }}>Duration:</strong> {selectedBooking.duration} hours</div>
               <div><strong style={{ color: A.ink }}>Total:</strong> ${selectedBooking.total_amount}</div>
             </div>
@@ -308,7 +291,7 @@ export default function AdminBookingsView() {
                     <div key={action.id} style={{ borderTop: `1px solid ${A.borderSoft}`, paddingTop: 10 }}>
                       <div style={{ fontSize: 13.5, color: A.ink, fontWeight: 600 }}>{action.action}</div>
                       <div style={{ fontSize: 12.5, color: A.inkSoft, marginTop: 3 }}>
-                        {action.previous_status} {"->"} {action.new_status} · {formatDateTime(action.created_at)}
+                        {action.previous_status} {"->"} {action.new_status} · {formatShortDateTime(action.created_at)}
                       </div>
                       <div style={{ fontSize: 13, color: A.inkMid, marginTop: 5 }}>{action.reason}</div>
                       {action.admin_email && (

@@ -6,6 +6,7 @@ import AdminPageHeader from "./AdminPageHeader";
 import ScreeningCard, { type ScreeningApplicant, type Steps } from "./screening/ScreeningCard";
 import { btnGhost } from "./admin-styles";
 import type { AdminNanny, ListAdminScreeningNanniesParams } from "@/src/types/api/admin";
+import { formatShortDate } from "@/src/utils/format";
 import {
   adminScreeningNanniesQueryKey,
   listAdminScreeningNannies,
@@ -25,21 +26,13 @@ function initialsFor(nanny: AdminNanny) {
   return source.toUpperCase() || nanny.display_name.slice(0, 2).toUpperCase() || "NA";
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(value));
-}
-
 function mapApplicant(nanny: AdminNanny): ScreeningApplicant {
   return {
     id: nanny.id,
     name: nanny.display_name,
     initials: initialsFor(nanny),
     city: `${nanny.city}, ${nanny.province}`,
-    submitted: formatDate(nanny.created_at),
+    submitted: formatShortDate(nanny.created_at),
     waiting: nanny.waiting_days,
     status: nanny.verification_status,
   };

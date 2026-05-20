@@ -1,4 +1,5 @@
 import type { Booking } from "@/src/types/api/api";
+import { formatTimeRange, formatWeekdayDateOnly } from "@/src/utils/format";
 import { N } from "../tokens";
 import NannyAvatar from "../NannyAvatar";
 import NannyPill from "../NannyPill";
@@ -19,26 +20,6 @@ function getInitials(name?: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-CA", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(`${value}T00:00:00`));
-}
-
-function formatTimeRange(booking: Booking) {
-  const [hour, minute] = booking.start_time.split(":").map(Number);
-  const start = new Date();
-  start.setHours(hour || 0, minute || 0, 0, 0);
-  const end = new Date(start.getTime() + booking.duration * 60 * 60 * 1000);
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${formatter.format(start)} - ${formatter.format(end)}`;
 }
 
 export default function DashboardUpcoming({
@@ -97,7 +78,7 @@ export default function DashboardUpcoming({
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 14.5, fontWeight: 600, color: N.greenDk }}>{b.parent_display_name || "Parent"}</div>
               <div style={{ fontSize: 13, color: N.inkMute, marginTop: 3 }}>
-                {formatDate(b.date)} · {formatTimeRange(b)}
+                {formatWeekdayDateOnly(b.date)} · {formatTimeRange(b.start_time, b.duration)}
               </div>
             </div>
             <div style={{ textAlign: "right" }}>

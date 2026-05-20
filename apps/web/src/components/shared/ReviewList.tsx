@@ -1,12 +1,5 @@
 import type { Review } from "@/src/types/api/api";
-
-function formatReviewDate(value: string) {
-  return new Intl.DateTimeFormat("en-CA", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(value));
-}
+import { formatReviewDate } from "@/src/utils/format";
 
 export default function ReviewList({
   reviews,

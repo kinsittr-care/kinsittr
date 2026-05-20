@@ -16,6 +16,7 @@ import {
   findNannyReviewedBookingIds,
   nannyReviewedBookingIdsQueryKey,
 } from "@/src/utils/api/reviews";
+import { formatTimeRange, formatWeekdayDateOnly } from "@/src/utils/format";
 import { cn } from "@/lib/utils";
 import BookingRequestCard from "./requests/BookingRequestCard";
 import type { BookingRequest } from "./requests/BookingRequestCard";
@@ -34,28 +35,13 @@ function getInitials(name?: string) {
     .join("");
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-CA", {
-    weekday: "short", month: "short", day: "numeric",
-  }).format(new Date(`${value}T00:00:00`));
-}
-
-function formatTimeRange(startTime: string, duration: number) {
-  const [hour, minute] = startTime.split(":").map(Number);
-  const start = new Date();
-  start.setHours(hour || 0, minute || 0, 0, 0);
-  const end = new Date(start.getTime() + duration * 60 * 60 * 1000);
-  const fmt = new Intl.DateTimeFormat("en-CA", { hour: "numeric", minute: "2-digit" });
-  return `${fmt.format(start)} - ${fmt.format(end)}`;
-}
-
 function toBookingRequest(booking: Booking): BookingRequest {
   const parent = booking.parent_display_name || "Parent";
   return {
     id: booking.id,
     parent,
     initials: getInitials(parent),
-    date: formatDate(booking.date),
+    date: formatWeekdayDateOnly(booking.date),
     time: formatTimeRange(booking.start_time, booking.duration),
     hours: booking.duration,
     amount: `$${booking.total_amount.toFixed(0)}`,

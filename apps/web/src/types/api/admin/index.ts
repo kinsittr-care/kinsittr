@@ -1,4 +1,5 @@
 export * from "./bookings";
+export * from "./conversations";
 export * from "./nannies";
 export * from "./parents";
 export * from "./reviews";

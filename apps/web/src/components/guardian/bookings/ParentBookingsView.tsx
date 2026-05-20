@@ -22,10 +22,10 @@ import SectionCard from "../profile/SectionCard";
 import BookingDetailCard from "./BookingDetailCard";
 import BookingStatusBadge from "./BookingStatusBadge";
 import {
-  describeBookingTime,
   formatBookingTotal,
   getBookingInitials,
 } from "./booking-helpers";
+import { describeBookingTime } from "@/src/utils/format";
 
 const filterLabelStyle: React.CSSProperties = {
   fontSize: 12,

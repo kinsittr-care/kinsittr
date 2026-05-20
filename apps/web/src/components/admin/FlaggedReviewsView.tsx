@@ -23,6 +23,7 @@ import {
   listAdminReviews,
   unflagAdminReview,
 } from "@/src/utils/api/admin/reviews";
+import { formatShortDate, formatShortDateTime } from "@/src/utils/format";
 
 type ReviewStatusFilter = "flagged" | "visible" | "hidden" | "all";
 
@@ -52,24 +53,6 @@ function reviewerName(review: AdminReview) {
 
 function targetName(review: AdminReview) {
   return review.target === "nanny" ? review.nanny_display_name : review.parent_display_name;
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(value));
-}
-
-function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
 }
 
 export default function FlaggedReviewsView() {
@@ -251,7 +234,7 @@ export default function FlaggedReviewsView() {
                     <AdminPill tone={review.reviewed_by_admin ? "clay" : "amber"}>
                       {review.reviewed_by_admin ? "Reviewed" : "Needs review"}
                     </AdminPill>
-                    <span style={{ fontSize: 13, color: A.inkSoft }}>{formatDate(review.created_at)}</span>
+                    <span style={{ fontSize: 13, color: A.inkSoft }}>{formatShortDate(review.created_at)}</span>
                   </div>
                 </div>
 
@@ -364,7 +347,7 @@ export default function FlaggedReviewsView() {
                     <div key={action.id} style={{ borderTop: `1px solid ${A.borderSoft}`, paddingTop: 10 }}>
                       <div style={{ fontSize: 13.5, color: A.ink, fontWeight: 600 }}>{action.action}</div>
                       <div style={{ fontSize: 12.5, color: A.inkSoft, marginTop: 3 }}>
-                        {formatDateTime(action.created_at)}
+                        {formatShortDateTime(action.created_at)}
                       </div>
                       <div style={{ fontSize: 13, color: A.inkMid, marginTop: 5 }}>{action.reason}</div>
                       {action.admin_email && (

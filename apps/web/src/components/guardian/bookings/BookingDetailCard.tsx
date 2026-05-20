@@ -3,9 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Booking } from "@/src/types/api/api";
 import { getParentBookingById, parentBookingQueryKey } from "@/src/utils/api/bookings";
+import { describeBookingTime, formatShortDateCA } from "@/src/utils/format";
 import SectionCard from "../profile/SectionCard";
 import BookingStatusBadge from "./BookingStatusBadge";
-import { describeBookingTime, formatBookingTotal } from "./booking-helpers";
+import { formatBookingTotal } from "./booking-helpers";
 
 interface BookingDetailCardProps {
   bookingId: string | null;
@@ -56,11 +57,7 @@ export default function BookingDetailCard({ bookingId }: BookingDetailCardProps)
                   <strong>Total:</strong> {formatBookingTotal(booking.total_amount)}
                 </div>
                 <div style={{ fontSize: 14 }}>
-                  <strong>Requested:</strong> {new Intl.DateTimeFormat("en-CA", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  }).format(new Date(booking.created_at))}
+                  <strong>Requested:</strong> {formatShortDateCA(booking.created_at)}
                 </div>
               </div>
             </div>

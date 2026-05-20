@@ -1,4 +1,5 @@
 import type { Conversation, Message } from "@/src/types/api/api";
+export { formatMessageTimestamp, formatThreadTimestamp } from "@/src/utils/format";
 
 export function getInitials(name: string) {
   return name
@@ -7,29 +8,6 @@ export function getInitials(name: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
-}
-
-export function formatThreadTimestamp(value?: string | null) {
-  if (!value) return "";
-
-  const date = new Date(value);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffHours < 1) return "Now";
-  if (diffHours < 24) return `${diffHours}h`;
-  if (diffDays < 7) return `${diffDays}d`;
-
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
-
-export function formatMessageTimestamp(value: string) {
-  return new Date(value).toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }
 
 export function formatConversationStatus(status: Conversation["booking_status"]) {
