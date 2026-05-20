@@ -2,10 +2,12 @@ package pipes
 
 import (
 	"encoding/json"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/kinsittr/kinsittr-api/admin/messages"
+	adminservices "github.com/kinsittr/kinsittr-api/admin/services"
 	"github.com/kinsittr/kinsittr-api/models"
 	repository "github.com/kinsittr/kinsittr-api/repositories/admin"
 	notifyrepo "github.com/kinsittr/kinsittr-api/repositories/notifications"
@@ -16,6 +18,8 @@ type AdminPipe struct {
 	repo            repository.AdminRepository
 	platformFeeRate float64
 	notifyRepo      notifyrepo.NotificationsRepository
+	emailService    *adminservices.EmailService
+	webOrigin       string
 }
 
 func NewAdminPipe(repo repository.AdminRepository, platformFeeRate float64, notifyRepo ...notifyrepo.NotificationsRepository) *AdminPipe {
@@ -28,6 +32,11 @@ func NewAdminPipe(repo repository.AdminRepository, platformFeeRate float64, noti
 		notifications = notifyRepo[0]
 	}
 	return &AdminPipe{repo: repo, platformFeeRate: rate, notifyRepo: notifications}
+}
+
+func (p *AdminPipe) SetInviteEmailService(emailService *adminservices.EmailService, webOrigin string) {
+	p.emailService = emailService
+	p.webOrigin = strings.TrimRight(strings.TrimSpace(webOrigin), "/")
 }
 
 func pipeError[T any](message string) *shared.PipeRes[T] {
@@ -110,4 +119,12 @@ func adminNotificationData(values map[string]string) []byte {
 		return []byte("{}")
 	}
 	return data
+}
+
+func (p *AdminPipe) adminInviteLink(token string) string {
+	origin := p.webOrigin
+	if origin == "" {
+		return token
+	}
+	return origin + "/auth/admin/accept-invite?token=" + url.QueryEscape(token)
 }

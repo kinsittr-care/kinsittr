@@ -44,6 +44,10 @@ export default function AdminAcceptInviteView() {
 
   return (
     <form onSubmit={submitInvite} style={{ display: "grid", gap: 16 }}>
+      <p style={{ margin: 0, color: "#7b7168", fontSize: 13, lineHeight: 1.6 }}>
+        Accepting an invite creates your admin account. You will be redirected to admin sign in afterwards
+      </p>
+
       <label style={{ display: "grid", gap: 6, color: "#7b7168", fontSize: 13 }}>
         Invite token
         <textarea

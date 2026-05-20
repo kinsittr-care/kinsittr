@@ -7,6 +7,7 @@ import AdminPill from "./compositions/AdminPill";
 import { btnDanger, btnGhost, btnPrimary, card } from "./compositions/admin-styles";
 import { A } from "./tokens";
 import type { AdminInviteData, InviteAdminPayload, ListAdminUsersParams } from "@/src/types/api/admin";
+import { getCurrentAdminSession } from "@/src/utils/api/admin/auth";
 import {
   adminUsersQueryKey,
   disableAdmin,
@@ -45,11 +46,16 @@ export default function AdminManagementView() {
   const [copied, setCopied] = useState(false);
   const params = useMemo<ListAdminUsersParams>(() => ({ page, limit: PAGE_SIZE }), [page]);
 
+  const currentAdminQuery = useQuery({
+    queryKey: ["admin", "auth", "me"],
+    queryFn: getCurrentAdminSession,
+  });
   const adminsQuery = useQuery({
     queryKey: adminUsersQueryKey(params),
     queryFn: () => listAdminUsers(params),
   });
   const admins = adminsQuery.data?.data?.items ?? [];
+  const currentAdminId = currentAdminQuery.data?.data?.user.id;
   const total = adminsQuery.data?.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -99,6 +105,8 @@ export default function AdminManagementView() {
           </h2>
           <p style={{ margin: "8px 0 20px", color: A.inkSoft, fontSize: 13.5, lineHeight: 1.6 }}>
             Create an invite token and share the generated acceptance link with the new admin.
+            After accepting the invite, they will be redirected to admin sign in because invite acceptance creates
+            the admin account but does not issue auth tokens.
           </p>
 
           <form onSubmit={submitInvite} style={{ display: "grid", gap: 14 }}>
@@ -184,46 +192,51 @@ export default function AdminManagementView() {
             {!adminsQuery.isLoading && !adminsQuery.isError && admins.length === 0 && (
               <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>No admins found.</p>
             )}
-            {admins.map((admin) => (
-              <div
-                key={admin.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 16,
-                  border: `1px solid ${A.borderSoft}`,
-                  borderRadius: 14,
-                  padding: "14px 16px",
-                  background: admin.is_active ? A.card : A.cardWarm,
-                }}
-              >
-                <div>
-                  <div style={{ color: A.ink, fontWeight: 700 }}>{fullName(admin.firstname, admin.lastname)}</div>
-                  <div style={{ color: A.inkSoft, fontSize: 12.5, marginTop: 3 }}>{admin.email}</div>
-                  <div style={{ color: A.inkSoft, fontSize: 12, marginTop: 5 }}>
-                    Joined {formatShortDateTime(admin.created_at)}
+            {admins.map((admin) => {
+              const isCurrentAdmin = admin.id === currentAdminId;
+
+              return (
+                <div
+                  key={admin.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 16,
+                    border: `1px solid ${A.borderSoft}`,
+                    borderRadius: 14,
+                    padding: "14px 16px",
+                    background: admin.is_active ? A.card : A.cardWarm,
+                  }}
+                >
+                  <div>
+                    <div style={{ color: A.ink, fontWeight: 700 }}>{fullName(admin.firstname, admin.lastname)}</div>
+                    <div style={{ color: A.inkSoft, fontSize: 12.5, marginTop: 3 }}>{admin.email}</div>
+                    <div style={{ color: A.inkSoft, fontSize: 12, marginTop: 5 }}>
+                      Joined {formatShortDateTime(admin.created_at)}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <AdminPill tone={admin.is_active ? "green" : "red"}>
+                      {admin.is_active ? "Active" : "Disabled"}
+                    </AdminPill>
+                    {isCurrentAdmin && <AdminPill tone="clay">You</AdminPill>}
+                    <button
+                      type="button"
+                      style={btnDanger}
+                      disabled={isCurrentAdmin || !admin.is_active || disableMutation.isPending}
+                      onClick={() => {
+                        if (window.confirm(`Disable ${admin.email}? This will revoke their admin access.`)) {
+                          disableMutation.mutate(admin.id);
+                        }
+                      }}
+                    >
+                      {isCurrentAdmin ? "Current admin" : "Disable"}
+                    </button>
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <AdminPill tone={admin.is_active ? "green" : "red"}>
-                    {admin.is_active ? "Active" : "Disabled"}
-                  </AdminPill>
-                  <button
-                    type="button"
-                    style={btnDanger}
-                    disabled={!admin.is_active || disableMutation.isPending}
-                    onClick={() => {
-                      if (window.confirm(`Disable ${admin.email}? This will revoke their admin access.`)) {
-                        disableMutation.mutate(admin.id);
-                      }
-                    }}
-                  >
-                    Disable
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {disableMutation.isError && (

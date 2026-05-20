@@ -15,6 +15,8 @@ import (
 type mockAdminRepo struct {
 	nanny               repository.NannyRecord
 	updatedNanny        repository.NannyRecord
+	invite              models.AdminInvite
+	createInviteParams  repository.InviteAdminParams
 	stepsUpdated        bool
 	statusActionUpdated bool
 }
@@ -99,8 +101,9 @@ func (m *mockAdminRepo) HideMessage(context.Context, repository.AdminConversatio
 func (m *mockAdminRepo) ListAdmins(context.Context, int, int) ([]repository.AdminUserRecord, int, error) {
 	return nil, 0, nil
 }
-func (m *mockAdminRepo) CreateAdminInvite(context.Context, repository.InviteAdminParams) (models.AdminInvite, error) {
-	return models.AdminInvite{}, nil
+func (m *mockAdminRepo) CreateAdminInvite(_ context.Context, params repository.InviteAdminParams) (models.AdminInvite, error) {
+	m.createInviteParams = params
+	return m.invite, nil
 }
 func (m *mockAdminRepo) AcceptAdminInvite(context.Context, repository.AcceptAdminInviteParams) (repository.AdminUserRecord, error) {
 	return repository.AdminUserRecord{}, nil
