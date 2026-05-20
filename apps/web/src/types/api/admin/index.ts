@@ -1,6 +1,7 @@
 export * from "./analytics";
 export * from "./bookings";
 export * from "./conversations";
+export * from "./management";
 export * from "./nannies";
 export * from "./parents";
 export * from "./reviews";

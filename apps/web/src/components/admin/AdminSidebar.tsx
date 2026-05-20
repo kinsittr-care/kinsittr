@@ -53,6 +53,11 @@ const navItems = [
     label: "Analytics",
     icon: <ChartIcon />,
   },
+  {
+    href: "/admin/admins",
+    label: "Admin Management",
+    icon: <GridIcon />,
+  },
 ];
 
 const badgeColors = {
