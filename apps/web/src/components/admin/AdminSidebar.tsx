@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { A } from "./tokens";
-import AdminAvatar from "./AdminAvatar";
+import AdminAvatar from "./compositions/AdminAvatar";
 import {
   GridIcon,
   DiamondIcon,
   ClockIcon,
   FlagIcon,
   ChartIcon,
-} from "./admin-icons";
+} from "./compositions/admin-icons";
 import type { AuthUser } from "@/src/types/api/api";
 
 const navItems = [

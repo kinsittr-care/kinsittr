@@ -3,13 +3,14 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { A } from "./tokens";
-import AdminPageHeader from "./AdminPageHeader";
+import AdminPageHeader from "./compositions/AdminPageHeader";
 import AdminPagination from "./AdminPagination";
 import AdminParentDetailPanel from "./AdminParentDetailPanel";
-import AdminAvatar from "./AdminAvatar";
-import AdminPill from "./AdminPill";
-import { SearchIcon } from "./admin-icons";
-import { btnDanger, btnGhost } from "./admin-styles";
+import AdminAvatar from "./compositions/AdminAvatar";
+import AdminPill from "./compositions/AdminPill";
+import AdminReasonDialog, { type AdminReasonDialogState } from "./AdminReasonDialog";
+import { SearchIcon } from "./compositions/admin-icons";
+import { btnDanger, btnGhost } from "./compositions/admin-styles";
 import type { AdminParent, ListAdminParentsParams } from "@/src/types/api/admin";
 import {
   adminParentQueryKey,
@@ -33,6 +34,7 @@ export default function ParentsModerationView() {
   const [submittedSearch, setSubmittedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
+  const [reasonAction, setReasonAction] = useState<AdminReasonDialogState | null>(null);
   const params = useMemo<ListAdminParentsParams>(
     () => ({ page, limit: PAGE_SIZE, search: submittedSearch || undefined }),
     [page, submittedSearch],
@@ -62,7 +64,6 @@ export default function ParentsModerationView() {
     },
   });
 
-  const askReason = () => window.prompt("Reason for suspending this parent?")?.trim();
   const actionError = parentsQuery.error || detailQuery.error || suspendMutation.error;
 
   return (
@@ -190,8 +191,16 @@ export default function ParentsModerationView() {
                     <button
                       disabled={!parent.user_is_active || isBusy}
                       onClick={() => {
-                        const reason = askReason();
-                        if (reason) suspendMutation.mutate({ id: parent.id, reason });
+                        setReasonAction({
+                          title: "Suspend parent",
+                          description: "Suspend this parent account. A reason is required for the admin audit trail.",
+                          submitLabel: "Suspend parent",
+                          tone: "danger",
+                          onSubmit: (reason) => {
+                            suspendMutation.mutate({ id: parent.id, reason });
+                            setReasonAction(null);
+                          },
+                        });
                       }}
                       style={{ ...btnDanger, opacity: parent.user_is_active && !isBusy ? 1 : 0.55 }}
                     >
@@ -209,6 +218,11 @@ export default function ParentsModerationView() {
           <AdminParentDetailPanel detail={selectedParentDetail} isLoading={detailQuery.isLoading} />
         )}
       </div>
+      <AdminReasonDialog
+        action={reasonAction}
+        isSubmitting={suspendMutation.isPending}
+        onClose={() => setReasonAction(null)}
+      />
     </>
   );
 }

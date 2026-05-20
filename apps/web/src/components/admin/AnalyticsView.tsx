@@ -2,11 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import AdminPageHeader from "./AdminPageHeader";
+import AdminPageHeader from "./compositions/AdminPageHeader";
 import AnalyticsMetricTiles from "./analytics/AnalyticsMetricTiles";
 import AnalyticsCityBars from "./analytics/AnalyticsCityBars";
 import AnalyticsKeyMetrics from "./analytics/AnalyticsKeyMetrics";
-import { btnGhost } from "./admin-styles";
+import { btnGhost } from "./compositions/admin-styles";
 import { A } from "./tokens";
 import type { AdminAnalyticsBucket, AdminAnalyticsData, AdminAnalyticsParams } from "@/src/types/api/admin";
 import { adminAnalyticsQueryKey, getAdminAnalytics } from "@/src/utils/api/admin/analytics";

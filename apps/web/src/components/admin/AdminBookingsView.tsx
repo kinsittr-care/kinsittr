@@ -4,16 +4,13 @@ import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { A } from "./tokens";
-import AdminPageHeader from "./AdminPageHeader";
+import AdminPageHeader from "./compositions/AdminPageHeader";
 import AdminPagination from "./AdminPagination";
-import AdminPill from "./AdminPill";
-import type { PillTone } from "./AdminPill";
-import { btnDanger, btnGhost, btnApprove } from "./admin-styles";
-import type {
-  AdminBooking,
-  ListAdminBookingActionsParams,
-  ListAdminBookingsParams,
-} from "@/src/types/api/admin";
+import AdminReasonDialog, { type AdminReasonDialogState } from "./AdminReasonDialog";
+import { btnGhost } from "./compositions/admin-styles";
+import AdminBookingDetailPanel from "./compositions/AdminBookingDetailPanel";
+import AdminBookingsTable from "./compositions/AdminBookingsTable";
+import type { ListAdminBookingActionsParams, ListAdminBookingsParams } from "@/src/types/api/admin";
 import type { BookingStatus } from "@/src/types/api/api";
 import {
   adminBookingActionsQueryKey,
@@ -25,9 +22,7 @@ import {
   listAdminBookingActions,
   listAdminBookings,
 } from "@/src/utils/api/admin/bookings";
-import { formatCurrency, formatDateOnlyShort, formatShortDateTime } from "@/src/utils/format";
 
-const colTemplate = ".95fr 1.55fr 1.35fr 1.05fr .7fr .9fr 1fr";
 const PAGE_SIZE = 20;
 
 const statusFilters: Array<{ label: string; value: BookingStatus | "" }> = [
@@ -39,19 +34,6 @@ const statusFilters: Array<{ label: string; value: BookingStatus | "" }> = [
   { label: "Declined", value: "declined" },
 ];
 
-const thStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: colTemplate,
-  padding: "14px 24px",
-  borderBottom: `1px solid ${A.divider}`,
-  background: A.cardWarm,
-  fontSize: 11.5,
-  fontWeight: 600,
-  letterSpacing: ".14em",
-  textTransform: "uppercase",
-  color: A.inkSoft,
-};
-
 const filterInputStyle: CSSProperties = {
   padding: "10px 14px",
   background: A.card,
@@ -60,22 +42,6 @@ const filterInputStyle: CSSProperties = {
   color: A.ink,
   minWidth: 150,
 };
-
-function statusTone(status: BookingStatus): PillTone {
-  if (status === "approved") return "green";
-  if (status === "pending") return "amber";
-  if (status === "completed") return "completed";
-  if (status === "cancelled" || status === "declined") return "red";
-  return "neutral";
-}
-
-function canCancel(booking: AdminBooking) {
-  return booking.status === "pending" || booking.status === "approved";
-}
-
-function canComplete(booking: AdminBooking) {
-  return booking.status === "approved";
-}
 
 export default function AdminBookingsView() {
   const queryClient = useQueryClient();
@@ -86,6 +52,7 @@ export default function AdminBookingsView() {
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [reasonAction, setReasonAction] = useState<AdminReasonDialogState | null>(null);
   const params = useMemo<ListAdminBookingsParams>(
     () => ({
       page,
@@ -141,7 +108,6 @@ export default function AdminBookingsView() {
     onSuccess: async (_data, variables) => invalidateBooking(variables.id),
   });
 
-  const askReason = (action: string) => window.prompt(`Reason to ${action} this booking?`)?.trim();
   const actionError =
     bookingsQuery.error || detailQuery.error || actionsQuery.error || cancelMutation.error || completeMutation.error;
   const selectedIsBusy =
@@ -221,153 +187,53 @@ export default function AdminBookingsView() {
               {actionError instanceof Error ? actionError.message : "Unable to update admin bookings."}
             </p>
           )}
-          <div
-            style={{
-              background: A.card,
-              border: `1px solid ${A.border}`,
-              borderRadius: 16,
-              overflow: "hidden",
-              boxShadow: A.shadow,
-            }}
-          >
-            <div style={thStyle}>
-              <div>ID</div>
-              <div>Nanny</div>
-              <div>Parent</div>
-              <div>Date</div>
-              <div>Hours</div>
-              <div>Total</div>
-              <div>Status</div>
-            </div>
-
-            {bookingsQuery.isLoading ? (
-              <div style={{ padding: 24, color: A.inkSoft }}>Loading bookings...</div>
-            ) : bookings.length === 0 ? (
-              <div style={{ padding: 24, color: A.inkSoft }}>No bookings found.</div>
-            ) : (
-              bookings.map((booking, i) => (
-                <button
-                  key={booking.id}
-                  className="admin-table-row"
-                  onClick={() => setSelectedBookingId(booking.id)}
-                  style={{
-                    all: "unset",
-                    display: "grid",
-                    gridTemplateColumns: colTemplate,
-                    alignItems: "center",
-                    padding: "18px 24px",
-                    gap: 12,
-                    borderBottom: i < bookings.length - 1 ? `1px solid ${A.borderSoft}` : "none",
-                    background: selectedBookingId === booking.id ? A.cardWarm : "transparent",
-                    cursor: "pointer",
-                    transition: "background .15s",
-                  }}
-                >
-                  <div style={{ fontFamily: "monospace", fontSize: 12, color: A.inkSoft, letterSpacing: ".02em" }}>
-                    {booking.id.slice(0, 8)}
-                  </div>
-                  <div style={{ fontSize: 14.5, fontWeight: 600, color: A.ink }}>{booking.nanny_display_name}</div>
-                  <div style={{ fontSize: 14, color: A.inkMid }}>{booking.parent_display_name}</div>
-                  <div style={{ fontSize: 13.5, color: A.inkSoft }}>{formatDateOnlyShort(booking.date)}</div>
-                  <div style={{ fontSize: 14.5, color: A.ink, fontWeight: 500 }}>{booking.duration}h</div>
-                  <div style={{ fontFamily: "var(--font-dm-serif), serif", fontSize: 18, color: A.clay }}>
-                    {formatCurrency(booking.total_amount)}
-                  </div>
-                  <div>
-                    <AdminPill tone={statusTone(booking.status)}>{booking.status}</AdminPill>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
+          <AdminBookingsTable
+            bookings={bookings}
+            isLoading={bookingsQuery.isLoading}
+            selectedBookingId={selectedBookingId}
+            onSelect={setSelectedBookingId}
+          />
           <AdminPagination page={page} total={total} limit={PAGE_SIZE} onPageChange={setPage} />
         </div>
 
         {selectedBooking && (
-          <aside
-            style={{
-              background: A.card,
-              border: `1px solid ${A.border}`,
-              borderRadius: 16,
-              boxShadow: A.shadow,
-              padding: 22,
-              alignSelf: "start",
-              display: "flex",
-              flexDirection: "column",
-              gap: 18,
+          <AdminBookingDetailPanel
+            booking={selectedBooking}
+            actions={actions}
+            isLoadingActions={actionsQuery.isLoading}
+            isBusy={Boolean(selectedIsBusy)}
+            onCancel={() => {
+              setReasonAction({
+                title: "Cancel booking",
+                description: "This will force-cancel the booking and notify the participants. A reason is required for the admin audit trail.",
+                submitLabel: "Cancel booking",
+                tone: "danger",
+                onSubmit: (reason) => {
+                  cancelMutation.mutate({ id: selectedBooking.id, reason });
+                  setReasonAction(null);
+                },
+              });
             }}
-          >
-            <div>
-              <div style={{ fontSize: 12, color: A.inkSoft, fontFamily: "monospace" }}>
-                {selectedBooking.id}
-              </div>
-              <h2 style={{ margin: "8px 0 0", fontFamily: "var(--font-dm-serif), serif", fontSize: 24, color: A.ink }}>
-                Booking details
-              </h2>
-              <div style={{ marginTop: 10 }}>
-                <AdminPill tone={statusTone(selectedBooking.status)}>{selectedBooking.status}</AdminPill>
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gap: 10, fontSize: 14, color: A.inkMid }}>
-              <div><strong style={{ color: A.ink }}>Parent:</strong> {selectedBooking.parent_display_name}</div>
-              <div><strong style={{ color: A.ink }}>Nanny:</strong> {selectedBooking.nanny_display_name}</div>
-              <div><strong style={{ color: A.ink }}>Date:</strong> {formatDateOnlyShort(selectedBooking.date)} at {selectedBooking.start_time}</div>
-              <div><strong style={{ color: A.ink }}>Duration:</strong> {selectedBooking.duration} hours</div>
-              <div><strong style={{ color: A.ink }}>Total:</strong> {formatCurrency(selectedBooking.total_amount)}</div>
-            </div>
-
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <button
-                disabled={!canCancel(selectedBooking) || Boolean(selectedIsBusy)}
-                onClick={() => {
-                  const reason = askReason("cancel");
-                  if (reason) cancelMutation.mutate({ id: selectedBooking.id, reason });
-                }}
-                style={{ ...btnDanger, opacity: canCancel(selectedBooking) && !selectedIsBusy ? 1 : 0.55 }}
-              >
-                Cancel
-              </button>
-              <button
-                disabled={!canComplete(selectedBooking) || Boolean(selectedIsBusy)}
-                onClick={() => {
-                  const reason = askReason("complete");
-                  if (reason) completeMutation.mutate({ id: selectedBooking.id, reason });
-                }}
-                style={{ ...btnApprove, opacity: canComplete(selectedBooking) && !selectedIsBusy ? 1 : 0.55 }}
-              >
-                Mark complete
-              </button>
-            </div>
-
-            <div>
-              <h3 style={{ margin: "0 0 10px", fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", color: A.inkSoft }}>
-                Action history
-              </h3>
-              {actionsQuery.isLoading ? (
-                <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>Loading actions...</p>
-              ) : actions.length === 0 ? (
-                <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>No admin actions yet.</p>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {actions.map((action) => (
-                    <div key={action.id} style={{ borderTop: `1px solid ${A.borderSoft}`, paddingTop: 10 }}>
-                      <div style={{ fontSize: 13.5, color: A.ink, fontWeight: 600 }}>{action.action}</div>
-                      <div style={{ fontSize: 12.5, color: A.inkSoft, marginTop: 3 }}>
-                        {action.previous_status} {"->"} {action.new_status} · {formatShortDateTime(action.created_at)}
-                      </div>
-                      <div style={{ fontSize: 13, color: A.inkMid, marginTop: 5 }}>{action.reason}</div>
-                      {action.admin_email && (
-                        <div style={{ fontSize: 12, color: A.inkSoft, marginTop: 4 }}>{action.admin_email}</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </aside>
+            onComplete={() => {
+              setReasonAction({
+                title: "Complete booking",
+                description: "This will mark the booking as completed. A reason is required for the admin audit trail.",
+                submitLabel: "Mark complete",
+                tone: "approve",
+                onSubmit: (reason) => {
+                  completeMutation.mutate({ id: selectedBooking.id, reason });
+                  setReasonAction(null);
+                },
+              });
+            }}
+          />
         )}
       </div>
+      <AdminReasonDialog
+        action={reasonAction}
+        isSubmitting={cancelMutation.isPending || completeMutation.isPending}
+        onClose={() => setReasonAction(null)}
+      />
     </>
   );
 }

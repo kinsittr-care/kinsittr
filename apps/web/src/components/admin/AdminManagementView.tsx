@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import AdminPageHeader from "./AdminPageHeader";
-import AdminPill from "./AdminPill";
-import { btnDanger, btnGhost, btnPrimary, card } from "./admin-styles";
+import AdminPageHeader from "./compositions/AdminPageHeader";
+import AdminPill from "./compositions/AdminPill";
+import { btnDanger, btnGhost, btnPrimary, card } from "./compositions/admin-styles";
 import { A } from "./tokens";
 import type { AdminInviteData, InviteAdminPayload, ListAdminUsersParams } from "@/src/types/api/admin";
 import {

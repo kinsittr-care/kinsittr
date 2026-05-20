@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import AdminPageHeader from "./AdminPageHeader";
+import AdminPageHeader from "./compositions/AdminPageHeader";
 import AdminPagination from "./AdminPagination";
+import AdminReasonDialog, { type AdminReasonDialogState } from "./AdminReasonDialog";
 import ScreeningCard, { type ScreeningApplicant, type Steps } from "./screening/ScreeningCard";
-import { btnGhost } from "./admin-styles";
+import { btnGhost } from "./compositions/admin-styles";
 import type { AdminNanny, ListAdminScreeningNanniesParams } from "@/src/types/api/admin";
 import { formatShortDate } from "@/src/utils/format";
 import {
@@ -59,6 +60,7 @@ export default function ScreeningQueueView() {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<ListAdminScreeningNanniesParams["status"]>("pending");
   const [page, setPage] = useState(1);
+  const [reasonAction, setReasonAction] = useState<AdminReasonDialogState | null>(null);
   const params = useMemo<ListAdminScreeningNanniesParams>(
     () => ({ page, limit: PAGE_SIZE, status }),
     [page, status],
@@ -104,9 +106,16 @@ export default function ScreeningQueueView() {
   };
 
   const reset = (nanny: AdminNanny) => {
-    const reason = window.prompt("Reason for resetting this screening?");
-    if (!reason?.trim()) return;
-    resetMutation.mutate({ id: nanny.id, reason: reason.trim() });
+    setReasonAction({
+      title: "Reset screening",
+      description: "Move this nanny back to pending for re-review. A reason is required for the admin audit trail.",
+      submitLabel: "Reset screening",
+      tone: "danger",
+      onSubmit: (reason) => {
+        resetMutation.mutate({ id: nanny.id, reason });
+        setReasonAction(null);
+      },
+    });
   };
 
   const actionError =
@@ -173,6 +182,11 @@ export default function ScreeningQueueView() {
         )}
         <AdminPagination page={page} total={total} limit={PAGE_SIZE} onPageChange={setPage} />
       </div>
+      <AdminReasonDialog
+        action={reasonAction}
+        isSubmitting={resetMutation.isPending}
+        onClose={() => setReasonAction(null)}
+      />
     </>
   );
 }

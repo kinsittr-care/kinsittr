@@ -1,8 +1,8 @@
 import { A } from "../tokens";
-import AdminAvatar from "../AdminAvatar";
-import AdminStepChip from "../AdminStepChip";
-import { TimerIcon, PinIcon, ArrowSmIcon } from "../admin-icons";
-import { btnGhostSm, btnPrimary } from "../admin-styles";
+import AdminAvatar from "../compositions/AdminAvatar";
+import AdminStepChip from "../compositions/AdminStepChip";
+import { TimerIcon, PinIcon, ArrowSmIcon } from "../compositions/admin-icons";
+import { btnGhostSm, btnPrimary } from "../compositions/admin-styles";
 import type { AdminVerificationStatus } from "@/src/types/api/admin";
 
 export type Steps = { docs: boolean; refs: boolean; interview: boolean };

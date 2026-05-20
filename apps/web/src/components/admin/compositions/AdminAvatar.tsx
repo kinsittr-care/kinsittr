@@ -1,4 +1,4 @@
-import { A } from "./tokens";
+import { A } from "../tokens";
 
 type AvatarTone = "clay" | "muted" | "plum";
 

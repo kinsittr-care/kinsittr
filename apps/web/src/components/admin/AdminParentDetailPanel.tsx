@@ -1,4 +1,4 @@
-import AdminPill from "./AdminPill";
+import AdminPill from "./compositions/AdminPill";
 import { A } from "./tokens";
 import type { AdminParentDetailData } from "@/src/types/api/admin";
 import { formatCurrency, formatDateOnlyShort } from "@/src/utils/format";

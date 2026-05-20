@@ -1,4 +1,4 @@
-import { A } from "./tokens";
+import { A } from "../tokens";
 
 export default function AdminStars({ value }: { value: number }) {
   return (

@@ -1,4 +1,4 @@
-import { A } from "./tokens";
+import { A } from "../tokens";
 
 function Check({ on }: { on: boolean }) {
   return on ? (

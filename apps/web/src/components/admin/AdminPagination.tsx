@@ -1,4 +1,4 @@
-import { btnGhost } from "./admin-styles";
+import { btnGhost } from "./compositions/admin-styles";
 import { A } from "./tokens";
 
 export default function AdminPagination({

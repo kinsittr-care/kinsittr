@@ -3,16 +3,12 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { A } from "./tokens";
-import AdminPageHeader from "./AdminPageHeader";
-import AdminPagination from "./AdminPagination";
-import AdminPill from "./AdminPill";
-import { btnApprove, btnDanger, btnGhost } from "./admin-styles";
-import type {
-  AdminConversation,
-  AdminMessage,
-  ListAdminConversationsParams,
-  ListAdminMessagesParams,
-} from "@/src/types/api/admin";
+import AdminPageHeader from "./compositions/AdminPageHeader";
+import AdminReasonDialog, { type AdminReasonDialogState } from "./AdminReasonDialog";
+import AdminConversationDetailPanel from "./compositions/AdminConversationDetailPanel";
+import AdminConversationList from "./compositions/AdminConversationList";
+import { btnGhost } from "./compositions/admin-styles";
+import type { ListAdminConversationsParams, ListAdminMessagesParams } from "@/src/types/api/admin";
 import type { BookingStatus } from "@/src/types/api/api";
 import {
   adminConversationMessagesQueryKey,
@@ -23,7 +19,6 @@ import {
   lockAdminConversation,
   unlockAdminConversation,
 } from "@/src/utils/api/admin/conversations";
-import { formatOptionalShortDateTime, formatShortDateTime } from "@/src/utils/format";
 
 const statusFilters: Array<{ label: string; value: BookingStatus | "" }> = [
   { label: "All", value: "" },
@@ -37,14 +32,6 @@ const statusFilters: Array<{ label: string; value: BookingStatus | "" }> = [
 const PAGE_SIZE = 20;
 const MESSAGE_PAGE_SIZE = 50;
 
-function senderName(message: AdminMessage) {
-  return `${message.sender_firstname} ${message.sender_lastname}`.trim() || message.sender_email;
-}
-
-function isLocked(conversation: AdminConversation) {
-  return Boolean(conversation.locked_at);
-}
-
 export default function ConversationsModerationView() {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<BookingStatus | "">("");
@@ -53,6 +40,7 @@ export default function ConversationsModerationView() {
   const [page, setPage] = useState(1);
   const [messagePage, setMessagePage] = useState(1);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [reasonAction, setReasonAction] = useState<AdminReasonDialogState | null>(null);
 
   const params = useMemo<ListAdminConversationsParams>(
     () => ({
@@ -110,7 +98,6 @@ export default function ConversationsModerationView() {
     onSuccess: async (_data, variables) => invalidateConversation(variables.conversationId),
   });
 
-  const askReason = (action: string) => window.prompt(`Reason for ${action}?`)?.trim();
   const actionError =
     conversationsQuery.error || messagesQuery.error || lockMutation.error || unlockMutation.error || hideMessageMutation.error;
   const selectedIsBusy =
@@ -179,161 +166,80 @@ export default function ConversationsModerationView() {
             </p>
           )}
 
-          <div style={{ background: A.card, border: `1px solid ${A.border}`, borderRadius: 16, boxShadow: A.shadow, overflow: "hidden" }}>
-            {conversationsQuery.isLoading ? (
-              <p style={{ padding: 20, margin: 0, color: A.inkSoft }}>Loading conversations...</p>
-            ) : conversations.length === 0 ? (
-              <p style={{ padding: 20, margin: 0, color: A.inkSoft }}>No conversations found.</p>
-            ) : (
-              conversations.map((conversation, index) => (
-                <button
-                  key={conversation.id}
-                  onClick={() => {
-                    setMessagePage(1);
-                    setSelectedConversationId(conversation.id);
-                  }}
-                  style={{
-                    all: "unset",
-                    display: "block",
-                    width: "100%",
-                    boxSizing: "border-box",
-                    padding: 18,
-                    cursor: "pointer",
-                    background: selectedConversationId === conversation.id ? A.cardWarm : A.card,
-                    borderBottom: index < conversations.length - 1 ? `1px solid ${A.borderSoft}` : "none",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
-                    <div style={{ color: A.ink, fontWeight: 700, fontSize: 14 }}>
-                      {conversation.parent.display_name} / {conversation.nanny.display_name}
-                    </div>
-                    <AdminPill tone={isLocked(conversation) ? "red" : "green"}>
-                      {isLocked(conversation) ? "Locked" : "Open"}
-                    </AdminPill>
-                  </div>
-                  <p style={{ margin: "8px 0 0", color: A.inkMid, fontSize: 13.5, lineHeight: 1.4 }}>
-                    {conversation.last_message_preview || "No messages yet"}
-                  </p>
-                  <div style={{ marginTop: 8, color: A.inkSoft, fontSize: 12.5 }}>
-                    {conversation.message_count} messages · {formatOptionalShortDateTime(conversation.last_message_at, "No messages yet")}
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-          <AdminPagination page={page} total={total} limit={PAGE_SIZE} onPageChange={setPage} />
+          <AdminConversationList
+            conversations={conversations}
+            isLoading={conversationsQuery.isLoading}
+            page={page}
+            selectedConversationId={selectedConversationId}
+            total={total}
+            limit={PAGE_SIZE}
+            onPageChange={setPage}
+            onSelect={(id) => {
+              setMessagePage(1);
+              setSelectedConversationId(id);
+            }}
+          />
         </div>
 
         {selectedConversation && (
-          <section style={{ background: A.card, border: `1px solid ${A.border}`, borderRadius: 16, boxShadow: A.shadow, overflow: "hidden" }}>
-            <div style={{ padding: 20, borderBottom: `1px solid ${A.borderSoft}`, display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-              <div>
-                <h2 style={{ margin: 0, fontFamily: "var(--font-dm-serif), serif", fontSize: 24, color: A.ink }}>
-                  {selectedConversation.parent.display_name} / {selectedConversation.nanny.display_name}
-                </h2>
-                <p style={{ margin: "6px 0 0", color: A.inkSoft, fontSize: 13 }}>
-                  Booking {selectedConversation.booking_status} · {selectedConversation.parent.email} · {selectedConversation.nanny.email}
-                </p>
-                {selectedConversation.lock_reason && (
-                  <p style={{ margin: "8px 0 0", color: A.red, fontSize: 13 }}>
-                    Lock reason: {selectedConversation.lock_reason}
-                  </p>
-                )}
-              </div>
-              <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                <button
-                  disabled={isLocked(selectedConversation) || Boolean(selectedIsBusy)}
-                  onClick={() => {
-                    const reason = askReason("locking this conversation");
-                    if (reason) lockMutation.mutate({ id: selectedConversation.id, reason });
-                  }}
-                  style={{ ...btnDanger, opacity: !isLocked(selectedConversation) && !selectedIsBusy ? 1 : 0.55 }}
-                >
-                  Lock
-                </button>
-                <button
-                  disabled={!isLocked(selectedConversation) || Boolean(selectedIsBusy)}
-                  onClick={() => {
-                    const reason = askReason("unlocking this conversation");
-                    if (reason) unlockMutation.mutate({ id: selectedConversation.id, reason });
-                  }}
-                  style={{ ...btnApprove, opacity: isLocked(selectedConversation) && !selectedIsBusy ? 1 : 0.55 }}
-                >
-                  Unlock
-                </button>
-              </div>
-            </div>
-
-            <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12, maxHeight: "calc(100dvh - 290px)", overflow: "auto" }}>
-                {messagesQuery.isLoading ? (
-                  <p style={{ margin: 0, color: A.inkSoft }}>Loading messages...</p>
-                ) : messages.length === 0 ? (
-                  <p style={{ margin: 0, color: A.inkSoft }}>No messages in this conversation.</p>
-                ) : (
-                  messages.map((message) => {
-                    const hidden = Boolean(message.hidden_at);
-                    const isBusy =
-                      hideMessageMutation.isPending &&
-                      hideMessageMutation.variables?.messageId === message.id;
-
-                    return (
-                      <div
-                        key={message.id}
-                        style={{
-                          padding: 14,
-                          border: `1px solid ${hidden ? A.red : A.borderSoft}`,
-                          background: hidden ? A.redLight : A.bgSoft,
-                          borderRadius: 12,
-                        }}
-                      >
-                        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                          <div style={{ color: A.ink, fontWeight: 700, fontSize: 13.5 }}>
-                            {senderName(message)} <span style={{ color: A.inkSoft, fontWeight: 500 }}>({message.sender_role})</span>
-                          </div>
-                          <div style={{ color: A.inkSoft, fontSize: 12.5 }}>{formatShortDateTime(message.created_at)}</div>
-                        </div>
-                        <p style={{ margin: "10px 0 0", color: hidden ? A.red : A.inkMid, lineHeight: 1.5, fontSize: 14 }}>
-                          {hidden ? "Hidden message" : message.body}
-                        </p>
-                        {message.hidden_reason && (
-                          <p style={{ margin: "8px 0 0", color: A.red, fontSize: 13 }}>
-                            Hidden reason: {message.hidden_reason}
-                          </p>
-                        )}
-                        <div style={{ marginTop: 10 }}>
-                          <button
-                            disabled={hidden || isBusy}
-                            onClick={() => {
-                              const reason = askReason("hiding this message");
-                              if (reason) {
-                                hideMessageMutation.mutate({
-                                  conversationId: selectedConversation.id,
-                                  messageId: message.id,
-                                  reason,
-                                });
-                              }
-                            }}
-                            style={{ ...btnGhost, opacity: !hidden && !isBusy ? 1 : 0.55 }}
-                          >
-                            Hide message
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-              <AdminPagination
-                page={messagePage}
-                total={messageTotal}
-                limit={MESSAGE_PAGE_SIZE}
-                onPageChange={setMessagePage}
-              />
-            </div>
-          </section>
+          <AdminConversationDetailPanel
+            conversation={selectedConversation}
+            isBusy={Boolean(selectedIsBusy)}
+            isLoadingMessages={messagesQuery.isLoading}
+            messages={messages}
+            messagePage={messagePage}
+            messageTotal={messageTotal}
+            messageLimit={MESSAGE_PAGE_SIZE}
+            hidingMessageId={hideMessageMutation.variables?.messageId}
+            onMessagePageChange={setMessagePage}
+            onLock={() => {
+              setReasonAction({
+                title: "Lock conversation",
+                description: "Prevent further messages in this conversation. A reason is required for the admin audit trail.",
+                submitLabel: "Lock conversation",
+                tone: "danger",
+                onSubmit: (reason) => {
+                  lockMutation.mutate({ id: selectedConversation.id, reason });
+                  setReasonAction(null);
+                },
+              });
+            }}
+            onUnlock={() => {
+              setReasonAction({
+                title: "Unlock conversation",
+                description: "Allow messaging to continue in this conversation. A reason is required for the admin audit trail.",
+                submitLabel: "Unlock conversation",
+                tone: "approve",
+                onSubmit: (reason) => {
+                  unlockMutation.mutate({ id: selectedConversation.id, reason });
+                  setReasonAction(null);
+                },
+              });
+            }}
+            onHideMessage={(message) => {
+              setReasonAction({
+                title: "Hide message",
+                description: "Hide this message from the conversation. A reason is required for the admin audit trail.",
+                submitLabel: "Hide message",
+                tone: "danger",
+                onSubmit: (reason) => {
+                  hideMessageMutation.mutate({
+                    conversationId: selectedConversation.id,
+                    messageId: message.id,
+                    reason,
+                  });
+                  setReasonAction(null);
+                },
+              });
+            }}
+          />
         )}
       </div>
+      <AdminReasonDialog
+        action={reasonAction}
+        isSubmitting={lockMutation.isPending || unlockMutation.isPending || hideMessageMutation.isPending}
+        onClose={() => setReasonAction(null)}
+      />
     </>
   );
 }

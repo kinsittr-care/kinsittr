@@ -1,5 +1,5 @@
-import AdminPill, { type PillTone } from "./AdminPill";
-import AdminStars from "./AdminStars";
+import AdminPill, { type PillTone } from "./compositions/AdminPill";
+import AdminStars from "./compositions/AdminStars";
 import { A } from "./tokens";
 import type { AdminNannyDetailData, AdminVerificationStatus } from "@/src/types/api/admin";
 import { formatCurrency, formatDateOnlyShort } from "@/src/utils/format";

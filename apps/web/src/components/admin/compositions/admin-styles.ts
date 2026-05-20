@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { A } from "./tokens";
+import { A } from "../tokens";
 
 export const card: CSSProperties = {
   background: A.card,

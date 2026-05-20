@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { A } from "./tokens";
+import { A } from "../tokens";
 
 export type PillTone = "neutral" | "clay" | "green" | "amber" | "red" | "completed";
 
