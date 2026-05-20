@@ -47,6 +47,9 @@ func (m *mockAdminRepo) ResetNannyScreeningWithAction(context.Context, repositor
 func (m *mockAdminRepo) SuspendNannyAccount(context.Context, repository.AdminAccountActionParams) (repository.NannyRecord, error) {
 	return m.updatedNanny, nil
 }
+func (m *mockAdminRepo) ReactivateNannyAccount(context.Context, repository.AdminAccountActionParams) (repository.NannyRecord, error) {
+	return m.updatedNanny, nil
+}
 func (m *mockAdminRepo) ListNannyBookingHistory(context.Context, uuid.UUID, repository.ListBookingsFilter) ([]repository.BookingRecord, int, error) {
 	return nil, 0, nil
 }
@@ -60,6 +63,9 @@ func (m *mockAdminRepo) GetParentByID(context.Context, uuid.UUID) (repository.Pa
 	return repository.ParentRecord{}, nil
 }
 func (m *mockAdminRepo) SuspendParentAccount(context.Context, repository.AdminAccountActionParams) (repository.ParentRecord, error) {
+	return repository.ParentRecord{}, nil
+}
+func (m *mockAdminRepo) ReactivateParentAccount(context.Context, repository.AdminAccountActionParams) (repository.ParentRecord, error) {
 	return repository.ParentRecord{}, nil
 }
 func (m *mockAdminRepo) ListParentBookingHistory(context.Context, uuid.UUID, repository.ListBookingsFilter) ([]repository.BookingRecord, int, error) {
@@ -109,6 +115,12 @@ func (m *mockAdminRepo) AcceptAdminInvite(context.Context, repository.AcceptAdmi
 	return repository.AdminUserRecord{}, nil
 }
 func (m *mockAdminRepo) DisableAdmin(context.Context, uuid.UUID) (repository.AdminUserRecord, error) {
+	return repository.AdminUserRecord{}, nil
+}
+func (m *mockAdminRepo) GetAdminByID(context.Context, uuid.UUID) (repository.AdminUserRecord, error) {
+	return repository.AdminUserRecord{}, nil
+}
+func (m *mockAdminRepo) ReactivateAdmin(context.Context, repository.AdminUserAccountActionParams) (repository.AdminUserRecord, error) {
 	return repository.AdminUserRecord{}, nil
 }
 func (m *mockAdminRepo) GetAnalyticsSummary(context.Context, repository.AnalyticsRangeFilter) (repository.AnalyticsSummary, error) {
