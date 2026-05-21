@@ -52,6 +52,12 @@ func AdminRoutes(controller *controllers.AdminController, jwtSecret string) []ap
 		},
 		{
 			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/nannies/:id/actions",
+			Middlewares: adminAuth,
+			Handler:     controller.ListNannyActions,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
 			Path:        "/parents",
 			Middlewares: adminAuth,
 			Handler:     controller.ListParents,
@@ -61,6 +67,12 @@ func AdminRoutes(controller *controllers.AdminController, jwtSecret string) []ap
 			Path:        "/parents/:id",
 			Middlewares: adminAuth,
 			Handler:     controller.GetParent,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/parents/:id/actions",
+			Middlewares: adminAuth,
+			Handler:     controller.ListParentActions,
 		},
 		{
 			RouteMethod: api.RouteMethod(fiber.MethodGet),
@@ -169,6 +181,12 @@ func AdminRoutes(controller *controllers.AdminController, jwtSecret string) []ap
 			Path:        "/conversations/:id/messages",
 			Middlewares: adminAuth,
 			Handler:     controller.ListConversationMessages,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/conversations/:id/actions",
+			Middlewares: adminAuth,
+			Handler:     controller.ListConversationActions,
 		},
 		{
 			RouteMethod: api.RouteMethod(fiber.MethodPatch),

@@ -1,6 +1,6 @@
 # KinSittr
 
-KinSittr is a Canadian childcare platform connecting families with verified nannies. The product currently includes the marketing site, parent and nanny web apps, and a Go API for auth, profiles, bookings, contact, and conversations.
+KinSittr is a childcare marketplace for Canadian families and verified nannies. The repository contains the public marketing site, parent and nanny product surfaces, an admin console, and the Go API that powers authentication, profiles, bookings, messaging, notifications, reviews, and moderation.
 
 ## Repository Structure
 
@@ -12,51 +12,29 @@ packages/     Shared workspace packages and config
 todos/        Planning notes and implementation backlog
 ```
 
-## Current Product Surface
+## Product Flow
 
-### Web App (`apps/web`)
+Parents discover KinSittr through the marketing pages, create an account, complete their profile, and browse verified nannies. The browse experience is backed by public nanny search with server-side filters for location, rate, specialties, and sorting. Once a parent finds a nanny, they can request a booking and track it through pending, approved, declined, cancelled, completed, and change-request states.
 
-Built with Next.js 16 App Router, React Query, Tailwind CSS v4, and the project design system.
+Nannies register with a profile that is treated as the source of their public listing after verification. They manage their own profile, review booking requests, approve or decline work, complete approved bookings after the service window, and participate in conversations created from approved bookings.
 
-Key routes:
+Messaging starts from bookings rather than open-ended chat. A conversation is created when a booking is approved, and both sides can view threads, send messages, mark conversations as read, and receive notifications for relevant activity.
 
-| Route | Description |
-|---|---|
-| `/` | Landing page |
-| `/about` | Story, values, and team |
-| `/safety` | Verification process and trust signals |
-| `/verification` | Nanny application walkthrough |
-| `/nanny-resources` | Benefits, pay, and guides for caregivers |
-| `/contact` | Public contact form |
-| `/auth/parent` | Parent auth flow |
-| `/auth/nanny` | Nanny auth flow |
-| `/parent` | Parent nanny browsing flow |
-| `/parent/bookings` | Parent booking list and booking details |
-| `/parent/messages` | Parent conversations and messages |
-| `/parent/profile` | Parent profile, children ages, and booking history |
-| `/parent/settings` | Parent preferences and account security |
-| `/nanny` | Nanny dashboard |
-| `/nanny/requests` | Nanny booking requests and approve/decline actions |
-| `/nanny/messages` | Nanny conversations and messages |
-| `/nanny/profile` | Nanny own profile management |
+Reviews are tied to completed bookings. Parents can review nannies, and nannies can review parents. Reviews are intentionally irreversible from the user side after submission; moderation happens through the admin console.
 
-### API (`apps/api`)
+Admins operate the trust and support layer. The admin console handles nanny screening, nanny and parent moderation, booking intervention, conversation moderation, review moderation, analytics, and admin account management. Moderation actions that change account or content state require reasons and write audit records.
 
-Built with Go, Fiber, pgx, PostgreSQL, JWT auth, and Resend for contact email.
+## Backend Flow
 
-Implemented API areas:
+The API is organized by feature area. Controllers parse requests and delegate to pipes. Pipes contain validation, authorization-sensitive business flow, repository calls, notifications, email triggers, and response shaping. Repositories own PostgreSQL reads/writes and are split by domain to keep files bounded.
 
-| Area | Routes |
-|---|---|
-| Auth | parent/nanny register, login, refresh, logout, `me`, change password, deactivate account |
-| Contact | public contact form email |
-| Public nannies | verified nanny list, public nanny profile |
-| Nanny profile | own profile read/update |
-| Parent profile | own profile read/update |
-| Parent settings | notification/privacy/preference settings |
-| Bookings | parent create/list/get/cancel, nanny list/get/approve/decline |
-| Conversations | list/get messages, send messages, mark conversation read |
+Shared infrastructure includes JWT auth, refresh-session storage, role middleware, PostgreSQL migrations, Resend-backed mail delivery, and reusable response/validation helpers. Email currently powers contact submissions and admin invite delivery when Resend configuration is present.
 
+## Frontend Flow
+
+The web app uses Next.js App Router with TanStack Query for API state. API integrations live under `apps/web/src/utils/api`, while shared response and domain types live under `apps/web/src/types/api`.
+
+The parent and nanny app areas use feature components for dashboards, bookings, messages, notifications, reviews, and profile management. The admin area keeps route-level views focused on state and API wiring, with smaller table, panel, filter, and display components moved into `components/admin/compositions`.
 
 ## Local Development
 
@@ -72,14 +50,12 @@ The web app expects the API at `NEXT_PUBLIC_API_URL`, defaulting to `http://loca
 
 ### API
 
-Run the API:
-
 ```bash
 cd apps/api
 go run .
 ```
 
-The API exposes `GET /health` and mounts app routes under `/api/v1`.
+The API exposes a health check and mounts versioned app routes under the v1 API prefix. See `ENDPOINTS.md` for the current endpoint inventory.
 
 ## Database
 
@@ -89,7 +65,7 @@ SQL migrations live in:
 apps/api/db/migrations/
 ```
 
-Apply them in order against the configured PostgreSQL database. The current schema includes users, profiles, refresh sessions, bookings, conversations, messages, parent settings, and conversation read state.
+Apply migrations in order against the configured PostgreSQL database. The schema currently covers users, parent and nanny profiles, refresh sessions, bookings, booking change requests, conversations, messages, notifications, reviews, screening records, admin actions, and admin invites.
 
 ## Verification
 

@@ -25,6 +25,7 @@ const (
 	Admin_Conversation_Unlocked  = "admin_conversation_unlocked"
 	Admin_Message_Hidden         = "admin_message_hidden"
 	Admin_Booking_Actions_Listed = "admin_booking_actions_listed"
+	Admin_Actions_Listed         = "admin_actions_listed"
 	Admin_Admins_Listed          = "admin_admins_listed"
 	Admin_Admin_Invited          = "admin_admin_invited"
 	Admin_Admin_Invite_Accepted  = "admin_admin_invite_accepted"

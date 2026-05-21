@@ -137,6 +137,19 @@ type AdminBookingActionRecord struct {
 	AdminEmail *string
 }
 
+type AdminAuditActionRecord struct {
+	ID             uuid.UUID
+	AdminUserID    *uuid.UUID
+	AdminEmail     *string
+	Action         string
+	Reason         *string
+	PreviousStatus *string
+	NewStatus      *string
+	MessageID      *uuid.UUID
+	TargetRole     models.UserRole
+	CreatedAt      time.Time
+}
+
 type ConversationRecord struct {
 	models.Conversation
 	BookingStatus      models.BookingStatus
@@ -228,12 +241,14 @@ type AdminRepository interface {
 	ResetNannyScreeningWithAction(ctx context.Context, params AdminNannyActionParams) (NannyRecord, error)
 	SuspendNannyAccount(ctx context.Context, params AdminAccountActionParams) (NannyRecord, error)
 	ReactivateNannyAccount(ctx context.Context, params AdminAccountActionParams) (NannyRecord, error)
+	ListNannyActions(ctx context.Context, nannyProfileID uuid.UUID, page, limit int) ([]AdminAuditActionRecord, int, error)
 	ListNannyBookingHistory(ctx context.Context, nannyProfileID uuid.UUID, filter ListBookingsFilter) ([]BookingRecord, int, error)
 	GetNannyBookingSummary(ctx context.Context, nannyProfileID uuid.UUID) (NannyBookingSummary, error)
 	ListParents(ctx context.Context, filter ListParentsFilter) ([]ParentRecord, int, error)
 	GetParentByID(ctx context.Context, parentProfileID uuid.UUID) (ParentRecord, error)
 	SuspendParentAccount(ctx context.Context, params AdminAccountActionParams) (ParentRecord, error)
 	ReactivateParentAccount(ctx context.Context, params AdminAccountActionParams) (ParentRecord, error)
+	ListParentActions(ctx context.Context, parentProfileID uuid.UUID, page, limit int) ([]AdminAuditActionRecord, int, error)
 	ListParentBookingHistory(ctx context.Context, parentProfileID uuid.UUID, filter ListBookingsFilter) ([]BookingRecord, int, error)
 	ListBookings(ctx context.Context, filter ListBookingsFilter) ([]BookingRecord, int, error)
 	GetBookingByID(ctx context.Context, bookingID uuid.UUID) (BookingRecord, error)
@@ -246,6 +261,7 @@ type AdminRepository interface {
 	LockConversation(ctx context.Context, params AdminConversationActionParams) (ConversationRecord, error)
 	UnlockConversation(ctx context.Context, params AdminConversationActionParams) (ConversationRecord, error)
 	HideMessage(ctx context.Context, params AdminConversationActionParams) (MessageRecord, error)
+	ListConversationActions(ctx context.Context, conversationID uuid.UUID, page, limit int) ([]AdminAuditActionRecord, int, error)
 	ListAdmins(ctx context.Context, page, limit int) ([]AdminUserRecord, int, error)
 	CreateAdminInvite(ctx context.Context, params InviteAdminParams) (models.AdminInvite, error)
 	AcceptAdminInvite(ctx context.Context, params AcceptAdminInviteParams) (AdminUserRecord, error)
