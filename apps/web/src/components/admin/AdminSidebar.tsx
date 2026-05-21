@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { A } from "./tokens";
 import AdminAvatar from "./compositions/AdminAvatar";
 import {
@@ -12,12 +13,20 @@ import {
   ChartIcon,
 } from "./compositions/admin-icons";
 import type { AuthUser } from "@/src/types/api/api";
+import {
+  adminReviewsQueryKey,
+  listAdminReviews,
+} from "@/src/utils/api/admin/reviews";
+import {
+  adminScreeningNanniesQueryKey,
+  listAdminScreeningNannies,
+} from "@/src/utils/api/admin/screening";
 
 const navItems = [
   {
     href: "/admin",
     label: "Screening Queue",
-    badge: 3,
+    badgeKey: "screening" as const,
     badgeTone: "red" as const,
     icon: <GridIcon />,
   },
@@ -44,7 +53,7 @@ const navItems = [
   {
     href: "/admin/flags",
     label: "Flagged Reviews",
-    badge: 2,
+    badgeKey: "reviews" as const,
     badgeTone: "amber" as const,
     icon: <FlagIcon />,
   },
@@ -65,14 +74,36 @@ const badgeColors = {
   amber: { bg: A.amber, fg: "#fff" },
 };
 
+const screeningBadgeParams = { page: 1, limit: 1, status: "pending" as const };
+const flaggedReviewsBadgeParams = { page: 1, limit: 1, flagged: true };
+
+function formatSidebarBadge(total: number | undefined) {
+  if (!total || total < 1) return null;
+  return total > 99 ? "99+" : String(total);
+}
+
 export default function AdminSidebar({ user }: { user: AuthUser | null }) {
   const pathname = usePathname();
+  const screeningBadgeQuery = useQuery({
+    queryKey: adminScreeningNanniesQueryKey(screeningBadgeParams),
+    queryFn: () => listAdminScreeningNannies(screeningBadgeParams),
+    staleTime: 30_000,
+  });
+  const flaggedReviewsBadgeQuery = useQuery({
+    queryKey: adminReviewsQueryKey(flaggedReviewsBadgeParams),
+    queryFn: () => listAdminReviews(flaggedReviewsBadgeParams),
+    staleTime: 30_000,
+  });
   const displayName = user ? `${user.firstname} ${user.lastname}`.trim() : "Admin";
   const initials = user
     ? `${user.firstname[0] ?? ""}${user.lastname[0] ?? ""}`.toUpperCase()
     : "AD";
   const isActive = (href: string) =>
     href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
+  const badgeValues = {
+    screening: formatSidebarBadge(screeningBadgeQuery.data?.data?.total),
+    reviews: formatSidebarBadge(flaggedReviewsBadgeQuery.data?.data?.total),
+  };
 
   return (
     <aside
@@ -151,6 +182,7 @@ export default function AdminSidebar({ user }: { user: AuthUser | null }) {
         {navItems.map((item) => {
           const active = isActive(item.href);
           const bc = item.badgeTone ? badgeColors[item.badgeTone] : null;
+          const badge = item.badgeKey ? badgeValues[item.badgeKey] : null;
           return (
             <Link
               key={item.href}
@@ -173,7 +205,7 @@ export default function AdminSidebar({ user }: { user: AuthUser | null }) {
             >
               <span style={{ display: "flex" }}>{item.icon}</span>
               <span style={{ flex: 1 }}>{item.label}</span>
-              {item.badge && bc && (
+              {badge && bc && (
                 <span
                   style={{
                     minWidth: 20,
@@ -189,7 +221,7 @@ export default function AdminSidebar({ user }: { user: AuthUser | null }) {
                     justifyContent: "center",
                   }}
                 >
-                  {item.badge}
+                  {badge}
                 </span>
               )}
             </Link>
