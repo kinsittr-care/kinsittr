@@ -1,9 +1,11 @@
 import type {
   AdminConversation,
+  AdminAuditActionListData,
   AdminConversationActionPayload,
   AdminConversationListData,
   AdminMessage,
   AdminMessageListData,
+  ListAdminAuditActionsParams,
   ListAdminConversationsParams,
   ListAdminMessagesParams,
 } from "@/src/types/api/admin";
@@ -20,7 +22,14 @@ export const adminConversationMessagesQueryKey = (
   params: ListAdminMessagesParams = {},
 ) => ["admin", "conversation-messages", conversationId, params];
 
-function buildConversationQuery(params: ListAdminConversationsParams | ListAdminMessagesParams) {
+export const adminConversationActionsQueryKey = (
+  conversationId: string,
+  params: ListAdminAuditActionsParams = {},
+) => ["admin", "conversation-actions", conversationId, params];
+
+function buildConversationQuery(
+  params: ListAdminConversationsParams | ListAdminMessagesParams | ListAdminAuditActionsParams,
+) {
   const query = new URLSearchParams();
   if (params.page) query.set("page", String(params.page));
   if (params.limit) query.set("limit", String(params.limit));
@@ -43,6 +52,15 @@ export async function listAdminConversationMessages(
 ) {
   return adminApiRequest<AdminMessageListData>(
     `/api/v1/admin/conversations/${conversationId}/messages${buildConversationQuery(params)}`,
+  );
+}
+
+export async function listAdminConversationActions(
+  conversationId: string,
+  params: ListAdminAuditActionsParams = {},
+) {
+  return adminApiRequest<AdminAuditActionListData>(
+    `/api/v1/admin/conversations/${conversationId}/actions${buildConversationQuery(params)}`,
   );
 }
 

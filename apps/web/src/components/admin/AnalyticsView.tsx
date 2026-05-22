@@ -74,17 +74,22 @@ function keyMetrics(data?: AdminAnalyticsData) {
 
 export default function AnalyticsView() {
   const [range, setRange] = useState<RangeKey>("30d");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [bucket, setBucket] = useState<AdminAnalyticsBucket | "">("");
   const activeRange = rangeConfig[range];
   const params = useMemo<AdminAnalyticsParams>(() => {
     const now = new Date();
+    const fallbackFrom = formatDateParam(subtractDays(now, activeRange.days));
+    const fallbackTo = formatDateParam(now);
     return {
-      date_from: formatDateParam(subtractDays(now, activeRange.days)),
-      date_to: formatDateParam(now),
-      bucket: activeRange.bucket,
+      date_from: dateFrom || fallbackFrom,
+      date_to: dateTo || fallbackTo,
+      bucket: bucket || activeRange.bucket,
       city_limit: 10,
       top_nannies_limit: 5,
     };
-  }, [activeRange]);
+  }, [activeRange, bucket, dateFrom, dateTo]);
 
   const analyticsQuery = useQuery({
     queryKey: adminAnalyticsQueryKey(params),
@@ -100,7 +105,7 @@ export default function AnalyticsView() {
         title="Analytics"
         subtitle={`${formatShortDate(params.date_from ?? "")} - ${formatShortDate(params.date_to ?? "")} · Canada`}
         right={
-          <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
             {(Object.keys(rangeConfig) as RangeKey[]).map((key) => (
               <button
                 key={key}
@@ -110,11 +115,41 @@ export default function AnalyticsView() {
                   borderColor: range === key ? A.clay : btnGhost.borderColor,
                   color: range === key ? A.clay : btnGhost.color,
                 }}
-                onClick={() => setRange(key)}
+                onClick={() => {
+                  setRange(key);
+                  setDateFrom("");
+                  setDateTo("");
+                  setBucket("");
+                }}
               >
                 {rangeConfig[key].label}
               </button>
             ))}
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(event) => setDateFrom(event.target.value)}
+              style={filterInputStyle}
+              aria-label="Analytics date from"
+            />
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(event) => setDateTo(event.target.value)}
+              style={filterInputStyle}
+              aria-label="Analytics date to"
+            />
+            <select
+              value={bucket}
+              onChange={(event) => setBucket(event.target.value as AdminAnalyticsBucket | "")}
+              style={filterInputStyle}
+              aria-label="Analytics bucket"
+            >
+              <option value="">Auto bucket</option>
+              <option value="day">Daily</option>
+              <option value="week">Weekly</option>
+              <option value="month">Monthly</option>
+            </select>
             <button style={btnGhost} onClick={() => analyticsQuery.refetch()}>
               Refresh
             </button>
@@ -213,7 +248,48 @@ export default function AnalyticsView() {
             </div>
           </div>
         </div>
+        <div style={{ background: A.card, border: `1px solid ${A.border}`, borderRadius: 16, padding: "24px 28px", boxShadow: A.shadow }}>
+          <h2 style={{ fontFamily: "var(--font-dm-serif), serif", fontSize: 22, fontWeight: 400, color: A.ink, margin: 0 }}>
+            Registration trends
+          </h2>
+          <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
+            {analyticsQuery.isLoading && <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>Loading registration trends...</p>}
+            {!analyticsQuery.isLoading && (analytics?.registration_trends ?? []).length === 0 && (
+              <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>No registration trend data yet.</p>
+            )}
+            {!analyticsQuery.isLoading &&
+              (analytics?.registration_trends ?? []).slice(-8).map((item) => (
+                <div key={item.period} style={{ display: "grid", gridTemplateColumns: "120px 1fr 1fr", gap: 12, alignItems: "center" }}>
+                  <span style={{ color: A.inkSoft, fontSize: 12.5 }}>{formatShortDate(item.period)}</span>
+                  <TrendBar label="Parents" value={item.parent_count} color={A.clay} />
+                  <TrendBar label="Nannies" value={item.nanny_count} color={A.amber} />
+                </div>
+              ))}
+          </div>
+        </div>
       </div>
     </>
   );
 }
+
+function TrendBar({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", color: A.inkMid, fontSize: 12 }}>
+        <span>{label}</span>
+        <strong>{formatNumber(value)}</strong>
+      </div>
+      <div style={{ marginTop: 5, height: 8, borderRadius: 999, background: A.cardWarm, overflow: "hidden" }}>
+        <div style={{ width: `${Math.min(value * 8, 100)}%`, height: "100%", background: color }} />
+      </div>
+    </div>
+  );
+}
+
+const filterInputStyle: React.CSSProperties = {
+  padding: "10px 12px",
+  background: A.card,
+  border: `1px solid ${A.border}`,
+  borderRadius: 10,
+  color: A.ink,
+};

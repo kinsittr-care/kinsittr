@@ -1,7 +1,8 @@
 import AdminPagination from "../AdminPagination";
+import AdminAuditTimeline from "./AdminAuditTimeline";
 import { btnApprove, btnDanger, btnGhost } from "./admin-styles";
 import { A } from "../tokens";
-import type { AdminConversation, AdminMessage } from "@/src/types/api/admin";
+import type { AdminAuditAction, AdminConversation, AdminMessage } from "@/src/types/api/admin";
 import { formatShortDateTime } from "@/src/utils/format";
 import { isConversationLocked } from "./AdminConversationList";
 
@@ -10,7 +11,11 @@ function senderName(message: AdminMessage) {
 }
 
 type AdminConversationDetailPanelProps = {
+  actions: AdminAuditAction[];
+  actionPage: number;
+  actionTotal: number;
   conversation: AdminConversation;
+  isLoadingActions: boolean;
   isBusy: boolean;
   isLoadingMessages: boolean;
   messages: AdminMessage[];
@@ -19,13 +24,18 @@ type AdminConversationDetailPanelProps = {
   messageLimit: number;
   hidingMessageId?: string;
   onHideMessage: (message: AdminMessage) => void;
+  onActionPageChange: (page: number) => void;
   onLock: () => void;
   onMessagePageChange: (page: number) => void;
   onUnlock: () => void;
 };
 
 export default function AdminConversationDetailPanel({
+  actions,
+  actionPage,
+  actionTotal,
   conversation,
+  isLoadingActions,
   isBusy,
   isLoadingMessages,
   messages,
@@ -33,6 +43,7 @@ export default function AdminConversationDetailPanel({
   messageTotal,
   messageLimit,
   hidingMessageId,
+  onActionPageChange,
   onHideMessage,
   onLock,
   onMessagePageChange,
@@ -104,7 +115,17 @@ export default function AdminConversationDetailPanel({
           )}
         </div>
         <AdminPagination page={messagePage} total={messageTotal} limit={messageLimit} onPageChange={onMessagePageChange} />
+        <AdminAuditTimeline
+          actions={actions}
+          isLoading={isLoadingActions}
+          page={actionPage}
+          total={actionTotal}
+          limit={ACTION_PAGE_SIZE}
+          onPageChange={onActionPageChange}
+        />
       </div>
     </section>
   );
 }
+
+const ACTION_PAGE_SIZE = 10;

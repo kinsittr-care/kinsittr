@@ -1,7 +1,9 @@
 import AdminPill, { type PillTone } from "./compositions/AdminPill";
 import AdminStars from "./compositions/AdminStars";
+import AdminAuditTimeline from "./compositions/AdminAuditTimeline";
+import { btnApprove } from "./compositions/admin-styles";
 import { A } from "./tokens";
-import type { AdminNannyDetailData, AdminVerificationStatus } from "@/src/types/api/admin";
+import type { AdminAuditAction, AdminNannyDetailData, AdminVerificationStatus } from "@/src/types/api/admin";
 import { formatCurrency, formatDateOnlyShort } from "@/src/utils/format";
 
 function statusTone(status: AdminVerificationStatus, active: boolean): PillTone {
@@ -13,11 +15,23 @@ function statusTone(status: AdminVerificationStatus, active: boolean): PillTone 
 }
 
 export default function AdminNannyDetailPanel({
+  actions,
+  actionPage,
+  actionTotal,
   detail,
+  isLoadingActions,
   isLoading,
+  onActionPageChange,
+  onReactivate,
 }: {
+  actions: AdminAuditAction[];
+  actionPage: number;
+  actionTotal: number;
   detail?: AdminNannyDetailData | null;
+  isLoadingActions: boolean;
   isLoading: boolean;
+  onActionPageChange: (page: number) => void;
+  onReactivate: () => void;
 }) {
   if (isLoading) {
     return <aside style={panelStyle}>Loading nanny details...</aside>;
@@ -45,6 +59,12 @@ export default function AdminNannyDetailPanel({
           {nanny.bio || "No bio provided."}
         </p>
       </div>
+
+      {!nanny.user_is_active && (
+        <button type="button" style={btnApprove} onClick={onReactivate}>
+          Reactivate nanny
+        </button>
+      )}
 
       <div style={metricGrid}>
         <Metric label="Earnings" value={formatCurrency(earnings.total_earnings)} />
@@ -86,9 +106,20 @@ export default function AdminNannyDetailPanel({
           ))
         )}
       </div>
+
+      <AdminAuditTimeline
+        actions={actions}
+        isLoading={isLoadingActions}
+        page={actionPage}
+        total={actionTotal}
+        limit={ACTION_PAGE_SIZE}
+        onPageChange={onActionPageChange}
+      />
     </aside>
   );
 }
+
+const ACTION_PAGE_SIZE = 10;
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (

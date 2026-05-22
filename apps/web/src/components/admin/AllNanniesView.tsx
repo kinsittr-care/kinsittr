@@ -10,18 +10,22 @@ import AdminReasonDialog, { type AdminReasonDialogState } from "./AdminReasonDia
 import AdminNanniesTable from "./compositions/AdminNanniesTable";
 import { SearchIcon } from "./compositions/admin-icons";
 import { btnGhost } from "./compositions/admin-styles";
-import type { AdminVerificationStatus, ListAdminNanniesParams } from "@/src/types/api/admin";
+import type { AdminVerificationStatus, ListAdminAuditActionsParams, ListAdminNanniesParams } from "@/src/types/api/admin";
 import {
+  adminNannyActionsQueryKey,
   adminNannyQueryKey,
   adminNanniesQueryKey,
   getAdminNanny,
+  listAdminNannyActions,
   listAdminNannies,
+  reactivateAdminNanny,
   rejectAdminNanny,
   suspendAdminNanny,
   verifyAdminNanny,
 } from "@/src/utils/api/admin/nannies";
 
 const PAGE_SIZE = 20;
+const ACTION_PAGE_SIZE = 10;
 
 const statusFilters: Array<{ label: string; value: AdminVerificationStatus | "" }> = [
   { label: "All", value: "" },
@@ -37,6 +41,7 @@ export default function AllNanniesView() {
   const [submittedSearch, setSubmittedSearch] = useState("");
   const [status, setStatus] = useState<AdminVerificationStatus | "">("");
   const [page, setPage] = useState(1);
+  const [actionPage, setActionPage] = useState(1);
   const [selectedNannyId, setSelectedNannyId] = useState<string | null>(null);
   const [reasonAction, setReasonAction] = useState<AdminReasonDialogState | null>(null);
   const params = useMemo<ListAdminNanniesParams>(
@@ -61,12 +66,30 @@ export default function AllNanniesView() {
     enabled: Boolean(selectedNannyId),
   });
   const selectedNannyDetail = detailQuery.data?.data ?? null;
+  const actionParams = useMemo<ListAdminAuditActionsParams>(
+    () => ({ page: actionPage, limit: ACTION_PAGE_SIZE }),
+    [actionPage],
+  );
+  const actionsQuery = useQuery({
+    queryKey: selectedNannyId
+      ? adminNannyActionsQueryKey(selectedNannyId, actionParams)
+      : ["admin", "nanny-actions", "none"],
+    queryFn: () => listAdminNannyActions(selectedNannyId as string, actionParams),
+    enabled: Boolean(selectedNannyId),
+  });
+  const actions = actionsQuery.data?.data?.items ?? [];
+  const actionTotal = actionsQuery.data?.data?.total ?? 0;
 
   const invalidate = async () => {
     await queryClient.invalidateQueries({ queryKey: ["admin", "nannies"] });
     await queryClient.invalidateQueries({ queryKey: ["admin", "screening", "nannies"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "analytics"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "bookings"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "conversations"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "reviews"] });
     if (selectedNannyId) {
       await queryClient.invalidateQueries({ queryKey: adminNannyQueryKey(selectedNannyId) });
+      await queryClient.invalidateQueries({ queryKey: ["admin", "nanny-actions", selectedNannyId] });
     }
   };
 
@@ -81,14 +104,26 @@ export default function AllNanniesView() {
       suspendAdminNanny(id, { reason }),
     onSuccess: invalidate,
   });
+  const reactivateMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      reactivateAdminNanny(id, { reason }),
+    onSuccess: invalidate,
+  });
 
   const busyIds = new Set<string>();
   if (verifyMutation.isPending && verifyMutation.variables) busyIds.add(verifyMutation.variables);
   if (rejectMutation.isPending && rejectMutation.variables) busyIds.add(rejectMutation.variables.id);
   if (suspendMutation.isPending && suspendMutation.variables) busyIds.add(suspendMutation.variables.id);
+  if (reactivateMutation.isPending && reactivateMutation.variables) busyIds.add(reactivateMutation.variables.id);
 
   const actionError =
-    nanniesQuery.error || detailQuery.error || verifyMutation.error || rejectMutation.error || suspendMutation.error;
+    nanniesQuery.error ||
+    detailQuery.error ||
+    actionsQuery.error ||
+    verifyMutation.error ||
+    rejectMutation.error ||
+    suspendMutation.error ||
+    reactivateMutation.error;
 
   return (
     <>
@@ -100,8 +135,9 @@ export default function AllNanniesView() {
             onSubmit={(event) => {
               event.preventDefault();
               setPage(1);
-              setSubmittedSearch(search.trim());
-              setSelectedNannyId(null);
+                  setSubmittedSearch(search.trim());
+                  setSelectedNannyId(null);
+                  setActionPage(1);
             }}
             style={{ display: "flex", gap: 10, alignItems: "center" }}
           >
@@ -143,6 +179,7 @@ export default function AllNanniesView() {
                   setPage(1);
                   setStatus(item.value);
                   setSelectedNannyId(null);
+                  setActionPage(1);
                 }}
                 style={{
                   ...btnGhost,
@@ -166,7 +203,10 @@ export default function AllNanniesView() {
           isLoading={nanniesQuery.isLoading}
           nannies={nannies}
           selectedNannyId={selectedNannyId}
-          onSelect={setSelectedNannyId}
+          onSelect={(id) => {
+            setSelectedNannyId(id);
+            setActionPage(1);
+          }}
           onVerify={(id) => verifyMutation.mutate(id)}
           onReject={(nanny) => {
             setReasonAction({
@@ -196,12 +236,33 @@ export default function AllNanniesView() {
           <AdminPagination page={page} total={total} limit={PAGE_SIZE} onPageChange={setPage} />
         </div>
         {selectedNannyId && (
-          <AdminNannyDetailPanel detail={selectedNannyDetail} isLoading={detailQuery.isLoading} />
+          <AdminNannyDetailPanel
+            actions={actions}
+            actionPage={actionPage}
+            actionTotal={actionTotal}
+            detail={selectedNannyDetail}
+            isLoading={detailQuery.isLoading}
+            isLoadingActions={actionsQuery.isLoading}
+            onActionPageChange={setActionPage}
+            onReactivate={() => {
+              if (!selectedNannyId) return;
+              setReasonAction({
+                title: "Reactivate nanny",
+                description: "Restore this nanny account. A reason is required for the admin audit trail.",
+                submitLabel: "Reactivate nanny",
+                tone: "approve",
+                onSubmit: (reason) => {
+                  reactivateMutation.mutate({ id: selectedNannyId, reason });
+                  setReasonAction(null);
+                },
+              });
+            }}
+          />
         )}
       </div>
       <AdminReasonDialog
         action={reasonAction}
-        isSubmitting={rejectMutation.isPending || suspendMutation.isPending}
+        isSubmitting={rejectMutation.isPending || suspendMutation.isPending || reactivateMutation.isPending}
         onClose={() => setReasonAction(null)}
       />
     </>

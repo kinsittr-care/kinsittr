@@ -11,17 +11,21 @@ import AdminPill from "./compositions/AdminPill";
 import AdminReasonDialog, { type AdminReasonDialogState } from "./AdminReasonDialog";
 import { SearchIcon } from "./compositions/admin-icons";
 import { btnDanger, btnGhost } from "./compositions/admin-styles";
-import type { AdminParent, ListAdminParentsParams } from "@/src/types/api/admin";
+import type { AdminParent, ListAdminAuditActionsParams, ListAdminParentsParams } from "@/src/types/api/admin";
 import {
+  adminParentActionsQueryKey,
   adminParentQueryKey,
   adminParentsQueryKey,
   getAdminParent,
+  listAdminParentActions,
   listAdminParents,
+  reactivateAdminParent,
   suspendAdminParent,
 } from "@/src/utils/api/admin/parents";
 
 const colTemplate = "2.2fr 1.35fr .9fr 1fr 1fr 1fr";
 const PAGE_SIZE = 20;
+const ACTION_PAGE_SIZE = 10;
 
 function initialsFor(parent: AdminParent) {
   const source = `${parent.user_firstname[0] ?? ""}${parent.user_lastname[0] ?? ""}`;
@@ -33,6 +37,7 @@ export default function ParentsModerationView() {
   const [search, setSearch] = useState("");
   const [submittedSearch, setSubmittedSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [actionPage, setActionPage] = useState(1);
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const [reasonAction, setReasonAction] = useState<AdminReasonDialogState | null>(null);
   const params = useMemo<ListAdminParentsParams>(
@@ -52,19 +57,44 @@ export default function ParentsModerationView() {
     enabled: Boolean(selectedParentId),
   });
   const selectedParentDetail = detailQuery.data?.data ?? null;
+  const actionParams = useMemo<ListAdminAuditActionsParams>(
+    () => ({ page: actionPage, limit: ACTION_PAGE_SIZE }),
+    [actionPage],
+  );
+  const actionsQuery = useQuery({
+    queryKey: selectedParentId
+      ? adminParentActionsQueryKey(selectedParentId, actionParams)
+      : ["admin", "parent-actions", "none"],
+    queryFn: () => listAdminParentActions(selectedParentId as string, actionParams),
+    enabled: Boolean(selectedParentId),
+  });
+  const actions = actionsQuery.data?.data?.items ?? [];
+  const actionTotal = actionsQuery.data?.data?.total ?? 0;
+
+  const invalidateParent = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["admin", "parents"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "analytics"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "bookings"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "conversations"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "reviews"] });
+    if (selectedParentId) {
+      await queryClient.invalidateQueries({ queryKey: adminParentQueryKey(selectedParentId) });
+      await queryClient.invalidateQueries({ queryKey: ["admin", "parent-actions", selectedParentId] });
+    }
+  };
 
   const suspendMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) =>
       suspendAdminParent(id, { reason }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["admin", "parents"] });
-      if (selectedParentId) {
-        await queryClient.invalidateQueries({ queryKey: adminParentQueryKey(selectedParentId) });
-      }
-    },
+    onSuccess: invalidateParent,
+  });
+  const reactivateMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      reactivateAdminParent(id, { reason }),
+    onSuccess: invalidateParent,
   });
 
-  const actionError = parentsQuery.error || detailQuery.error || suspendMutation.error;
+  const actionError = parentsQuery.error || detailQuery.error || actionsQuery.error || suspendMutation.error || reactivateMutation.error;
 
   return (
     <>
@@ -78,6 +108,7 @@ export default function ParentsModerationView() {
               setPage(1);
               setSubmittedSearch(search.trim());
               setSelectedParentId(null);
+              setActionPage(1);
             }}
             style={{ display: "flex", gap: 10, alignItems: "center" }}
           >
@@ -159,7 +190,10 @@ export default function ParentsModerationView() {
                 <div
                   key={parent.id}
                   className="admin-table-row"
-                  onClick={() => setSelectedParentId(parent.id)}
+                  onClick={() => {
+                    setSelectedParentId(parent.id);
+                    setActionPage(1);
+                  }}
                   style={{
                     display: "grid",
                     gridTemplateColumns: colTemplate,
@@ -215,12 +249,33 @@ export default function ParentsModerationView() {
           <AdminPagination page={page} total={total} limit={PAGE_SIZE} onPageChange={setPage} />
         </div>
         {selectedParentId && (
-          <AdminParentDetailPanel detail={selectedParentDetail} isLoading={detailQuery.isLoading} />
+          <AdminParentDetailPanel
+            actions={actions}
+            actionPage={actionPage}
+            actionTotal={actionTotal}
+            detail={selectedParentDetail}
+            isLoading={detailQuery.isLoading}
+            isLoadingActions={actionsQuery.isLoading}
+            onActionPageChange={setActionPage}
+            onReactivate={() => {
+              if (!selectedParentId) return;
+              setReasonAction({
+                title: "Reactivate parent",
+                description: "Restore this parent account. A reason is required for the admin audit trail.",
+                submitLabel: "Reactivate parent",
+                tone: "approve",
+                onSubmit: (reason) => {
+                  reactivateMutation.mutate({ id: selectedParentId, reason });
+                  setReasonAction(null);
+                },
+              });
+            }}
+          />
         )}
       </div>
       <AdminReasonDialog
         action={reasonAction}
-        isSubmitting={suspendMutation.isPending}
+        isSubmitting={suspendMutation.isPending || reactivateMutation.isPending}
         onClose={() => setReasonAction(null)}
       />
     </>

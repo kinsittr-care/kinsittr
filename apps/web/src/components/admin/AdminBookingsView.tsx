@@ -94,6 +94,10 @@ export default function AdminBookingsView() {
     await queryClient.invalidateQueries({ queryKey: ["admin", "bookings"] });
     await queryClient.invalidateQueries({ queryKey: adminBookingQueryKey(bookingId) });
     await queryClient.invalidateQueries({ queryKey: ["admin", "booking-actions", bookingId] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "analytics"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "conversations"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "nanny"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "parent"] });
   };
 
   const cancelMutation = useMutation({

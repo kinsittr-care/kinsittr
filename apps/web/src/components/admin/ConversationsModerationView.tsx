@@ -8,12 +8,14 @@ import AdminReasonDialog, { type AdminReasonDialogState } from "./AdminReasonDia
 import AdminConversationDetailPanel from "./compositions/AdminConversationDetailPanel";
 import AdminConversationList from "./compositions/AdminConversationList";
 import { btnGhost } from "./compositions/admin-styles";
-import type { ListAdminConversationsParams, ListAdminMessagesParams } from "@/src/types/api/admin";
+import type { ListAdminAuditActionsParams, ListAdminConversationsParams, ListAdminMessagesParams } from "@/src/types/api/admin";
 import type { BookingStatus } from "@/src/types/api/api";
 import {
+  adminConversationActionsQueryKey,
   adminConversationMessagesQueryKey,
   adminConversationsQueryKey,
   hideAdminConversationMessage,
+  listAdminConversationActions,
   listAdminConversationMessages,
   listAdminConversations,
   lockAdminConversation,
@@ -31,6 +33,7 @@ const statusFilters: Array<{ label: string; value: BookingStatus | "" }> = [
 
 const PAGE_SIZE = 20;
 const MESSAGE_PAGE_SIZE = 50;
+const ACTION_PAGE_SIZE = 10;
 
 export default function ConversationsModerationView() {
   const queryClient = useQueryClient();
@@ -39,6 +42,7 @@ export default function ConversationsModerationView() {
   const [submittedSearch, setSubmittedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [messagePage, setMessagePage] = useState(1);
+  const [actionPage, setActionPage] = useState(1);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [reasonAction, setReasonAction] = useState<AdminReasonDialogState | null>(null);
 
@@ -54,6 +58,10 @@ export default function ConversationsModerationView() {
   const messageParams = useMemo<ListAdminMessagesParams>(
     () => ({ page: messagePage, limit: MESSAGE_PAGE_SIZE }),
     [messagePage],
+  );
+  const actionParams = useMemo<ListAdminAuditActionsParams>(
+    () => ({ page: actionPage, limit: ACTION_PAGE_SIZE }),
+    [actionPage],
   );
 
   const conversationsQuery = useQuery({
@@ -74,10 +82,22 @@ export default function ConversationsModerationView() {
   const selectedConversation = messagesQuery.data?.data?.conversation ?? fallbackConversation ?? null;
   const messages = messagesQuery.data?.data?.items ?? [];
   const messageTotal = messagesQuery.data?.data?.total ?? 0;
+  const actionsQuery = useQuery({
+    queryKey: selectedConversationId
+      ? adminConversationActionsQueryKey(selectedConversationId, actionParams)
+      : ["admin", "conversation-actions", "none"],
+    queryFn: () => listAdminConversationActions(selectedConversationId as string, actionParams),
+    enabled: Boolean(selectedConversationId),
+  });
+  const actions = actionsQuery.data?.data?.items ?? [];
+  const actionTotal = actionsQuery.data?.data?.total ?? 0;
 
   const invalidateConversation = async (conversationId: string) => {
     await queryClient.invalidateQueries({ queryKey: ["admin", "conversations"] });
     await queryClient.invalidateQueries({ queryKey: ["admin", "conversation-messages", conversationId] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "conversation-actions", conversationId] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "bookings"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "analytics"] });
   };
 
   const lockMutation = useMutation({
@@ -99,7 +119,12 @@ export default function ConversationsModerationView() {
   });
 
   const actionError =
-    conversationsQuery.error || messagesQuery.error || lockMutation.error || unlockMutation.error || hideMessageMutation.error;
+    conversationsQuery.error ||
+    messagesQuery.error ||
+    actionsQuery.error ||
+    lockMutation.error ||
+    unlockMutation.error ||
+    hideMessageMutation.error;
   const selectedIsBusy =
     selectedConversation &&
     ((lockMutation.isPending && lockMutation.variables?.id === selectedConversation.id) ||
@@ -116,6 +141,7 @@ export default function ConversationsModerationView() {
               event.preventDefault();
               setPage(1);
               setMessagePage(1);
+              setActionPage(1);
               setSubmittedSearch(search.trim());
               setSelectedConversationId(null);
             }}
@@ -142,6 +168,7 @@ export default function ConversationsModerationView() {
                 onClick={() => {
                   setPage(1);
                   setMessagePage(1);
+                  setActionPage(1);
                   setStatus(item.value);
                   setSelectedConversationId(null);
                 }}
@@ -176,6 +203,7 @@ export default function ConversationsModerationView() {
             onPageChange={setPage}
             onSelect={(id) => {
               setMessagePage(1);
+              setActionPage(1);
               setSelectedConversationId(id);
             }}
           />
@@ -183,7 +211,11 @@ export default function ConversationsModerationView() {
 
         {selectedConversation && (
           <AdminConversationDetailPanel
+            actions={actions}
+            actionPage={actionPage}
+            actionTotal={actionTotal}
             conversation={selectedConversation}
+            isLoadingActions={actionsQuery.isLoading}
             isBusy={Boolean(selectedIsBusy)}
             isLoadingMessages={messagesQuery.isLoading}
             messages={messages}
@@ -191,6 +223,7 @@ export default function ConversationsModerationView() {
             messageTotal={messageTotal}
             messageLimit={MESSAGE_PAGE_SIZE}
             hidingMessageId={hideMessageMutation.variables?.messageId}
+            onActionPageChange={setActionPage}
             onMessagePageChange={setMessagePage}
             onLock={() => {
               setReasonAction({

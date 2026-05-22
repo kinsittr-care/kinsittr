@@ -98,6 +98,9 @@ export default function FlaggedReviewsView() {
     await queryClient.invalidateQueries({ queryKey: ["admin", "reviews"] });
     await queryClient.invalidateQueries({ queryKey: adminReviewQueryKey(reviewId, reviewTarget) });
     await queryClient.invalidateQueries({ queryKey: ["admin", "review-actions", reviewId, reviewTarget] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "nanny"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "parent"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "analytics"] });
   };
 
   const flagMutation = useMutation({

@@ -76,6 +76,8 @@ export default function ScreeningQueueView() {
 
   const invalidateScreening = async () => {
     await queryClient.invalidateQueries({ queryKey: ["admin", "screening", "nannies"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "nannies"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "analytics"] });
   };
 
   const startMutation = useMutation({

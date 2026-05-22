@@ -1,14 +1,28 @@
 import AdminPill from "./compositions/AdminPill";
+import AdminAuditTimeline from "./compositions/AdminAuditTimeline";
+import { btnApprove } from "./compositions/admin-styles";
 import { A } from "./tokens";
-import type { AdminParentDetailData } from "@/src/types/api/admin";
+import type { AdminAuditAction, AdminParentDetailData } from "@/src/types/api/admin";
 import { formatCurrency, formatDateOnlyShort } from "@/src/utils/format";
 
 export default function AdminParentDetailPanel({
+  actions,
+  actionPage,
+  actionTotal,
   detail,
+  isLoadingActions,
   isLoading,
+  onActionPageChange,
+  onReactivate,
 }: {
+  actions: AdminAuditAction[];
+  actionPage: number;
+  actionTotal: number;
   detail?: AdminParentDetailData | null;
+  isLoadingActions: boolean;
   isLoading: boolean;
+  onActionPageChange: (page: number) => void;
+  onReactivate: () => void;
 }) {
   if (isLoading) {
     return <aside style={panelStyle}>Loading parent details...</aside>;
@@ -33,6 +47,12 @@ export default function AdminParentDetailPanel({
           </AdminPill>
         </div>
       </div>
+
+      {!parent.user_is_active && (
+        <button type="button" style={btnApprove} onClick={onReactivate}>
+          Reactivate parent
+        </button>
+      )}
 
       <div style={metricGrid}>
         <Metric label="Spend" value={formatCurrency(parent.total_spend)} />
@@ -69,9 +89,20 @@ export default function AdminParentDetailPanel({
           ))
         )}
       </div>
+
+      <AdminAuditTimeline
+        actions={actions}
+        isLoading={isLoadingActions}
+        page={actionPage}
+        total={actionTotal}
+        limit={ACTION_PAGE_SIZE}
+        onPageChange={onActionPageChange}
+      />
     </aside>
   );
 }
+
+const ACTION_PAGE_SIZE = 10;
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
