@@ -48,6 +48,10 @@ func (c *Config) ContactConfigured() bool {
 	return c.ResendAPIKey != "" && c.ContactToEmail != "" && c.ContactFromEmail != ""
 }
 
+func (c *Config) MailConfigured() bool {
+	return c.ResendAPIKey != "" && c.ContactFromEmail != ""
+}
+
 func getEnv(key, fallback string) string {
 	if value := os.Getenv(key); value != "" {
 		return value

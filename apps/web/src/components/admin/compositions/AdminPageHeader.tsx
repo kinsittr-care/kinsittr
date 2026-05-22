@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { A } from "./tokens";
+import { A } from "../tokens";
 
 export default function AdminPageHeader({
   title,

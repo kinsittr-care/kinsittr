@@ -17,37 +17,10 @@ import {
   parentReviewedBookingIdsQueryKey,
   publicNannyReviewsQueryKey,
 } from "@/src/utils/api/reviews";
-import Avatar from "../dashboard/Avatar";
 import SectionCard from "../profile/SectionCard";
 import BookingDetailCard from "./BookingDetailCard";
-import BookingStatusBadge from "./BookingStatusBadge";
-import {
-  formatBookingTotal,
-  getBookingInitials,
-} from "./booking-helpers";
-import { describeBookingTime } from "@/src/utils/format";
-
-const filterLabelStyle: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 500,
-  color: "var(--muted)",
-  display: "block",
-  marginBottom: 6,
-  textTransform: "uppercase",
-  letterSpacing: "0.06em",
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  border: "1.5px solid var(--border)",
-  borderRadius: 9,
-  padding: "11px 14px",
-  fontSize: 14,
-  outline: "none",
-  background: "var(--bg-warm)",
-  color: "var(--brand-text)",
-  fontFamily: "inherit",
-};
+import ParentBookingsFilters from "./ParentBookingsFilters";
+import ParentBookingsList from "./ParentBookingsList";
 
 interface ParentBookingsViewProps {
   compact?: boolean;
@@ -159,39 +132,14 @@ export default function ParentBookingsView({
   return (
     <div style={{ display: "grid", gap: 20 }}>
       {!compact && (
-        <SectionCard title="Filters">
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-              gap: 14,
-            }}
-          >
-            <div>
-              <label style={filterLabelStyle}>Status</label>
-              <select
-                value={status}
-                onChange={(event) => handleStatusChange(event.target.value as BookingStatus | "")}
-                style={inputStyle}
-              >
-                <option value="">All statuses</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="declined">Declined</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
-            <div>
-              <label style={filterLabelStyle}>From</label>
-              <input type="date" value={dateFrom} onChange={(event) => handleDateFromChange(event.target.value)} style={inputStyle} />
-            </div>
-            <div>
-              <label style={filterLabelStyle}>To</label>
-              <input type="date" value={dateTo} onChange={(event) => handleDateToChange(event.target.value)} style={inputStyle} />
-            </div>
-          </div>
-        </SectionCard>
+        <ParentBookingsFilters
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          status={status}
+          onDateFromChange={handleDateFromChange}
+          onDateToChange={handleDateToChange}
+          onStatusChange={handleStatusChange}
+        />
       )}
 
       <SectionCard
@@ -235,113 +183,18 @@ export default function ParentBookingsView({
             {cancelError && (
               <p style={{ fontSize: 13, color: "#b24a3f", marginTop: 0 }}>{cancelError}</p>
             )}
-            {bookings.map((booking, index) => (
-              <div
-                key={booking.id}
-                className="flex flex-col md:flex-row md:items-center gap-4"
-                style={{
-                  padding: "14px 0",
-                  borderBottom: index === bookings.length - 1 ? "none" : "1px solid var(--border)",
-                }}
-              >
-                <div
-                  className="flex items-center gap-[14px]"
-                  style={{ flex: 1, cursor: !compact ? "pointer" : "default" }}
-                  onClick={!compact ? () => setSelectedBookingId(booking.id) : undefined}
-                >
-                  <Avatar initials={getBookingInitials(booking.nanny_display_name)} size={40} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>
-                      {booking.nanny_display_name ?? "Selected nanny"}
-                    </div>
-                    <div style={{ fontSize: 12.5, color: "var(--faint)", marginTop: 1 }}>
-                      {describeBookingTime(booking)}
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className="flex flex-col md:flex-row md:items-center gap-3"
-                  style={{ marginLeft: compact ? 0 : "auto" }}
-                >
-                  <div style={{ textAlign: compact ? "left" : "right" }}>
-                    <div style={{ fontWeight: 700, fontSize: 15 }}>{formatBookingTotal(booking.total_amount)}</div>
-                    <BookingStatusBadge status={booking.status} />
-                  </div>
-                  {!compact && (
-                    <div className="flex gap-2">
-                      <button
-                        className="btn-outline"
-                        style={{ padding: "8px 14px", fontSize: 13 }}
-                        onClick={() => setSelectedBookingId(booking.id)}
-                      >
-                        View details
-                      </button>
-                      {booking.status === "pending" && (
-                        <button
-                          style={{
-                            padding: "8px 14px",
-                            fontSize: 13,
-                            borderRadius: 10,
-                            background: "#fff",
-                            color: "#c0392b",
-                            border: "1.5px solid #f0d0d0",
-                            cursor: cancelMutation.isPending ? "not-allowed" : "pointer",
-                            fontFamily: "inherit",
-                          }}
-                          disabled={cancelMutation.isPending}
-                          onClick={() => cancelMutation.mutate(booking.id)}
-                        >
-                          {cancelMutation.isPending ? "Cancelling..." : "Cancel"}
-                        </button>
-                      )}
-                      {booking.status === "completed" && (
-                        <button
-                          style={{
-                            padding: "8px 14px",
-                            fontSize: 13,
-                            borderRadius: 10,
-                            background: reviewedBookingIds.has(booking.id) ? "var(--bg-warm)" : "var(--teal)",
-                            color: reviewedBookingIds.has(booking.id) ? "var(--muted)" : "#fff",
-                            border: reviewedBookingIds.has(booking.id) ? "1.5px solid var(--border)" : "none",
-                            cursor: reviewedBookingIds.has(booking.id) ? "default" : "pointer",
-                            fontFamily: "inherit",
-                            fontWeight: 600,
-                          }}
-                          disabled={reviewedBookingIds.has(booking.id)}
-                          onClick={() => setReviewBookingId(booking.id)}
-                        >
-                          {reviewedBookingIds.has(booking.id) ? "Reviewed" : "Leave review"}
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {!compact && totalPages > 1 ? (
-              <div className="flex items-center justify-between" style={{ marginTop: 18, gap: 12 }}>
-                <button
-                  className="btn-outline"
-                  style={{ padding: "10px 16px", fontSize: 13 }}
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </button>
-                <span style={{ fontSize: 13, color: "var(--muted)" }}>
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  className="btn-outline"
-                  style={{ padding: "10px 16px", fontSize: 13 }}
-                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-                  disabled={currentPage >= totalPages}
-                >
-                  Next
-                </button>
-              </div>
-            ) : null}
+            <ParentBookingsList
+              bookings={bookings}
+              cancelIsPending={cancelMutation.isPending}
+              compact={compact}
+              currentPage={currentPage}
+              reviewedBookingIds={reviewedBookingIds}
+              totalPages={totalPages}
+              onCancel={(bookingId) => cancelMutation.mutate(bookingId)}
+              onPageChange={setPage}
+              onReview={setReviewBookingId}
+              onSelect={setSelectedBookingId}
+            />
           </>
         )}
       </SectionCard>

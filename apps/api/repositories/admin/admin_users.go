@@ -162,3 +162,46 @@ func (r *pgRepository) DisableAdmin(ctx context.Context, adminUserID uuid.UUID) 
 	}
 	return record, nil
 }
+
+func (r *pgRepository) GetAdminByID(ctx context.Context, adminUserID uuid.UUID) (AdminUserRecord, error) {
+	return scanAdminUser(r.db.QueryRow(ctx, `
+		SELECT id, firstname, lastname, email, role, phone, is_active, country_code, created_at, updated_at
+		FROM users
+		WHERE id = $1 AND role = $2
+	`, adminUserID, models.AdminUserRole))
+}
+
+func (r *pgRepository) ReactivateAdmin(ctx context.Context, params AdminUserAccountActionParams) (AdminUserRecord, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return AdminUserRecord{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	record, err := scanAdminUser(tx.QueryRow(ctx, `
+		UPDATE users
+		SET is_active = TRUE, updated_at = NOW()
+		WHERE id = $1 AND role = $2 AND is_active = FALSE
+		RETURNING id, firstname, lastname, email, role, phone, is_active, country_code, created_at, updated_at
+	`, params.TargetAdminID, models.AdminUserRole))
+	if errors.Is(err, pgx.ErrNoRows) || record.ID == uuid.Nil {
+		if err := tx.Commit(ctx); err != nil {
+			return AdminUserRecord{}, err
+		}
+		return AdminUserRecord{}, nil
+	}
+	if err != nil {
+		return AdminUserRecord{}, err
+	}
+
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO admin_account_actions (id, target_user_id, target_profile_id, target_role, admin_user_id, action, reason)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+	`, uuid.New(), params.TargetAdminID, params.TargetAdminID, models.AdminUserRole, params.AdminUserID, string(models.AdminReactivateAccountAction), params.Reason); err != nil {
+		return AdminUserRecord{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return AdminUserRecord{}, err
+	}
+	return record, nil
+}

@@ -62,3 +62,23 @@ func (c *AdminController) DisableAdmin(ctx *fiber.Ctx) error {
 	}
 	return adminSuccess(ctx, string(res.Message), res.Data)
 }
+
+func (c *AdminController) ReactivateAdmin(ctx *fiber.Ctx) error {
+	currentAdminID, ok := ctx.Locals("auth.user_id").(uuid.UUID)
+	if !ok {
+		return adminPipeError(ctx, messages.Invalid_Admin_Request)
+	}
+	targetAdminID, err := parseAdminID(ctx, "id")
+	if err != nil {
+		return adminPipeError(ctx, messages.Invalid_Admin_Request)
+	}
+	var dto dtos.AdminAccountActionDTO
+	if err := ctx.BodyParser(&dto); err != nil {
+		return adminPipeError(ctx, messages.Invalid_Admin_Request)
+	}
+	res := c.pipe.ReactivateAdmin(ctx.Context(), currentAdminID, targetAdminID, dto)
+	if !res.Success {
+		return adminPipeError(ctx, string(res.Message))
+	}
+	return adminSuccess(ctx, string(res.Message), res.Data)
+}

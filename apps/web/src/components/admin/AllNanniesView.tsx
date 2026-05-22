@@ -3,22 +3,29 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { A } from "./tokens";
-import AdminPageHeader from "./AdminPageHeader";
-import AdminAvatar from "./AdminAvatar";
-import AdminPill, { type PillTone } from "./AdminPill";
-import AdminStars from "./AdminStars";
-import { SearchIcon } from "./admin-icons";
-import { btnDanger, btnGhost, btnGhostSm, btnApprove } from "./admin-styles";
-import type { AdminNanny, AdminVerificationStatus, ListAdminNanniesParams } from "@/src/types/api/admin";
+import AdminPageHeader from "./compositions/AdminPageHeader";
+import AdminNannyDetailPanel from "./AdminNannyDetailPanel";
+import AdminPagination from "./AdminPagination";
+import AdminReasonDialog, { type AdminReasonDialogState } from "./AdminReasonDialog";
+import AdminNanniesTable from "./compositions/AdminNanniesTable";
+import { SearchIcon } from "./compositions/admin-icons";
+import { btnGhost } from "./compositions/admin-styles";
+import type { AdminVerificationStatus, ListAdminAuditActionsParams, ListAdminNanniesParams } from "@/src/types/api/admin";
 import {
+  adminNannyActionsQueryKey,
+  adminNannyQueryKey,
   adminNanniesQueryKey,
+  getAdminNanny,
+  listAdminNannyActions,
   listAdminNannies,
+  reactivateAdminNanny,
   rejectAdminNanny,
   suspendAdminNanny,
   verifyAdminNanny,
 } from "@/src/utils/api/admin/nannies";
 
-const colTemplate = "2.1fr 1.35fr .85fr 1.1fr 1fr 1.45fr";
+const PAGE_SIZE = 20;
+const ACTION_PAGE_SIZE = 10;
 
 const statusFilters: Array<{ label: string; value: AdminVerificationStatus | "" }> = [
   { label: "All", value: "" },
@@ -28,46 +35,23 @@ const statusFilters: Array<{ label: string; value: AdminVerificationStatus | "" 
   { label: "Rejected", value: "rejected" },
 ];
 
-function initialsFor(nanny: AdminNanny) {
-  const source = `${nanny.user_firstname[0] ?? ""}${nanny.user_lastname[0] ?? ""}`;
-  return source.toUpperCase() || nanny.display_name.slice(0, 2).toUpperCase() || "NA";
-}
-
-function statusLabel(status: AdminVerificationStatus) {
-  return status.replace("_", " ");
-}
-
-function statusTone(nanny: AdminNanny): PillTone {
-  if (!nanny.user_is_active) return "red";
-  if (nanny.verification_status === "verified") return "green";
-  if (nanny.verification_status === "rejected") return "red";
-  if (nanny.verification_status === "under_review") return "clay";
-  return "amber";
-}
-
-function canVerify(nanny: AdminNanny) {
-  return (
-    nanny.user_is_active &&
-    nanny.verification_status === "under_review" &&
-    nanny.screening_steps.docs_reviewed &&
-    nanny.screening_steps.references_checked &&
-    nanny.screening_steps.interview_done
-  );
-}
-
 export default function AllNanniesView() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [submittedSearch, setSubmittedSearch] = useState("");
   const [status, setStatus] = useState<AdminVerificationStatus | "">("");
+  const [page, setPage] = useState(1);
+  const [actionPage, setActionPage] = useState(1);
+  const [selectedNannyId, setSelectedNannyId] = useState<string | null>(null);
+  const [reasonAction, setReasonAction] = useState<AdminReasonDialogState | null>(null);
   const params = useMemo<ListAdminNanniesParams>(
     () => ({
-      page: 1,
-      limit: 20,
+      page,
+      limit: PAGE_SIZE,
       search: submittedSearch || undefined,
       status: status || undefined,
     }),
-    [status, submittedSearch],
+    [page, status, submittedSearch],
   );
 
   const nanniesQuery = useQuery({
@@ -76,10 +60,37 @@ export default function AllNanniesView() {
   });
   const nannies = nanniesQuery.data?.data?.items ?? [];
   const total = nanniesQuery.data?.data?.total ?? 0;
+  const detailQuery = useQuery({
+    queryKey: selectedNannyId ? adminNannyQueryKey(selectedNannyId) : ["admin", "nanny", "none"],
+    queryFn: () => getAdminNanny(selectedNannyId as string),
+    enabled: Boolean(selectedNannyId),
+  });
+  const selectedNannyDetail = detailQuery.data?.data ?? null;
+  const actionParams = useMemo<ListAdminAuditActionsParams>(
+    () => ({ page: actionPage, limit: ACTION_PAGE_SIZE }),
+    [actionPage],
+  );
+  const actionsQuery = useQuery({
+    queryKey: selectedNannyId
+      ? adminNannyActionsQueryKey(selectedNannyId, actionParams)
+      : ["admin", "nanny-actions", "none"],
+    queryFn: () => listAdminNannyActions(selectedNannyId as string, actionParams),
+    enabled: Boolean(selectedNannyId),
+  });
+  const actions = actionsQuery.data?.data?.items ?? [];
+  const actionTotal = actionsQuery.data?.data?.total ?? 0;
 
   const invalidate = async () => {
     await queryClient.invalidateQueries({ queryKey: ["admin", "nannies"] });
     await queryClient.invalidateQueries({ queryKey: ["admin", "screening", "nannies"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "analytics"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "bookings"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "conversations"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "reviews"] });
+    if (selectedNannyId) {
+      await queryClient.invalidateQueries({ queryKey: adminNannyQueryKey(selectedNannyId) });
+      await queryClient.invalidateQueries({ queryKey: ["admin", "nanny-actions", selectedNannyId] });
+    }
   };
 
   const verifyMutation = useMutation({ mutationFn: verifyAdminNanny, onSuccess: invalidate });
@@ -93,16 +104,26 @@ export default function AllNanniesView() {
       suspendAdminNanny(id, { reason }),
     onSuccess: invalidate,
   });
+  const reactivateMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      reactivateAdminNanny(id, { reason }),
+    onSuccess: invalidate,
+  });
 
   const busyIds = new Set<string>();
   if (verifyMutation.isPending && verifyMutation.variables) busyIds.add(verifyMutation.variables);
   if (rejectMutation.isPending && rejectMutation.variables) busyIds.add(rejectMutation.variables.id);
   if (suspendMutation.isPending && suspendMutation.variables) busyIds.add(suspendMutation.variables.id);
-
-  const askReason = (label: string) => window.prompt(`Reason for ${label}?`)?.trim();
+  if (reactivateMutation.isPending && reactivateMutation.variables) busyIds.add(reactivateMutation.variables.id);
 
   const actionError =
-    nanniesQuery.error || verifyMutation.error || rejectMutation.error || suspendMutation.error;
+    nanniesQuery.error ||
+    detailQuery.error ||
+    actionsQuery.error ||
+    verifyMutation.error ||
+    rejectMutation.error ||
+    suspendMutation.error ||
+    reactivateMutation.error;
 
   return (
     <>
@@ -113,7 +134,10 @@ export default function AllNanniesView() {
           <form
             onSubmit={(event) => {
               event.preventDefault();
-              setSubmittedSearch(search.trim());
+              setPage(1);
+                  setSubmittedSearch(search.trim());
+                  setSelectedNannyId(null);
+                  setActionPage(1);
             }}
             style={{ display: "flex", gap: 10, alignItems: "center" }}
           >
@@ -145,22 +169,28 @@ export default function AllNanniesView() {
           </form>
         }
       />
-      <div style={{ padding: "24px 40px 40px", display: "flex", flexDirection: "column", gap: 14 }}>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {statusFilters.map((item) => (
-            <button
-              key={item.label}
-              onClick={() => setStatus(item.value)}
-              style={{
-                ...btnGhost,
-                borderColor: status === item.value ? A.clay : A.border,
-                color: status === item.value ? A.clay : A.inkMid,
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
+      <div style={{ padding: "24px 40px 40px", display: "grid", gridTemplateColumns: selectedNannyId ? "1fr 380px" : "1fr", gap: 18 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {statusFilters.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => {
+                  setPage(1);
+                  setStatus(item.value);
+                  setSelectedNannyId(null);
+                  setActionPage(1);
+                }}
+                style={{
+                  ...btnGhost,
+                  borderColor: status === item.value ? A.clay : A.border,
+                  color: status === item.value ? A.clay : A.inkMid,
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
 
         {actionError && (
           <p style={{ color: A.red, fontSize: 14, margin: 0 }}>
@@ -168,120 +198,73 @@ export default function AllNanniesView() {
           </p>
         )}
 
-        <div
-          style={{
-            background: A.card,
-            border: `1px solid ${A.border}`,
-            borderRadius: 16,
-            overflow: "hidden",
-            boxShadow: A.shadow,
+        <AdminNanniesTable
+          busyIds={busyIds}
+          isLoading={nanniesQuery.isLoading}
+          nannies={nannies}
+          selectedNannyId={selectedNannyId}
+          onSelect={(id) => {
+            setSelectedNannyId(id);
+            setActionPage(1);
           }}
-        >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: colTemplate,
-              padding: "14px 24px",
-              borderBottom: `1px solid ${A.divider}`,
-              background: A.cardWarm,
-              fontSize: 11.5,
-              fontWeight: 600,
-              letterSpacing: ".14em",
-              textTransform: "uppercase" as const,
-              color: A.inkSoft,
-            }}
-          >
-            <div>Nanny</div>
-            <div>City</div>
-            <div>Rate</div>
-            <div>Rating</div>
-            <div>Status</div>
-            <div style={{ textAlign: "right" }}>Actions</div>
-          </div>
-
-          {nanniesQuery.isLoading ? (
-            <div style={{ padding: 24, color: A.inkSoft }}>Loading nannies...</div>
-          ) : nannies.length === 0 ? (
-            <div style={{ padding: 24, color: A.inkSoft }}>No nannies found.</div>
-          ) : (
-            nannies.map((nanny, i) => {
-              const isBusy = busyIds.has(nanny.id);
-              return (
-                <div
-                  key={nanny.id}
-                  className="admin-table-row"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: colTemplate,
-                    alignItems: "center",
-                    padding: "16px 24px",
-                    gap: 12,
-                    borderBottom: i < nannies.length - 1 ? `1px solid ${A.borderSoft}` : "none",
-                    transition: "background .15s",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                    <AdminAvatar
-                      initials={initialsFor(nanny)}
-                      size={40}
-                      tone={nanny.user_is_active ? "clay" : "muted"}
-                    />
-                    <div>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: A.ink }}>{nanny.display_name}</div>
-                      <div style={{ fontSize: 12.5, color: A.inkSoft }}>{nanny.user_email}</div>
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 14, color: A.inkMid }}>{nanny.city}, {nanny.province}</div>
-                  <div>
-                    <span style={{ fontFamily: "var(--font-dm-serif), serif", fontSize: 18, color: A.ink }}>
-                      ${nanny.rate_per_hour}
-                    </span>
-                    <span style={{ fontSize: 13, color: A.inkSoft, fontWeight: 400 }}>/hr</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <AdminStars value={Math.round(nanny.rating_avg)} />
-                    <span style={{ fontSize: 13.5, color: A.inkMid, fontWeight: 500 }}>{nanny.rating_avg.toFixed(1)}</span>
-                  </div>
-                  <div>
-                    <AdminPill tone={statusTone(nanny)}>
-                      {nanny.user_is_active ? statusLabel(nanny.verification_status) : "suspended"}
-                    </AdminPill>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, flexWrap: "wrap" }}>
-                    <button
-                      disabled={!canVerify(nanny) || isBusy}
-                      onClick={() => verifyMutation.mutate(nanny.id)}
-                      style={{ ...btnApprove, opacity: canVerify(nanny) && !isBusy ? 1 : 0.55 }}
-                    >
-                      Verify
-                    </button>
-                    <button
-                      disabled={!nanny.user_is_active || isBusy}
-                      onClick={() => {
-                        const reason = askReason("rejecting this nanny");
-                        if (reason) rejectMutation.mutate({ id: nanny.id, reason });
-                      }}
-                      style={{ ...btnGhostSm, opacity: nanny.user_is_active && !isBusy ? 1 : 0.55 }}
-                    >
-                      Reject
-                    </button>
-                    <button
-                      disabled={!nanny.user_is_active || isBusy}
-                      onClick={() => {
-                        const reason = askReason("suspending this nanny");
-                        if (reason) suspendMutation.mutate({ id: nanny.id, reason });
-                      }}
-                      style={{ ...btnDanger, opacity: nanny.user_is_active && !isBusy ? 1 : 0.55 }}
-                    >
-                      Suspend
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          )}
+          onVerify={(id) => verifyMutation.mutate(id)}
+          onReject={(nanny) => {
+            setReasonAction({
+              title: "Reject nanny",
+              description: "Reject this nanny from screening. A reason is required for the admin audit trail.",
+              submitLabel: "Reject nanny",
+              tone: "danger",
+              onSubmit: (reason) => {
+                rejectMutation.mutate({ id: nanny.id, reason });
+                setReasonAction(null);
+              },
+            });
+          }}
+          onSuspend={(nanny) => {
+            setReasonAction({
+              title: "Suspend nanny",
+              description: "Suspend this nanny account. A reason is required for the admin audit trail.",
+              submitLabel: "Suspend nanny",
+              tone: "danger",
+              onSubmit: (reason) => {
+                suspendMutation.mutate({ id: nanny.id, reason });
+                setReasonAction(null);
+              },
+            });
+          }}
+        />
+          <AdminPagination page={page} total={total} limit={PAGE_SIZE} onPageChange={setPage} />
         </div>
+        {selectedNannyId && (
+          <AdminNannyDetailPanel
+            actions={actions}
+            actionPage={actionPage}
+            actionTotal={actionTotal}
+            detail={selectedNannyDetail}
+            isLoading={detailQuery.isLoading}
+            isLoadingActions={actionsQuery.isLoading}
+            onActionPageChange={setActionPage}
+            onReactivate={() => {
+              if (!selectedNannyId) return;
+              setReasonAction({
+                title: "Reactivate nanny",
+                description: "Restore this nanny account. A reason is required for the admin audit trail.",
+                submitLabel: "Reactivate nanny",
+                tone: "approve",
+                onSubmit: (reason) => {
+                  reactivateMutation.mutate({ id: selectedNannyId, reason });
+                  setReasonAction(null);
+                },
+              });
+            }}
+          />
+        )}
       </div>
+      <AdminReasonDialog
+        action={reasonAction}
+        isSubmitting={rejectMutation.isPending || suspendMutation.isPending || reactivateMutation.isPending}
+        onClose={() => setReasonAction(null)}
+      />
     </>
   );
 }

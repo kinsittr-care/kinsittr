@@ -33,7 +33,8 @@ const (
 type AdminAccountActionType string
 
 const (
-	AdminSuspendAccountAction AdminAccountActionType = "suspend"
+	AdminSuspendAccountAction    AdminAccountActionType = "suspend"
+	AdminReactivateAccountAction AdminAccountActionType = "reactivate"
 )
 
 type AdminBookingAction struct {

@@ -56,6 +56,18 @@ func (p *AdminPipe) InviteAdmin(ctx context.Context, invitedBy uuid.UUID, dto dt
 		return pipeError[AdminInviteData](messages.Invalid_Admin_Request)
 	}
 	data := toAdminInviteData(invite, token)
+	if p.emailService != nil {
+		err = p.emailService.SendAdminInvite(
+			ctx,
+			email,
+			firstname,
+			p.adminInviteLink(token),
+			invite.ExpiresAt.Format(time.RFC1123),
+		)
+		if err != nil {
+			return pipeError[AdminInviteData](messages.Invalid_Admin_Request)
+		}
+	}
 	return pipeSuccess(messages.Admin_Admin_Invited, &data)
 }
 

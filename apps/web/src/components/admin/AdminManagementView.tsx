@@ -2,16 +2,19 @@
 
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import AdminPageHeader from "./AdminPageHeader";
-import AdminPill from "./AdminPill";
-import { btnDanger, btnGhost, btnPrimary, card } from "./admin-styles";
+import AdminPageHeader from "./compositions/AdminPageHeader";
+import AdminPill from "./compositions/AdminPill";
+import AdminReasonDialog, { type AdminReasonDialogState } from "./AdminReasonDialog";
+import { btnDanger, btnGhost, btnPrimary, card } from "./compositions/admin-styles";
 import { A } from "./tokens";
 import type { AdminInviteData, InviteAdminPayload, ListAdminUsersParams } from "@/src/types/api/admin";
+import { getCurrentAdminSession } from "@/src/utils/api/admin/auth";
 import {
   adminUsersQueryKey,
   disableAdmin,
   inviteAdmin,
   listAdminUsers,
+  reactivateAdmin,
 } from "@/src/utils/api/admin/management";
 import { formatShortDateTime } from "@/src/utils/format";
 
@@ -28,10 +31,6 @@ const inputStyle: React.CSSProperties = {
   color: A.ink,
 };
 
-function fullName(firstname: string, lastname: string) {
-  return `${firstname} ${lastname}`.trim() || "Admin";
-}
-
 function inviteLink(invite: AdminInviteData | null) {
   if (!invite?.token || typeof window === "undefined") return invite?.token ?? "";
   return `${window.location.origin}/auth/admin/accept-invite?token=${encodeURIComponent(invite.token)}`;
@@ -43,13 +42,19 @@ export default function AdminManagementView() {
   const [draft, setDraft] = useState<InviteAdminPayload>({ firstname: "", lastname: "", email: "" });
   const [latestInvite, setLatestInvite] = useState<AdminInviteData | null>(null);
   const [copied, setCopied] = useState(false);
+  const [reasonAction, setReasonAction] = useState<AdminReasonDialogState | null>(null);
   const params = useMemo<ListAdminUsersParams>(() => ({ page, limit: PAGE_SIZE }), [page]);
 
+  const currentAdminQuery = useQuery({
+    queryKey: ["admin", "auth", "me"],
+    queryFn: getCurrentAdminSession,
+  });
   const adminsQuery = useQuery({
     queryKey: adminUsersQueryKey(params),
     queryFn: () => listAdminUsers(params),
   });
   const admins = adminsQuery.data?.data?.items ?? [];
+  const currentAdminId = currentAdminQuery.data?.data?.user.id;
   const total = adminsQuery.data?.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -65,6 +70,13 @@ export default function AdminManagementView() {
 
   const disableMutation = useMutation({
     mutationFn: disableAdmin,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+  const reactivateMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      reactivateAdmin(id, { reason }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     },
@@ -99,6 +111,8 @@ export default function AdminManagementView() {
           </h2>
           <p style={{ margin: "8px 0 20px", color: A.inkSoft, fontSize: 13.5, lineHeight: 1.6 }}>
             Create an invite token and share the generated acceptance link with the new admin.
+            After accepting the invite, they will be redirected to admin sign in because invite acceptance creates
+            the admin account but does not issue auth tokens.
           </p>
 
           <form onSubmit={submitInvite} style={{ display: "grid", gap: 14 }}>
@@ -184,51 +198,80 @@ export default function AdminManagementView() {
             {!adminsQuery.isLoading && !adminsQuery.isError && admins.length === 0 && (
               <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>No admins found.</p>
             )}
-            {admins.map((admin) => (
-              <div
-                key={admin.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 16,
-                  border: `1px solid ${A.borderSoft}`,
-                  borderRadius: 14,
-                  padding: "14px 16px",
-                  background: admin.is_active ? A.card : A.cardWarm,
-                }}
-              >
-                <div>
-                  <div style={{ color: A.ink, fontWeight: 700 }}>{fullName(admin.firstname, admin.lastname)}</div>
-                  <div style={{ color: A.inkSoft, fontSize: 12.5, marginTop: 3 }}>{admin.email}</div>
-                  <div style={{ color: A.inkSoft, fontSize: 12, marginTop: 5 }}>
-                    Joined {formatShortDateTime(admin.created_at)}
+            {admins.map((admin) => {
+              const isCurrentAdmin = admin.id === currentAdminId;
+
+              return (
+                <div
+                  key={admin.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 16,
+                    border: `1px solid ${A.borderSoft}`,
+                    borderRadius: 14,
+                    padding: "14px 16px",
+                    background: admin.is_active ? A.card : A.cardWarm,
+                  }}
+                >
+                  <div>
+                    <div style={{ color: A.ink, fontWeight: 700 }}>{`${admin.firstname} ${admin.lastname}`.trim() || "Admin"}</div>
+                    <div style={{ color: A.inkSoft, fontSize: 12.5, marginTop: 3 }}>{admin.email}</div>
+                    <div style={{ color: A.inkSoft, fontSize: 12, marginTop: 5 }}>
+                      Joined {formatShortDateTime(admin.created_at)}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <AdminPill tone={admin.is_active ? "green" : "red"}>
+                      {admin.is_active ? "Active" : "Disabled"}
+                    </AdminPill>
+                    {isCurrentAdmin && <AdminPill tone="clay">You</AdminPill>}
+                    <button
+                      type="button"
+                      style={btnDanger}
+                      disabled={isCurrentAdmin || !admin.is_active || disableMutation.isPending}
+                      onClick={() => {
+                        if (window.confirm(`Disable ${admin.email}? This will revoke their admin access.`)) {
+                          disableMutation.mutate(admin.id);
+                        }
+                      }}
+                    >
+                      {isCurrentAdmin ? "Current admin" : "Disable"}
+                    </button>
+                    <button
+                      type="button"
+                      style={btnPrimary}
+                      disabled={admin.is_active || reactivateMutation.isPending}
+                      onClick={() => {
+                        setReasonAction({
+                          title: "Reactivate admin",
+                          description: "Restore this admin account. A reason is required for the admin audit trail.",
+                          submitLabel: "Reactivate admin",
+                          tone: "approve",
+                          onSubmit: (reason) => {
+                            reactivateMutation.mutate({ id: admin.id, reason });
+                            setReasonAction(null);
+                          },
+                        });
+                      }}
+                    >
+                      Reactivate
+                    </button>
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <AdminPill tone={admin.is_active ? "green" : "red"}>
-                    {admin.is_active ? "Active" : "Disabled"}
-                  </AdminPill>
-                  <button
-                    type="button"
-                    style={btnDanger}
-                    disabled={!admin.is_active || disableMutation.isPending}
-                    onClick={() => {
-                      if (window.confirm(`Disable ${admin.email}? This will revoke their admin access.`)) {
-                        disableMutation.mutate(admin.id);
-                      }
-                    }}
-                  >
-                    Disable
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {disableMutation.isError && (
             <p style={{ margin: "14px 0 0", color: A.red, fontSize: 13 }}>
               {disableMutation.error instanceof Error ? disableMutation.error.message : "Unable to disable admin."}
+            </p>
+          )}
+          {reactivateMutation.isError && (
+            <p style={{ margin: "14px 0 0", color: A.red, fontSize: 13 }}>
+              {reactivateMutation.error instanceof Error ? reactivateMutation.error.message : "Unable to reactivate admin."}
             </p>
           )}
 
@@ -245,6 +288,11 @@ export default function AdminManagementView() {
           </div>
         </section>
       </div>
+      <AdminReasonDialog
+        action={reasonAction}
+        isSubmitting={reactivateMutation.isPending}
+        onClose={() => setReasonAction(null)}
+      />
     </>
   );
 }

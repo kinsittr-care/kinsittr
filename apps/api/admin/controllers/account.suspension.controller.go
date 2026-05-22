@@ -31,6 +31,30 @@ func (c *AdminController) SuspendParent(ctx *fiber.Ctx) error {
 	return adminSuccess(ctx, string(res.Message), res.Data)
 }
 
+func (c *AdminController) ReactivateNanny(ctx *fiber.Ctx) error {
+	adminUserID, profileID, dto, err := parseAccountAction(ctx)
+	if err != nil {
+		return adminPipeError(ctx, messages.Invalid_Admin_Request)
+	}
+	res := c.pipe.ReactivateNanny(ctx.Context(), adminUserID, profileID, dto)
+	if !res.Success {
+		return adminPipeError(ctx, string(res.Message))
+	}
+	return adminSuccess(ctx, string(res.Message), res.Data)
+}
+
+func (c *AdminController) ReactivateParent(ctx *fiber.Ctx) error {
+	adminUserID, profileID, dto, err := parseAccountAction(ctx)
+	if err != nil {
+		return adminPipeError(ctx, messages.Invalid_Admin_Request)
+	}
+	res := c.pipe.ReactivateParent(ctx.Context(), adminUserID, profileID, dto)
+	if !res.Success {
+		return adminPipeError(ctx, string(res.Message))
+	}
+	return adminSuccess(ctx, string(res.Message), res.Data)
+}
+
 func parseAccountAction(ctx *fiber.Ctx) (uuid.UUID, uuid.UUID, dtos.AdminAccountActionDTO, error) {
 	adminUserID, ok := ctx.Locals("auth.user_id").(uuid.UUID)
 	if !ok {

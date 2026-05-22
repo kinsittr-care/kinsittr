@@ -12,6 +12,7 @@ import (
 	admin_controller "github.com/kinsittr/kinsittr-api/admin/controllers"
 	admin_pipe "github.com/kinsittr/kinsittr-api/admin/pipes"
 	admin_router "github.com/kinsittr/kinsittr-api/admin/routers"
+	admin_services "github.com/kinsittr/kinsittr-api/admin/services"
 	auth_controller "github.com/kinsittr/kinsittr-api/auth/controllers"
 	auth_pipe "github.com/kinsittr/kinsittr-api/auth/pipes"
 	auth_router "github.com/kinsittr/kinsittr-api/auth/routers"
@@ -109,6 +110,11 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	adminAuthPipe := admin_auth_pipe.NewAdminAuthPipe(account.AccountRepo, cfg.JWTSecret, cfg.JWTRefreshSecret)
 	adminAuthController := admin_auth_controller.NewAdminAuthController(adminAuthPipe)
 	adminPipe := admin_pipe.NewAdminPipe(admin_repo.AdminRepo, cfg.PlatformFeeRate, notifications_repo.NotificationsRepo)
+	if cfg.MailConfigured() {
+		resendProvider := mail.NewResendProvider(cfg.ResendAPIKey, cfg.ContactFromEmail)
+		adminEmailService := admin_services.NewEmailService(resendProvider)
+		adminPipe.SetInviteEmailService(adminEmailService, cfg.WebOrigin)
+	}
 	adminController := admin_controller.NewAdminController(adminPipe)
 
 	apiGroup := app.Group("/api/v1")

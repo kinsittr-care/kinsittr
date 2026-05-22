@@ -4,6 +4,31 @@ export interface AdminReasonPayload {
   reason: string;
 }
 
+export interface ListAdminAuditActionsParams {
+  page?: number;
+  limit?: number;
+}
+
+export interface AdminAuditAction {
+  id: string;
+  admin_user_id?: string | null;
+  admin_email?: string | null;
+  action: string;
+  reason?: string | null;
+  previous_status?: string | null;
+  new_status?: string | null;
+  message_id?: string | null;
+  target_role?: string;
+  created_at: string;
+}
+
+export interface AdminAuditActionListData {
+  items: AdminAuditAction[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
 export interface AdminBooking {
   id: string;
   parent_profile_id: string;

@@ -1,4 +1,5 @@
 import type { Booking } from "@/src/types/api/api";
+import { formatCurrency } from "@/src/utils/format";
 import { cn } from "@/lib/utils";
 
 type Tone = "green" | "gold" | "rose" | "amber";
@@ -52,7 +53,7 @@ export default function DashboardStatCards({
     <div className="flex gap-3 overflow-x-auto pb-0.5 [scrollbar-width:none] [-ms-overflow-style:none] md:grid md:grid-cols-4 md:overflow-visible md:gap-4">
       <StatCard
         label="Approved value"
-        value={isLoading ? "..." : `$${estimatedEarnings.toFixed(0)}`}
+        value={isLoading ? "..." : formatCurrency(estimatedEarnings)}
         sub={`${approvedCount} approved bookings`}
         tone="green"
       />

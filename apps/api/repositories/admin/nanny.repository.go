@@ -346,8 +346,47 @@ func (r *pgRepository) SuspendNannyAccount(ctx context.Context, params AdminAcco
 	}
 	if _, err := tx.Exec(ctx, `
 		INSERT INTO admin_account_actions (id, target_user_id, target_profile_id, target_role, admin_user_id, action, reason)
-		VALUES ($1, $2, $3, $4, $5, 'suspend', $6)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`, uuid.New(), targetUserID, params.ProfileID, models.NannyUserRole, params.AdminUserID, string(models.AdminSuspendAccountAction), params.Reason); err != nil {
+		return NannyRecord{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return NannyRecord{}, err
+	}
+	return r.GetNannyByID(ctx, params.ProfileID)
+}
+
+func (r *pgRepository) ReactivateNannyAccount(ctx context.Context, params AdminAccountActionParams) (NannyRecord, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return NannyRecord{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	var targetUserID uuid.UUID
+	err = tx.QueryRow(ctx, `
+		UPDATE users u
+		SET is_active = TRUE, updated_at = NOW()
+		FROM nanny_profiles np
+		WHERE np.user_id = u.id
+		  AND np.id = $1
+		  AND u.is_active = FALSE
+		RETURNING u.id
+	`, params.ProfileID).Scan(&targetUserID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		if err := tx.Commit(ctx); err != nil {
+			return NannyRecord{}, err
+		}
+		return NannyRecord{}, nil
+	}
+	if err != nil {
+		return NannyRecord{}, err
+	}
+
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO admin_account_actions (id, target_user_id, target_profile_id, target_role, admin_user_id, action, reason)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+	`, uuid.New(), targetUserID, params.ProfileID, models.NannyUserRole, params.AdminUserID, string(models.AdminReactivateAccountAction), params.Reason); err != nil {
 		return NannyRecord{}, err
 	}
 	if err := tx.Commit(ctx); err != nil {

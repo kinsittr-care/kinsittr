@@ -152,8 +152,47 @@ func (r *pgRepository) SuspendParentAccount(ctx context.Context, params AdminAcc
 	}
 	if _, err := tx.Exec(ctx, `
 		INSERT INTO admin_account_actions (id, target_user_id, target_profile_id, target_role, admin_user_id, action, reason)
-		VALUES ($1, $2, $3, $4, $5, 'suspend', $6)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`, uuid.New(), targetUserID, params.ProfileID, models.ParentUserRole, params.AdminUserID, string(models.AdminSuspendAccountAction), params.Reason); err != nil {
+		return ParentRecord{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return ParentRecord{}, err
+	}
+	return r.GetParentByID(ctx, params.ProfileID)
+}
+
+func (r *pgRepository) ReactivateParentAccount(ctx context.Context, params AdminAccountActionParams) (ParentRecord, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return ParentRecord{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	var targetUserID uuid.UUID
+	err = tx.QueryRow(ctx, `
+		UPDATE users u
+		SET is_active = TRUE, updated_at = NOW()
+		FROM parent_profiles pp
+		WHERE pp.user_id = u.id
+		  AND pp.id = $1
+		  AND u.is_active = FALSE
+		RETURNING u.id
+	`, params.ProfileID).Scan(&targetUserID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		if err := tx.Commit(ctx); err != nil {
+			return ParentRecord{}, err
+		}
+		return ParentRecord{}, nil
+	}
+	if err != nil {
+		return ParentRecord{}, err
+	}
+
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO admin_account_actions (id, target_user_id, target_profile_id, target_role, admin_user_id, action, reason)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+	`, uuid.New(), targetUserID, params.ProfileID, models.ParentUserRole, params.AdminUserID, string(models.AdminReactivateAccountAction), params.Reason); err != nil {
 		return ParentRecord{}, err
 	}
 	if err := tx.Commit(ctx); err != nil {

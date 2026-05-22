@@ -15,6 +15,8 @@ import (
 type mockAdminRepo struct {
 	nanny               repository.NannyRecord
 	updatedNanny        repository.NannyRecord
+	invite              models.AdminInvite
+	createInviteParams  repository.InviteAdminParams
 	stepsUpdated        bool
 	statusActionUpdated bool
 }
@@ -45,6 +47,12 @@ func (m *mockAdminRepo) ResetNannyScreeningWithAction(context.Context, repositor
 func (m *mockAdminRepo) SuspendNannyAccount(context.Context, repository.AdminAccountActionParams) (repository.NannyRecord, error) {
 	return m.updatedNanny, nil
 }
+func (m *mockAdminRepo) ReactivateNannyAccount(context.Context, repository.AdminAccountActionParams) (repository.NannyRecord, error) {
+	return m.updatedNanny, nil
+}
+func (m *mockAdminRepo) ListNannyActions(context.Context, uuid.UUID, int, int) ([]repository.AdminAuditActionRecord, int, error) {
+	return nil, 0, nil
+}
 func (m *mockAdminRepo) ListNannyBookingHistory(context.Context, uuid.UUID, repository.ListBookingsFilter) ([]repository.BookingRecord, int, error) {
 	return nil, 0, nil
 }
@@ -59,6 +67,12 @@ func (m *mockAdminRepo) GetParentByID(context.Context, uuid.UUID) (repository.Pa
 }
 func (m *mockAdminRepo) SuspendParentAccount(context.Context, repository.AdminAccountActionParams) (repository.ParentRecord, error) {
 	return repository.ParentRecord{}, nil
+}
+func (m *mockAdminRepo) ReactivateParentAccount(context.Context, repository.AdminAccountActionParams) (repository.ParentRecord, error) {
+	return repository.ParentRecord{}, nil
+}
+func (m *mockAdminRepo) ListParentActions(context.Context, uuid.UUID, int, int) ([]repository.AdminAuditActionRecord, int, error) {
+	return nil, 0, nil
 }
 func (m *mockAdminRepo) ListParentBookingHistory(context.Context, uuid.UUID, repository.ListBookingsFilter) ([]repository.BookingRecord, int, error) {
 	return nil, 0, nil
@@ -96,16 +110,26 @@ func (m *mockAdminRepo) UnlockConversation(context.Context, repository.AdminConv
 func (m *mockAdminRepo) HideMessage(context.Context, repository.AdminConversationActionParams) (repository.MessageRecord, error) {
 	return repository.MessageRecord{}, nil
 }
+func (m *mockAdminRepo) ListConversationActions(context.Context, uuid.UUID, int, int) ([]repository.AdminAuditActionRecord, int, error) {
+	return nil, 0, nil
+}
 func (m *mockAdminRepo) ListAdmins(context.Context, int, int) ([]repository.AdminUserRecord, int, error) {
 	return nil, 0, nil
 }
-func (m *mockAdminRepo) CreateAdminInvite(context.Context, repository.InviteAdminParams) (models.AdminInvite, error) {
-	return models.AdminInvite{}, nil
+func (m *mockAdminRepo) CreateAdminInvite(_ context.Context, params repository.InviteAdminParams) (models.AdminInvite, error) {
+	m.createInviteParams = params
+	return m.invite, nil
 }
 func (m *mockAdminRepo) AcceptAdminInvite(context.Context, repository.AcceptAdminInviteParams) (repository.AdminUserRecord, error) {
 	return repository.AdminUserRecord{}, nil
 }
 func (m *mockAdminRepo) DisableAdmin(context.Context, uuid.UUID) (repository.AdminUserRecord, error) {
+	return repository.AdminUserRecord{}, nil
+}
+func (m *mockAdminRepo) GetAdminByID(context.Context, uuid.UUID) (repository.AdminUserRecord, error) {
+	return repository.AdminUserRecord{}, nil
+}
+func (m *mockAdminRepo) ReactivateAdmin(context.Context, repository.AdminUserAccountActionParams) (repository.AdminUserRecord, error) {
 	return repository.AdminUserRecord{}, nil
 }
 func (m *mockAdminRepo) GetAnalyticsSummary(context.Context, repository.AnalyticsRangeFilter) (repository.AnalyticsSummary, error) {

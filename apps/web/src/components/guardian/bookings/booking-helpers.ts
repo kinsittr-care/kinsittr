@@ -1,13 +1,5 @@
 import type { BookingStatus } from "@/src/types/api/api";
 
-export function formatBookingTotal(value: number) {
-  return new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
 export function formatBookingStatus(status: BookingStatus) {
   switch (status) {
     case "pending":

@@ -1,6 +1,7 @@
 import type {
   AcceptAdminInvitePayload,
   AdminInviteData,
+  AdminReasonPayload,
   AdminUser,
   AdminUserListData,
   InviteAdminPayload,
@@ -38,6 +39,13 @@ export async function inviteAdmin(payload: InviteAdminPayload) {
 export async function disableAdmin(adminUserId: string) {
   return adminApiRequest<AdminUser>(`/api/v1/admin/admins/${adminUserId}/disable`, {
     method: "PATCH",
+  });
+}
+
+export async function reactivateAdmin(adminUserId: string, payload: AdminReasonPayload) {
+  return adminApiRequest<AdminUser>(`/api/v1/admin/admins/${adminUserId}/reactivate`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
   });
 }
 
