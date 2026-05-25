@@ -99,6 +99,12 @@ func NannyBookingRoutes(controller *controllers.BookingsController, jwtSecret st
 		},
 		{
 			RouteMethod: api.RouteMethod(fiber.MethodPost),
+			Path:        "/:id/payment/retry",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.RetryPayment,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPost),
 			Path:        "/:id/change-requests",
 			Middlewares: []typings.FiberMiddleware{auth},
 			Handler:     controller.CreateNannyChangeRequest,

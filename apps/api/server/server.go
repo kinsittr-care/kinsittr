@@ -113,6 +113,7 @@ func New(cfg *config.Config) (*fiber.App, error) {
 		cfg.StripeWebhookSecret,
 		cfg.StripeConnectRefreshURL,
 		cfg.StripeConnectReturnURL,
+		notifications_repo.NotificationsRepo,
 	)
 	paymentsController := payments_controller.NewPaymentsController(paymentsPipe)
 

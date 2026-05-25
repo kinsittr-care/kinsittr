@@ -11,6 +11,14 @@ import (
 )
 
 func (p *BookingsPipe) Complete(ctx context.Context, userID, bookingID uuid.UUID) *shared.PipeRes[BookingData] {
+	return p.completeApprovedBooking(ctx, userID, bookingID, messages.Booking_Completed)
+}
+
+func (p *BookingsPipe) RetryPayment(ctx context.Context, userID, bookingID uuid.UUID) *shared.PipeRes[BookingData] {
+	return p.completeApprovedBooking(ctx, userID, bookingID, messages.Booking_Payment_Retried)
+}
+
+func (p *BookingsPipe) completeApprovedBooking(ctx context.Context, userID, bookingID uuid.UUID, successMessage string) *shared.PipeRes[BookingData] {
 	nannyProfile, err := p.profileRepo.GetNannyProfileByUserID(ctx, userID)
 	if err != nil {
 		return pipeError[BookingData](messages.Invalid_Booking_Request)
@@ -53,5 +61,5 @@ func (p *BookingsPipe) Complete(ctx context.Context, userID, bookingID uuid.UUID
 		Body:  "Your nanny marked the booking as completed.",
 		Data:  notificationData(map[string]string{"booking_id": booking.ID.String()}),
 	})
-	return pipeSuccess(messages.Booking_Completed, &data)
+	return pipeSuccess(successMessage, &data)
 }

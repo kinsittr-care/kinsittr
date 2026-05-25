@@ -19,6 +19,11 @@ const (
 	BookingChangeAcceptedNotificationType  NotificationType = "booking_change_accepted"
 	BookingChangeDeclinedNotificationType  NotificationType = "booking_change_declined"
 	MessageReceivedNotificationType        NotificationType = "message_received"
+	PaymentSetupMissingNotificationType    NotificationType = "payment_setup_missing"
+	PaymentSucceededNotificationType       NotificationType = "payment_succeeded"
+	PaymentFailedNotificationType          NotificationType = "payment_failed"
+	PaymentRefundedNotificationType        NotificationType = "payment_refunded"
+	PaymentRefundFailedNotificationType    NotificationType = "payment_refund_failed"
 )
 
 type Notification struct {

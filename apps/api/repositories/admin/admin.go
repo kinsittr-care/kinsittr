@@ -130,6 +130,10 @@ type BookingRecord struct {
 	StripePaymentIntentID string
 	StripeChargeID        string
 	StripeRefundID        string
+	PaymentAmount         float64
+	PlatformFee           float64
+	PaymentCreatedAt      *time.Time
+	PaymentUpdatedAt      *time.Time
 }
 
 type NannyBookingSummary struct {

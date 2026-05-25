@@ -7,6 +7,7 @@ const (
 	Booking_Found                   = "booking_found"
 	Booking_Approved                = "booking_approved"
 	Booking_Completed               = "booking_completed"
+	Booking_Payment_Retried         = "booking_payment_retried"
 	Booking_Change_Request_Created  = "booking_change_request_created"
 	Booking_Change_Request_Listed   = "booking_change_request_listed"
 	Booking_Change_Request_Accepted = "booking_change_request_accepted"

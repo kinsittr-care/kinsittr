@@ -43,12 +43,16 @@ export default function AdminBookingDetailPanel({
         <div><strong style={{ color: A.ink }}>Duration:</strong> {booking.duration} hours</div>
         <div><strong style={{ color: A.ink }}>Total:</strong> {formatCurrency(booking.total_amount)}</div>
         <div><strong style={{ color: A.ink }}>Payment:</strong> {paymentState.label}</div>
+        {booking.payment_amount ? <div><strong style={{ color: A.ink }}>Payment amount:</strong> {formatCurrency(booking.payment_amount)}</div> : null}
+        {booking.platform_fee ? <div><strong style={{ color: A.ink }}>Platform fee:</strong> {formatCurrency(booking.platform_fee)}</div> : null}
         {booking.payment_failure_message && (
           <div style={{ color: A.red }}><strong>Payment issue:</strong> {booking.payment_failure_message}</div>
         )}
         {booking.stripe_payment_intent_id && <div><strong style={{ color: A.ink }}>Intent:</strong> {booking.stripe_payment_intent_id}</div>}
         {booking.stripe_charge_id && <div><strong style={{ color: A.ink }}>Charge:</strong> {booking.stripe_charge_id}</div>}
         {booking.stripe_refund_id && <div><strong style={{ color: A.ink }}>Refund:</strong> {booking.stripe_refund_id}</div>}
+        {booking.payment_created_at && <div><strong style={{ color: A.ink }}>Payment created:</strong> {formatShortDateTime(booking.payment_created_at)}</div>}
+        {booking.payment_updated_at && <div><strong style={{ color: A.ink }}>Payment updated:</strong> {formatShortDateTime(booking.payment_updated_at)}</div>}
       </div>
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>

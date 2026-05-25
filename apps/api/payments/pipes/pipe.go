@@ -1,9 +1,13 @@
 package pipes
 
 import (
+	"context"
+	"encoding/json"
 	"math"
 
+	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/models"
+	notifyrepo "github.com/kinsittr/kinsittr-api/repositories/notifications"
 	paymentrepo "github.com/kinsittr/kinsittr-api/repositories/payments"
 	"github.com/kinsittr/kinsittr-api/repositories/profile"
 	shared "github.com/kinsittr/kinsittr-api/shared"
@@ -14,6 +18,7 @@ type PaymentsPipe struct {
 	repo            paymentrepo.PaymentsRepository
 	profileRepo     profile.ProfileRepository
 	stripe          *stripeapi.Client
+	notifyRepo      notifyrepo.NotificationsRepository
 	webhookSecret   string
 	platformFeeRate float64
 	refreshURL      string
@@ -49,16 +54,43 @@ type PaymentMethodListData struct {
 	Items []PaymentMethodData `json:"items"`
 }
 
-func NewPaymentsPipe(repo paymentrepo.PaymentsRepository, profileRepo profile.ProfileRepository, stripeClient *stripeapi.Client, platformFeeRate float64, webhookSecret, refreshURL, returnURL string) *PaymentsPipe {
+func NewPaymentsPipe(repo paymentrepo.PaymentsRepository, profileRepo profile.ProfileRepository, stripeClient *stripeapi.Client, platformFeeRate float64, webhookSecret, refreshURL, returnURL string, notifyRepo ...notifyrepo.NotificationsRepository) *PaymentsPipe {
+	var notifications notifyrepo.NotificationsRepository
+	if len(notifyRepo) > 0 {
+		notifications = notifyRepo[0]
+	}
 	return &PaymentsPipe{
 		repo:            repo,
 		profileRepo:     profileRepo,
 		stripe:          stripeClient,
+		notifyRepo:      notifications,
 		webhookSecret:   webhookSecret,
 		platformFeeRate: platformFeeRate,
 		refreshURL:      refreshURL,
 		returnURL:       returnURL,
 	}
+}
+
+func paymentNotificationData(values map[string]string) []byte {
+	data, err := json.Marshal(values)
+	if err != nil {
+		return []byte("{}")
+	}
+	return data
+}
+
+func (p *PaymentsPipe) notifyParentProfile(ctx context.Context, parentProfileID uuid.UUID, notification models.Notification) {
+	if p.notifyRepo == nil || parentProfileID == uuid.Nil {
+		return
+	}
+	_, _ = p.notifyRepo.CreateForParentProfileID(ctx, parentProfileID, notification)
+}
+
+func (p *PaymentsPipe) notifyNannyProfile(ctx context.Context, nannyProfileID uuid.UUID, notification models.Notification) {
+	if p.notifyRepo == nil || nannyProfileID == uuid.Nil {
+		return
+	}
+	_, _ = p.notifyRepo.CreateForNannyProfileID(ctx, nannyProfileID, notification)
 }
 
 func failedPayment(ctx paymentrepo.PaymentContext, reason string, feeRate float64) paymentrepo.CreatePaymentParams {

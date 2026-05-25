@@ -24,6 +24,8 @@ export default function BookingRequestCard({
   booking,
   onApprove,
   onDecline,
+  onComplete,
+  onRetryPayment,
   onReview,
   isUpdating = false,
   isHighlighted = false,
@@ -32,14 +34,18 @@ export default function BookingRequestCard({
   booking: BookingRequest;
   onApprove?: () => void;
   onDecline?: () => void;
+  onComplete?: () => void;
+  onRetryPayment?: () => void;
   onReview?: () => void;
   isUpdating?: boolean;
   isHighlighted?: boolean;
   isReviewed?: boolean;
 }) {
   const isPending = booking.status === "pending";
+  const isApproved = booking.status === "approved";
   const isCompleted = booking.status === "completed";
   const paymentState = formatPaymentState(booking.paymentStatus);
+  const canRetryPayment = isApproved && (booking.paymentStatus === "failed" || booking.paymentStatus === "requires_payment_method");
 
   return (
     <div
@@ -112,6 +118,11 @@ export default function BookingRequestCard({
       {!isPending && (
         <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button style={btnGhost}>View details</button>
+          {isApproved && (
+            <button style={btnAccept} onClick={canRetryPayment ? onRetryPayment : onComplete} disabled={isUpdating}>
+              {isUpdating ? "Updating..." : canRetryPayment ? "Retry payment" : "Mark complete"}
+            </button>
+          )}
           {isCompleted && (
             <button style={btnGhost} onClick={onReview} disabled={isReviewed}>
               {isReviewed ? "Reviewed" : "Review parent"}

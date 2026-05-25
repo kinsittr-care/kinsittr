@@ -6,9 +6,11 @@ import { useSearchParams } from "next/navigation";
 import type { Booking, BookingStatus } from "@/src/types/api/api";
 import {
   approveNannyBooking,
+  completeNannyBooking,
   declineNannyBooking,
   listNannyBookings,
   nannyBookingsQueryKey,
+  retryNannyBookingPayment,
 } from "@/src/utils/api/bookings";
 import ReviewDialog from "@/src/components/shared/ReviewDialog";
 import {
@@ -70,9 +72,12 @@ export default function NannyRequestsView() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, action }: { id: string; action: "approve" | "decline" }) => {
+    mutationFn: async ({ id, action }: { id: string; action: "approve" | "decline" | "complete" | "retry-payment" }) => {
       setUpdatingID(id);
-      return action === "approve" ? approveNannyBooking(id) : declineNannyBooking(id);
+      if (action === "approve") return approveNannyBooking(id);
+      if (action === "decline") return declineNannyBooking(id);
+      if (action === "retry-payment") return retryNannyBookingPayment(id);
+      return completeNannyBooking(id);
     },
     onSettled: async () => {
       setUpdatingID(null);
@@ -188,6 +193,8 @@ export default function NannyRequestsView() {
               isHighlighted={r.id === notifiedBookingID}
               onApprove={() => updateMutation.mutate({ id: r.id, action: "approve" })}
               onDecline={() => updateMutation.mutate({ id: r.id, action: "decline" })}
+              onComplete={() => updateMutation.mutate({ id: r.id, action: "complete" })}
+              onRetryPayment={() => updateMutation.mutate({ id: r.id, action: "retry-payment" })}
               onReview={() => setReviewBookingId(r.id)}
               isReviewed={reviewedBookingIds.has(r.id)}
             />

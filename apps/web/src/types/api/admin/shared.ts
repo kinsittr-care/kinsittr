@@ -49,6 +49,10 @@ export interface AdminBooking {
   stripe_payment_intent_id?: string;
   stripe_charge_id?: string;
   stripe_refund_id?: string;
+  payment_amount?: number;
+  platform_fee?: number;
+  payment_created_at?: string;
+  payment_updated_at?: string;
   created_at: string;
   updated_at: string;
 }

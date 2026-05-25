@@ -97,6 +97,10 @@ func scanBookingRecord(row pgx.Row) (BookingRecord, error) {
 		&record.StripePaymentIntentID,
 		&record.StripeChargeID,
 		&record.StripeRefundID,
+		&record.PaymentAmount,
+		&record.PlatformFee,
+		&record.PaymentCreatedAt,
+		&record.PaymentUpdatedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return BookingRecord{}, nil
@@ -112,7 +116,11 @@ const bookingRecordSelect = `
 	       COALESCE(bp.failure_message, ''),
 	       COALESCE(bp.stripe_payment_intent_id, ''),
 	       COALESCE(bp.stripe_charge_id, ''),
-	       COALESCE(bp.stripe_refund_id, '')
+	       COALESCE(bp.stripe_refund_id, ''),
+	       COALESCE(bp.amount, 0),
+	       COALESCE(bp.platform_fee, 0),
+	       bp.created_at,
+	       bp.updated_at
 	FROM bookings b
 	INNER JOIN nanny_profiles np ON np.id = b.nanny_profile_id
 	INNER JOIN parent_profiles pp ON pp.id = b.parent_profile_id

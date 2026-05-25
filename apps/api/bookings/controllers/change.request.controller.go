@@ -160,6 +160,23 @@ func (c *BookingsController) Complete(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "message": string(res.Message), "data": res.Data})
 }
 
+func (c *BookingsController) RetryPayment(ctx *fiber.Ctx) error {
+	userID, _, ok := bookingAuth(ctx, models.NannyUserRole)
+	if !ok {
+		return nil
+	}
+	bookingID, ok := bookingIDParam(ctx, "id")
+	if !ok {
+		return nil
+	}
+
+	res := c.pipe.RetryPayment(ctx.Context(), userID, bookingID)
+	if !res.Success {
+		return bookingPipeError(ctx, string(res.Message))
+	}
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "message": string(res.Message), "data": res.Data})
+}
+
 func bookingAuth(ctx *fiber.Ctx, expectedRole models.UserRole) (uuid.UUID, models.UserRole, bool) {
 	userID, ok := ctx.Locals("auth.user_id").(uuid.UUID)
 	if !ok || userID == uuid.Nil {

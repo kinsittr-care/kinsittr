@@ -21,10 +21,12 @@ func (p *PaymentsPipe) EnsureBookingPaymentReady(ctx context.Context, nannyProfi
 		return err
 	}
 	if paymentCtx.StripeCustomerID == "" || paymentCtx.StripeAccountID == "" || !paymentCtx.StripeOnboarded {
+		p.notifyPaymentSetupMissing(ctx, paymentCtx)
 		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
 	}
 	_, err = p.resolvePaymentMethod(ctx, paymentCtx)
 	if err != nil {
+		p.notifyPaymentSetupMissing(ctx, paymentCtx)
 		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
 	}
 	return nil
@@ -40,11 +42,13 @@ func (p *PaymentsPipe) ChargeCompletedBooking(ctx context.Context, nannyProfileI
 	}
 	if paymentCtx.StripeCustomerID == "" || paymentCtx.StripeAccountID == "" || !paymentCtx.StripeOnboarded {
 		_, _ = p.repo.UpsertBookingPayment(ctx, failedPayment(paymentCtx, "missing_stripe_setup", p.platformFeeRate))
+		p.notifyPaymentSetupMissing(ctx, paymentCtx)
 		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
 	}
 	method, err := p.resolvePaymentMethod(ctx, paymentCtx)
 	if err != nil {
 		_, _ = p.repo.UpsertBookingPayment(ctx, failedPayment(paymentCtx, "missing_payment_method", p.platformFeeRate))
+		p.notifyPaymentSetupMissing(ctx, paymentCtx)
 		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
 	}
 	amountCents := cents(paymentCtx.Amount)
@@ -83,8 +87,10 @@ func (p *PaymentsPipe) ChargeCompletedBooking(ctx context.Context, nannyProfileI
 		return upsertErr
 	}
 	if status != models.PaymentSucceeded && status != models.PaymentProcessing {
+		p.notifyPaymentFailed(ctx, paymentCtx, failure)
 		return errors.New(booking_messages.Booking_Payment_Failed)
 	}
+	p.notifyPaymentSucceeded(ctx, paymentCtx)
 	return nil
 }
 
@@ -101,9 +107,14 @@ func (p *PaymentsPipe) RefundBooking(ctx context.Context, bookingID uuid.UUID) e
 	}
 	refund, err := p.stripe.CreateRefund(ctx, payment.StripeChargeID, "booking-refund-"+bookingID.String())
 	if err != nil {
+		p.notifyRefundFailed(ctx, payment)
 		return err
 	}
-	return p.repo.UpdatePaymentRefundedByChargeID(ctx, payment.StripeChargeID, refund.ID)
+	if err := p.repo.UpdatePaymentRefundedByChargeID(ctx, payment.StripeChargeID, refund.ID); err != nil {
+		return err
+	}
+	p.notifyRefundSucceeded(ctx, payment)
+	return nil
 }
 
 func (p *PaymentsPipe) resolvePaymentMethod(ctx context.Context, paymentCtx payment_repo.PaymentContext) (stripe_api.PaymentMethod, error) {
@@ -115,4 +126,80 @@ func (p *PaymentsPipe) resolvePaymentMethod(ctx context.Context, paymentCtx paym
 		return stripe_api.PaymentMethod{ID: customer.InvoiceSettings.DefaultPaymentMethod}, nil
 	}
 	return p.stripe.FirstCardPaymentMethod(ctx, paymentCtx.StripeCustomerID)
+}
+
+func (p *PaymentsPipe) notifyPaymentSetupMissing(ctx context.Context, paymentCtx payment_repo.PaymentContext) {
+	data := paymentNotificationData(map[string]string{"booking_id": paymentCtx.BookingID.String()})
+	p.notifyParentProfile(ctx, paymentCtx.ParentProfileID, models.Notification{
+		Type:  models.PaymentSetupMissingNotificationType,
+		Title: "Payment setup needed",
+		Body:  "Add or update your saved card so this booking can move forward.",
+		Data:  data,
+	})
+	p.notifyNannyProfile(ctx, paymentCtx.NannyProfileID, models.Notification{
+		Type:  models.PaymentSetupMissingNotificationType,
+		Title: "Payment setup missing",
+		Body:  "This booking is blocked until the parent's payment setup is ready.",
+		Data:  data,
+	})
+}
+
+func (p *PaymentsPipe) notifyPaymentSucceeded(ctx context.Context, paymentCtx payment_repo.PaymentContext) {
+	data := paymentNotificationData(map[string]string{"booking_id": paymentCtx.BookingID.String()})
+	p.notifyParentProfile(ctx, paymentCtx.ParentProfileID, models.Notification{
+		Type:  models.PaymentSucceededNotificationType,
+		Title: "Payment successful",
+		Body:  "Your booking payment was processed successfully.",
+		Data:  data,
+	})
+	p.notifyNannyProfile(ctx, paymentCtx.NannyProfileID, models.Notification{
+		Type:  models.PaymentSucceededNotificationType,
+		Title: "Booking payment received",
+		Body:  "Payment for this completed booking was processed successfully.",
+		Data:  data,
+	})
+}
+
+func (p *PaymentsPipe) notifyPaymentFailed(ctx context.Context, paymentCtx payment_repo.PaymentContext, reason string) {
+	if reason == "" {
+		reason = "The saved payment method could not be charged."
+	}
+	data := paymentNotificationData(map[string]string{"booking_id": paymentCtx.BookingID.String()})
+	p.notifyParentProfile(ctx, paymentCtx.ParentProfileID, models.Notification{
+		Type:  models.PaymentFailedNotificationType,
+		Title: "Payment failed",
+		Body:  reason,
+		Data:  data,
+	})
+	p.notifyNannyProfile(ctx, paymentCtx.NannyProfileID, models.Notification{
+		Type:  models.PaymentFailedNotificationType,
+		Title: "Booking payment failed",
+		Body:  "The parent needs to update their payment method before this booking can be completed.",
+		Data:  data,
+	})
+}
+
+func (p *PaymentsPipe) notifyRefundSucceeded(ctx context.Context, payment models.BookingPayment) {
+	p.notifyParentProfile(ctx, payment.ParentProfileID, models.Notification{
+		Type:  models.PaymentRefundedNotificationType,
+		Title: "Payment refunded",
+		Body:  "A refund was issued for your cancelled booking.",
+		Data:  paymentNotificationData(map[string]string{"booking_id": payment.BookingID.String()}),
+	})
+}
+
+func (p *PaymentsPipe) notifyRefundFailed(ctx context.Context, payment models.BookingPayment) {
+	data := paymentNotificationData(map[string]string{"booking_id": payment.BookingID.String()})
+	p.notifyParentProfile(ctx, payment.ParentProfileID, models.Notification{
+		Type:  models.PaymentRefundFailedNotificationType,
+		Title: "Refund issue",
+		Body:  "A refund for your cancelled booking needs manual review.",
+		Data:  data,
+	})
+	p.notifyNannyProfile(ctx, payment.NannyProfileID, models.Notification{
+		Type:  models.PaymentRefundFailedNotificationType,
+		Title: "Refund issue",
+		Body:  "A refund for this cancelled booking needs manual review.",
+		Data:  data,
+	})
 }
