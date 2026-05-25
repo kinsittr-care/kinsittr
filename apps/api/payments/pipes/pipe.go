@@ -36,6 +36,19 @@ type SetupIntentData struct {
 	ClientSecret string `json:"client_secret"`
 }
 
+type PaymentMethodData struct {
+	ID        string `json:"id"`
+	Brand     string `json:"brand"`
+	Last4     string `json:"last4"`
+	ExpMonth  int    `json:"exp_month"`
+	ExpYear   int    `json:"exp_year"`
+	IsDefault bool   `json:"is_default"`
+}
+
+type PaymentMethodListData struct {
+	Items []PaymentMethodData `json:"items"`
+}
+
 func NewPaymentsPipe(repo paymentrepo.PaymentsRepository, profileRepo profile.ProfileRepository, stripeClient *stripeapi.Client, platformFeeRate float64, webhookSecret, refreshURL, returnURL string) *PaymentsPipe {
 	return &PaymentsPipe{
 		repo:            repo,

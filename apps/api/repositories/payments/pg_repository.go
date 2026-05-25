@@ -23,7 +23,7 @@ func (r *pgRepository) GetNannyPaymentContext(ctx context.Context, nannyProfileI
 	err := r.db.QueryRow(ctx, `
 		SELECT b.id, b.parent_profile_id, b.nanny_profile_id,
 		       pu.id, nu.id,
-		       pu.email, pp.display_name, COALESCE(pp.stripe_customer_id, ''),
+		       pu.email, pp.display_name, COALESCE(pp.stripe_customer_id, ''), COALESCE(pp.stripe_default_payment_method_id, ''),
 		       nu.email, np.display_name, COALESCE(np.stripe_account_id, ''), np.stripe_onboarded,
 		       b.total_amount, np.currency
 		FROM bookings b
@@ -35,12 +35,54 @@ func (r *pgRepository) GetNannyPaymentContext(ctx context.Context, nannyProfileI
 	`, bookingID, nannyProfileID).Scan(
 		&data.BookingID, &data.ParentProfileID, &data.NannyProfileID,
 		&data.ParentUserID, &data.NannyUserID,
-		&data.ParentEmail, &data.ParentDisplayName, &data.StripeCustomerID,
+		&data.ParentEmail, &data.ParentDisplayName, &data.StripeCustomerID, &data.StripeDefaultPaymentMethodID,
 		&data.NannyEmail, &data.NannyDisplayName, &data.StripeAccountID, &data.StripeOnboarded,
 		&data.Amount, &data.Currency,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return PaymentContext{}, nil
+	}
+	return data, err
+}
+
+func (r *pgRepository) GetParentBillingContext(ctx context.Context, userID uuid.UUID) (ParentBillingContext, error) {
+	var data ParentBillingContext
+	err := r.db.QueryRow(ctx, `
+		SELECT pp.id, u.id, u.email, pp.display_name, COALESCE(pp.stripe_customer_id, ''), COALESCE(pp.stripe_default_payment_method_id, '')
+		FROM parent_profiles pp
+		INNER JOIN users u ON u.id = pp.user_id
+		WHERE pp.user_id = $1
+	`, userID).Scan(
+		&data.ParentProfileID,
+		&data.UserID,
+		&data.Email,
+		&data.DisplayName,
+		&data.StripeCustomerID,
+		&data.StripeDefaultPaymentMethodID,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ParentBillingContext{}, nil
+	}
+	return data, err
+}
+
+func (r *pgRepository) GetNannyConnectContext(ctx context.Context, userID uuid.UUID) (NannyConnectContext, error) {
+	var data NannyConnectContext
+	err := r.db.QueryRow(ctx, `
+		SELECT np.id, u.id, u.email, np.display_name, COALESCE(np.stripe_account_id, ''), np.stripe_onboarded
+		FROM nanny_profiles np
+		INNER JOIN users u ON u.id = np.user_id
+		WHERE np.user_id = $1
+	`, userID).Scan(
+		&data.NannyProfileID,
+		&data.UserID,
+		&data.Email,
+		&data.DisplayName,
+		&data.StripeAccountID,
+		&data.StripeOnboarded,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return NannyConnectContext{}, nil
 	}
 	return data, err
 }
@@ -69,6 +111,15 @@ func (r *pgRepository) UpdateParentStripeCustomer(ctx context.Context, parentPro
 		SET stripe_customer_id = $1, updated_at = NOW()
 		WHERE id = $2
 	`, customerID, parentProfileID)
+	return err
+}
+
+func (r *pgRepository) UpdateParentDefaultPaymentMethod(ctx context.Context, parentProfileID uuid.UUID, paymentMethodID string) error {
+	_, err := r.db.Exec(ctx, `
+		UPDATE parent_profiles
+		SET stripe_default_payment_method_id = $1, updated_at = NOW()
+		WHERE id = $2
+	`, paymentMethodID, parentProfileID)
 	return err
 }
 

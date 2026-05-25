@@ -23,7 +23,7 @@ func (p *PaymentsPipe) EnsureBookingPaymentReady(ctx context.Context, nannyProfi
 	if paymentCtx.StripeCustomerID == "" || paymentCtx.StripeAccountID == "" || !paymentCtx.StripeOnboarded {
 		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
 	}
-	_, err = p.stripe.FirstCardPaymentMethod(ctx, paymentCtx.StripeCustomerID)
+	_, err = p.resolvePaymentMethod(ctx, paymentCtx)
 	if err != nil {
 		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
 	}
@@ -42,7 +42,7 @@ func (p *PaymentsPipe) ChargeCompletedBooking(ctx context.Context, nannyProfileI
 		_, _ = p.repo.UpsertBookingPayment(ctx, failedPayment(paymentCtx, "missing_stripe_setup", p.platformFeeRate))
 		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
 	}
-	method, err := p.stripe.FirstCardPaymentMethod(ctx, paymentCtx.StripeCustomerID)
+	method, err := p.resolvePaymentMethod(ctx, paymentCtx)
 	if err != nil {
 		_, _ = p.repo.UpsertBookingPayment(ctx, failedPayment(paymentCtx, "missing_payment_method", p.platformFeeRate))
 		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
@@ -99,9 +99,20 @@ func (p *PaymentsPipe) RefundBooking(ctx context.Context, bookingID uuid.UUID) e
 	if payment.Status != models.PaymentSucceeded && payment.Status != models.PaymentProcessing {
 		return nil
 	}
-	refund, err := p.stripe.CreateRefund(ctx, payment.StripeChargeID)
+	refund, err := p.stripe.CreateRefund(ctx, payment.StripeChargeID, "booking-refund-"+bookingID.String())
 	if err != nil {
 		return err
 	}
 	return p.repo.UpdatePaymentRefundedByChargeID(ctx, payment.StripeChargeID, refund.ID)
+}
+
+func (p *PaymentsPipe) resolvePaymentMethod(ctx context.Context, paymentCtx payment_repo.PaymentContext) (stripe_api.PaymentMethod, error) {
+	if paymentCtx.StripeDefaultPaymentMethodID != "" {
+		return stripe_api.PaymentMethod{ID: paymentCtx.StripeDefaultPaymentMethodID}, nil
+	}
+	customer, err := p.stripe.GetCustomer(ctx, paymentCtx.StripeCustomerID)
+	if err == nil && customer.InvoiceSettings.DefaultPaymentMethod != "" {
+		return stripe_api.PaymentMethod{ID: customer.InvoiceSettings.DefaultPaymentMethod}, nil
+	}
+	return p.stripe.FirstCardPaymentMethod(ctx, paymentCtx.StripeCustomerID)
 }

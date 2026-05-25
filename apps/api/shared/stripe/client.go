@@ -36,7 +36,10 @@ type AccountLink struct {
 }
 
 type Customer struct {
-	ID string `json:"id"`
+	ID              string `json:"id"`
+	InvoiceSettings struct {
+		DefaultPaymentMethod string `json:"default_payment_method"`
+	} `json:"invoice_settings"`
 }
 
 type SetupIntent struct {
@@ -45,7 +48,14 @@ type SetupIntent struct {
 }
 
 type PaymentMethod struct {
-	ID string `json:"id"`
+	ID   string `json:"id"`
+	Type string `json:"type"`
+	Card struct {
+		Brand    string `json:"brand"`
+		Last4    string `json:"last4"`
+		ExpMonth int    `json:"exp_month"`
+		ExpYear  int    `json:"exp_year"`
+	} `json:"card"`
 }
 
 type PaymentIntent struct {
@@ -79,14 +89,14 @@ func (c *Client) Configured() bool {
 	return strings.TrimSpace(c.secretKey) != ""
 }
 
-func (c *Client) CreateExpressAccount(ctx context.Context, email string) (Account, error) {
+func (c *Client) CreateExpressAccount(ctx context.Context, email, idempotencyKey string) (Account, error) {
 	values := url.Values{}
 	values.Set("type", "express")
 	values.Set("country", "CA")
 	values.Set("email", email)
 	values.Set("capabilities[card_payments][requested]", "true")
 	values.Set("capabilities[transfers][requested]", "true")
-	return postForm[Account](ctx, c, "/accounts", values)
+	return postForm[Account](ctx, c, "/accounts", values, requestOptions{IdempotencyKey: idempotencyKey})
 }
 
 func (c *Client) CreateAccountLink(ctx context.Context, accountID, refreshURL, returnURL string) (AccountLink, error) {
@@ -98,11 +108,11 @@ func (c *Client) CreateAccountLink(ctx context.Context, accountID, refreshURL, r
 	return postForm[AccountLink](ctx, c, "/account_links", values)
 }
 
-func (c *Client) CreateCustomer(ctx context.Context, email, name string) (Customer, error) {
+func (c *Client) CreateCustomer(ctx context.Context, email, name, idempotencyKey string) (Customer, error) {
 	values := url.Values{}
 	values.Set("email", email)
 	values.Set("name", name)
-	return postForm[Customer](ctx, c, "/customers", values)
+	return postForm[Customer](ctx, c, "/customers", values, requestOptions{IdempotencyKey: idempotencyKey})
 }
 
 func (c *Client) CreateSetupIntent(ctx context.Context, customerID string) (SetupIntent, error) {
@@ -114,20 +124,46 @@ func (c *Client) CreateSetupIntent(ctx context.Context, customerID string) (Setu
 }
 
 func (c *Client) FirstCardPaymentMethod(ctx context.Context, customerID string) (PaymentMethod, error) {
+	methods, err := c.ListCardPaymentMethods(ctx, customerID)
+	if err != nil {
+		return PaymentMethod{}, err
+	}
+	if len(methods) == 0 {
+		return PaymentMethod{}, errors.New("stripe_payment_method_not_found")
+	}
+	return methods[0], nil
+}
+
+func (c *Client) ListCardPaymentMethods(ctx context.Context, customerID string) ([]PaymentMethod, error) {
 	values := url.Values{}
 	values.Set("customer", customerID)
 	values.Set("type", "card")
-	values.Set("limit", "1")
+	values.Set("limit", "100")
 	var response struct {
 		Data []PaymentMethod `json:"data"`
 	}
 	if err := getForm(ctx, c, "/payment_methods", values, &response); err != nil {
-		return PaymentMethod{}, err
+		return nil, err
 	}
-	if len(response.Data) == 0 {
-		return PaymentMethod{}, errors.New("stripe_payment_method_not_found")
+	return response.Data, nil
+}
+
+func (c *Client) GetCustomer(ctx context.Context, customerID string) (Customer, error) {
+	var customer Customer
+	if err := getForm(ctx, c, "/customers/"+url.PathEscape(customerID), nil, &customer); err != nil {
+		return Customer{}, err
 	}
-	return response.Data[0], nil
+	return customer, nil
+}
+
+func (c *Client) UpdateCustomerDefaultPaymentMethod(ctx context.Context, customerID, paymentMethodID string) (Customer, error) {
+	values := url.Values{}
+	values.Set("invoice_settings[default_payment_method]", paymentMethodID)
+	return postForm[Customer](ctx, c, "/customers/"+url.PathEscape(customerID), values)
+}
+
+func (c *Client) DetachPaymentMethod(ctx context.Context, paymentMethodID string) (PaymentMethod, error) {
+	return postForm[PaymentMethod](ctx, c, "/payment_methods/"+url.PathEscape(paymentMethodID)+"/detach", url.Values{})
 }
 
 func (c *Client) CreateDestinationPaymentIntent(ctx context.Context, params PaymentIntentParams) (PaymentIntent, error) {
@@ -141,13 +177,13 @@ func (c *Client) CreateDestinationPaymentIntent(ctx context.Context, params Paym
 	values.Set("application_fee_amount", strconv.FormatInt(params.ApplicationFeeCents, 10))
 	values.Set("transfer_data[destination]", params.DestinationAccountID)
 	values.Set("metadata[booking_id]", params.BookingID)
-	return postForm[PaymentIntent](ctx, c, "/payment_intents", values)
+	return postForm[PaymentIntent](ctx, c, "/payment_intents", values, requestOptions{IdempotencyKey: "booking-charge-" + params.BookingID})
 }
 
-func (c *Client) CreateRefund(ctx context.Context, chargeID string) (Refund, error) {
+func (c *Client) CreateRefund(ctx context.Context, chargeID, idempotencyKey string) (Refund, error) {
 	values := url.Values{}
 	values.Set("charge", chargeID)
-	return postForm[Refund](ctx, c, "/refunds", values)
+	return postForm[Refund](ctx, c, "/refunds", values, requestOptions{IdempotencyKey: idempotencyKey})
 }
 
 type PaymentIntentParams struct {
@@ -200,9 +236,13 @@ func parseSignatureHeader(header string) (string, string) {
 	return timestamp, signature
 }
 
-func postForm[T any](ctx context.Context, c *Client, path string, values url.Values) (T, error) {
+type requestOptions struct {
+	IdempotencyKey string
+}
+
+func postForm[T any](ctx context.Context, c *Client, path string, values url.Values, opts ...requestOptions) (T, error) {
 	var output T
-	if err := c.request(ctx, http.MethodPost, path, values, &output); err != nil {
+	if err := c.request(ctx, http.MethodPost, path, values, &output, mergeRequestOptions(opts...)); err != nil {
 		return output, err
 	}
 	return output, nil
@@ -213,10 +253,20 @@ func getForm(ctx context.Context, c *Client, path string, values url.Values, out
 	if encoded := values.Encode(); encoded != "" {
 		target += "?" + encoded
 	}
-	return c.request(ctx, http.MethodGet, target, nil, output)
+	return c.request(ctx, http.MethodGet, target, nil, output, requestOptions{})
 }
 
-func (c *Client) request(ctx context.Context, method, path string, values url.Values, output any) error {
+func mergeRequestOptions(opts ...requestOptions) requestOptions {
+	var merged requestOptions
+	for _, opt := range opts {
+		if opt.IdempotencyKey != "" {
+			merged.IdempotencyKey = opt.IdempotencyKey
+		}
+	}
+	return merged
+}
+
+func (c *Client) request(ctx context.Context, method, path string, values url.Values, output any, opts requestOptions) error {
 	if !c.Configured() {
 		return errors.New("stripe_not_configured")
 	}
@@ -229,6 +279,9 @@ func (c *Client) request(ctx context.Context, method, path string, values url.Va
 		return err
 	}
 	req.SetBasicAuth(c.secretKey, "")
+	if opts.IdempotencyKey != "" {
+		req.Header.Set("Idempotency-Key", opts.IdempotencyKey)
+	}
 	if values != nil {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}

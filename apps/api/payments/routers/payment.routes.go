@@ -35,6 +35,24 @@ func ParentBillingRoutes(controller *controllers.PaymentsController, jwtSecret s
 			Middlewares: []typings.FiberMiddleware{auth},
 			Handler:     controller.CreateParentSetupIntent,
 		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/payment-methods",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.ListParentPaymentMethods,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPut),
+			Path:        "/payment-methods/:id",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.UpdateParentPaymentMethod,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodDelete),
+			Path:        "/payment-methods/:id",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.DeleteParentPaymentMethod,
+		},
 	}
 }
 

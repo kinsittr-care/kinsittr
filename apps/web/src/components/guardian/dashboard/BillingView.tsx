@@ -1,9 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import SectionCard from "../profile/SectionCard";
-import { createParentSetupIntent } from "@/src/utils/api/payments";
+import {
+  createParentSetupIntent,
+  deleteParentPaymentMethod,
+  listParentPaymentMethods,
+  parentPaymentMethodsQueryKey,
+  setDefaultParentPaymentMethod,
+} from "@/src/utils/api/payments";
 
 const labelStyle: React.CSSProperties = {
   fontSize: 12,
@@ -42,7 +48,7 @@ type StripeInstance = {
   confirmCardSetup: (
     clientSecret: string,
     data: { payment_method: { card: StripeCardElement } },
-  ) => Promise<{ error?: { message?: string } }>;
+  ) => Promise<{ error?: { message?: string }; setupIntent?: { payment_method?: string } }>;
 };
 
 declare global {
@@ -75,13 +81,33 @@ function loadStripeScript() {
 }
 
 export default function BillingView() {
+  const queryClient = useQueryClient();
   const [editPayment, setEditPayment] = useState(false);
-  const [hasSavedCard, setHasSavedCard] = useState(false);
   const [cardError, setCardError] = useState("");
   const [cardSuccess, setCardSuccess] = useState("");
   const cardElementRef = useRef<StripeCardElement | null>(null);
   const stripeRef = useRef<StripeInstance | null>(null);
   const setupMutation = useMutation({ mutationFn: createParentSetupIntent });
+  const methodsQuery = useQuery({
+    queryKey: parentPaymentMethodsQueryKey,
+    queryFn: async () => listParentPaymentMethods(),
+  });
+  const setDefaultMutation = useMutation({
+    mutationFn: setDefaultParentPaymentMethod,
+    onSuccess: async () => {
+      setCardSuccess("Default card updated.");
+      await queryClient.invalidateQueries({ queryKey: parentPaymentMethodsQueryKey });
+    },
+  });
+  const deleteMutation = useMutation({
+    mutationFn: deleteParentPaymentMethod,
+    onSuccess: async () => {
+      setCardSuccess("Card removed.");
+      await queryClient.invalidateQueries({ queryKey: parentPaymentMethodsQueryKey });
+    },
+  });
+  const paymentMethods = methodsQuery.data?.data?.items ?? [];
+  const hasSavedCard = paymentMethods.length > 0;
 
   useEffect(() => {
     let active = true;
@@ -144,7 +170,11 @@ export default function BillingView() {
         setCardError(result.error.message ?? "Unable to save card.");
         return;
       }
-      setHasSavedCard(true);
+      const paymentMethodID = result.setupIntent?.payment_method;
+      if (paymentMethodID) {
+        await setDefaultParentPaymentMethod(paymentMethodID);
+      }
+      await queryClient.invalidateQueries({ queryKey: parentPaymentMethodsQueryKey });
       setCardSuccess("Card saved successfully.");
       setEditPayment(false);
     } catch (error) {
@@ -184,7 +214,7 @@ export default function BillingView() {
                 marginBottom: 16,
               }}
             >
-              <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex flex-col md:flex-row gap-4" style={{ flex: 1 }}>
                 <div
                   style={{
                     width: 52,
@@ -204,31 +234,56 @@ export default function BillingView() {
                   VISA
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 15, letterSpacing: "0.06em" }}>
-                    {hasSavedCard ? "Saved card on file" : "No saved card yet"}
-                  </div>
-                  <div style={{ fontSize: 13, color: "var(--faint)", marginTop: 2 }}>
-                    {hasSavedCard ? "Stripe stores the card securely for booking payments." : "Add a card before requesting paid bookings."}
-                  </div>
+                  {methodsQuery.isLoading ? (
+                    <div style={{ fontSize: 13, color: "var(--faint)" }}>Loading saved cards...</div>
+                  ) : hasSavedCard ? (
+                    <div style={{ display: "grid", gap: 10 }}>
+                      {paymentMethods.map((method) => (
+                        <div key={method.id} className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: 15, letterSpacing: "0.04em" }}>
+                              {method.brand.toUpperCase()} •••• {method.last4}
+                            </div>
+                            <div style={{ fontSize: 13, color: "var(--faint)", marginTop: 2 }}>
+                              Expires {method.exp_month}/{method.exp_year}
+                            </div>
+                          </div>
+                          {method.is_default ? (
+                            <span style={{ color: "var(--teal)", fontSize: 12.5, fontWeight: 600 }}>Default</span>
+                          ) : (
+                            <button className="btn-outline" style={{ fontSize: 12, padding: "6px 10px" }} onClick={() => setDefaultMutation.mutate(method.id)}>
+                              Set default
+                            </button>
+                          )}
+                          <button
+                            className="btn-outline"
+                            style={{ fontSize: 12, padding: "6px 10px", color: "#c0392b" }}
+                            onClick={() => deleteMutation.mutate(method.id)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ fontWeight: 600, fontSize: 15, letterSpacing: "0.06em" }}>No saved card yet</div>
+                      <div style={{ fontSize: 13, color: "var(--faint)", marginTop: 2 }}>
+                        Add a card before requesting paid bookings.
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
-              {hasSavedCard && (
-                <span
-                  style={{
-                    background: "var(--teal-lt)",
-                    color: "var(--teal)",
-                    border: "1px solid var(--teal-mid)",
-                    borderRadius: 20,
-                    padding: "3px 10px",
-                    fontSize: 12,
-                    fontWeight: 500,
-                  }}
-                >
-                  ✓ Default
-                </span>
-              )}
             </div>
             {cardSuccess && <p style={{ color: "var(--teal)", fontSize: 13, marginBottom: 14 }}>{cardSuccess}</p>}
+            {(methodsQuery.error || setDefaultMutation.error || deleteMutation.error) && (
+              <p style={{ color: "#c0392b", fontSize: 13, marginBottom: 14 }}>
+                {[methodsQuery.error, setDefaultMutation.error, deleteMutation.error].find(Boolean) instanceof Error
+                  ? ([methodsQuery.error, setDefaultMutation.error, deleteMutation.error].find(Boolean) as Error).message
+                  : "Unable to update payment methods."}
+              </p>
+            )}
             <div className="flex flex-col md:flex-row gap-[10px]">
               <button
                 className="btn-outline"

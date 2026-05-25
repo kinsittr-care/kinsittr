@@ -12,22 +12,19 @@ func (p *PaymentsPipe) CreateNannyConnectLink(ctx context.Context, userID uuid.U
 	if p.stripe == nil || !p.stripe.Configured() {
 		return pipeError[StripeConnectData](messages.Stripe_Not_Configured)
 	}
-	profile, err := p.profileRepo.GetNannyProfileByUserID(ctx, userID)
-	if err != nil || profile.ID == uuid.Nil {
+	connect, err := p.repo.GetNannyConnectContext(ctx, userID)
+	if err != nil || connect.NannyProfileID == uuid.Nil {
 		return pipeError[StripeConnectData](messages.Payment_Profile_Not_Found)
 	}
-	accountID := ""
-	if profile.StripeAccountID != nil {
-		accountID = *profile.StripeAccountID
-	}
+	accountID := connect.StripeAccountID
 	if accountID == "" {
-		account, err := p.stripe.CreateExpressAccount(ctx, "")
+		account, err := p.stripe.CreateExpressAccount(ctx, connect.Email, "nanny-connect-"+connect.NannyProfileID.String())
 		if err != nil {
 			return pipeError[StripeConnectData](messages.Invalid_Payment_Request)
 		}
 		accountID = account.ID
 		onboarded := account.ChargesEnabled && account.PayoutsEnabled && account.DetailsSubmitted
-		if err := p.repo.UpdateNannyStripeAccount(ctx, profile.ID, accountID, onboarded); err != nil {
+		if err := p.repo.UpdateNannyStripeAccount(ctx, connect.NannyProfileID, accountID, onboarded); err != nil {
 			return pipeError[StripeConnectData](messages.Invalid_Payment_Request)
 		}
 	}
@@ -35,7 +32,7 @@ func (p *PaymentsPipe) CreateNannyConnectLink(ctx context.Context, userID uuid.U
 	if err != nil {
 		return pipeError[StripeConnectData](messages.Invalid_Payment_Request)
 	}
-	data := StripeConnectData{AccountID: accountID, URL: link.URL, Onboarded: profile.StripeOnboarded}
+	data := StripeConnectData{AccountID: accountID, URL: link.URL, Onboarded: connect.StripeOnboarded}
 	return pipeSuccess(messages.Stripe_Onboarding_Created, &data)
 }
 
