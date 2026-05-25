@@ -22,6 +22,21 @@ export class ApiRequestError extends Error {
   }
 }
 
+function formatApiErrorMessage(message: string) {
+  switch (message) {
+    case "booking_payment_setup_missing":
+      return "Payment setup is missing. The parent needs a saved card and the nanny needs completed Stripe setup.";
+    case "booking_payment_failed":
+      return "Payment failed, so the booking could not be completed.";
+    case "admin_booking_payment_failed":
+      return "Payment failed, so the admin completion could not be applied.";
+    case "admin_booking_refund_failed":
+      return "The booking was cancelled, but the refund failed. Review the Stripe payment before notifying participants.";
+    default:
+      return message;
+  }
+}
+
 interface ApiRequestOptions {
   requiresAuth?: boolean;
   refreshPath?: string;
@@ -108,7 +123,7 @@ export async function apiRequest<TResponse>(
 
   if (!response.ok) {
     throw new ApiRequestError(
-      payload.message || "Something went wrong while processing your request.",
+      formatApiErrorMessage(payload.message || "Something went wrong while processing your request."),
     );
   }
 

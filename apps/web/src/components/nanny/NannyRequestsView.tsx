@@ -46,6 +46,8 @@ function toBookingRequest(booking: Booking): BookingRequest {
     hours: booking.duration,
     amount: formatCurrency(booking.total_amount),
     status: booking.status === "cancelled" ? "neutral" : booking.status,
+    paymentStatus: booking.payment_status,
+    paymentFailure: booking.payment_failure_message,
     children: booking.parent_city
       ? `${booking.parent_city}${booking.parent_province ? `, ${booking.parent_province}` : ""}`
       : "Family details",
@@ -162,6 +164,11 @@ export default function NannyRequestsView() {
 
       {/* Cards */}
       <div className="flex flex-col gap-4">
+        {updateMutation.error && (
+          <p className="text-nanny-rose text-[14px] m-0">
+            {updateMutation.error instanceof Error ? updateMutation.error.message : "Unable to update booking."}
+          </p>
+        )}
         {bookingsQuery.isLoading ? (
           <p className="text-center py-14 text-nanny-ink-faint text-[15px]">Loading requests...</p>
         ) : bookingsQuery.isError ? (

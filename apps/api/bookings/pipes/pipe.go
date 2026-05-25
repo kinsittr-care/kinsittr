@@ -28,6 +28,11 @@ type BookingData struct {
 	Duration          int                  `json:"duration"`
 	TotalAmount       float64              `json:"total_amount"`
 	Status            models.BookingStatus `json:"status"`
+	PaymentStatus     string               `json:"payment_status,omitempty"`
+	PaymentFailure    string               `json:"payment_failure_message,omitempty"`
+	PaymentIntentID   string               `json:"stripe_payment_intent_id,omitempty"`
+	StripeChargeID    string               `json:"stripe_charge_id,omitempty"`
+	StripeRefundID    string               `json:"stripe_refund_id,omitempty"`
 	CreatedAt         time.Time            `json:"created_at"`
 	UpdatedAt         time.Time            `json:"updated_at"`
 }
@@ -119,6 +124,11 @@ func toBookingRecordData(booking bookings.BookingRecord) BookingData {
 	data.NannyDisplayName = booking.NannyDisplayName
 	data.NannyCity = booking.NannyCity
 	data.NannyProvince = booking.NannyProvince
+	data.PaymentStatus = booking.PaymentStatus
+	data.PaymentFailure = booking.PaymentFailureMessage
+	data.PaymentIntentID = booking.StripePaymentIntentID
+	data.StripeChargeID = booking.StripeChargeID
+	data.StripeRefundID = booking.StripeRefundID
 	return data
 }
 

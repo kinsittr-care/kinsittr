@@ -24,6 +24,8 @@ func adminPipeError(ctx *fiber.Ctx, message string) error {
 		status = fiber.StatusConflict
 	case messages.Admin_Booking_Payment_Failed:
 		status = fiber.StatusPaymentRequired
+	case messages.Admin_Booking_Refund_Failed:
+		status = fiber.StatusBadGateway
 	}
 	return ctx.Status(status).JSON(fiber.Map{
 		"success": false,

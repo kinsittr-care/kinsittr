@@ -18,12 +18,17 @@ var (
 
 type BookingRecord struct {
 	models.Booking
-	NannyDisplayName  string `json:"nanny_display_name"`
-	NannyCity         string `json:"nanny_city"`
-	NannyProvince     string `json:"nanny_province"`
-	ParentDisplayName string `json:"parent_display_name"`
-	ParentCity        string `json:"parent_city"`
-	ParentProvince    string `json:"parent_province"`
+	NannyDisplayName      string `json:"nanny_display_name"`
+	NannyCity             string `json:"nanny_city"`
+	NannyProvince         string `json:"nanny_province"`
+	ParentDisplayName     string `json:"parent_display_name"`
+	ParentCity            string `json:"parent_city"`
+	ParentProvince        string `json:"parent_province"`
+	PaymentStatus         string `json:"payment_status,omitempty"`
+	PaymentFailureMessage string `json:"payment_failure_message,omitempty"`
+	StripePaymentIntentID string `json:"stripe_payment_intent_id,omitempty"`
+	StripeChargeID        string `json:"stripe_charge_id,omitempty"`
+	StripeRefundID        string `json:"stripe_refund_id,omitempty"`
 }
 
 type ListBookingsFilter struct {

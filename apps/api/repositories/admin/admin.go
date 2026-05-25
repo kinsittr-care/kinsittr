@@ -119,12 +119,17 @@ type AdminUserAccountActionParams struct {
 
 type BookingRecord struct {
 	models.Booking
-	NannyDisplayName  string
-	NannyCity         string
-	NannyProvince     string
-	ParentDisplayName string
-	ParentCity        string
-	ParentProvince    string
+	NannyDisplayName      string
+	NannyCity             string
+	NannyProvince         string
+	ParentDisplayName     string
+	ParentCity            string
+	ParentProvince        string
+	PaymentStatus         string
+	PaymentFailureMessage string
+	StripePaymentIntentID string
+	StripeChargeID        string
+	StripeRefundID        string
 }
 
 type NannyBookingSummary struct {

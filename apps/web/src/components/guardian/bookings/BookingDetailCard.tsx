@@ -6,6 +6,7 @@ import { getParentBookingById, parentBookingQueryKey } from "@/src/utils/api/boo
 import { describeBookingTime, formatCurrency, formatShortDateCA } from "@/src/utils/format";
 import SectionCard from "../profile/SectionCard";
 import BookingStatusBadge from "./BookingStatusBadge";
+import PaymentStatusBadge from "./PaymentStatusBadge";
 
 interface BookingDetailCardProps {
   bookingId: string | null;
@@ -46,7 +47,10 @@ export default function BookingDetailCard({ bookingId }: BookingDetailCardProps)
                     {[booking.nanny_city, booking.nanny_province].filter(Boolean).join(", ")}
                   </div>
                 </div>
-                <BookingStatusBadge status={booking.status} />
+                <div className="flex flex-wrap justify-end gap-2">
+                  <BookingStatusBadge status={booking.status} />
+                  <PaymentStatusBadge status={booking.payment_status} />
+                </div>
               </div>
               <div style={{ display: "grid", gap: 10 }}>
                 <div style={{ fontSize: 14 }}>
@@ -55,6 +59,11 @@ export default function BookingDetailCard({ bookingId }: BookingDetailCardProps)
                 <div style={{ fontSize: 14 }}>
                   <strong>Total:</strong> {formatCurrency(booking.total_amount)}
                 </div>
+                {booking.payment_failure_message && (
+                  <div style={{ fontSize: 14, color: "#b24a3f" }}>
+                    <strong>Payment issue:</strong> {booking.payment_failure_message}
+                  </div>
+                )}
                 <div style={{ fontSize: 14 }}>
                   <strong>Requested:</strong> {formatShortDateCA(booking.created_at)}
                 </div>

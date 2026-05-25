@@ -2,9 +2,9 @@ import type { CSSProperties } from "react";
 import AdminPill, { type PillTone } from "./AdminPill";
 import { A } from "../tokens";
 import type { AdminBooking } from "@/src/types/api/admin";
-import { formatCurrency, formatDateOnlyShort } from "@/src/utils/format";
+import { formatCurrency, formatDateOnlyShort, formatPaymentState } from "@/src/utils/format";
 
-const colTemplate = ".95fr 1.55fr 1.35fr 1.05fr .7fr .9fr 1fr";
+const colTemplate = ".95fr 1.45fr 1.25fr .95fr .6fr .8fr .95fr .95fr";
 
 const thStyle: CSSProperties = {
   display: "grid",
@@ -48,6 +48,7 @@ export default function AdminBookingsTable({
         <div>Hours</div>
         <div>Total</div>
         <div>Status</div>
+        <div>Payment</div>
       </div>
 
       {isLoading ? (
@@ -85,6 +86,13 @@ export default function AdminBookingsTable({
             </div>
             <div>
               <AdminPill tone={bookingStatusTone(booking.status)}>{booking.status}</AdminPill>
+            </div>
+            <div>
+              {(() => {
+                const payment = formatPaymentState(booking.payment_status);
+                const tone = payment.tone === "danger" ? "red" : payment.tone === "success" ? "green" : payment.tone === "warning" ? "amber" : "neutral";
+                return <AdminPill tone={tone}>{payment.label}</AdminPill>;
+              })()}
             </div>
           </button>
         ))

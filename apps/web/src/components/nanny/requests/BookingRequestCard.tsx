@@ -1,4 +1,6 @@
 import { N } from "../tokens";
+import type { PaymentStatus } from "@/src/types/api/api";
+import { formatPaymentState } from "@/src/utils/format";
 import NannyAvatar from "../NannyAvatar";
 import NannyPill from "../NannyPill";
 import type { PillTone } from "../NannyPill";
@@ -13,6 +15,8 @@ export type BookingRequest = {
   hours: number;
   amount: string;
   status: PillTone;
+  paymentStatus?: PaymentStatus | "";
+  paymentFailure?: string;
   children: string;
 };
 
@@ -35,6 +39,7 @@ export default function BookingRequestCard({
 }) {
   const isPending = booking.status === "pending";
   const isCompleted = booking.status === "completed";
+  const paymentState = formatPaymentState(booking.paymentStatus);
 
   return (
     <div
@@ -62,6 +67,9 @@ export default function BookingRequestCard({
             <NannyPill tone={booking.status}>
               {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
             </NannyPill>
+            <NannyPill tone={paymentState.tone === "danger" ? "declined" : paymentState.tone === "success" ? "paid" : paymentState.tone === "warning" ? "pending" : "neutral"}>
+              {paymentState.label}
+            </NannyPill>
           </div>
           <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 18, fontSize: 13.5, color: N.inkMute }}>
             <span>📅 {booking.date}</span>
@@ -84,6 +92,11 @@ export default function BookingRequestCard({
           <div style={{ fontSize: 12.5, color: N.inkFaint, marginTop: 4 }}>CAD</div>
         </div>
       </div>
+      {booking.paymentFailure && (
+        <div style={{ marginTop: 12, color: N.rose, fontSize: 13.5 }}>
+          Payment issue: {booking.paymentFailure}
+        </div>
+      )}
 
       {isPending && (
         <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
