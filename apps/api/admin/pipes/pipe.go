@@ -26,6 +26,7 @@ type AdminPipe struct {
 }
 
 type AdminPaymentProcessor interface {
+	ChargeCompletedBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) error
 	RefundBooking(ctx context.Context, bookingID uuid.UUID) error
 }
 

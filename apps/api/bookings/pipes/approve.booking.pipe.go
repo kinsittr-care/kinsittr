@@ -20,6 +20,15 @@ func (p *BookingsPipe) Approve(ctx context.Context, userID, bookingID uuid.UUID)
 		return pipeError[BookingData](messages.Nanny_Profile_Not_Found)
 	}
 
+	if p.payments != nil {
+		if err := p.payments.EnsureBookingPaymentReady(ctx, nannyProfile.ID, bookingID); err != nil {
+			if err.Error() == messages.Booking_Payment_Setup_Missing {
+				return pipeError[BookingData](messages.Booking_Payment_Setup_Missing)
+			}
+			return pipeError[BookingData](messages.Cannot_Approve_Booking)
+		}
+	}
+
 	booking, err := p.repo.ApproveNannyBookingWithConversation(ctx, nannyProfile.ID, bookingID)
 	if err != nil {
 		if errors.Is(err, bookings.ErrNannyTimeUnavailable) {
@@ -32,9 +41,6 @@ func (p *BookingsPipe) Approve(ctx context.Context, userID, bookingID uuid.UUID)
 	}
 
 	data := toBookingRecordData(booking)
-	if p.payments != nil {
-		_ = p.payments.ChargeApprovedBooking(ctx, nannyProfile.ID, booking.ID)
-	}
 	p.notifyParentProfile(ctx, booking.ParentProfileID, models.Notification{
 		Type:  models.BookingApprovedNotificationType,
 		Title: "Booking approved",

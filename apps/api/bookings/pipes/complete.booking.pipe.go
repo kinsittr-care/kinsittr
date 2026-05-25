@@ -32,6 +32,14 @@ func (p *BookingsPipe) Complete(ctx context.Context, userID, bookingID uuid.UUID
 	if currentBooking.StartTime.Add(time.Duration(currentBooking.Duration) * time.Hour).After(time.Now().UTC()) {
 		return pipeError[BookingData](messages.Cannot_Complete_Booking)
 	}
+	if p.payments != nil {
+		if err := p.payments.ChargeCompletedBooking(ctx, nannyProfile.ID, bookingID); err != nil {
+			if err.Error() == messages.Booking_Payment_Setup_Missing {
+				return pipeError[BookingData](messages.Booking_Payment_Setup_Missing)
+			}
+			return pipeError[BookingData](messages.Booking_Payment_Failed)
+		}
+	}
 
 	booking, err := p.repo.CompleteNannyBooking(ctx, nannyProfile.ID, bookingID)
 	if err != nil || booking.ID == uuid.Nil {

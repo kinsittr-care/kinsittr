@@ -2,17 +2,37 @@ package pipes
 
 import (
 	"context"
+	"errors"
 	"math"
 
 	"github.com/google/uuid"
+	booking_messages "github.com/kinsittr/kinsittr-api/bookings/messages"
 	"github.com/kinsittr/kinsittr-api/models"
-	paymentrepo "github.com/kinsittr/kinsittr-api/repositories/payments"
-	stripeapi "github.com/kinsittr/kinsittr-api/shared/stripe"
+	payment_repo "github.com/kinsittr/kinsittr-api/repositories/payments"
+	stripe_api "github.com/kinsittr/kinsittr-api/shared/stripe"
 )
 
-func (p *PaymentsPipe) ChargeApprovedBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) error {
+func (p *PaymentsPipe) EnsureBookingPaymentReady(ctx context.Context, nannyProfileID, bookingID uuid.UUID) error {
 	if p.stripe == nil || !p.stripe.Configured() {
-		return nil
+		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
+	}
+	paymentCtx, err := p.repo.GetNannyPaymentContext(ctx, nannyProfileID, bookingID)
+	if err != nil || paymentCtx.BookingID == uuid.Nil {
+		return err
+	}
+	if paymentCtx.StripeCustomerID == "" || paymentCtx.StripeAccountID == "" || !paymentCtx.StripeOnboarded {
+		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
+	}
+	_, err = p.stripe.FirstCardPaymentMethod(ctx, paymentCtx.StripeCustomerID)
+	if err != nil {
+		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
+	}
+	return nil
+}
+
+func (p *PaymentsPipe) ChargeCompletedBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) error {
+	if p.stripe == nil || !p.stripe.Configured() {
+		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
 	}
 	paymentCtx, err := p.repo.GetNannyPaymentContext(ctx, nannyProfileID, bookingID)
 	if err != nil || paymentCtx.BookingID == uuid.Nil {
@@ -20,16 +40,16 @@ func (p *PaymentsPipe) ChargeApprovedBooking(ctx context.Context, nannyProfileID
 	}
 	if paymentCtx.StripeCustomerID == "" || paymentCtx.StripeAccountID == "" || !paymentCtx.StripeOnboarded {
 		_, _ = p.repo.UpsertBookingPayment(ctx, failedPayment(paymentCtx, "missing_stripe_setup", p.platformFeeRate))
-		return nil
+		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
 	}
 	method, err := p.stripe.FirstCardPaymentMethod(ctx, paymentCtx.StripeCustomerID)
 	if err != nil {
 		_, _ = p.repo.UpsertBookingPayment(ctx, failedPayment(paymentCtx, "missing_payment_method", p.platformFeeRate))
-		return nil
+		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
 	}
 	amountCents := cents(paymentCtx.Amount)
 	feeCents := int64(math.Round(float64(amountCents) * p.platformFeeRate))
-	intent, err := p.stripe.CreateDestinationPaymentIntent(ctx, stripeapi.PaymentIntentParams{
+	intent, err := p.stripe.CreateDestinationPaymentIntent(ctx, stripe_api.PaymentIntentParams{
 		AmountCents:          amountCents,
 		ApplicationFeeCents:  feeCents,
 		Currency:             string(paymentCtx.Currency),
@@ -46,7 +66,8 @@ func (p *PaymentsPipe) ChargeApprovedBooking(ctx context.Context, nannyProfileID
 	} else if intent.LastError != nil {
 		failure = intent.LastError.Message
 	}
-	_, upsertErr := p.repo.UpsertBookingPayment(ctx, paymentrepo.CreatePaymentParams{
+	status = normalizePaymentStatus(status)
+	_, upsertErr := p.repo.UpsertBookingPayment(ctx, payment_repo.CreatePaymentParams{
 		BookingID:             paymentCtx.BookingID,
 		ParentProfileID:       paymentCtx.ParentProfileID,
 		NannyProfileID:        paymentCtx.NannyProfileID,
@@ -55,10 +76,16 @@ func (p *PaymentsPipe) ChargeApprovedBooking(ctx context.Context, nannyProfileID
 		Amount:                paymentCtx.Amount,
 		PlatformFee:           float64(feeCents) / 100,
 		Currency:              paymentCtx.Currency,
-		Status:                normalizePaymentStatus(status),
+		Status:                status,
 		FailureMessage:        failure,
 	})
-	return upsertErr
+	if upsertErr != nil {
+		return upsertErr
+	}
+	if status != models.PaymentSucceeded && status != models.PaymentProcessing {
+		return errors.New(booking_messages.Booking_Payment_Failed)
+	}
+	return nil
 }
 
 func (p *PaymentsPipe) RefundBooking(ctx context.Context, bookingID uuid.UUID) error {

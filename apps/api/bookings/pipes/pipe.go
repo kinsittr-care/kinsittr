@@ -74,7 +74,8 @@ type BookingsPipe struct {
 }
 
 type BookingPaymentProcessor interface {
-	ChargeApprovedBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) error
+	EnsureBookingPaymentReady(ctx context.Context, nannyProfileID, bookingID uuid.UUID) error
+	ChargeCompletedBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) error
 	RefundBooking(ctx context.Context, bookingID uuid.UUID) error
 }
 

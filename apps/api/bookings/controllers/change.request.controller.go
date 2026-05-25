@@ -226,6 +226,8 @@ func bookingPipeError(ctx *fiber.Ctx, message string) error {
 		status = fiber.StatusConflict
 	case messages.Booking_Start_In_Past:
 		status = fiber.StatusUnprocessableEntity
+	case messages.Booking_Payment_Setup_Missing, messages.Booking_Payment_Failed:
+		status = fiber.StatusPaymentRequired
 	}
 	return ctx.Status(status).JSON(fiber.Map{"success": false, "message": message})
 }

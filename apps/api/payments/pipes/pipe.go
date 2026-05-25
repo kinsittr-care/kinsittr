@@ -66,6 +66,9 @@ func cents(value float64) int64 {
 }
 
 func normalizePaymentStatus(status models.PaymentStatus) models.PaymentStatus {
+	if status == "canceled" {
+		return models.PaymentCancelled
+	}
 	switch status {
 	case models.PaymentRequiresPaymentMethod, models.PaymentRequiresConfirmation, models.PaymentRequiresAction,
 		models.PaymentProcessing, models.PaymentSucceeded, models.PaymentCancelled, models.PaymentRefunded:

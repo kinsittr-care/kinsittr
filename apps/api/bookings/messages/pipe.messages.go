@@ -28,6 +28,8 @@ const (
 	Cannot_Approve_Booking                 = "cannot_approve_booking"
 	Cannot_Decline_Booking                 = "cannot_decline_booking"
 	Cannot_Complete_Booking                = "cannot_complete_booking"
+	Booking_Payment_Setup_Missing          = "booking_payment_setup_missing"
+	Booking_Payment_Failed                 = "booking_payment_failed"
 	Booking_Change_Request_Not_Found       = "booking_change_request_not_found"
 	Booking_Change_Request_Already_Pending = "booking_change_request_already_pending"
 	Cannot_Create_Booking_Change_Request   = "cannot_create_booking_change_request"

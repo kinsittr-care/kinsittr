@@ -7,23 +7,23 @@ import (
 	"github.com/kinsittr/kinsittr-api/models"
 	"github.com/kinsittr/kinsittr-api/payments/messages"
 	shared "github.com/kinsittr/kinsittr-api/shared"
-	stripeapi "github.com/kinsittr/kinsittr-api/shared/stripe"
+	stripe_api "github.com/kinsittr/kinsittr-api/shared/stripe"
 )
 
 func (p *PaymentsPipe) HandleStripeWebhook(ctx context.Context, payload []byte, signature string) *shared.PipeRes[any] {
-	event, err := stripeapi.VerifyWebhook(payload, signature, p.webhookSecret)
+	event, err := stripe_api.VerifyWebhook(payload, signature, p.webhookSecret)
 	if err != nil {
 		return pipeError[any](messages.Invalid_Payment_Request)
 	}
 	switch event.Type {
 	case "account.updated":
-		var account stripeapi.Account
+		var account stripe_api.Account
 		if err := json.Unmarshal(event.Data.Object, &account); err == nil {
 			onboarded := account.ChargesEnabled && account.PayoutsEnabled && account.DetailsSubmitted
 			_ = p.repo.UpdateNannyStripeOnboardedByAccountID(ctx, account.ID, onboarded)
 		}
 	case "payment_intent.succeeded", "payment_intent.payment_failed", "payment_intent.processing", "payment_intent.canceled":
-		var intent stripeapi.PaymentIntent
+		var intent stripe_api.PaymentIntent
 		if err := json.Unmarshal(event.Data.Object, &intent); err == nil {
 			failure := ""
 			if intent.LastError != nil {
