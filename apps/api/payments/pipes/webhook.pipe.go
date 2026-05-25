@@ -15,22 +15,39 @@ func (p *PaymentsPipe) HandleStripeWebhook(ctx context.Context, payload []byte, 
 	if err != nil {
 		return pipeError[any](messages.Invalid_Payment_Request)
 	}
+	if event.ID == "" {
+		return pipeError[any](messages.Invalid_Payment_Request)
+	}
+	processed, err := p.repo.HasProcessedStripeEvent(ctx, event.ID)
+	if err != nil {
+		return pipeError[any](messages.Invalid_Payment_Request)
+	}
+	if processed {
+		return pipeSuccess[any](messages.Stripe_Webhook_Processed, nil)
+	}
+
 	switch event.Type {
 	case "account.updated":
 		var account stripe_api.Account
-		if err := json.Unmarshal(event.Data.Object, &account); err == nil {
-			onboarded := account.ChargesEnabled && account.PayoutsEnabled && account.DetailsSubmitted
-			_ = p.repo.UpdateNannyStripeOnboardedByAccountID(ctx, account.ID, onboarded)
+		if err := json.Unmarshal(event.Data.Object, &account); err != nil {
+			return pipeError[any](messages.Invalid_Payment_Request)
+		}
+		onboarded := account.ChargesEnabled && account.PayoutsEnabled && account.DetailsSubmitted
+		if err := p.repo.UpdateNannyStripeOnboardedByAccountID(ctx, account.ID, onboarded); err != nil {
+			return pipeError[any](messages.Invalid_Payment_Request)
 		}
 	case "payment_intent.succeeded", "payment_intent.payment_failed", "payment_intent.processing", "payment_intent.canceled":
 		var intent stripe_api.PaymentIntent
-		if err := json.Unmarshal(event.Data.Object, &intent); err == nil {
-			failure := ""
-			if intent.LastError != nil {
-				failure = intent.LastError.Message
-			}
-			status := normalizePaymentStatus(models.PaymentStatus(intent.Status))
-			_ = p.repo.UpdatePaymentStatusByIntentID(ctx, intent.ID, status, intent.LatestCharge, failure)
+		if err := json.Unmarshal(event.Data.Object, &intent); err != nil {
+			return pipeError[any](messages.Invalid_Payment_Request)
+		}
+		failure := ""
+		if intent.LastError != nil {
+			failure = intent.LastError.Message
+		}
+		status := normalizePaymentStatus(models.PaymentStatus(intent.Status))
+		if err := p.repo.UpdatePaymentStatusByIntentID(ctx, intent.ID, status, intent.LatestCharge, failure); err != nil {
+			return pipeError[any](messages.Invalid_Payment_Request)
 		}
 	case "charge.refunded":
 		var charge struct {
@@ -41,13 +58,19 @@ func (p *PaymentsPipe) HandleStripeWebhook(ctx context.Context, payload []byte, 
 				} `json:"data"`
 			} `json:"refunds"`
 		}
-		if err := json.Unmarshal(event.Data.Object, &charge); err == nil {
-			refundID := ""
-			if len(charge.Refunds.Data) > 0 {
-				refundID = charge.Refunds.Data[0].ID
-			}
-			_ = p.repo.UpdatePaymentRefundedByChargeID(ctx, charge.ID, refundID)
+		if err := json.Unmarshal(event.Data.Object, &charge); err != nil {
+			return pipeError[any](messages.Invalid_Payment_Request)
 		}
+		refundID := ""
+		if len(charge.Refunds.Data) > 0 {
+			refundID = charge.Refunds.Data[0].ID
+		}
+		if err := p.repo.UpdatePaymentRefundedByChargeID(ctx, charge.ID, refundID); err != nil {
+			return pipeError[any](messages.Invalid_Payment_Request)
+		}
+	}
+	if err := p.repo.RecordProcessedStripeEvent(ctx, event.ID, event.Type); err != nil {
+		return pipeError[any](messages.Invalid_Payment_Request)
 	}
 	return pipeSuccess[any](messages.Stripe_Webhook_Processed, nil)
 }

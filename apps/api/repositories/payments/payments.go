@@ -69,6 +69,8 @@ type PaymentsRepository interface {
 	UpsertBookingPayment(ctx context.Context, params CreatePaymentParams) (models.BookingPayment, error)
 	UpdatePaymentStatusByIntentID(ctx context.Context, paymentIntentID string, status models.PaymentStatus, chargeID, failureMessage string) error
 	UpdatePaymentRefundedByChargeID(ctx context.Context, chargeID, refundID string) error
+	HasProcessedStripeEvent(ctx context.Context, eventID string) (bool, error)
+	RecordProcessedStripeEvent(ctx context.Context, eventID, eventType string) error
 }
 
 var PaymentsRepo PaymentsRepository

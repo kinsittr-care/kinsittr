@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kinsittr/kinsittr-api/models"
 )
@@ -179,6 +180,32 @@ func (r *pgRepository) UpdatePaymentRefundedByChargeID(ctx context.Context, char
 		WHERE stripe_charge_id = $3
 	`, models.PaymentRefunded, refundID, chargeID)
 	return err
+}
+
+func (r *pgRepository) HasProcessedStripeEvent(ctx context.Context, eventID string) (bool, error) {
+	var exists bool
+	err := r.db.QueryRow(ctx, `
+		SELECT EXISTS (
+			SELECT 1 FROM stripe_webhook_events WHERE stripe_event_id = $1
+		)
+	`, eventID).Scan(&exists)
+	return exists, err
+}
+
+func (r *pgRepository) RecordProcessedStripeEvent(ctx context.Context, eventID, eventType string) error {
+	_, err := r.db.Exec(ctx, `
+		INSERT INTO stripe_webhook_events (id, stripe_event_id, event_type)
+		VALUES ($1, $2, $3)
+	`, uuid.New(), eventID, eventType)
+	if isUniqueViolation(err) {
+		return nil
+	}
+	return err
+}
+
+func isUniqueViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23505"
 }
 
 func scanPayment(row pgx.Row) (models.BookingPayment, error) {

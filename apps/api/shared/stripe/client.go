@@ -18,6 +18,7 @@ import (
 )
 
 const apiBase = "https://api.stripe.com/v1"
+const webhookTolerance = 5 * time.Minute
 
 type Client struct {
 	secretKey string
@@ -202,6 +203,14 @@ func VerifyWebhook(payload []byte, header, secret string) (Event, error) {
 	}
 	timestamp, signature := parseSignatureHeader(header)
 	if timestamp == "" || signature == "" {
+		return Event{}, errors.New("invalid_stripe_signature")
+	}
+	timestampUnix, err := strconv.ParseInt(timestamp, 10, 64)
+	if err != nil {
+		return Event{}, errors.New("invalid_stripe_signature")
+	}
+	signedAt := time.Unix(timestampUnix, 0)
+	if time.Since(signedAt) > webhookTolerance || time.Until(signedAt) > webhookTolerance {
 		return Event{}, errors.New("invalid_stripe_signature")
 	}
 	signedPayload := []byte(timestamp + "." + string(payload))
