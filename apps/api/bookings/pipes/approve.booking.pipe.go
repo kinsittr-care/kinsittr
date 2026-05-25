@@ -32,6 +32,9 @@ func (p *BookingsPipe) Approve(ctx context.Context, userID, bookingID uuid.UUID)
 	}
 
 	data := toBookingRecordData(booking)
+	if p.payments != nil {
+		_ = p.payments.ChargeApprovedBooking(ctx, nannyProfile.ID, booking.ID)
+	}
 	p.notifyParentProfile(ctx, booking.ParentProfileID, models.Notification{
 		Type:  models.BookingApprovedNotificationType,
 		Title: "Booking approved",

@@ -1,0 +1,84 @@
+package pipes
+
+import (
+	"math"
+
+	"github.com/kinsittr/kinsittr-api/models"
+	paymentrepo "github.com/kinsittr/kinsittr-api/repositories/payments"
+	"github.com/kinsittr/kinsittr-api/repositories/profile"
+	shared "github.com/kinsittr/kinsittr-api/shared"
+	stripeapi "github.com/kinsittr/kinsittr-api/shared/stripe"
+)
+
+type PaymentsPipe struct {
+	repo            paymentrepo.PaymentsRepository
+	profileRepo     profile.ProfileRepository
+	stripe          *stripeapi.Client
+	webhookSecret   string
+	platformFeeRate float64
+	refreshURL      string
+	returnURL       string
+}
+
+type StripeConnectData struct {
+	AccountID string `json:"account_id"`
+	URL       string `json:"url"`
+	Onboarded bool   `json:"onboarded"`
+}
+
+type StripeStatusData struct {
+	AccountID string `json:"account_id,omitempty"`
+	Onboarded bool   `json:"onboarded"`
+}
+
+type SetupIntentData struct {
+	CustomerID   string `json:"customer_id"`
+	ClientSecret string `json:"client_secret"`
+}
+
+func NewPaymentsPipe(repo paymentrepo.PaymentsRepository, profileRepo profile.ProfileRepository, stripeClient *stripeapi.Client, platformFeeRate float64, webhookSecret, refreshURL, returnURL string) *PaymentsPipe {
+	return &PaymentsPipe{
+		repo:            repo,
+		profileRepo:     profileRepo,
+		stripe:          stripeClient,
+		webhookSecret:   webhookSecret,
+		platformFeeRate: platformFeeRate,
+		refreshURL:      refreshURL,
+		returnURL:       returnURL,
+	}
+}
+
+func failedPayment(ctx paymentrepo.PaymentContext, reason string, feeRate float64) paymentrepo.CreatePaymentParams {
+	return paymentrepo.CreatePaymentParams{
+		BookingID:       ctx.BookingID,
+		ParentProfileID: ctx.ParentProfileID,
+		NannyProfileID:  ctx.NannyProfileID,
+		Amount:          ctx.Amount,
+		PlatformFee:     math.Round(ctx.Amount*feeRate*100) / 100,
+		Currency:        ctx.Currency,
+		Status:          models.PaymentFailed,
+		FailureMessage:  reason,
+	}
+}
+
+func cents(value float64) int64 {
+	return int64(math.Round(value * 100))
+}
+
+func normalizePaymentStatus(status models.PaymentStatus) models.PaymentStatus {
+	switch status {
+	case models.PaymentRequiresPaymentMethod, models.PaymentRequiresConfirmation, models.PaymentRequiresAction,
+		models.PaymentProcessing, models.PaymentSucceeded, models.PaymentCancelled, models.PaymentRefunded:
+		return status
+	default:
+		return models.PaymentFailed
+	}
+}
+
+func pipeError[T any](message string) *shared.PipeRes[T] {
+	return &shared.PipeRes[T]{Success: false, Message: shared.CreatePipeMessage(message)}
+}
+
+func pipeSuccess[T any](message string, data *T) *shared.PipeRes[T] {
+	return &shared.PipeRes[T]{Success: true, Message: shared.CreatePipeMessage(message), Data: data}
+}

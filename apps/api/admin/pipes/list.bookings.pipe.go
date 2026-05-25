@@ -92,6 +92,9 @@ func (p *AdminPipe) CancelBooking(ctx context.Context, adminUserID, bookingID uu
 		return pipeError[AdminBookingData](messages.Admin_Booking_Action_Blocked)
 	}
 	data := toAdminBookingData(record)
+	if p.payments != nil {
+		_ = p.payments.RefundBooking(ctx, record.ID)
+	}
 	p.notifyBookingParticipants(ctx, record, "Booking cancelled by admin", "An admin cancelled this booking.", models.BookingCancelledNotificationType)
 	return pipeSuccess(messages.Admin_Booking_Cancelled, &data)
 }

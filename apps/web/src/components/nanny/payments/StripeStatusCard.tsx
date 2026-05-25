@@ -1,7 +1,33 @@
+"use client";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { N } from "../tokens";
 import { btnPrimary } from "../nanny-styles";
+import {
+  createNannyStripeConnectLink,
+  getNannyStripeStatus,
+  nannyStripeStatusQueryKey,
+} from "@/src/utils/api/payments";
 
 export default function StripeStatusCard() {
+  const queryClient = useQueryClient();
+  const statusQuery = useQuery({
+    queryKey: nannyStripeStatusQueryKey,
+    queryFn: getNannyStripeStatus,
+  });
+  const connectMutation = useMutation({
+    mutationFn: createNannyStripeConnectLink,
+    onSuccess: async (response) => {
+      await queryClient.invalidateQueries({ queryKey: nannyStripeStatusQueryKey });
+      if (response.data?.url) {
+        window.location.href = response.data.url;
+      }
+    },
+  });
+  const status = statusQuery.data?.data;
+  const connected = Boolean(status?.account_id);
+  const onboarded = Boolean(status?.onboarded);
+
   return (
     <div
       style={{
@@ -37,8 +63,21 @@ export default function StripeStatusCard() {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: N.greenDk }}>Stripe Connect</div>
         <div style={{ marginTop: 4, fontSize: 13.5, color: N.inkMute }}>
-          Your account is active. Payouts are processed weekly.
+          {statusQuery.isLoading
+            ? "Checking your Stripe onboarding status..."
+            : onboarded
+              ? "Your account is active. Payouts are processed weekly."
+              : connected
+                ? "Finish onboarding to receive payouts after completed bookings."
+                : "Connect Stripe to receive secure booking payouts."}
         </div>
+        {(statusQuery.error || connectMutation.error) && (
+          <div style={{ marginTop: 6, fontSize: 12.5, color: "#b34b39" }}>
+            {(statusQuery.error ?? connectMutation.error) instanceof Error
+              ? (statusQuery.error ?? connectMutation.error)?.message
+              : "Unable to load Stripe status."}
+          </div>
+        )}
       </div>
       <span
         style={{
@@ -51,9 +90,15 @@ export default function StripeStatusCard() {
           borderRadius: 999,
         }}
       >
-        ✓ Connected
+        {onboarded ? "✓ Connected" : connected ? "Setup needed" : "Not connected"}
       </span>
-      <button style={btnPrimary}>Manage account</button>
+      <button
+        style={btnPrimary}
+        disabled={connectMutation.isPending}
+        onClick={() => connectMutation.mutate()}
+      >
+        {connectMutation.isPending ? "Opening Stripe..." : onboarded ? "Manage account" : "Connect Stripe"}
+      </button>
     </div>
   );
 }

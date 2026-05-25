@@ -37,6 +37,9 @@ import (
 	parent_controller "github.com/kinsittr/kinsittr-api/parent/controllers"
 	parent_pipe "github.com/kinsittr/kinsittr-api/parent/pipes"
 	parent_router "github.com/kinsittr/kinsittr-api/parent/routers"
+	payments_controller "github.com/kinsittr/kinsittr-api/payments/controllers"
+	payments_pipe "github.com/kinsittr/kinsittr-api/payments/pipes"
+	payments_router "github.com/kinsittr/kinsittr-api/payments/routers"
 	"github.com/kinsittr/kinsittr-api/repositories"
 	"github.com/kinsittr/kinsittr-api/repositories/account"
 	admin_repo "github.com/kinsittr/kinsittr-api/repositories/admin"
@@ -44,6 +47,7 @@ import (
 	messages_repo "github.com/kinsittr/kinsittr-api/repositories/messages"
 	nanny_repo "github.com/kinsittr/kinsittr-api/repositories/nanny"
 	notifications_repo "github.com/kinsittr/kinsittr-api/repositories/notifications"
+	payments_repo "github.com/kinsittr/kinsittr-api/repositories/payments"
 	profile_repo "github.com/kinsittr/kinsittr-api/repositories/profile"
 	reviews_repo "github.com/kinsittr/kinsittr-api/repositories/reviews"
 	reviews_controller "github.com/kinsittr/kinsittr-api/reviews/controllers"
@@ -51,6 +55,7 @@ import (
 	reviews_router "github.com/kinsittr/kinsittr-api/reviews/routers"
 	"github.com/kinsittr/kinsittr-api/shared/api"
 	"github.com/kinsittr/kinsittr-api/shared/mail"
+	stripeapi "github.com/kinsittr/kinsittr-api/shared/stripe"
 )
 
 func New(cfg *config.Config) (*fiber.App, error) {
@@ -90,10 +95,6 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	parentPipe := parent_pipe.NewParentPipe(profile_repo.ProfileRepo)
 	parentController := parent_controller.NewParentController(parentPipe)
 
-	// bookings
-	bookingsPipe := bookings_pipe.NewBookingsPipe(bookings_repo.BookingsRepo, profile_repo.ProfileRepo, nanny_repo.NannyRepo, notifications_repo.NotificationsRepo)
-	bookingsController := bookings_controller.NewBookingsController(bookingsPipe)
-
 	// conversations
 	conversationsPipe := conversations_pipe.NewConversationsPipe(messages_repo.MessagesRepo, profile_repo.ProfileRepo, notifications_repo.NotificationsRepo)
 	conversationsController := conversations_controller.NewConversationsController(conversationsPipe)
@@ -101,6 +102,24 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	// notifications
 	notificationsPipe := notifications_pipe.NewNotificationsPipe(notifications_repo.NotificationsRepo)
 	notificationsController := notifications_controller.NewNotificationsController(notificationsPipe)
+
+	// payments
+	stripeClient := stripeapi.NewClient(cfg.StripeSecretKey)
+	paymentsPipe := payments_pipe.NewPaymentsPipe(
+		payments_repo.PaymentsRepo,
+		profile_repo.ProfileRepo,
+		stripeClient,
+		cfg.PlatformFeeRate,
+		cfg.StripeWebhookSecret,
+		cfg.StripeConnectRefreshURL,
+		cfg.StripeConnectReturnURL,
+	)
+	paymentsController := payments_controller.NewPaymentsController(paymentsPipe)
+
+	// bookings
+	bookingsPipe := bookings_pipe.NewBookingsPipe(bookings_repo.BookingsRepo, profile_repo.ProfileRepo, nanny_repo.NannyRepo, notifications_repo.NotificationsRepo)
+	bookingsPipe.SetPaymentProcessor(paymentsPipe)
+	bookingsController := bookings_controller.NewBookingsController(bookingsPipe)
 
 	// reviews
 	reviewsPipe := reviews_pipe.NewReviewsPipe(reviews_repo.ReviewsRepo, bookings_repo.BookingsRepo, profile_repo.ProfileRepo)
@@ -110,6 +129,7 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	adminAuthPipe := admin_auth_pipe.NewAdminAuthPipe(account.AccountRepo, cfg.JWTSecret, cfg.JWTRefreshSecret)
 	adminAuthController := admin_auth_controller.NewAdminAuthController(adminAuthPipe)
 	adminPipe := admin_pipe.NewAdminPipe(admin_repo.AdminRepo, cfg.PlatformFeeRate, notifications_repo.NotificationsRepo)
+	adminPipe.SetPaymentProcessor(paymentsPipe)
 	if cfg.MailConfigured() {
 		resendProvider := mail.NewResendProvider(cfg.ResendAPIKey, cfg.ContactFromEmail)
 		adminEmailService := admin_services.NewEmailService(resendProvider)
@@ -140,12 +160,16 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	nannyBookingsGroup := nannyGroup.Group("/bookings")
 	api.BaseRouter(nannyBookingsGroup, bookings_router.NannyBookingRoutes(bookingsController, cfg.JWTSecret))
 	api.BaseRouter(nannyBookingsGroup, reviews_router.NannyBookingReviewRoutes(reviewsController, cfg.JWTSecret))
+	nannyPaymentsGroup := nannyGroup.Group("/payments")
+	api.BaseRouter(nannyPaymentsGroup, payments_router.NannyPaymentRoutes(paymentsController, cfg.JWTSecret))
 	nannyReviewsGroup := nannyGroup.Group("/reviews")
 	api.BaseRouter(nannyReviewsGroup, reviews_router.NannyReviewRoutes(reviewsController, cfg.JWTSecret))
 	api.BaseRouter(nannyGroup, nanny_router.NannyRoutes(nannyController, cfg.JWTSecret))
 
 	parentGroup := apiGroup.Group("/parent")
 	api.BaseRouter(parentGroup, parent_router.ParentRoutes(parentController, cfg.JWTSecret))
+	parentBillingGroup := parentGroup.Group("/billing")
+	api.BaseRouter(parentBillingGroup, payments_router.ParentBillingRoutes(paymentsController, cfg.JWTSecret))
 
 	bookingsGroup := apiGroup.Group("/bookings")
 	api.BaseRouter(bookingsGroup, bookings_router.BookingRoutes(bookingsController, cfg.JWTSecret))
@@ -159,6 +183,9 @@ func New(cfg *config.Config) (*fiber.App, error) {
 
 	notificationsGroup := apiGroup.Group("/notifications")
 	api.BaseRouter(notificationsGroup, notifications_router.NotificationRoutes(notificationsController, cfg.JWTSecret))
+
+	webhooksGroup := apiGroup.Group("/webhooks")
+	api.BaseRouter(webhooksGroup, payments_router.StripeWebhookRoutes(paymentsController))
 
 	adminGroup := apiGroup.Group("/admin")
 	adminAuthGroup := adminGroup.Group("/auth")

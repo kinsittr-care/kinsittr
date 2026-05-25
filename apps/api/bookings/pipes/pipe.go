@@ -1,6 +1,7 @@
 package pipes
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -69,6 +70,12 @@ type BookingsPipe struct {
 	profileRepo profile.ProfileRepository
 	nannyRepo   nanny.NannyRepository
 	notifyRepo  notifications.NotificationsRepository
+	payments    BookingPaymentProcessor
+}
+
+type BookingPaymentProcessor interface {
+	ChargeApprovedBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) error
+	RefundBooking(ctx context.Context, bookingID uuid.UUID) error
 }
 
 func NewBookingsPipe(repo bookings.BookingsRepository, profileRepo profile.ProfileRepository, nannyRepo nanny.NannyRepository, notifyRepo ...notifications.NotificationsRepository) *BookingsPipe {
@@ -82,6 +89,10 @@ func NewBookingsPipe(repo bookings.BookingsRepository, profileRepo profile.Profi
 		nannyRepo:   nannyRepo,
 		notifyRepo:  notificationsRepo,
 	}
+}
+
+func (p *BookingsPipe) SetPaymentProcessor(processor BookingPaymentProcessor) {
+	p.payments = processor
 }
 
 func toBookingData(booking models.Booking) BookingData {
