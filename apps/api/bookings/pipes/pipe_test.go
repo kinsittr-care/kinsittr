@@ -34,6 +34,7 @@ type mockBookingsRepo struct {
 	nannyBookingErr     error
 	approvedBooking     bookingsrepo.BookingRecord
 	approveBookingErr   error
+	approveCalls        int
 	declinedBooking     bookingsrepo.BookingRecord
 	declineBookingErr   error
 	changeRequests      []models.BookingChangeRequest
@@ -49,6 +50,7 @@ type mockBookingsRepo struct {
 	declineChangeReqErr error
 	completedBooking    bookingsrepo.BookingRecord
 	completeBookingErr  error
+	completeCalls       int
 }
 
 func (m *mockBookingsRepo) HasParentActiveBookingWithNanny(_ context.Context, _, _ uuid.UUID, _ time.Time, _ int) (bool, error) {
@@ -79,9 +81,11 @@ func (m *mockBookingsRepo) GetNannyBookingByID(_ context.Context, _, _ uuid.UUID
 	return m.nannyBooking, m.nannyBookingErr
 }
 func (m *mockBookingsRepo) ApproveNannyBooking(_ context.Context, _, _ uuid.UUID) (bookingsrepo.BookingRecord, error) {
+	m.approveCalls++
 	return m.approvedBooking, m.approveBookingErr
 }
 func (m *mockBookingsRepo) ApproveNannyBookingWithConversation(_ context.Context, _, _ uuid.UUID) (bookingsrepo.BookingRecord, error) {
+	m.approveCalls++
 	return m.approvedBooking, m.approveBookingErr
 }
 func (m *mockBookingsRepo) DeclineNannyBooking(_ context.Context, _, _ uuid.UUID) (bookingsrepo.BookingRecord, error) {
@@ -106,6 +110,7 @@ func (m *mockBookingsRepo) DeclineBookingChangeRequest(_ context.Context, _, _ u
 	return m.declinedChangeReq, m.declineChangeReqErr
 }
 func (m *mockBookingsRepo) CompleteNannyBooking(_ context.Context, _, _ uuid.UUID) (bookingsrepo.BookingRecord, error) {
+	m.completeCalls++
 	return m.completedBooking, m.completeBookingErr
 }
 
