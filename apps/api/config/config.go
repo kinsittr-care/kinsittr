@@ -7,27 +7,35 @@ import (
 )
 
 type Config struct {
-	Port             string
-	WebOrigin        string
-	DatabaseURL      string
-	JWTSecret        string
-	JWTRefreshSecret string
-	ResendAPIKey     string
-	ContactToEmail   string
-	ContactFromEmail string
-	PlatformFeeRate  float64
+	Port                    string
+	WebOrigin               string
+	DatabaseURL             string
+	JWTSecret               string
+	JWTRefreshSecret        string
+	ResendAPIKey            string
+	ContactToEmail          string
+	ContactFromEmail        string
+	PlatformFeeRate         float64
+	StripeSecretKey         string
+	StripeWebhookSecret     string
+	StripeConnectRefreshURL string
+	StripeConnectReturnURL  string
 }
 
 func Load() (*Config, error) {
 	cfg := &Config{
-		Port:             getEnv("PORT", "4006"),
-		WebOrigin:        getEnv("WEB_ORIGIN", "http://localhost:3000"),
-		DatabaseURL:      os.Getenv("DATABASE_URL"),
-		JWTSecret:        os.Getenv("JWT_SECRET"),
-		JWTRefreshSecret: os.Getenv("JWT_REFRESH_SECRET"),
-		ResendAPIKey:     os.Getenv("RESEND_API_KEY"),
-		ContactToEmail:   os.Getenv("CONTACT_TO_EMAIL"),
-		ContactFromEmail: os.Getenv("CONTACT_FROM_EMAIL"),
+		Port:                    getEnv("PORT", "4006"),
+		WebOrigin:               getEnv("WEB_ORIGIN", "http://localhost:3000"),
+		DatabaseURL:             os.Getenv("DATABASE_URL"),
+		JWTSecret:               os.Getenv("JWT_SECRET"),
+		JWTRefreshSecret:        os.Getenv("JWT_REFRESH_SECRET"),
+		ResendAPIKey:            os.Getenv("RESEND_API_KEY"),
+		ContactToEmail:          os.Getenv("CONTACT_TO_EMAIL"),
+		ContactFromEmail:        os.Getenv("CONTACT_FROM_EMAIL"),
+		StripeSecretKey:         os.Getenv("STRIPE_SECRET_KEY"),
+		StripeWebhookSecret:     os.Getenv("STRIPE_WEBHOOK_SECRET"),
+		StripeConnectRefreshURL: getEnv("STRIPE_CONNECT_REFRESH_URL", getEnv("WEB_ORIGIN", "http://localhost:3000")+"/nanny/payments"),
+		StripeConnectReturnURL:  getEnv("STRIPE_CONNECT_RETURN_URL", getEnv("WEB_ORIGIN", "http://localhost:3000")+"/nanny/payments"),
 	}
 	cfg.PlatformFeeRate = getFloatEnv("PLATFORM_FEE_RATE", 0.10)
 
@@ -42,6 +50,10 @@ func Load() (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func (c *Config) StripeConfigured() bool {
+	return c.StripeSecretKey != ""
 }
 
 func (c *Config) ContactConfigured() bool {

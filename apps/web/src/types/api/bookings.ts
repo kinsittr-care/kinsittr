@@ -7,6 +7,15 @@ export interface CreateBookingPayload {
 }
 
 export type BookingStatus = "pending" | "approved" | "declined" | "cancelled" | "completed";
+export type PaymentStatus =
+  | "requires_payment_method"
+  | "requires_confirmation"
+  | "requires_action"
+  | "processing"
+  | "succeeded"
+  | "failed"
+  | "cancelled"
+  | "refunded";
 
 export interface Booking {
   id: string;
@@ -23,6 +32,11 @@ export interface Booking {
   duration: number;
   total_amount: number;
   status: BookingStatus;
+  payment_status?: PaymentStatus | "";
+  payment_failure_message?: string;
+  stripe_payment_intent_id?: string;
+  stripe_charge_id?: string;
+  stripe_refund_id?: string;
   created_at: string;
   updated_at: string;
 }

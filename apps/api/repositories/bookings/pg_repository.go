@@ -141,16 +141,47 @@ func normalizeListFilter(filter ListBookingsFilter) ListBookingsFilter {
 	return filter
 }
 
+const bookingPaymentColumns = `
+	COALESCE(bp.status, ''),
+	COALESCE(bp.failure_message, ''),
+	COALESCE(bp.stripe_payment_intent_id, ''),
+	COALESCE(bp.stripe_charge_id, ''),
+	COALESCE(bp.stripe_refund_id, '')
+`
+
+const bookingPaymentReturningColumns = `
+	COALESCE((SELECT bp.status FROM booking_payments bp WHERE bp.booking_id = b.id), ''),
+	COALESCE((SELECT bp.failure_message FROM booking_payments bp WHERE bp.booking_id = b.id), ''),
+	COALESCE((SELECT bp.stripe_payment_intent_id FROM booking_payments bp WHERE bp.booking_id = b.id), ''),
+	COALESCE((SELECT bp.stripe_charge_id FROM booking_payments bp WHERE bp.booking_id = b.id), ''),
+	COALESCE((SELECT bp.stripe_refund_id FROM booking_payments bp WHERE bp.booking_id = b.id), '')
+`
+
+type bookingScanner interface {
+	Scan(dest ...any) error
+}
+
+func scanBookingRecord(scanner bookingScanner) (BookingRecord, error) {
+	var booking BookingRecord
+	err := scanner.Scan(
+		&booking.ID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
+		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
+		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
+		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince,
+		&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
+		&booking.StripeChargeID, &booking.StripeRefundID,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return BookingRecord{}, nil
+	}
+	return booking, err
+}
+
 func scanBookingRows(rows pgx.Rows) ([]BookingRecord, error) {
 	var bookings []BookingRecord
 	for rows.Next() {
-		var booking BookingRecord
-		if err := rows.Scan(
-			&booking.ID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
-			&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
-			&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
-			&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince,
-		); err != nil {
+		booking, err := scanBookingRecord(rows)
+		if err != nil {
 			return nil, err
 		}
 		bookings = append(bookings, booking)
@@ -174,10 +205,12 @@ func (r *pgRepository) ListParentBookings(ctx context.Context, parentProfileID u
 	query := fmt.Sprintf(`
 		SELECT b.id, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
 		       np.display_name, np.city, np.province,
-		       pp.display_name, pp.city, pp.province
+		       pp.display_name, pp.city, pp.province,
+		       `+bookingPaymentColumns+`
 		FROM bookings b
 		INNER JOIN nanny_profiles np ON np.id = b.nanny_profile_id
 		INNER JOIN parent_profiles pp ON pp.id = b.parent_profile_id
+		LEFT JOIN booking_payments bp ON bp.booking_id = b.id
 		WHERE %s
 		ORDER BY b.date DESC, b.start_time DESC, b.created_at DESC
 		LIMIT $%d OFFSET $%d
@@ -197,16 +230,20 @@ func (r *pgRepository) GetParentBookingByID(ctx context.Context, parentProfileID
 	err := r.db.QueryRow(ctx, `
 		SELECT b.id, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
 		       np.display_name, np.city, np.province,
-		       pp.display_name, pp.city, pp.province
+		       pp.display_name, pp.city, pp.province,
+		       `+bookingPaymentColumns+`
 		FROM bookings b
 		INNER JOIN nanny_profiles np ON np.id = b.nanny_profile_id
 		INNER JOIN parent_profiles pp ON pp.id = b.parent_profile_id
+		LEFT JOIN booking_payments bp ON bp.booking_id = b.id
 		WHERE b.parent_profile_id = $1 AND b.id = $2
 	`, parentProfileID, bookingID).Scan(
 		&booking.ID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
 		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
 		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince,
+		&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
+		&booking.StripeChargeID, &booking.StripeRefundID,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return BookingRecord{}, nil
@@ -227,12 +264,15 @@ func (r *pgRepository) CancelParentBooking(ctx context.Context, parentProfileID,
 		  AND b.status = $4
 		RETURNING b.id, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
 		          np.display_name, np.city, np.province,
-		          pp.display_name, pp.city, pp.province
+		          pp.display_name, pp.city, pp.province,
+		          `+bookingPaymentReturningColumns+`
 	`, models.CancelledBookingStatus, parentProfileID, bookingID, models.PendingBookingStatus).Scan(
 		&booking.ID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
 		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
 		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince,
+		&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
+		&booking.StripeChargeID, &booking.StripeRefundID,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return BookingRecord{}, nil
@@ -255,10 +295,12 @@ func (r *pgRepository) ListNannyBookings(ctx context.Context, nannyProfileID uui
 	query := fmt.Sprintf(`
 		SELECT b.id, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
 		       np.display_name, np.city, np.province,
-		       pp.display_name, pp.city, pp.province
+		       pp.display_name, pp.city, pp.province,
+		       `+bookingPaymentColumns+`
 		FROM bookings b
 		INNER JOIN nanny_profiles np ON np.id = b.nanny_profile_id
 		INNER JOIN parent_profiles pp ON pp.id = b.parent_profile_id
+		LEFT JOIN booking_payments bp ON bp.booking_id = b.id
 		WHERE %s
 		ORDER BY b.date DESC, b.start_time DESC, b.created_at DESC
 		LIMIT $%d OFFSET $%d
@@ -278,16 +320,20 @@ func (r *pgRepository) GetNannyBookingByID(ctx context.Context, nannyProfileID, 
 	err := r.db.QueryRow(ctx, `
 		SELECT b.id, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
 		       np.display_name, np.city, np.province,
-		       pp.display_name, pp.city, pp.province
+		       pp.display_name, pp.city, pp.province,
+		       `+bookingPaymentColumns+`
 		FROM bookings b
 		INNER JOIN nanny_profiles np ON np.id = b.nanny_profile_id
 		INNER JOIN parent_profiles pp ON pp.id = b.parent_profile_id
+		LEFT JOIN booking_payments bp ON bp.booking_id = b.id
 		WHERE b.nanny_profile_id = $1 AND b.id = $2
 	`, nannyProfileID, bookingID).Scan(
 		&booking.ID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
 		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
 		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince,
+		&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
+		&booking.StripeChargeID, &booking.StripeRefundID,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return BookingRecord{}, nil
@@ -318,12 +364,15 @@ func (r *pgRepository) ApproveNannyBookingWithConversation(ctx context.Context, 
 		  AND b.status = $4
 		RETURNING b.id, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
 		          np.display_name, np.city, np.province,
-		          pp.display_name, pp.city, pp.province
+		          pp.display_name, pp.city, pp.province,
+		          `+bookingPaymentReturningColumns+`
 	`, models.ApprovedBookingStatus, nannyProfileID, bookingID, models.PendingBookingStatus).Scan(
 		&booking.ID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
 		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
 		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince,
+		&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
+		&booking.StripeChargeID, &booking.StripeRefundID,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return BookingRecord{}, nil
@@ -364,12 +413,15 @@ func (r *pgRepository) updateNannyBookingStatus(ctx context.Context, nannyProfil
 		  AND b.status = $4
 		RETURNING b.id, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
 		          np.display_name, np.city, np.province,
-		          pp.display_name, pp.city, pp.province
+		          pp.display_name, pp.city, pp.province,
+		          `+bookingPaymentReturningColumns+`
 	`, status, nannyProfileID, bookingID, models.PendingBookingStatus).Scan(
 		&booking.ID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
 		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
 		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince,
+		&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
+		&booking.StripeChargeID, &booking.StripeRefundID,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return BookingRecord{}, nil
@@ -495,12 +547,15 @@ func (r *pgRepository) AcceptBookingChangeRequest(ctx context.Context, bookingID
 			  AND b.status = $3
 			RETURNING b.id, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
 			          np.display_name, np.city, np.province,
-			          pp.display_name, pp.city, pp.province
+			          pp.display_name, pp.city, pp.province,
+			          `+bookingPaymentReturningColumns+`
 		`, models.CancelledBookingStatus, bookingID, models.ApprovedBookingStatus).Scan(
 			&booking.ID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 			&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
 			&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
 			&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince,
+			&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
+			&booking.StripeChargeID, &booking.StripeRefundID,
 		)
 	} else {
 		err = tx.QueryRow(ctx, `
@@ -517,12 +572,15 @@ func (r *pgRepository) AcceptBookingChangeRequest(ctx context.Context, bookingID
 			  AND b.status IN ($5, $6)
 			RETURNING b.id, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
 			          np.display_name, np.city, np.province,
-			          pp.display_name, pp.city, pp.province
+			          pp.display_name, pp.city, pp.province,
+			          `+bookingPaymentReturningColumns+`
 		`, *request.ProposedDate, *request.ProposedStartTime, *request.ProposedDuration, bookingID, models.PendingBookingStatus, models.ApprovedBookingStatus).Scan(
 			&booking.ID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 			&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
 			&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
 			&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince,
+			&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
+			&booking.StripeChargeID, &booking.StripeRefundID,
 		)
 	}
 	if err != nil {
@@ -558,12 +616,15 @@ func (r *pgRepository) CompleteNannyBooking(ctx context.Context, nannyProfileID,
 		  AND b.status = $4
 		RETURNING b.id, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
 		          np.display_name, np.city, np.province,
-		          pp.display_name, pp.city, pp.province
+		          pp.display_name, pp.city, pp.province,
+		          `+bookingPaymentReturningColumns+`
 	`, models.CompletedBookingStatus, nannyProfileID, bookingID, models.ApprovedBookingStatus).Scan(
 		&booking.ID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
 		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
 		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince,
+		&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
+		&booking.StripeChargeID, &booking.StripeRefundID,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return BookingRecord{}, nil

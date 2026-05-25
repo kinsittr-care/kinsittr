@@ -1,4 +1,4 @@
-import type { BookingStatus } from "../bookings";
+import type { BookingStatus, PaymentStatus } from "../bookings";
 
 export interface AdminReasonPayload {
   reason: string;
@@ -44,6 +44,15 @@ export interface AdminBooking {
   duration: number;
   total_amount: number;
   status: BookingStatus;
+  payment_status?: PaymentStatus | "";
+  payment_failure_message?: string;
+  stripe_payment_intent_id?: string;
+  stripe_charge_id?: string;
+  stripe_refund_id?: string;
+  payment_amount?: number;
+  platform_fee?: number;
+  payment_created_at?: string;
+  payment_updated_at?: string;
   created_at: string;
   updated_at: string;
 }

@@ -1,4 +1,6 @@
 import { N } from "../tokens";
+import type { PaymentStatus } from "@/src/types/api/api";
+import { formatPaymentState } from "@/src/utils/format";
 import NannyAvatar from "../NannyAvatar";
 import NannyPill from "../NannyPill";
 import type { PillTone } from "../NannyPill";
@@ -13,6 +15,8 @@ export type BookingRequest = {
   hours: number;
   amount: string;
   status: PillTone;
+  paymentStatus?: PaymentStatus | "";
+  paymentFailure?: string;
   children: string;
 };
 
@@ -20,6 +24,8 @@ export default function BookingRequestCard({
   booking,
   onApprove,
   onDecline,
+  onComplete,
+  onRetryPayment,
   onReview,
   isUpdating = false,
   isHighlighted = false,
@@ -28,13 +34,18 @@ export default function BookingRequestCard({
   booking: BookingRequest;
   onApprove?: () => void;
   onDecline?: () => void;
+  onComplete?: () => void;
+  onRetryPayment?: () => void;
   onReview?: () => void;
   isUpdating?: boolean;
   isHighlighted?: boolean;
   isReviewed?: boolean;
 }) {
   const isPending = booking.status === "pending";
+  const isApproved = booking.status === "approved";
   const isCompleted = booking.status === "completed";
+  const paymentState = formatPaymentState(booking.paymentStatus);
+  const canRetryPayment = isApproved && (booking.paymentStatus === "failed" || booking.paymentStatus === "requires_payment_method");
 
   return (
     <div
@@ -62,6 +73,9 @@ export default function BookingRequestCard({
             <NannyPill tone={booking.status}>
               {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
             </NannyPill>
+            <NannyPill tone={paymentState.tone === "danger" ? "declined" : paymentState.tone === "success" ? "paid" : paymentState.tone === "warning" ? "pending" : "neutral"}>
+              {paymentState.label}
+            </NannyPill>
           </div>
           <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 18, fontSize: 13.5, color: N.inkMute }}>
             <span>📅 {booking.date}</span>
@@ -84,6 +98,11 @@ export default function BookingRequestCard({
           <div style={{ fontSize: 12.5, color: N.inkFaint, marginTop: 4 }}>CAD</div>
         </div>
       </div>
+      {booking.paymentFailure && (
+        <div style={{ marginTop: 12, color: N.rose, fontSize: 13.5 }}>
+          Payment issue: {booking.paymentFailure}
+        </div>
+      )}
 
       {isPending && (
         <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
@@ -99,6 +118,11 @@ export default function BookingRequestCard({
       {!isPending && (
         <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button style={btnGhost}>View details</button>
+          {isApproved && (
+            <button style={btnAccept} onClick={canRetryPayment ? onRetryPayment : onComplete} disabled={isUpdating}>
+              {isUpdating ? "Updating..." : canRetryPayment ? "Retry payment" : "Mark complete"}
+            </button>
+          )}
           {isCompleted && (
             <button style={btnGhost} onClick={onReview} disabled={isReviewed}>
               {isReviewed ? "Reviewed" : "Review parent"}

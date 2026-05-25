@@ -92,6 +92,11 @@ func (p *AdminPipe) CancelBooking(ctx context.Context, adminUserID, bookingID uu
 		return pipeError[AdminBookingData](messages.Admin_Booking_Action_Blocked)
 	}
 	data := toAdminBookingData(record)
+	if p.payments != nil {
+		if err := p.payments.RefundBooking(ctx, record.ID); err != nil {
+			return pipeError[AdminBookingData](messages.Admin_Booking_Refund_Failed)
+		}
+	}
 	p.notifyBookingParticipants(ctx, record, "Booking cancelled by admin", "An admin cancelled this booking.", models.BookingCancelledNotificationType)
 	return pipeSuccess(messages.Admin_Booking_Cancelled, &data)
 }
@@ -114,6 +119,11 @@ func (p *AdminPipe) CompleteBooking(ctx context.Context, adminUserID, bookingID 
 	}
 	if current.StartTime.Add(time.Duration(current.Duration) * time.Hour).After(time.Now().UTC()) {
 		return pipeError[AdminBookingData](messages.Admin_Booking_Action_Blocked)
+	}
+	if p.payments != nil {
+		if err := p.payments.ChargeCompletedBooking(ctx, current.NannyProfileID, current.ID); err != nil {
+			return pipeError[AdminBookingData](messages.Admin_Booking_Payment_Failed)
+		}
 	}
 
 	record, err := p.repo.CompleteBooking(ctx, repository.AdminBookingActionParams{

@@ -92,6 +92,15 @@ func scanBookingRecord(row pgx.Row) (BookingRecord, error) {
 		&record.ParentDisplayName,
 		&record.ParentCity,
 		&record.ParentProvince,
+		&record.PaymentStatus,
+		&record.PaymentFailureMessage,
+		&record.StripePaymentIntentID,
+		&record.StripeChargeID,
+		&record.StripeRefundID,
+		&record.PaymentAmount,
+		&record.PlatformFee,
+		&record.PaymentCreatedAt,
+		&record.PaymentUpdatedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return BookingRecord{}, nil
@@ -102,10 +111,20 @@ func scanBookingRecord(row pgx.Row) (BookingRecord, error) {
 const bookingRecordSelect = `
 	SELECT b.id, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
 	       np.display_name, np.city, np.province,
-	       pp.display_name, pp.city, pp.province
+	       pp.display_name, pp.city, pp.province,
+	       COALESCE(bp.status, ''),
+	       COALESCE(bp.failure_message, ''),
+	       COALESCE(bp.stripe_payment_intent_id, ''),
+	       COALESCE(bp.stripe_charge_id, ''),
+	       COALESCE(bp.stripe_refund_id, ''),
+	       COALESCE(bp.amount, 0),
+	       COALESCE(bp.platform_fee, 0),
+	       bp.created_at,
+	       bp.updated_at
 	FROM bookings b
 	INNER JOIN nanny_profiles np ON np.id = b.nanny_profile_id
 	INNER JOIN parent_profiles pp ON pp.id = b.parent_profile_id
+	LEFT JOIN booking_payments bp ON bp.booking_id = b.id
 `
 
 func (r *pgRepository) ListBookings(ctx context.Context, filter ListBookingsFilter) ([]BookingRecord, int, error) {

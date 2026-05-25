@@ -1,6 +1,7 @@
 import type { Booking } from "@/src/types/api/api";
 import Avatar from "../dashboard/Avatar";
 import BookingStatusBadge from "./BookingStatusBadge";
+import PaymentStatusBadge from "./PaymentStatusBadge";
 import { getBookingInitials } from "./booking-helpers";
 import { describeBookingTime, formatCurrency } from "@/src/utils/format";
 
@@ -47,7 +48,10 @@ export default function ParentBookingsList({
           <div className="flex flex-col md:flex-row md:items-center gap-3" style={{ marginLeft: compact ? 0 : "auto" }}>
             <div style={{ textAlign: compact ? "left" : "right" }}>
               <div style={{ fontWeight: 700, fontSize: 15 }}>{formatCurrency(booking.total_amount)}</div>
-              <BookingStatusBadge status={booking.status} />
+              <div className="flex flex-wrap justify-start md:justify-end gap-1.5" style={{ marginTop: 4 }}>
+                <BookingStatusBadge status={booking.status} />
+                <PaymentStatusBadge status={booking.payment_status} />
+              </div>
             </div>
             {!compact && (
               <div className="flex gap-2">

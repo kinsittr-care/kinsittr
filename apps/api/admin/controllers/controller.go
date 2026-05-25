@@ -22,6 +22,10 @@ func adminPipeError(ctx *fiber.Ctx, message string) error {
 		status = fiber.StatusNotFound
 	case messages.Admin_Screening_Closed, messages.Admin_Screening_Not_Started, messages.Admin_Booking_Action_Blocked, messages.Admin_Nanny_Action_Blocked, messages.Admin_Account_Action_Blocked:
 		status = fiber.StatusConflict
+	case messages.Admin_Booking_Payment_Failed:
+		status = fiber.StatusPaymentRequired
+	case messages.Admin_Booking_Refund_Failed:
+		status = fiber.StatusBadGateway
 	}
 	return ctx.Status(status).JSON(fiber.Map{
 		"success": false,

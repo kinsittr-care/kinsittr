@@ -44,6 +44,8 @@ const (
 	Admin_Screening_Closed       = "admin_screening_closed"
 	Admin_Screening_Not_Started  = "admin_screening_not_started"
 	Admin_Booking_Action_Blocked = "admin_booking_action_blocked"
+	Admin_Booking_Payment_Failed = "admin_booking_payment_failed"
+	Admin_Booking_Refund_Failed  = "admin_booking_refund_failed"
 	Admin_Nanny_Action_Blocked   = "admin_nanny_action_blocked"
 	Admin_Account_Action_Blocked = "admin_account_action_blocked"
 	Admin_Nanny_Not_Found        = "admin_nanny_not_found"

@@ -11,7 +11,7 @@ import (
 	"github.com/kinsittr/kinsittr-api/models"
 	"github.com/kinsittr/kinsittr-api/nanny/messages"
 	"github.com/kinsittr/kinsittr-api/nanny/pipes"
-	nannyrepo "github.com/kinsittr/kinsittr-api/repositories/nanny"
+	nanny_repo "github.com/kinsittr/kinsittr-api/repositories/nanny"
 )
 
 type mockNannyRepo struct {
@@ -23,7 +23,7 @@ type mockNannyRepo struct {
 func (m *mockNannyRepo) GetVerifiedNannyByID(_ context.Context, _ uuid.UUID) (models.NannyProfile, error) {
 	return m.nanny, nil
 }
-func (m *mockNannyRepo) ListVerifiedNannies(_ context.Context, _ nannyrepo.ListVerifiedNanniesFilter) ([]models.NannyProfile, int, error) {
+func (m *mockNannyRepo) ListVerifiedNannies(_ context.Context, _ nanny_repo.ListVerifiedNanniesFilter) ([]models.NannyProfile, int, error) {
 	return m.nannies, m.nanniesTotal, nil
 }
 

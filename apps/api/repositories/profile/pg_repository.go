@@ -41,13 +41,13 @@ func (r *pgRepository) CreateParentProfile(ctx context.Context, p models.ParentP
 	err := r.db.QueryRow(ctx, `
 		INSERT INTO parent_profiles (id, user_id, display_name, num_children, children_ages, city, province)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id, user_id, display_name, num_children, children_ages, city, province, created_at, updated_at
+		RETURNING id, user_id, display_name, num_children, children_ages, city, province, COALESCE(stripe_customer_id, ''), COALESCE(stripe_default_payment_method_id, ''), created_at, updated_at
 	`,
 		p.ID, p.UserID, p.DisplayName, p.NumChildren, p.ChildrenAges, p.City, p.Province,
 	).Scan(
 		&created.ID, &created.UserID, &created.DisplayName,
 		&created.NumChildren, &created.ChildrenAges,
-		&created.City, &created.Province,
+		&created.City, &created.Province, &created.StripeCustomerID, &created.StripeDefaultPaymentMethodID,
 		&created.CreatedAt, &created.UpdatedAt,
 	)
 	return created, err
@@ -74,12 +74,12 @@ func (r *pgRepository) GetNannyProfileByUserID(ctx context.Context, userID uuid.
 func (r *pgRepository) GetParentProfileByUserID(ctx context.Context, userID uuid.UUID) (models.ParentProfile, error) {
 	var p models.ParentProfile
 	err := r.db.QueryRow(ctx, `
-		SELECT id, user_id, display_name, num_children, children_ages, city, province, created_at, updated_at
+		SELECT id, user_id, display_name, num_children, children_ages, city, province, COALESCE(stripe_customer_id, ''), COALESCE(stripe_default_payment_method_id, ''), created_at, updated_at
 		FROM parent_profiles WHERE user_id = $1
 	`, userID).Scan(
 		&p.ID, &p.UserID, &p.DisplayName,
 		&p.NumChildren, &p.ChildrenAges,
-		&p.City, &p.Province,
+		&p.City, &p.Province, &p.StripeCustomerID, &p.StripeDefaultPaymentMethodID,
 		&p.CreatedAt, &p.UpdatedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -113,13 +113,13 @@ func (r *pgRepository) UpdateParentProfile(ctx context.Context, p models.ParentP
 		UPDATE parent_profiles
 		SET display_name = $1, num_children = $2, children_ages = $3, city = $4, province = $5, updated_at = NOW()
 		WHERE user_id = $6
-		RETURNING id, user_id, display_name, num_children, children_ages, city, province, created_at, updated_at
+		RETURNING id, user_id, display_name, num_children, children_ages, city, province, COALESCE(stripe_customer_id, ''), COALESCE(stripe_default_payment_method_id, ''), created_at, updated_at
 	`,
 		p.DisplayName, p.NumChildren, p.ChildrenAges, p.City, p.Province, p.UserID,
 	).Scan(
 		&updated.ID, &updated.UserID, &updated.DisplayName,
 		&updated.NumChildren, &updated.ChildrenAges,
-		&updated.City, &updated.Province,
+		&updated.City, &updated.Province, &updated.StripeCustomerID, &updated.StripeDefaultPaymentMethodID,
 		&updated.CreatedAt, &updated.UpdatedAt,
 	)
 	return updated, err

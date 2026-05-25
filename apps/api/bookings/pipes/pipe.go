@@ -1,6 +1,7 @@
 package pipes
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,6 +28,11 @@ type BookingData struct {
 	Duration          int                  `json:"duration"`
 	TotalAmount       float64              `json:"total_amount"`
 	Status            models.BookingStatus `json:"status"`
+	PaymentStatus     string               `json:"payment_status,omitempty"`
+	PaymentFailure    string               `json:"payment_failure_message,omitempty"`
+	PaymentIntentID   string               `json:"stripe_payment_intent_id,omitempty"`
+	StripeChargeID    string               `json:"stripe_charge_id,omitempty"`
+	StripeRefundID    string               `json:"stripe_refund_id,omitempty"`
 	CreatedAt         time.Time            `json:"created_at"`
 	UpdatedAt         time.Time            `json:"updated_at"`
 }
@@ -69,6 +75,13 @@ type BookingsPipe struct {
 	profileRepo profile.ProfileRepository
 	nannyRepo   nanny.NannyRepository
 	notifyRepo  notifications.NotificationsRepository
+	payments    BookingPaymentProcessor
+}
+
+type BookingPaymentProcessor interface {
+	EnsureBookingPaymentReady(ctx context.Context, nannyProfileID, bookingID uuid.UUID) error
+	ChargeCompletedBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) error
+	RefundBooking(ctx context.Context, bookingID uuid.UUID) error
 }
 
 func NewBookingsPipe(repo bookings.BookingsRepository, profileRepo profile.ProfileRepository, nannyRepo nanny.NannyRepository, notifyRepo ...notifications.NotificationsRepository) *BookingsPipe {
@@ -82,6 +95,10 @@ func NewBookingsPipe(repo bookings.BookingsRepository, profileRepo profile.Profi
 		nannyRepo:   nannyRepo,
 		notifyRepo:  notificationsRepo,
 	}
+}
+
+func (p *BookingsPipe) SetPaymentProcessor(processor BookingPaymentProcessor) {
+	p.payments = processor
 }
 
 func toBookingData(booking models.Booking) BookingData {
@@ -107,6 +124,11 @@ func toBookingRecordData(booking bookings.BookingRecord) BookingData {
 	data.NannyDisplayName = booking.NannyDisplayName
 	data.NannyCity = booking.NannyCity
 	data.NannyProvince = booking.NannyProvince
+	data.PaymentStatus = booking.PaymentStatus
+	data.PaymentFailure = booking.PaymentFailureMessage
+	data.PaymentIntentID = booking.StripePaymentIntentID
+	data.StripeChargeID = booking.StripeChargeID
+	data.StripeRefundID = booking.StripeRefundID
 	return data
 }
 

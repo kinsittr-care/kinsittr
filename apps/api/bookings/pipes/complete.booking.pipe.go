@@ -11,6 +11,14 @@ import (
 )
 
 func (p *BookingsPipe) Complete(ctx context.Context, userID, bookingID uuid.UUID) *shared.PipeRes[BookingData] {
+	return p.completeApprovedBooking(ctx, userID, bookingID, messages.Booking_Completed)
+}
+
+func (p *BookingsPipe) RetryPayment(ctx context.Context, userID, bookingID uuid.UUID) *shared.PipeRes[BookingData] {
+	return p.completeApprovedBooking(ctx, userID, bookingID, messages.Booking_Payment_Retried)
+}
+
+func (p *BookingsPipe) completeApprovedBooking(ctx context.Context, userID, bookingID uuid.UUID, successMessage string) *shared.PipeRes[BookingData] {
 	nannyProfile, err := p.profileRepo.GetNannyProfileByUserID(ctx, userID)
 	if err != nil {
 		return pipeError[BookingData](messages.Invalid_Booking_Request)
@@ -32,6 +40,14 @@ func (p *BookingsPipe) Complete(ctx context.Context, userID, bookingID uuid.UUID
 	if currentBooking.StartTime.Add(time.Duration(currentBooking.Duration) * time.Hour).After(time.Now().UTC()) {
 		return pipeError[BookingData](messages.Cannot_Complete_Booking)
 	}
+	if p.payments != nil {
+		if err := p.payments.ChargeCompletedBooking(ctx, nannyProfile.ID, bookingID); err != nil {
+			if err.Error() == messages.Booking_Payment_Setup_Missing {
+				return pipeError[BookingData](messages.Booking_Payment_Setup_Missing)
+			}
+			return pipeError[BookingData](messages.Booking_Payment_Failed)
+		}
+	}
 
 	booking, err := p.repo.CompleteNannyBooking(ctx, nannyProfile.ID, bookingID)
 	if err != nil || booking.ID == uuid.Nil {
@@ -45,5 +61,5 @@ func (p *BookingsPipe) Complete(ctx context.Context, userID, bookingID uuid.UUID
 		Body:  "Your nanny marked the booking as completed.",
 		Data:  notificationData(map[string]string{"booking_id": booking.ID.String()}),
 	})
-	return pipeSuccess(messages.Booking_Completed, &data)
+	return pipeSuccess(successMessage, &data)
 }

@@ -1,11 +1,13 @@
 package pipes
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/admin/messages"
 	adminservices "github.com/kinsittr/kinsittr-api/admin/services"
 	"github.com/kinsittr/kinsittr-api/models"
@@ -19,7 +21,13 @@ type AdminPipe struct {
 	platformFeeRate float64
 	notifyRepo      notifyrepo.NotificationsRepository
 	emailService    *adminservices.EmailService
+	payments        AdminPaymentProcessor
 	webOrigin       string
+}
+
+type AdminPaymentProcessor interface {
+	ChargeCompletedBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) error
+	RefundBooking(ctx context.Context, bookingID uuid.UUID) error
 }
 
 func NewAdminPipe(repo repository.AdminRepository, platformFeeRate float64, notifyRepo ...notifyrepo.NotificationsRepository) *AdminPipe {
@@ -37,6 +45,10 @@ func NewAdminPipe(repo repository.AdminRepository, platformFeeRate float64, noti
 func (p *AdminPipe) SetInviteEmailService(emailService *adminservices.EmailService, webOrigin string) {
 	p.emailService = emailService
 	p.webOrigin = strings.TrimRight(strings.TrimSpace(webOrigin), "/")
+}
+
+func (p *AdminPipe) SetPaymentProcessor(processor AdminPaymentProcessor) {
+	p.payments = processor
 }
 
 func pipeError[T any](message string) *shared.PipeRes[T] {

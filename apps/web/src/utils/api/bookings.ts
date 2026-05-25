@@ -119,3 +119,27 @@ export async function declineNannyBooking(id: string) {
     },
   );
 }
+
+export async function completeNannyBooking(id: string) {
+  return apiRequest<Booking>(
+    `/api/v1/nanny/bookings/${id}/complete`,
+    {
+      method: "PATCH",
+    },
+    {
+      requiresAuth: true,
+    },
+  );
+}
+
+export async function retryNannyBookingPayment(id: string) {
+  return apiRequest<Booking>(
+    `/api/v1/nanny/bookings/${id}/payment/retry`,
+    {
+      method: "POST",
+    },
+    {
+      requiresAuth: true,
+    },
+  );
+}

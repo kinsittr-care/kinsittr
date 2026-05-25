@@ -104,6 +104,15 @@ type AdminBookingData struct {
 	Duration          int                  `json:"duration"`
 	TotalAmount       float64              `json:"total_amount"`
 	Status            models.BookingStatus `json:"status"`
+	PaymentStatus     string               `json:"payment_status,omitempty"`
+	PaymentFailure    string               `json:"payment_failure_message,omitempty"`
+	PaymentIntentID   string               `json:"stripe_payment_intent_id,omitempty"`
+	StripeChargeID    string               `json:"stripe_charge_id,omitempty"`
+	StripeRefundID    string               `json:"stripe_refund_id,omitempty"`
+	PaymentAmount     float64              `json:"payment_amount,omitempty"`
+	PlatformFee       float64              `json:"platform_fee,omitempty"`
+	PaymentCreatedAt  *time.Time           `json:"payment_created_at,omitempty"`
+	PaymentUpdatedAt  *time.Time           `json:"payment_updated_at,omitempty"`
 	CreatedAt         time.Time            `json:"created_at"`
 	UpdatedAt         time.Time            `json:"updated_at"`
 }
@@ -340,6 +349,15 @@ func toAdminBookingData(record repository.BookingRecord) AdminBookingData {
 		Duration:          record.Duration,
 		TotalAmount:       record.TotalAmount,
 		Status:            record.Status,
+		PaymentStatus:     record.PaymentStatus,
+		PaymentFailure:    record.PaymentFailureMessage,
+		PaymentIntentID:   record.StripePaymentIntentID,
+		StripeChargeID:    record.StripeChargeID,
+		StripeRefundID:    record.StripeRefundID,
+		PaymentAmount:     record.PaymentAmount,
+		PlatformFee:       record.PlatformFee,
+		PaymentCreatedAt:  record.PaymentCreatedAt,
+		PaymentUpdatedAt:  record.PaymentUpdatedAt,
 		CreatedAt:         record.CreatedAt,
 		UpdatedAt:         record.UpdatedAt,
 	}

@@ -6,9 +6,11 @@ import { useSearchParams } from "next/navigation";
 import type { Booking, BookingStatus } from "@/src/types/api/api";
 import {
   approveNannyBooking,
+  completeNannyBooking,
   declineNannyBooking,
   listNannyBookings,
   nannyBookingsQueryKey,
+  retryNannyBookingPayment,
 } from "@/src/utils/api/bookings";
 import ReviewDialog from "@/src/components/shared/ReviewDialog";
 import {
@@ -46,6 +48,8 @@ function toBookingRequest(booking: Booking): BookingRequest {
     hours: booking.duration,
     amount: formatCurrency(booking.total_amount),
     status: booking.status === "cancelled" ? "neutral" : booking.status,
+    paymentStatus: booking.payment_status,
+    paymentFailure: booking.payment_failure_message,
     children: booking.parent_city
       ? `${booking.parent_city}${booking.parent_province ? `, ${booking.parent_province}` : ""}`
       : "Family details",
@@ -68,9 +72,12 @@ export default function NannyRequestsView() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, action }: { id: string; action: "approve" | "decline" }) => {
+    mutationFn: async ({ id, action }: { id: string; action: "approve" | "decline" | "complete" | "retry-payment" }) => {
       setUpdatingID(id);
-      return action === "approve" ? approveNannyBooking(id) : declineNannyBooking(id);
+      if (action === "approve") return approveNannyBooking(id);
+      if (action === "decline") return declineNannyBooking(id);
+      if (action === "retry-payment") return retryNannyBookingPayment(id);
+      return completeNannyBooking(id);
     },
     onSettled: async () => {
       setUpdatingID(null);
@@ -162,6 +169,11 @@ export default function NannyRequestsView() {
 
       {/* Cards */}
       <div className="flex flex-col gap-4">
+        {updateMutation.error && (
+          <p className="text-nanny-rose text-[14px] m-0">
+            {updateMutation.error instanceof Error ? updateMutation.error.message : "Unable to update booking."}
+          </p>
+        )}
         {bookingsQuery.isLoading ? (
           <p className="text-center py-14 text-nanny-ink-faint text-[15px]">Loading requests...</p>
         ) : bookingsQuery.isError ? (
@@ -181,6 +193,8 @@ export default function NannyRequestsView() {
               isHighlighted={r.id === notifiedBookingID}
               onApprove={() => updateMutation.mutate({ id: r.id, action: "approve" })}
               onDecline={() => updateMutation.mutate({ id: r.id, action: "decline" })}
+              onComplete={() => updateMutation.mutate({ id: r.id, action: "complete" })}
+              onRetryPayment={() => updateMutation.mutate({ id: r.id, action: "retry-payment" })}
               onReview={() => setReviewBookingId(r.id)}
               isReviewed={reviewedBookingIds.has(r.id)}
             />
