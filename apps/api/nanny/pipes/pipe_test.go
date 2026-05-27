@@ -42,7 +42,7 @@ func (m *mockProfileRepo) GetNannyProfileByUserID(_ context.Context, _ uuid.UUID
 func (m *mockProfileRepo) UpdateNannyProfile(_ context.Context, _ models.NannyProfile) (models.NannyProfile, error) {
 	return m.updatedNanny, m.updateNannyErr
 }
-func (m *mockProfileRepo) UpdateNannyAvatarURL(_ context.Context, _ uuid.UUID, _ string) (models.NannyProfile, error) {
+func (m *mockProfileRepo) UpdateNannyAvatar(_ context.Context, _ uuid.UUID, _ string, _ string) (models.NannyProfile, error) {
 	return models.NannyProfile{}, nil
 }
 func (m *mockProfileRepo) GetParentProfileByUserID(_ context.Context, _ uuid.UUID) (models.ParentProfile, error) {
@@ -119,6 +119,42 @@ func TestNormalizeSpecialties(t *testing.T) {
 		result := normalizeSpecialties(input)
 		if len(result) != 5 {
 			t.Errorf("expected 5 specialties, got %d: %v", len(result), result)
+		}
+	})
+}
+
+func TestAvatarUploadHelpers(t *testing.T) {
+	t.Run("detects image type from bytes", func(t *testing.T) {
+		cases := []struct {
+			name string
+			data []byte
+			want string
+		}{
+			{name: "jpeg", data: []byte{0xff, 0xd8, 0xff, 0xdb, 0x00, 0x43, 0x00}, want: "image/jpeg"},
+			{name: "png", data: []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}, want: "image/png"},
+			{name: "webp", data: []byte("RIFF\x24\x00\x00\x00WEBPVP8 "), want: "image/webp"},
+			{name: "text", data: []byte("not an image"), want: "text/plain"},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				got := detectAvatarContentType(tc.data)
+				if got != tc.want {
+					t.Fatalf("expected %s, got %s", tc.want, got)
+				}
+			})
+		}
+	})
+
+	t.Run("deletes only when previous public id differs", func(t *testing.T) {
+		if shouldDeletePreviousAvatar("", "next") {
+			t.Fatal("empty previous public id should not be deleted")
+		}
+		if shouldDeletePreviousAvatar("same", "same") {
+			t.Fatal("same public id should not be deleted")
+		}
+		if !shouldDeletePreviousAvatar("old", "next") {
+			t.Fatal("different previous public id should be deleted")
 		}
 	})
 }

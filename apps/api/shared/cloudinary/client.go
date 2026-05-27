@@ -49,9 +49,11 @@ func (c *Client) Configured() bool {
 func (c *Client) UploadImage(ctx context.Context, data []byte, folder, publicID string) (UploadResult, error) {
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 	params := map[string]string{
-		"folder":    folder,
-		"public_id": publicID,
-		"timestamp": timestamp,
+		"folder":     folder,
+		"invalidate": "true",
+		"overwrite":  "true",
+		"public_id":  publicID,
+		"timestamp":  timestamp,
 	}
 	signature := c.sign(params)
 
@@ -67,6 +69,8 @@ func (c *Client) UploadImage(ctx context.Context, data []byte, folder, publicID 
 	}
 
 	_ = w.WriteField("folder", folder)
+	_ = w.WriteField("invalidate", "true")
+	_ = w.WriteField("overwrite", "true")
 	_ = w.WriteField("public_id", publicID)
 	_ = w.WriteField("timestamp", timestamp)
 	_ = w.WriteField("api_key", c.apiKey)

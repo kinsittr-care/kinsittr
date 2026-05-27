@@ -14,7 +14,7 @@ type ProfileRepository interface {
 	GetNannyProfileByUserID(ctx context.Context, userID uuid.UUID) (models.NannyProfile, error)
 	GetParentProfileByUserID(ctx context.Context, userID uuid.UUID) (models.ParentProfile, error)
 	UpdateNannyProfile(ctx context.Context, profile models.NannyProfile) (models.NannyProfile, error)
-	UpdateNannyAvatarURL(ctx context.Context, userID uuid.UUID, avatarURL string) (models.NannyProfile, error)
+	UpdateNannyAvatar(ctx context.Context, userID uuid.UUID, avatarURL string, avatarPublicID string) (models.NannyProfile, error)
 	UpdateParentProfile(ctx context.Context, profile models.ParentProfile) (models.ParentProfile, error)
 	GetOrCreateParentSettings(ctx context.Context, userID uuid.UUID) (models.ParentSettings, error)
 	UpdateParentSettings(ctx context.Context, settings models.ParentSettings) (models.ParentSettings, error)

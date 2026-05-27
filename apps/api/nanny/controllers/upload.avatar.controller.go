@@ -51,8 +51,7 @@ func (c *NannyController) UploadAvatar(ctx *fiber.Ctx) error {
 		})
 	}
 
-	contentType := file.Header.Get("Content-Type")
-	res := c.pipe.UploadAvatar(ctx.Context(), userID, data, contentType)
+	res := c.pipe.UploadAvatar(ctx.Context(), userID, data)
 	if !res.Success {
 		status := fiber.StatusBadRequest
 		msg := string(res.Message)
