@@ -4,6 +4,7 @@ import (
 	"github.com/kinsittr/kinsittr-api/models"
 	"github.com/kinsittr/kinsittr-api/repositories/nanny"
 	"github.com/kinsittr/kinsittr-api/repositories/profile"
+	cloudinaryapi "github.com/kinsittr/kinsittr-api/shared/cloudinary"
 )
 
 type PublicNannyCard struct {
@@ -36,6 +37,7 @@ type PublicNannyListData struct {
 type NannyPipe struct {
 	repo        nanny.NannyRepository
 	profileRepo profile.ProfileRepository
+	cloudinary  *cloudinaryapi.Client
 }
 
 func NewNannyPipe(repo nanny.NannyRepository, profileRepo profile.ProfileRepository) *NannyPipe {
@@ -43,4 +45,8 @@ func NewNannyPipe(repo nanny.NannyRepository, profileRepo profile.ProfileReposit
 		repo:        repo,
 		profileRepo: profileRepo,
 	}
+}
+
+func (p *NannyPipe) SetCloudinaryClient(c *cloudinaryapi.Client) {
+	p.cloudinary = c
 }

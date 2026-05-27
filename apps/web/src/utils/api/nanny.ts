@@ -4,7 +4,11 @@ import type {
   PublicNannyListData,
   UpdateNannyProfilePayload,
 } from "@/src/types/api/api";
-import { apiRequest } from "@/src/utils/api/api";
+import { ApiRequestError, type ApiResponse, apiRequest } from "@/src/utils/api/api";
+import { getStoredAuthSession } from "@/src/utils/api/session";
+
+const apiBaseUrl =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:4006";
 
 function buildListPublicNanniesQuery(params: ListPublicNanniesParams) {
   const query = new URLSearchParams();
@@ -55,4 +59,27 @@ export async function updateOwnNannyProfile(payload: UpdateNannyProfilePayload) 
       requiresAuth: true,
     },
   );
+}
+
+export async function uploadNannyAvatar(file: File): Promise<ApiResponse<NannyProfile>> {
+  const formData = new FormData();
+  formData.append("avatar", file);
+
+  const session = getStoredAuthSession();
+  const headers: Record<string, string> = {};
+  if (session?.accessToken) {
+    headers["Authorization"] = `Bearer ${session.accessToken}`;
+  }
+
+  const response = await fetch(`${apiBaseUrl}/api/v1/nanny/avatar`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  const payload = (await response.json()) as ApiResponse<NannyProfile>;
+  if (!response.ok) {
+    throw new ApiRequestError(payload.message || "Upload failed");
+  }
+  return payload;
 }

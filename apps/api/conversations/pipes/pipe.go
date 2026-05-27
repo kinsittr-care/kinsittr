@@ -4,9 +4,9 @@ import (
 	"strings"
 	"time"
 
-	convmessages "github.com/kinsittr/kinsittr-api/conversations/messages"
+	conversation_messages "github.com/kinsittr/kinsittr-api/conversations/messages"
 	"github.com/kinsittr/kinsittr-api/models"
-	messagesrepo "github.com/kinsittr/kinsittr-api/repositories/messages"
+	messages_repo "github.com/kinsittr/kinsittr-api/repositories/messages"
 	"github.com/kinsittr/kinsittr-api/repositories/notifications"
 	"github.com/kinsittr/kinsittr-api/repositories/profile"
 	shared "github.com/kinsittr/kinsittr-api/shared"
@@ -54,12 +54,12 @@ type MessageListData struct {
 }
 
 type ConversationsPipe struct {
-	repo        messagesrepo.MessagesRepository
+	repo        messages_repo.MessagesRepository
 	profileRepo profile.ProfileRepository
 	notifyRepo  notifications.NotificationsRepository
 }
 
-func NewConversationsPipe(repo messagesrepo.MessagesRepository, profileRepo profile.ProfileRepository, notifyRepo ...notifications.NotificationsRepository) *ConversationsPipe {
+func NewConversationsPipe(repo messages_repo.MessagesRepository, profileRepo profile.ProfileRepository, notifyRepo ...notifications.NotificationsRepository) *ConversationsPipe {
 	var notificationsRepo notifications.NotificationsRepository
 	if len(notifyRepo) > 0 {
 		notificationsRepo = notifyRepo[0]
@@ -67,7 +67,7 @@ func NewConversationsPipe(repo messagesrepo.MessagesRepository, profileRepo prof
 	return &ConversationsPipe{repo: repo, profileRepo: profileRepo, notifyRepo: notificationsRepo}
 }
 
-func toConversationData(record messagesrepo.ConversationRecord) ConversationData {
+func toConversationData(record messages_repo.ConversationRecord) ConversationData {
 	return ConversationData{
 		ID:                       record.ID.String(),
 		BookingID:                record.BookingID.String(),
@@ -131,5 +131,5 @@ func pipeSuccess[T any](message string, data *T) *shared.PipeRes[T] {
 }
 
 func conversationNotFound[T any]() *shared.PipeRes[T] {
-	return pipeError[T](convmessages.Conversation_Not_Found)
+	return pipeError[T](conversation_messages.Conversation_Not_Found)
 }

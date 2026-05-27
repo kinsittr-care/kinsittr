@@ -1,4 +1,9 @@
+"use client";
+
+import { useRef } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { NannyProfile, UpdateNannyProfilePayload } from "@/src/types/api/api";
+import { ownNannyProfileQueryKey, uploadNannyAvatar } from "@/src/utils/api/nanny";
 import NannyAvatar from "../NannyAvatar";
 import { N } from "../tokens";
 import { getInitials } from "./nannyProfileHelpers";
@@ -9,6 +14,16 @@ interface NannyProfileHeaderCardProps {
 }
 
 export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCardProps) {
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const uploadMutation = useMutation({
+    mutationFn: uploadNannyAvatar,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ownNannyProfileQueryKey() });
+    },
+  });
+
   return (
     <div
       style={{
@@ -24,7 +39,7 @@ export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCard
       }}
     >
       <div style={{ position: "relative" }}>
-        <NannyAvatar initials={getInitials(form.display_name)} size={80} tone="green" />
+        <NannyAvatar initials={getInitials(form.display_name)} src={profile.avatar_url || undefined} size={80} tone="green" />
         {profile.verification_status === "verified" && (
           <div
             style={{
@@ -71,8 +86,31 @@ export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCard
         </div>
       </div>
       <div style={{ marginLeft: "auto" }}>
-        <button style={{ padding: "9px 16px", background: N.cardSoft, border: `1px solid ${N.border}`, borderRadius: 10, fontSize: 13.5, color: N.inkMute, cursor: "not-allowed" }} disabled>
-          Photo upload later
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          style={{ display: "none" }}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) uploadMutation.mutate(file);
+            e.target.value = "";
+          }}
+        />
+        <button
+          style={{
+            padding: "9px 16px",
+            background: N.cardSoft,
+            border: `1px solid ${N.border}`,
+            borderRadius: 10,
+            fontSize: 13.5,
+            color: uploadMutation.isPending ? N.inkMute : N.greenDk,
+            cursor: uploadMutation.isPending ? "not-allowed" : "pointer",
+          }}
+          disabled={uploadMutation.isPending}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {uploadMutation.isPending ? "Uploading…" : "Change photo"}
         </button>
       </div>
     </div>

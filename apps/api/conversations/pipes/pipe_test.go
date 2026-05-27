@@ -8,22 +8,22 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/conversations/dtos"
-	convmessages "github.com/kinsittr/kinsittr-api/conversations/messages"
+	conversation_messages "github.com/kinsittr/kinsittr-api/conversations/messages"
 	"github.com/kinsittr/kinsittr-api/models"
-	messagesrepo "github.com/kinsittr/kinsittr-api/repositories/messages"
+	messages_repo "github.com/kinsittr/kinsittr-api/repositories/messages"
 	"github.com/kinsittr/kinsittr-api/repositories/profile"
 )
 
 type mockMessagesRepo struct {
-	parentConversations      []messagesrepo.ConversationRecord
+	parentConversations      []messages_repo.ConversationRecord
 	parentConversationsTotal int
 	parentConversationsErr   error
-	nannyConversations       []messagesrepo.ConversationRecord
+	nannyConversations       []messages_repo.ConversationRecord
 	nannyConversationsTotal  int
 	nannyConversationsErr    error
-	parentConversation       messagesrepo.ConversationRecord
+	parentConversation       messages_repo.ConversationRecord
 	parentConversationErr    error
-	nannyConversation        messagesrepo.ConversationRecord
+	nannyConversation        messages_repo.ConversationRecord
 	nannyConversationErr     error
 	messages                 []models.Message
 	messagesTotal            int
@@ -44,23 +44,23 @@ func (m *mockMessagesRepo) CreateConversation(_ context.Context, conversation mo
 	return conversation, nil
 }
 
-func (m *mockMessagesRepo) ListParentConversations(_ context.Context, _ uuid.UUID, _ messagesrepo.ConversationListFilter) ([]messagesrepo.ConversationRecord, int, error) {
+func (m *mockMessagesRepo) ListParentConversations(_ context.Context, _ uuid.UUID, _ messages_repo.ConversationListFilter) ([]messages_repo.ConversationRecord, int, error) {
 	return m.parentConversations, m.parentConversationsTotal, m.parentConversationsErr
 }
 
-func (m *mockMessagesRepo) ListNannyConversations(_ context.Context, _ uuid.UUID, _ messagesrepo.ConversationListFilter) ([]messagesrepo.ConversationRecord, int, error) {
+func (m *mockMessagesRepo) ListNannyConversations(_ context.Context, _ uuid.UUID, _ messages_repo.ConversationListFilter) ([]messages_repo.ConversationRecord, int, error) {
 	return m.nannyConversations, m.nannyConversationsTotal, m.nannyConversationsErr
 }
 
-func (m *mockMessagesRepo) GetParentConversationByID(_ context.Context, _, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
+func (m *mockMessagesRepo) GetParentConversationByID(_ context.Context, _, _, _ uuid.UUID) (messages_repo.ConversationRecord, error) {
 	return m.parentConversation, m.parentConversationErr
 }
 
-func (m *mockMessagesRepo) GetNannyConversationByID(_ context.Context, _, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
+func (m *mockMessagesRepo) GetNannyConversationByID(_ context.Context, _, _, _ uuid.UUID) (messages_repo.ConversationRecord, error) {
 	return m.nannyConversation, m.nannyConversationErr
 }
 
-func (m *mockMessagesRepo) ListMessages(_ context.Context, _ uuid.UUID, _ messagesrepo.MessageListFilter) ([]models.Message, int, error) {
+func (m *mockMessagesRepo) ListMessages(_ context.Context, _ uuid.UUID, _ messages_repo.MessageListFilter) ([]models.Message, int, error) {
 	return m.messages, m.messagesTotal, m.messagesErr
 }
 
@@ -100,6 +100,9 @@ func (m *mockProfileRepo) GetParentProfileByUserID(_ context.Context, _ uuid.UUI
 func (m *mockProfileRepo) UpdateNannyProfile(_ context.Context, p models.NannyProfile) (models.NannyProfile, error) {
 	return p, nil
 }
+func (m *mockProfileRepo) UpdateNannyAvatarURL(_ context.Context, _ uuid.UUID, _ string) (models.NannyProfile, error) {
+	return models.NannyProfile{}, nil
+}
 func (m *mockProfileRepo) UpdateParentProfile(_ context.Context, p models.ParentProfile) (models.ParentProfile, error) {
 	return p, nil
 }
@@ -121,9 +124,9 @@ func newConversationsPipe(repo *mockMessagesRepo, profileRepo *mockProfileRepo) 
 	return NewConversationsPipe(repo, profileRepo)
 }
 
-func validConversationRecord() messagesrepo.ConversationRecord {
+func validConversationRecord() messages_repo.ConversationRecord {
 	now := time.Now().UTC()
-	return messagesrepo.ConversationRecord{
+	return messages_repo.ConversationRecord{
 		Conversation: models.Conversation{
 			ID:              uuid.New(),
 			BookingID:       uuid.New(),
@@ -158,7 +161,7 @@ func TestConversationsPipeList(t *testing.T) {
 	t.Run("parent success normalizes pagination and returns conversations", func(t *testing.T) {
 		record := validConversationRecord()
 		repo := &mockMessagesRepo{
-			parentConversations:      []messagesrepo.ConversationRecord{record},
+			parentConversations:      []messages_repo.ConversationRecord{record},
 			parentConversationsTotal: 1,
 		}
 		pipe := newConversationsPipe(repo, &mockProfileRepo{
@@ -170,7 +173,7 @@ func TestConversationsPipeList(t *testing.T) {
 		if !res.Success {
 			t.Fatalf("expected success, got %s", res.Message)
 		}
-		if string(res.Message) != convmessages.Conversation_Listed {
+		if string(res.Message) != conversation_messages.Conversation_Listed {
 			t.Fatalf("unexpected message: %s", res.Message)
 		}
 		if res.Data == nil || len(res.Data.Items) != 1 {
@@ -189,8 +192,8 @@ func TestConversationsPipeList(t *testing.T) {
 
 		res := pipe.List(context.Background(), uuid.New(), models.AdminUserRole, dtos.ListConversationsQueryDTO{})
 
-		if res.Success || string(res.Message) != convmessages.Forbidden_Conversation_Access {
-			t.Fatalf("expected %s, got success=%v message=%s", convmessages.Forbidden_Conversation_Access, res.Success, res.Message)
+		if res.Success || string(res.Message) != conversation_messages.Forbidden_Conversation_Access {
+			t.Fatalf("expected %s, got success=%v message=%s", conversation_messages.Forbidden_Conversation_Access, res.Success, res.Message)
 		}
 	})
 }
@@ -206,8 +209,8 @@ func TestConversationsPipeGetByID(t *testing.T) {
 
 		res := pipe.GetByID(context.Background(), uuid.New(), models.ParentUserRole, record.ID)
 
-		if !res.Success || string(res.Message) != convmessages.Conversation_Found {
-			t.Fatalf("expected success %s, got success=%v message=%s", convmessages.Conversation_Found, res.Success, res.Message)
+		if !res.Success || string(res.Message) != conversation_messages.Conversation_Found {
+			t.Fatalf("expected success %s, got success=%v message=%s", conversation_messages.Conversation_Found, res.Success, res.Message)
 		}
 		if res.Data == nil || res.Data.ID != record.ID.String() {
 			t.Fatalf("unexpected data: %+v", res.Data)
@@ -221,8 +224,8 @@ func TestConversationsPipeGetByID(t *testing.T) {
 
 		res := pipe.GetByID(context.Background(), uuid.New(), models.ParentUserRole, uuid.New())
 
-		if res.Success || string(res.Message) != convmessages.Conversation_Not_Found {
-			t.Fatalf("expected %s, got success=%v message=%s", convmessages.Conversation_Not_Found, res.Success, res.Message)
+		if res.Success || string(res.Message) != conversation_messages.Conversation_Not_Found {
+			t.Fatalf("expected %s, got success=%v message=%s", conversation_messages.Conversation_Not_Found, res.Success, res.Message)
 		}
 	})
 }
@@ -242,8 +245,8 @@ func TestConversationsPipeListMessages(t *testing.T) {
 
 		res := pipe.ListMessages(context.Background(), uuid.New(), models.NannyUserRole, record.ID, dtos.ListMessagesQueryDTO{})
 
-		if !res.Success || string(res.Message) != convmessages.Messages_Listed {
-			t.Fatalf("expected success %s, got success=%v message=%s", convmessages.Messages_Listed, res.Success, res.Message)
+		if !res.Success || string(res.Message) != conversation_messages.Messages_Listed {
+			t.Fatalf("expected success %s, got success=%v message=%s", conversation_messages.Messages_Listed, res.Success, res.Message)
 		}
 		if res.Data == nil || len(res.Data.Items) != 1 {
 			t.Fatalf("expected one message, got %+v", res.Data)
@@ -260,8 +263,8 @@ func TestConversationsPipeListMessages(t *testing.T) {
 
 		res := pipe.ListMessages(context.Background(), uuid.New(), models.NannyUserRole, uuid.New(), dtos.ListMessagesQueryDTO{})
 
-		if res.Success || string(res.Message) != convmessages.Invalid_Message_Request {
-			t.Fatalf("expected %s, got success=%v message=%s", convmessages.Invalid_Message_Request, res.Success, res.Message)
+		if res.Success || string(res.Message) != conversation_messages.Invalid_Message_Request {
+			t.Fatalf("expected %s, got success=%v message=%s", conversation_messages.Invalid_Message_Request, res.Success, res.Message)
 		}
 	})
 }
@@ -284,8 +287,8 @@ func TestConversationsPipeSendMessage(t *testing.T) {
 			Body: "  Hello there  ",
 		})
 
-		if !res.Success || string(res.Message) != convmessages.Message_Sent {
-			t.Fatalf("expected success %s, got success=%v message=%s", convmessages.Message_Sent, res.Success, res.Message)
+		if !res.Success || string(res.Message) != conversation_messages.Message_Sent {
+			t.Fatalf("expected success %s, got success=%v message=%s", conversation_messages.Message_Sent, res.Success, res.Message)
 		}
 		if repo.lastMessage.Body != "Hello there" {
 			t.Fatalf("expected trimmed body, got %q", repo.lastMessage.Body)
@@ -310,8 +313,8 @@ func TestConversationsPipeSendMessage(t *testing.T) {
 			Body: "   ",
 		})
 
-		if res.Success || string(res.Message) != convmessages.Invalid_Message_Request {
-			t.Fatalf("expected %s, got success=%v message=%s", convmessages.Invalid_Message_Request, res.Success, res.Message)
+		if res.Success || string(res.Message) != conversation_messages.Invalid_Message_Request {
+			t.Fatalf("expected %s, got success=%v message=%s", conversation_messages.Invalid_Message_Request, res.Success, res.Message)
 		}
 	})
 }
@@ -329,8 +332,8 @@ func TestConversationsPipeMarkRead(t *testing.T) {
 
 		res := pipe.MarkRead(context.Background(), userID, models.ParentUserRole, record.ID)
 
-		if !res.Success || string(res.Message) != convmessages.Conversation_Read {
-			t.Fatalf("expected success %s, got success=%v message=%s", convmessages.Conversation_Read, res.Success, res.Message)
+		if !res.Success || string(res.Message) != conversation_messages.Conversation_Read {
+			t.Fatalf("expected success %s, got success=%v message=%s", conversation_messages.Conversation_Read, res.Success, res.Message)
 		}
 		if repo.readConversationID != record.ID || repo.readUserID != userID {
 			t.Fatalf("expected read marker for conversation=%s user=%s, got conversation=%s user=%s", record.ID, userID, repo.readConversationID, repo.readUserID)
@@ -347,8 +350,8 @@ func TestConversationsPipeMarkRead(t *testing.T) {
 
 		res := pipe.MarkRead(context.Background(), uuid.New(), models.ParentUserRole, uuid.New())
 
-		if res.Success || string(res.Message) != convmessages.Conversation_Not_Found {
-			t.Fatalf("expected %s, got success=%v message=%s", convmessages.Conversation_Not_Found, res.Success, res.Message)
+		if res.Success || string(res.Message) != conversation_messages.Conversation_Not_Found {
+			t.Fatalf("expected %s, got success=%v message=%s", conversation_messages.Conversation_Not_Found, res.Success, res.Message)
 		}
 	})
 }

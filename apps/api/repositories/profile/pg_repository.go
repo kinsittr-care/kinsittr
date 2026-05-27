@@ -24,14 +24,14 @@ func (r *pgRepository) CreateNannyProfile(ctx context.Context, p models.NannyPro
 		INSERT INTO nanny_profiles (id, user_id, display_name, bio, specialties, rate_per_hour, service_type, currency, city, province, verification_status)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')
 		RETURNING id, user_id, display_name, bio, COALESCE(specialties, '{}'::text[]), rate_per_hour, service_type, currency, verification_status, verified_at,
-		          stripe_account_id, stripe_onboarded, rating_avg, rating_count, city, province, created_at, updated_at
+		          stripe_account_id, stripe_onboarded, rating_avg, rating_count, COALESCE(avatar_url, ''), city, province, created_at, updated_at
 	`,
 		p.ID, p.UserID, p.DisplayName, p.Bio, p.Specialties, p.RatePerHour, p.ServiceType, p.Currency, p.City, p.Province,
 	).Scan(
 		&created.ID, &created.UserID, &created.DisplayName, &created.Bio, &created.Specialties,
 		&created.RatePerHour, &created.ServiceType, &created.Currency, &created.VerificationStatus,
 		&created.VerifiedAt, &created.StripeAccountID, &created.StripeOnboarded, &created.RatingAvg, &created.RatingCount,
-		&created.City, &created.Province, &created.CreatedAt, &created.UpdatedAt,
+		&created.AvatarURL, &created.City, &created.Province, &created.CreatedAt, &created.UpdatedAt,
 	)
 	return created, err
 }
@@ -57,13 +57,13 @@ func (r *pgRepository) GetNannyProfileByUserID(ctx context.Context, userID uuid.
 	var p models.NannyProfile
 	err := r.db.QueryRow(ctx, `
 		SELECT id, user_id, display_name, bio, COALESCE(specialties, '{}'::text[]), rate_per_hour, service_type, currency, verification_status, verified_at,
-		       stripe_account_id, stripe_onboarded, rating_avg, rating_count, city, province, created_at, updated_at
+		       stripe_account_id, stripe_onboarded, rating_avg, rating_count, COALESCE(avatar_url, ''), city, province, created_at, updated_at
 		FROM nanny_profiles WHERE user_id = $1
 	`, userID).Scan(
 		&p.ID, &p.UserID, &p.DisplayName, &p.Bio, &p.Specialties,
 		&p.RatePerHour, &p.ServiceType, &p.Currency, &p.VerificationStatus,
 		&p.VerifiedAt, &p.StripeAccountID, &p.StripeOnboarded, &p.RatingAvg, &p.RatingCount,
-		&p.City, &p.Province, &p.CreatedAt, &p.UpdatedAt,
+		&p.AvatarURL, &p.City, &p.Province, &p.CreatedAt, &p.UpdatedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return models.NannyProfile{}, nil
@@ -95,14 +95,31 @@ func (r *pgRepository) UpdateNannyProfile(ctx context.Context, p models.NannyPro
 		SET display_name = $1, bio = $2, specialties = $3, rate_per_hour = $4, city = $5, province = $6, updated_at = NOW()
 		WHERE user_id = $7
 		RETURNING id, user_id, display_name, bio, COALESCE(specialties, '{}'::text[]), rate_per_hour, service_type, currency, verification_status, verified_at,
-		          stripe_account_id, stripe_onboarded, rating_avg, rating_count, city, province, created_at, updated_at
+		          stripe_account_id, stripe_onboarded, rating_avg, rating_count, COALESCE(avatar_url, ''), city, province, created_at, updated_at
 	`,
 		p.DisplayName, p.Bio, p.Specialties, p.RatePerHour, p.City, p.Province, p.UserID,
 	).Scan(
 		&updated.ID, &updated.UserID, &updated.DisplayName, &updated.Bio, &updated.Specialties,
 		&updated.RatePerHour, &updated.ServiceType, &updated.Currency, &updated.VerificationStatus,
 		&updated.VerifiedAt, &updated.StripeAccountID, &updated.StripeOnboarded, &updated.RatingAvg, &updated.RatingCount,
-		&updated.City, &updated.Province, &updated.CreatedAt, &updated.UpdatedAt,
+		&updated.AvatarURL, &updated.City, &updated.Province, &updated.CreatedAt, &updated.UpdatedAt,
+	)
+	return updated, err
+}
+
+func (r *pgRepository) UpdateNannyAvatarURL(ctx context.Context, userID uuid.UUID, avatarURL string) (models.NannyProfile, error) {
+	var updated models.NannyProfile
+	err := r.db.QueryRow(ctx, `
+		UPDATE nanny_profiles
+		SET avatar_url = $1, updated_at = NOW()
+		WHERE user_id = $2
+		RETURNING id, user_id, display_name, bio, COALESCE(specialties, '{}'::text[]), rate_per_hour, service_type, currency, verification_status, verified_at,
+		          stripe_account_id, stripe_onboarded, rating_avg, rating_count, COALESCE(avatar_url, ''), city, province, created_at, updated_at
+	`, avatarURL, userID).Scan(
+		&updated.ID, &updated.UserID, &updated.DisplayName, &updated.Bio, &updated.Specialties,
+		&updated.RatePerHour, &updated.ServiceType, &updated.Currency, &updated.VerificationStatus,
+		&updated.VerifiedAt, &updated.StripeAccountID, &updated.StripeOnboarded, &updated.RatingAvg, &updated.RatingCount,
+		&updated.AvatarURL, &updated.City, &updated.Province, &updated.CreatedAt, &updated.UpdatedAt,
 	)
 	return updated, err
 }

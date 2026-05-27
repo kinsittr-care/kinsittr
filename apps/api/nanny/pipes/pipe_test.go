@@ -42,6 +42,9 @@ func (m *mockProfileRepo) GetNannyProfileByUserID(_ context.Context, _ uuid.UUID
 func (m *mockProfileRepo) UpdateNannyProfile(_ context.Context, _ models.NannyProfile) (models.NannyProfile, error) {
 	return m.updatedNanny, m.updateNannyErr
 }
+func (m *mockProfileRepo) UpdateNannyAvatarURL(_ context.Context, _ uuid.UUID, _ string) (models.NannyProfile, error) {
+	return models.NannyProfile{}, nil
+}
 func (m *mockProfileRepo) GetParentProfileByUserID(_ context.Context, _ uuid.UUID) (models.ParentProfile, error) {
 	return models.ParentProfile{}, nil
 }

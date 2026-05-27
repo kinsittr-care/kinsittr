@@ -142,6 +142,9 @@ func (m *mockReviewProfileRepo) GetNannyProfileByUserID(context.Context, uuid.UU
 func (m *mockReviewProfileRepo) UpdateNannyProfile(context.Context, models.NannyProfile) (models.NannyProfile, error) {
 	return models.NannyProfile{}, nil
 }
+func (m *mockReviewProfileRepo) UpdateNannyAvatarURL(_ context.Context, _ uuid.UUID, _ string) (models.NannyProfile, error) {
+	return models.NannyProfile{}, nil
+}
 func (m *mockReviewProfileRepo) UpdateParentProfile(context.Context, models.ParentProfile) (models.ParentProfile, error) {
 	return models.ParentProfile{}, nil
 }

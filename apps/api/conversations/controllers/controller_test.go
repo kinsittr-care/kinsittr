@@ -13,13 +13,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/conversations/pipes"
 	"github.com/kinsittr/kinsittr-api/models"
-	messagesrepo "github.com/kinsittr/kinsittr-api/repositories/messages"
+	messages_repo "github.com/kinsittr/kinsittr-api/repositories/messages"
 )
 
 type mockMessagesRepo struct {
-	parentConversations      []messagesrepo.ConversationRecord
+	parentConversations      []messages_repo.ConversationRecord
 	parentConversationsTotal int
-	parentConversation       messagesrepo.ConversationRecord
+	parentConversation       messages_repo.ConversationRecord
 	messages                 []models.Message
 	messagesTotal            int
 	createdMessage           models.Message
@@ -31,19 +31,19 @@ func (m *mockMessagesRepo) GetConversationByBookingID(_ context.Context, _ uuid.
 func (m *mockMessagesRepo) CreateConversation(_ context.Context, conversation models.Conversation) (models.Conversation, error) {
 	return conversation, nil
 }
-func (m *mockMessagesRepo) ListParentConversations(_ context.Context, _ uuid.UUID, _ messagesrepo.ConversationListFilter) ([]messagesrepo.ConversationRecord, int, error) {
+func (m *mockMessagesRepo) ListParentConversations(_ context.Context, _ uuid.UUID, _ messages_repo.ConversationListFilter) ([]messages_repo.ConversationRecord, int, error) {
 	return m.parentConversations, m.parentConversationsTotal, nil
 }
-func (m *mockMessagesRepo) ListNannyConversations(_ context.Context, _ uuid.UUID, _ messagesrepo.ConversationListFilter) ([]messagesrepo.ConversationRecord, int, error) {
+func (m *mockMessagesRepo) ListNannyConversations(_ context.Context, _ uuid.UUID, _ messages_repo.ConversationListFilter) ([]messages_repo.ConversationRecord, int, error) {
 	return nil, 0, nil
 }
-func (m *mockMessagesRepo) GetParentConversationByID(_ context.Context, _, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
+func (m *mockMessagesRepo) GetParentConversationByID(_ context.Context, _, _, _ uuid.UUID) (messages_repo.ConversationRecord, error) {
 	return m.parentConversation, nil
 }
-func (m *mockMessagesRepo) GetNannyConversationByID(_ context.Context, _, _, _ uuid.UUID) (messagesrepo.ConversationRecord, error) {
-	return messagesrepo.ConversationRecord{}, nil
+func (m *mockMessagesRepo) GetNannyConversationByID(_ context.Context, _, _, _ uuid.UUID) (messages_repo.ConversationRecord, error) {
+	return messages_repo.ConversationRecord{}, nil
 }
-func (m *mockMessagesRepo) ListMessages(_ context.Context, _ uuid.UUID, _ messagesrepo.MessageListFilter) ([]models.Message, int, error) {
+func (m *mockMessagesRepo) ListMessages(_ context.Context, _ uuid.UUID, _ messages_repo.MessageListFilter) ([]models.Message, int, error) {
 	return m.messages, m.messagesTotal, nil
 }
 func (m *mockMessagesRepo) CreateMessage(_ context.Context, message models.Message) (models.Message, error) {
@@ -76,6 +76,9 @@ func (m *mockProfileRepo) GetParentProfileByUserID(_ context.Context, _ uuid.UUI
 func (m *mockProfileRepo) UpdateNannyProfile(_ context.Context, p models.NannyProfile) (models.NannyProfile, error) {
 	return p, nil
 }
+func (m *mockProfileRepo) UpdateNannyAvatarURL(_ context.Context, _ uuid.UUID, _ string) (models.NannyProfile, error) {
+	return models.NannyProfile{}, nil
+}
 func (m *mockProfileRepo) UpdateParentProfile(_ context.Context, p models.ParentProfile) (models.ParentProfile, error) {
 	return p, nil
 }
@@ -97,9 +100,9 @@ type apiResponse struct {
 	Data    json.RawMessage `json:"data"`
 }
 
-func newConversationControllerForTests(record messagesrepo.ConversationRecord, message models.Message) *ConversationsController {
+func newConversationControllerForTests(record messages_repo.ConversationRecord, message models.Message) *ConversationsController {
 	repo := &mockMessagesRepo{
-		parentConversations:      []messagesrepo.ConversationRecord{record},
+		parentConversations:      []messages_repo.ConversationRecord{record},
 		parentConversationsTotal: 1,
 		parentConversation:       record,
 		messages:                 []models.Message{message},
@@ -140,9 +143,9 @@ func doJSONRequest(t *testing.T, app *fiber.App, method, path string, body any) 
 	return &parsed, resp.StatusCode
 }
 
-func validConversationRecord() messagesrepo.ConversationRecord {
+func validConversationRecord() messages_repo.ConversationRecord {
 	now := time.Now().UTC()
-	return messagesrepo.ConversationRecord{
+	return messages_repo.ConversationRecord{
 		Conversation: models.Conversation{
 			ID:              uuid.New(),
 			BookingID:       uuid.New(),
