@@ -55,7 +55,7 @@ cd apps/api
 go run .
 ```
 
-The API exposes a health check and mounts versioned app routes under the v1 API prefix. See `ENDPOINTS.md` for the current endpoint inventory.
+The API exposes a health check and mounts versioned app routes under the v1 API prefix. [ENDPOINTS.md](./ENDPOINTS.md) is the canonical inventory for implemented and planned API endpoints.
 
 ## Database
 

@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 type AvatarTone = "green" | "cream" | "rose";
 
 const palette: Record<AvatarTone, { bg: string; fg: string }> = {
@@ -8,30 +10,47 @@ const palette: Record<AvatarTone, { bg: string; fg: string }> = {
 
 export default function NannyAvatar({
   initials,
+  src,
   size = 44,
   tone = "green",
 }: {
   initials: string;
+  src?: string;
   size?: number;
   tone?: AvatarTone;
 }) {
   const { bg, fg } = palette[tone];
+  const sharedStyle: CSSProperties = {
+    width: size,
+    height: size,
+    borderRadius: "50%",
+    flexShrink: 0,
+    boxShadow: "inset 0 1px 2px rgba(0,0,0,.08), 0 2px 8px rgba(45,90,61,.18)",
+  };
+
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt={initials}
+        style={{ ...sharedStyle, objectFit: "cover" }}
+      />
+    );
+  }
+
   return (
     <div
       style={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
+        ...sharedStyle,
         background: bg,
         color: fg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        flexShrink: 0,
         fontFamily: "DM Serif Display, var(--font-dm-serif), serif",
         fontSize: size * 0.36,
         letterSpacing: ".01em",
-        boxShadow: "inset 0 1px 2px rgba(0,0,0,.08), 0 2px 8px rgba(45,90,61,.18)",
       }}
     >
       {initials}

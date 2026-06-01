@@ -64,6 +64,7 @@ export interface NannyProfile {
   stripe_onboarded: boolean;
   rating_avg: number;
   rating_count: number;
+  avatar_url?: string;
   city: string;
   province: string;
   created_at: string;
@@ -89,6 +90,7 @@ export interface PublicNannyCard {
   currency: string;
   rating_avg: number;
   rating_count: number;
+  avatar_url?: string;
   city: string;
   province: string;
 }

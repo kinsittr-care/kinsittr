@@ -1,7 +1,15 @@
+"use client";
+
+import { useRef, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { NannyProfile, UpdateNannyProfilePayload } from "@/src/types/api/api";
+import { ownNannyProfileQueryKey, uploadNannyAvatar } from "@/src/utils/api/nanny";
 import NannyAvatar from "../NannyAvatar";
 import { N } from "../tokens";
 import { getInitials } from "./nannyProfileHelpers";
+
+const maxAvatarBytes = 5 * 1024 * 1024;
+const allowedAvatarTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 interface NannyProfileHeaderCardProps {
   form: UpdateNannyProfilePayload;
@@ -9,6 +17,37 @@ interface NannyProfileHeaderCardProps {
 }
 
 export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCardProps) {
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState("");
+
+  const uploadMutation = useMutation({
+    mutationFn: uploadNannyAvatar,
+    onMutate: () => {
+      setUploadError("");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ownNannyProfileQueryKey() });
+    },
+    onError: (error) => {
+      setUploadError(error instanceof Error ? error.message : "Upload failed");
+    },
+  });
+
+  function handleAvatarChange(file: File | undefined) {
+    setUploadError("");
+    if (!file) return;
+    if (!allowedAvatarTypes.has(file.type)) {
+      setUploadError("Choose a JPEG, PNG, or WebP image.");
+      return;
+    }
+    if (file.size > maxAvatarBytes) {
+      setUploadError("Choose an image smaller than 5 MB.");
+      return;
+    }
+    uploadMutation.mutate(file);
+  }
+
   return (
     <div
       style={{
@@ -24,7 +63,7 @@ export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCard
       }}
     >
       <div style={{ position: "relative" }}>
-        <NannyAvatar initials={getInitials(form.display_name)} size={80} tone="green" />
+        <NannyAvatar initials={getInitials(form.display_name)} src={profile.avatar_url || undefined} size={80} tone="green" />
         {profile.verification_status === "verified" && (
           <div
             style={{
@@ -71,9 +110,46 @@ export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCard
         </div>
       </div>
       <div style={{ marginLeft: "auto" }}>
-        <button style={{ padding: "9px 16px", background: N.cardSoft, border: `1px solid ${N.border}`, borderRadius: 10, fontSize: 13.5, color: N.inkMute, cursor: "not-allowed" }} disabled>
-          Photo upload later
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          style={{ display: "none" }}
+          onChange={(e) => {
+            handleAvatarChange(e.target.files?.[0]);
+            e.target.value = "";
+          }}
+          disabled={uploadMutation.isPending}
+        />
+        <button
+          style={{
+            padding: "9px 16px",
+            background: N.cardSoft,
+            border: `1px solid ${N.border}`,
+            borderRadius: 10,
+            fontSize: 13.5,
+            color: uploadMutation.isPending ? N.inkMute : N.greenDk,
+            cursor: uploadMutation.isPending ? "not-allowed" : "pointer",
+          }}
+          disabled={uploadMutation.isPending}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {uploadMutation.isPending ? "Uploading…" : "Change photo"}
         </button>
+        {uploadError && (
+          <div
+            role="alert"
+            style={{
+              marginTop: 8,
+              maxWidth: 220,
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: "#b42318",
+            }}
+          >
+            {uploadError}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -37,6 +37,8 @@ type NannyProfile struct {
 	StripeOnboarded    bool               `json:"stripe_onboarded"`
 	RatingAvg          float64            `json:"rating_avg"`
 	RatingCount        int                `json:"rating_count"`
+	AvatarURL          string             `json:"avatar_url"`
+	AvatarPublicID     string             `json:"avatar_public_id"`
 	City               string             `json:"city"`
 	Province           string             `json:"province"`
 	CreatedAt          time.Time          `json:"created_at"`

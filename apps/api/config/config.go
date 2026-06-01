@@ -20,6 +20,9 @@ type Config struct {
 	StripeWebhookSecret     string
 	StripeConnectRefreshURL string
 	StripeConnectReturnURL  string
+	CloudinaryCloudName     string
+	CloudinaryAPIKey        string
+	CloudinaryAPISecret     string
 }
 
 func Load() (*Config, error) {
@@ -36,6 +39,9 @@ func Load() (*Config, error) {
 		StripeWebhookSecret:     os.Getenv("STRIPE_WEBHOOK_SECRET"),
 		StripeConnectRefreshURL: getEnv("STRIPE_CONNECT_REFRESH_URL", getEnv("WEB_ORIGIN", "http://localhost:3000")+"/nanny/payments"),
 		StripeConnectReturnURL:  getEnv("STRIPE_CONNECT_RETURN_URL", getEnv("WEB_ORIGIN", "http://localhost:3000")+"/nanny/payments"),
+		CloudinaryCloudName:     os.Getenv("CLOUDINARY_CLOUD_NAME"),
+		CloudinaryAPIKey:        os.Getenv("CLOUDINARY_API_KEY"),
+		CloudinaryAPISecret:     os.Getenv("CLOUDINARY_API_SECRET"),
 	}
 	cfg.PlatformFeeRate = getFloatEnv("PLATFORM_FEE_RATE", 0.10)
 
@@ -54,6 +60,10 @@ func Load() (*Config, error) {
 
 func (c *Config) StripeConfigured() bool {
 	return c.StripeSecretKey != ""
+}
+
+func (c *Config) CloudinaryConfigured() bool {
+	return c.CloudinaryCloudName != "" && c.CloudinaryAPIKey != "" && c.CloudinaryAPISecret != ""
 }
 
 func (c *Config) ContactConfigured() bool {

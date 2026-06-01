@@ -24,5 +24,11 @@ func NannyRoutes(controller *controllers.NannyController, jwtSecret string) []ap
 			Middlewares: []typings.FiberMiddleware{auth},
 			Handler:     controller.UpdateOwnProfile,
 		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPost),
+			Path:        "/avatar",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.UploadAvatar,
+		},
 	}
 }

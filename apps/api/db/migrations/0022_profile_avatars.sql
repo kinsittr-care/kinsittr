@@ -1,0 +1,2 @@
+ALTER TABLE nanny_profiles
+    ADD COLUMN IF NOT EXISTS avatar_url TEXT NOT NULL DEFAULT '';

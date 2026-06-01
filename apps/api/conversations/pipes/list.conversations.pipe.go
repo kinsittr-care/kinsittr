@@ -5,9 +5,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/conversations/dtos"
-	convmessages "github.com/kinsittr/kinsittr-api/conversations/messages"
+	conversation_messages "github.com/kinsittr/kinsittr-api/conversations/messages"
 	"github.com/kinsittr/kinsittr-api/models"
-	messagesrepo "github.com/kinsittr/kinsittr-api/repositories/messages"
+	messages_repo "github.com/kinsittr/kinsittr-api/repositories/messages"
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
 
@@ -15,7 +15,7 @@ func (p *ConversationsPipe) List(ctx context.Context, userID uuid.UUID, role mod
 	page, limit := normalizePageLimit(dto.Page, dto.Limit, 20)
 
 	var (
-		itemsRaw []messagesrepo.ConversationRecord
+		itemsRaw []messages_repo.ConversationRecord
 		total    int
 		err      error
 	)
@@ -24,26 +24,26 @@ func (p *ConversationsPipe) List(ctx context.Context, userID uuid.UUID, role mod
 	case models.ParentUserRole:
 		parentProfile, profileErr := p.profileRepo.GetParentProfileByUserID(ctx, userID)
 		if profileErr != nil {
-			return pipeError[ConversationListData](convmessages.Invalid_Message_Request)
+			return pipeError[ConversationListData](conversation_messages.Invalid_Message_Request)
 		}
 		if parentProfile.ID == uuid.Nil {
 			return conversationNotFound[ConversationListData]()
 		}
-		itemsRaw, total, err = p.repo.ListParentConversations(ctx, parentProfile.ID, messagesrepo.ConversationListFilter{Page: page, Limit: limit, UserID: userID})
+		itemsRaw, total, err = p.repo.ListParentConversations(ctx, parentProfile.ID, messages_repo.ConversationListFilter{Page: page, Limit: limit, UserID: userID})
 	case models.NannyUserRole:
 		nannyProfile, profileErr := p.profileRepo.GetNannyProfileByUserID(ctx, userID)
 		if profileErr != nil {
-			return pipeError[ConversationListData](convmessages.Invalid_Message_Request)
+			return pipeError[ConversationListData](conversation_messages.Invalid_Message_Request)
 		}
 		if nannyProfile.ID == uuid.Nil {
 			return conversationNotFound[ConversationListData]()
 		}
-		itemsRaw, total, err = p.repo.ListNannyConversations(ctx, nannyProfile.ID, messagesrepo.ConversationListFilter{Page: page, Limit: limit, UserID: userID})
+		itemsRaw, total, err = p.repo.ListNannyConversations(ctx, nannyProfile.ID, messages_repo.ConversationListFilter{Page: page, Limit: limit, UserID: userID})
 	default:
-		return pipeError[ConversationListData](convmessages.Forbidden_Conversation_Access)
+		return pipeError[ConversationListData](conversation_messages.Forbidden_Conversation_Access)
 	}
 	if err != nil {
-		return pipeError[ConversationListData](convmessages.Invalid_Message_Request)
+		return pipeError[ConversationListData](conversation_messages.Invalid_Message_Request)
 	}
 
 	items := make([]ConversationData, 0, len(itemsRaw))
@@ -52,5 +52,5 @@ func (p *ConversationsPipe) List(ctx context.Context, userID uuid.UUID, role mod
 	}
 
 	data := ConversationListData{Items: items, Page: page, Limit: limit, Total: total}
-	return pipeSuccess(convmessages.Conversation_Listed, &data)
+	return pipeSuccess(conversation_messages.Conversation_Listed, &data)
 }

@@ -55,6 +55,7 @@ import (
 	reviews_router "github.com/kinsittr/kinsittr-api/reviews/routers"
 	"github.com/kinsittr/kinsittr-api/shared/api"
 	"github.com/kinsittr/kinsittr-api/shared/mail"
+	cloudinaryapi "github.com/kinsittr/kinsittr-api/shared/cloudinary"
 	stripeapi "github.com/kinsittr/kinsittr-api/shared/stripe"
 )
 
@@ -89,6 +90,9 @@ func New(cfg *config.Config) (*fiber.App, error) {
 
 	// nanny public
 	nannyPipe := nanny_pipe.NewNannyPipe(nanny_repo.NannyRepo, profile_repo.ProfileRepo)
+	if cfg.CloudinaryConfigured() {
+		nannyPipe.SetCloudinaryClient(cloudinaryapi.NewClient(cfg.CloudinaryCloudName, cfg.CloudinaryAPIKey, cfg.CloudinaryAPISecret))
+	}
 	nannyController := nanny_controller.NewNannyController(nannyPipe)
 
 	// parent

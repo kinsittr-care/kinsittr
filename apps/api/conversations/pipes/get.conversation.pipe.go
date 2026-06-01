@@ -4,15 +4,15 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	convmessages "github.com/kinsittr/kinsittr-api/conversations/messages"
+	conversation_messages "github.com/kinsittr/kinsittr-api/conversations/messages"
 	"github.com/kinsittr/kinsittr-api/models"
-	messagesrepo "github.com/kinsittr/kinsittr-api/repositories/messages"
+	messages_repo "github.com/kinsittr/kinsittr-api/repositories/messages"
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
 
 func (p *ConversationsPipe) GetByID(ctx context.Context, userID uuid.UUID, role models.UserRole, conversationID uuid.UUID) *shared.PipeRes[ConversationData] {
 	var (
-		record messagesrepo.ConversationRecord
+		record messages_repo.ConversationRecord
 		err    error
 	)
 
@@ -20,7 +20,7 @@ func (p *ConversationsPipe) GetByID(ctx context.Context, userID uuid.UUID, role 
 	case models.ParentUserRole:
 		parentProfile, profileErr := p.profileRepo.GetParentProfileByUserID(ctx, userID)
 		if profileErr != nil {
-			return pipeError[ConversationData](convmessages.Invalid_Message_Request)
+			return pipeError[ConversationData](conversation_messages.Invalid_Message_Request)
 		}
 		if parentProfile.ID == uuid.Nil {
 			return conversationNotFound[ConversationData]()
@@ -29,22 +29,22 @@ func (p *ConversationsPipe) GetByID(ctx context.Context, userID uuid.UUID, role 
 	case models.NannyUserRole:
 		nannyProfile, profileErr := p.profileRepo.GetNannyProfileByUserID(ctx, userID)
 		if profileErr != nil {
-			return pipeError[ConversationData](convmessages.Invalid_Message_Request)
+			return pipeError[ConversationData](conversation_messages.Invalid_Message_Request)
 		}
 		if nannyProfile.ID == uuid.Nil {
 			return conversationNotFound[ConversationData]()
 		}
 		record, err = p.repo.GetNannyConversationByID(ctx, conversationID, nannyProfile.ID, userID)
 	default:
-		return pipeError[ConversationData](convmessages.Forbidden_Conversation_Access)
+		return pipeError[ConversationData](conversation_messages.Forbidden_Conversation_Access)
 	}
 	if err != nil {
-		return pipeError[ConversationData](convmessages.Invalid_Message_Request)
+		return pipeError[ConversationData](conversation_messages.Invalid_Message_Request)
 	}
 	if record.ID == uuid.Nil {
 		return conversationNotFound[ConversationData]()
 	}
 
 	data := toConversationData(record)
-	return pipeSuccess(convmessages.Conversation_Found, &data)
+	return pipeSuccess(conversation_messages.Conversation_Found, &data)
 }

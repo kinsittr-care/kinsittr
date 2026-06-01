@@ -43,6 +43,24 @@ interface ApiRequestOptions {
   retryOnUnauthorized?: boolean;
 }
 
+function isMultipartBody(body: RequestInit["body"]) {
+  return typeof FormData !== "undefined" && body instanceof FormData;
+}
+
+function buildApiHeaders(
+  init: RequestInit | undefined,
+  accessToken?: string,
+) {
+  const headers = new Headers(init?.headers);
+  if (!headers.has("Content-Type") && !isMultipartBody(init?.body)) {
+    headers.set("Content-Type", "application/json");
+  }
+  if (accessToken) {
+    headers.set("Authorization", `Bearer ${accessToken}`);
+  }
+  return headers;
+}
+
 async function parseApiResponse<TResponse>(
   response: Response,
 ): Promise<ApiResponse<TResponse>> {
@@ -87,14 +105,10 @@ export async function apiRequest<TResponse>(
   options: ApiRequestOptions = {},
 ): Promise<ApiResponse<TResponse>> {
   const session = options.requiresAuth ? getStoredAuthSession() : null;
-
-  const headers = new Headers(init?.headers);
-  if (!headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
-  }
-  if (options.requiresAuth && session?.accessToken) {
-    headers.set("Authorization", `Bearer ${session.accessToken}`);
-  }
+  const headers = buildApiHeaders(
+    init,
+    options.requiresAuth ? session?.accessToken : undefined,
+  );
 
   let response = await fetch(`${apiBaseUrl}${path}`, {
     ...init,
@@ -107,11 +121,7 @@ export async function apiRequest<TResponse>(
     options.retryOnUnauthorized !== false
   ) {
     const refreshed = await refreshStoredSession(options.refreshPath);
-    const retryHeaders = new Headers(init?.headers);
-    if (!retryHeaders.has("Content-Type")) {
-      retryHeaders.set("Content-Type", "application/json");
-    }
-    retryHeaders.set("Authorization", `Bearer ${refreshed.accessToken}`);
+    const retryHeaders = buildApiHeaders(init, refreshed.accessToken);
 
     response = await fetch(`${apiBaseUrl}${path}`, {
       ...init,

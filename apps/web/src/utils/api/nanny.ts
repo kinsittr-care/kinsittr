@@ -4,7 +4,7 @@ import type {
   PublicNannyListData,
   UpdateNannyProfilePayload,
 } from "@/src/types/api/api";
-import { apiRequest } from "@/src/utils/api/api";
+import { ApiRequestError, type ApiResponse, apiRequest } from "@/src/utils/api/api";
 
 function buildListPublicNanniesQuery(params: ListPublicNanniesParams) {
   const query = new URLSearchParams();
@@ -55,4 +55,27 @@ export async function updateOwnNannyProfile(payload: UpdateNannyProfilePayload) 
       requiresAuth: true,
     },
   );
+}
+
+export async function uploadNannyAvatar(file: File): Promise<ApiResponse<NannyProfile>> {
+  const formData = new FormData();
+  formData.append("avatar", file);
+
+  try {
+    return await apiRequest<NannyProfile>(
+      "/api/v1/nanny/avatar",
+      {
+        method: "POST",
+        body: formData,
+      },
+      {
+        requiresAuth: true,
+      },
+    );
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      throw error;
+    }
+    throw new ApiRequestError("Upload failed");
+  }
 }
