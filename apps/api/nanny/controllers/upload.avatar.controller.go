@@ -9,6 +9,8 @@ import (
 	"github.com/kinsittr/kinsittr-api/nanny/messages"
 )
 
+const maxAvatarUploadBytes = 5 * 1024 * 1024 // 5 MB
+
 func (c *NannyController) UploadAvatar(ctx *fiber.Ctx) error {
 	userID, ok := ctx.Locals("auth.user_id").(uuid.UUID)
 	if !ok || userID == uuid.Nil {
@@ -43,11 +45,17 @@ func (c *NannyController) UploadAvatar(ctx *fiber.Ctx) error {
 	}
 	defer f.Close()
 
-	data, err := io.ReadAll(f)
+	data, err := io.ReadAll(io.LimitReader(f, maxAvatarUploadBytes+1))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"message": messages.Avatar_Invalid_File,
+		})
+	}
+	if len(data) > maxAvatarUploadBytes {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": messages.Avatar_Too_Large,
 		})
 	}
 

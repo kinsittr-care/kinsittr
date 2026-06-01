@@ -1,12 +1,15 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { NannyProfile, UpdateNannyProfilePayload } from "@/src/types/api/api";
 import { ownNannyProfileQueryKey, uploadNannyAvatar } from "@/src/utils/api/nanny";
 import NannyAvatar from "../NannyAvatar";
 import { N } from "../tokens";
 import { getInitials } from "./nannyProfileHelpers";
+
+const maxAvatarBytes = 5 * 1024 * 1024;
+const allowedAvatarTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 interface NannyProfileHeaderCardProps {
   form: UpdateNannyProfilePayload;
@@ -16,13 +19,34 @@ interface NannyProfileHeaderCardProps {
 export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCardProps) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState("");
 
   const uploadMutation = useMutation({
     mutationFn: uploadNannyAvatar,
+    onMutate: () => {
+      setUploadError("");
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ownNannyProfileQueryKey() });
     },
+    onError: (error) => {
+      setUploadError(error instanceof Error ? error.message : "Upload failed");
+    },
   });
+
+  function handleAvatarChange(file: File | undefined) {
+    setUploadError("");
+    if (!file) return;
+    if (!allowedAvatarTypes.has(file.type)) {
+      setUploadError("Choose a JPEG, PNG, or WebP image.");
+      return;
+    }
+    if (file.size > maxAvatarBytes) {
+      setUploadError("Choose an image smaller than 5 MB.");
+      return;
+    }
+    uploadMutation.mutate(file);
+  }
 
   return (
     <div
@@ -92,10 +116,10 @@ export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCard
           accept="image/jpeg,image/png,image/webp"
           style={{ display: "none" }}
           onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) uploadMutation.mutate(file);
+            handleAvatarChange(e.target.files?.[0]);
             e.target.value = "";
           }}
+          disabled={uploadMutation.isPending}
         />
         <button
           style={{
@@ -112,6 +136,20 @@ export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCard
         >
           {uploadMutation.isPending ? "Uploading…" : "Change photo"}
         </button>
+        {uploadError && (
+          <div
+            role="alert"
+            style={{
+              marginTop: 8,
+              maxWidth: 220,
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: "#b42318",
+            }}
+          >
+            {uploadError}
+          </div>
+        )}
       </div>
     </div>
   );
