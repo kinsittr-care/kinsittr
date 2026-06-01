@@ -294,6 +294,37 @@ func (r *pgRepository) ResetUserPasswordWithRecoveryToken(ctx context.Context, t
 	return tx.Commit(ctx)
 }
 
+func (r *pgRepository) AllowAuthRateLimit(ctx context.Context, key string, max int, window time.Duration) (bool, error) {
+	if max < 1 {
+		max = 1
+	}
+	windowSeconds := int(window.Seconds())
+	if windowSeconds < 1 {
+		windowSeconds = 1
+	}
+
+	var count int
+	err := r.db.QueryRow(ctx, `
+		INSERT INTO auth_rate_limits (key, count, expires_at)
+		VALUES ($1, 1, NOW() + ($2 * INTERVAL '1 second'))
+		ON CONFLICT (key) DO UPDATE
+		SET count = CASE
+				WHEN auth_rate_limits.expires_at <= NOW() THEN 1
+				ELSE auth_rate_limits.count + 1
+			END,
+			expires_at = CASE
+				WHEN auth_rate_limits.expires_at <= NOW() THEN NOW() + ($2 * INTERVAL '1 second')
+				ELSE auth_rate_limits.expires_at
+			END,
+			updated_at = NOW()
+		RETURNING count
+	`, key, windowSeconds).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count <= max, nil
+}
+
 func (r *pgRepository) CreateRefreshSession(ctx context.Context, session models.RefreshSession) error {
 	_, err := r.db.Exec(ctx, `
 		INSERT INTO refresh_sessions (id, user_id, expires_at)

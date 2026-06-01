@@ -17,6 +17,10 @@ import (
 
 const recoveryTokenTTL = 30 * time.Minute
 const maxRecoveryRequestsPerHour = 3
+const maxRecoveryIPRequestsPerWindow = 5
+const maxRecoveryTokenAttemptsPerWindow = 10
+const recoveryIPRateLimitWindow = 15 * time.Minute
+const recoveryTokenRateLimitWindow = 15 * time.Minute
 
 type RecoveryVerifyData struct {
 	Valid bool `json:"valid"`
@@ -24,7 +28,15 @@ type RecoveryVerifyData struct {
 
 func (p *AuthPipe) RequestRecovery(ctx context.Context, dto dtos.RecoveryRequestDTO, requestIP string) *shared.PipeRes[any] {
 	email := strings.ToLower(strings.TrimSpace(dto.Email))
+	requestIP = strings.TrimSpace(requestIP)
 	generic := pipeSuccess[any](messages.Recovery_Request_Accepted, nil)
+
+	if !p.allowRecoveryRate(ctx, "request:ip:"+requestIP, maxRecoveryIPRequestsPerWindow, recoveryIPRateLimitWindow) {
+		return generic
+	}
+	if !p.allowRecoveryRate(ctx, "request:email:"+email, maxRecoveryRequestsPerHour, time.Hour) {
+		return generic
+	}
 
 	user, err := p.repo.GetUserByEmail(ctx, email)
 	if err != nil || user.ID == uuid.Nil || !user.IsActive || user.Role == models.AdminUserRole {
@@ -52,7 +64,7 @@ func (p *AuthPipe) RequestRecovery(ctx context.Context, dto dtos.RecoveryRequest
 		ID:        uuid.New(),
 		UserID:    user.ID,
 		TokenHash: tokenHash,
-		RequestIP: strings.TrimSpace(requestIP),
+		RequestIP: requestIP,
 		ExpiresAt: time.Now().Add(recoveryTokenTTL),
 	}); err != nil {
 		return generic
@@ -67,7 +79,14 @@ func (p *AuthPipe) RequestRecovery(ctx context.Context, dto dtos.RecoveryRequest
 	return generic
 }
 
-func (p *AuthPipe) VerifyRecovery(ctx context.Context, dto dtos.RecoveryVerifyDTO) *shared.PipeRes[RecoveryVerifyData] {
+func (p *AuthPipe) VerifyRecovery(ctx context.Context, dto dtos.RecoveryVerifyDTO, requestIP string) *shared.PipeRes[RecoveryVerifyData] {
+	if !p.allowRecoveryRate(ctx, "verify:ip:"+strings.TrimSpace(requestIP), maxRecoveryTokenAttemptsPerWindow, recoveryTokenRateLimitWindow) {
+		return &shared.PipeRes[RecoveryVerifyData]{
+			Success: false,
+			Message: shared.CreatePipeMessage(messages.Invalid_Recovery_Token),
+		}
+	}
+
 	token, err := p.validRecoveryToken(ctx, dto.Token)
 	if err != nil || token.ID == uuid.Nil {
 		return &shared.PipeRes[RecoveryVerifyData]{
@@ -79,7 +98,11 @@ func (p *AuthPipe) VerifyRecovery(ctx context.Context, dto dtos.RecoveryVerifyDT
 	return pipeSuccess(messages.Recovery_Token_Verified, &RecoveryVerifyData{Valid: true})
 }
 
-func (p *AuthPipe) ResetRecoveryPassword(ctx context.Context, dto dtos.RecoveryResetDTO) *shared.PipeRes[any] {
+func (p *AuthPipe) ResetRecoveryPassword(ctx context.Context, dto dtos.RecoveryResetDTO, requestIP string) *shared.PipeRes[any] {
+	if !p.allowRecoveryRate(ctx, "reset:ip:"+strings.TrimSpace(requestIP), maxRecoveryTokenAttemptsPerWindow, recoveryTokenRateLimitWindow) {
+		return pipeError[any](messages.Invalid_Recovery_Token)
+	}
+
 	token, err := p.validRecoveryToken(ctx, dto.Token)
 	if err != nil || token.ID == uuid.Nil {
 		return pipeError[any](messages.Invalid_Recovery_Token)
@@ -94,6 +117,12 @@ func (p *AuthPipe) ResetRecoveryPassword(ctx context.Context, dto dtos.RecoveryR
 	}
 
 	return pipeSuccess[any](messages.Password_Reset, nil)
+}
+
+func (p *AuthPipe) allowRecoveryRate(ctx context.Context, suffix string, max int, window time.Duration) bool {
+	key := "auth:recovery:" + suffix
+	allowed, err := p.repo.AllowAuthRateLimit(ctx, key, max, window)
+	return err == nil && allowed
 }
 
 func (p *AuthPipe) validRecoveryToken(ctx context.Context, rawToken string) (models.PasswordRecoveryToken, error) {

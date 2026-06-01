@@ -26,6 +26,7 @@ type AccountRepository interface {
 	CountPasswordRecoveryTokensSince(ctx context.Context, userID uuid.UUID, since time.Time) (int, error)
 	ExpirePasswordRecoveryTokensByUserID(ctx context.Context, userID uuid.UUID) error
 	ResetUserPasswordWithRecoveryToken(ctx context.Context, tokenID uuid.UUID, userID uuid.UUID, passwordHash string) error
+	AllowAuthRateLimit(ctx context.Context, key string, max int, window time.Duration) (bool, error)
 
 	// refresh sessions
 	CreateRefreshSession(ctx context.Context, session models.RefreshSession) error

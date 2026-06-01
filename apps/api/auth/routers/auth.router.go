@@ -1,10 +1,7 @@
 package routers
 
 import (
-	"time"
-
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/kinsittr/kinsittr-api/auth/controllers"
 	"github.com/kinsittr/kinsittr-api/middleware"
 	"github.com/kinsittr/kinsittr-api/shared/api"
@@ -12,14 +9,6 @@ import (
 )
 
 func AuthRoutes(controller *controllers.AuthController, jwtSecret string) []api.RouterSchema {
-	recoveryLimit := limiter.New(limiter.Config{
-		Max:        5,
-		Expiration: 15 * time.Minute,
-		KeyGenerator: func(ctx *fiber.Ctx) string {
-			return ctx.IP()
-		},
-	})
-
 	return []api.RouterSchema{
 		{
 			RouteMethod: api.RouteMethod(fiber.MethodPost),
@@ -72,7 +61,7 @@ func AuthRoutes(controller *controllers.AuthController, jwtSecret string) []api.
 		{
 			RouteMethod: api.RouteMethod(fiber.MethodPost),
 			Path:        "/recovery/request",
-			Middlewares: []typings.FiberMiddleware{recoveryLimit},
+			Middlewares: []typings.FiberMiddleware{},
 			Handler:     controller.RequestRecovery,
 		},
 		{

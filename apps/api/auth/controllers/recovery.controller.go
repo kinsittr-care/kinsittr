@@ -52,7 +52,7 @@ func (c *AuthController) VerifyRecovery(ctx *fiber.Ctx) error {
 		})
 	}
 
-	res := c.pipe.VerifyRecovery(ctx.Context(), dto)
+	res := c.pipe.VerifyRecovery(ctx.Context(), dto, ctx.IP())
 	if !res.Success {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"success": false,
@@ -82,7 +82,7 @@ func (c *AuthController) ResetRecovery(ctx *fiber.Ctx) error {
 		})
 	}
 
-	res := c.pipe.ResetRecoveryPassword(ctx.Context(), dto)
+	res := c.pipe.ResetRecoveryPassword(ctx.Context(), dto, ctx.IP())
 	if !res.Success {
 		status := fiber.StatusBadRequest
 		if string(res.Message) == messages.Invalid_Recovery_Token {

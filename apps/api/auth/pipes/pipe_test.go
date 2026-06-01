@@ -44,6 +44,8 @@ type mockAccountRepo struct {
 	recoveryTokenErr        error
 	recoveryCount           int
 	recoveryCountErr        error
+	blockedRateLimitKeys    map[string]bool
+	rateLimitErr            error
 	createRecoveryErr       error
 	expireRecoveryErr       error
 	resetRecoveryErr        error
@@ -57,6 +59,7 @@ type mockAccountRepo struct {
 	resetRecoveryTokenID  uuid.UUID
 	resetRecoveryUserID   uuid.UUID
 	resetRecoveryPassword string
+	rateLimitKeys         []string
 }
 
 func (m *mockAccountRepo) UserExistsByEmail(_ context.Context, _ string) (bool, error) {
@@ -118,6 +121,16 @@ func (m *mockAccountRepo) GetPasswordRecoveryTokenByHash(_ context.Context, _ st
 }
 func (m *mockAccountRepo) CountPasswordRecoveryTokensSince(_ context.Context, _ uuid.UUID, _ time.Time) (int, error) {
 	return m.recoveryCount, m.recoveryCountErr
+}
+func (m *mockAccountRepo) AllowAuthRateLimit(_ context.Context, key string, _ int, _ time.Duration) (bool, error) {
+	m.rateLimitKeys = append(m.rateLimitKeys, key)
+	if m.rateLimitErr != nil {
+		return false, m.rateLimitErr
+	}
+	if m.blockedRateLimitKeys != nil && m.blockedRateLimitKeys[key] {
+		return false, nil
+	}
+	return true, nil
 }
 func (m *mockAccountRepo) ExpirePasswordRecoveryTokensByUserID(_ context.Context, _ uuid.UUID) error {
 	return m.expireRecoveryErr
@@ -483,6 +496,26 @@ func TestAuthPipeRecovery(t *testing.T) {
 		if repo.createdRecoveryToken.TokenHash == "" {
 			t.Fatal("expected hashed token")
 		}
+		if len(repo.rateLimitKeys) != 2 {
+			t.Fatalf("expected IP and email rate limit checks, got %v", repo.rateLimitKeys)
+		}
+	})
+
+	t.Run("request IP rate limit returns generic success without token", func(t *testing.T) {
+		repo := &mockAccountRepo{
+			blockedRateLimitKeys: map[string]bool{
+				"auth:recovery:request:ip:127.0.0.1": true,
+			},
+		}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+
+		res := pipe.RequestRecovery(context.Background(), dtos.RecoveryRequestDTO{Email: "jordan@example.com"}, "127.0.0.1")
+		if !res.Success || string(res.Message) != messages.Recovery_Request_Accepted {
+			t.Fatalf("expected generic success, got success=%v message=%s", res.Success, res.Message)
+		}
+		if repo.createdRecoveryToken.ID != uuid.Nil {
+			t.Fatal("expected no token when IP recovery limit is reached")
+		}
 	})
 
 	t.Run("email rate limit returns generic success without token", func(t *testing.T) {
@@ -509,7 +542,21 @@ func TestAuthPipeRecovery(t *testing.T) {
 		}
 		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
 
-		res := pipe.VerifyRecovery(context.Background(), dtos.RecoveryVerifyDTO{Token: "valid-length-token-value-1234567890"})
+		res := pipe.VerifyRecovery(context.Background(), dtos.RecoveryVerifyDTO{Token: "valid-length-token-value-1234567890"}, "127.0.0.1")
+		if res.Success || string(res.Message) != messages.Invalid_Recovery_Token {
+			t.Fatalf("expected %s, got success=%v message=%s", messages.Invalid_Recovery_Token, res.Success, res.Message)
+		}
+	})
+
+	t.Run("verify rate limit returns invalid token", func(t *testing.T) {
+		repo := &mockAccountRepo{
+			blockedRateLimitKeys: map[string]bool{
+				"auth:recovery:verify:ip:127.0.0.1": true,
+			},
+		}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+
+		res := pipe.VerifyRecovery(context.Background(), dtos.RecoveryVerifyDTO{Token: "valid-length-token-value-1234567890"}, "127.0.0.1")
 		if res.Success || string(res.Message) != messages.Invalid_Recovery_Token {
 			t.Fatalf("expected %s, got success=%v message=%s", messages.Invalid_Recovery_Token, res.Success, res.Message)
 		}
@@ -527,7 +574,7 @@ func TestAuthPipeRecovery(t *testing.T) {
 		}
 		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
 
-		res := pipe.VerifyRecovery(context.Background(), dtos.RecoveryVerifyDTO{Token: "valid-length-token-value-1234567890"})
+		res := pipe.VerifyRecovery(context.Background(), dtos.RecoveryVerifyDTO{Token: "valid-length-token-value-1234567890"}, "127.0.0.1")
 		if !res.Success || string(res.Message) != messages.Recovery_Token_Verified {
 			t.Fatalf("expected success, got success=%v message=%s", res.Success, res.Message)
 		}
@@ -549,7 +596,7 @@ func TestAuthPipeRecovery(t *testing.T) {
 		res := pipe.ResetRecoveryPassword(context.Background(), dtos.RecoveryResetDTO{
 			Token:       "valid-length-token-value-1234567890",
 			NewPassword: "newsecurepass",
-		})
+		}, "127.0.0.1")
 		if !res.Success || string(res.Message) != messages.Password_Reset {
 			t.Fatalf("expected success, got success=%v message=%s", res.Success, res.Message)
 		}
@@ -558,6 +605,23 @@ func TestAuthPipeRecovery(t *testing.T) {
 		}
 		if !services.CheckPassword(repo.resetRecoveryPassword, "newsecurepass") {
 			t.Fatal("expected stored reset password hash to match new password")
+		}
+	})
+
+	t.Run("reset rate limit returns invalid token", func(t *testing.T) {
+		repo := &mockAccountRepo{
+			blockedRateLimitKeys: map[string]bool{
+				"auth:recovery:reset:ip:127.0.0.1": true,
+			},
+		}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+
+		res := pipe.ResetRecoveryPassword(context.Background(), dtos.RecoveryResetDTO{
+			Token:       "valid-length-token-value-1234567890",
+			NewPassword: "newsecurepass",
+		}, "127.0.0.1")
+		if res.Success || string(res.Message) != messages.Invalid_Recovery_Token {
+			t.Fatalf("expected %s, got success=%v message=%s", messages.Invalid_Recovery_Token, res.Success, res.Message)
 		}
 	})
 }
