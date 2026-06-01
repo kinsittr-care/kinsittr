@@ -59,6 +59,34 @@ func (m *mockAccountRepo) DeactivateUser(context.Context, uuid.UUID) error {
 	return nil
 }
 
+func (m *mockAccountRepo) CreatePasswordRecoveryToken(context.Context, models.PasswordRecoveryToken) error {
+	return nil
+}
+
+func (m *mockAccountRepo) GetPasswordRecoveryTokenByHash(context.Context, string) (models.PasswordRecoveryToken, error) {
+	return models.PasswordRecoveryToken{}, nil
+}
+
+func (m *mockAccountRepo) CountPasswordRecoveryTokensSince(context.Context, uuid.UUID, time.Time) (int, error) {
+	return 0, nil
+}
+
+func (m *mockAccountRepo) AllowAuthRateLimit(context.Context, string, int, time.Duration) (bool, error) {
+	return true, nil
+}
+
+func (m *mockAccountRepo) DeleteStalePasswordRecoveryTokens(context.Context, time.Time) (int64, error) {
+	return 0, nil
+}
+
+func (m *mockAccountRepo) ExpirePasswordRecoveryTokensByUserID(context.Context, uuid.UUID) error {
+	return nil
+}
+
+func (m *mockAccountRepo) ResetUserPasswordWithRecoveryToken(context.Context, uuid.UUID, uuid.UUID, string) error {
+	return nil
+}
+
 func (m *mockAccountRepo) CreateRefreshSession(_ context.Context, session models.RefreshSession) error {
 	m.createdRefreshSession = session
 	return m.createRefreshSessionErr

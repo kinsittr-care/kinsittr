@@ -54,6 +54,23 @@ export interface DeactivateAccountPayload {
   password: string;
 }
 
+export interface RecoveryRequestPayload {
+  email: string;
+}
+
+export interface RecoveryVerifyPayload {
+  token: string;
+}
+
+export interface RecoveryResetPayload {
+  token: string;
+  new_password: string;
+}
+
+export interface RecoveryVerifyData {
+  valid: boolean;
+}
+
 export interface AuthTokenPair {
   access_token: string;
   refresh_token: string;

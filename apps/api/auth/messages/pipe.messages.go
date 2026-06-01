@@ -9,6 +9,9 @@ const (
 	Logged_Out_Successfully      = "logged_out_successfully"
 	Password_Changed             = "password_changed"
 	Account_Deactivated          = "account_deactivated"
+	Recovery_Request_Accepted    = "recovery_request_accepted"
+	Recovery_Token_Verified      = "recovery_token_verified"
+	Password_Reset               = "password_reset"
 
 	// -
 	Email_Already_In_Use      = "email_already_in_use"
@@ -18,4 +21,5 @@ const (
 	Registration_Failed       = "registration_failed"
 	Invalid_Password          = "invalid_password"
 	Invalid_Account_Request   = "invalid_account_request"
+	Invalid_Recovery_Token    = "invalid_recovery_token"
 )

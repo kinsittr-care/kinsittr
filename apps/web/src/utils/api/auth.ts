@@ -5,6 +5,10 @@ import {
   ChangePasswordPayload,
   DeactivateAccountPayload,
   LoginPayload,
+  RecoveryRequestPayload,
+  RecoveryResetPayload,
+  RecoveryVerifyData,
+  RecoveryVerifyPayload,
   RegisterNannyPayload,
   RegisterParentPayload,
 } from "@/src/types/api/api";
@@ -74,6 +78,27 @@ export async function deactivateAccount(payload: DeactivateAccountPayload) {
       requiresAuth: true,
     },
   );
+}
+
+export async function requestPasswordRecovery(payload: RecoveryRequestPayload) {
+  return apiRequest("/api/v1/auth/recovery/request", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function verifyPasswordRecovery(payload: RecoveryVerifyPayload) {
+  return apiRequest<RecoveryVerifyData>("/api/v1/auth/recovery/verify", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function resetPasswordWithRecovery(payload: RecoveryResetPayload) {
+  return apiRequest("/api/v1/auth/recovery/reset", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function establishAuthSession(auth: AuthTokenPair): Promise<AuthSession> {

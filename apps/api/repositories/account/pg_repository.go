@@ -208,6 +208,134 @@ func (r *pgRepository) DeactivateUser(ctx context.Context, userID uuid.UUID) err
 	return tx.Commit(ctx)
 }
 
+func (r *pgRepository) CreatePasswordRecoveryToken(ctx context.Context, token models.PasswordRecoveryToken) error {
+	_, err := r.db.Exec(ctx, `
+		INSERT INTO password_recovery_tokens (id, user_id, token_hash, request_ip, expires_at)
+		VALUES ($1, $2, $3, $4, $5)
+	`, token.ID, token.UserID, token.TokenHash, token.RequestIP, token.ExpiresAt)
+	return err
+}
+
+func (r *pgRepository) GetPasswordRecoveryTokenByHash(ctx context.Context, tokenHash string) (models.PasswordRecoveryToken, error) {
+	var token models.PasswordRecoveryToken
+	err := r.db.QueryRow(ctx, `
+		SELECT id, user_id, token_hash, request_ip, expires_at, used_at, created_at
+		FROM password_recovery_tokens
+		WHERE token_hash = $1
+	`, tokenHash).Scan(
+		&token.ID,
+		&token.UserID,
+		&token.TokenHash,
+		&token.RequestIP,
+		&token.ExpiresAt,
+		&token.UsedAt,
+		&token.CreatedAt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return models.PasswordRecoveryToken{}, nil
+	}
+	return token, err
+}
+
+func (r *pgRepository) CountPasswordRecoveryTokensSince(ctx context.Context, userID uuid.UUID, since time.Time) (int, error) {
+	var count int
+	err := r.db.QueryRow(ctx, `
+		SELECT COUNT(*)
+		FROM password_recovery_tokens
+		WHERE user_id = $1 AND created_at >= $2
+	`, userID, since).Scan(&count)
+	return count, err
+}
+
+func (r *pgRepository) ExpirePasswordRecoveryTokensByUserID(ctx context.Context, userID uuid.UUID) error {
+	_, err := r.db.Exec(ctx, `
+		UPDATE password_recovery_tokens
+		SET used_at = NOW()
+		WHERE user_id = $1 AND used_at IS NULL
+	`, userID)
+	return err
+}
+
+func (r *pgRepository) ResetUserPasswordWithRecoveryToken(ctx context.Context, tokenID uuid.UUID, userID uuid.UUID, passwordHash string) error {
+	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	tag, err := tx.Exec(ctx, `
+		UPDATE password_recovery_tokens
+		SET used_at = NOW()
+		WHERE id = $1 AND user_id = $2 AND used_at IS NULL AND expires_at > NOW()
+	`, tokenID, userID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+
+	tag, err = tx.Exec(ctx, `
+		UPDATE users
+		SET password_hash = $1, updated_at = NOW()
+		WHERE id = $2 AND is_active = TRUE
+	`, passwordHash, userID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+
+	if _, err := tx.Exec(ctx, `DELETE FROM refresh_sessions WHERE user_id = $1`, userID); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (r *pgRepository) AllowAuthRateLimit(ctx context.Context, key string, max int, window time.Duration) (bool, error) {
+	if max < 1 {
+		max = 1
+	}
+	windowSeconds := int(window.Seconds())
+	if windowSeconds < 1 {
+		windowSeconds = 1
+	}
+
+	var count int
+	err := r.db.QueryRow(ctx, `
+		INSERT INTO auth_rate_limits (key, count, expires_at)
+		VALUES ($1, 1, NOW() + ($2 * INTERVAL '1 second'))
+		ON CONFLICT (key) DO UPDATE
+		SET count = CASE
+				WHEN auth_rate_limits.expires_at <= NOW() THEN 1
+				ELSE auth_rate_limits.count + 1
+			END,
+			expires_at = CASE
+				WHEN auth_rate_limits.expires_at <= NOW() THEN NOW() + ($2 * INTERVAL '1 second')
+				ELSE auth_rate_limits.expires_at
+			END,
+			updated_at = NOW()
+		RETURNING count
+	`, key, windowSeconds).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count <= max, nil
+}
+
+func (r *pgRepository) DeleteStalePasswordRecoveryTokens(ctx context.Context, before time.Time) (int64, error) {
+	tag, err := r.db.Exec(ctx, `
+		DELETE FROM password_recovery_tokens
+		WHERE expires_at < $1 OR (used_at IS NOT NULL AND used_at < $1)
+	`, before)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
+}
+
 func (r *pgRepository) CreateRefreshSession(ctx context.Context, session models.RefreshSession) error {
 	_, err := r.db.Exec(ctx, `
 		INSERT INTO refresh_sessions (id, user_id, expires_at)

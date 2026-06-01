@@ -16,6 +16,7 @@ import (
 	auth_controller "github.com/kinsittr/kinsittr-api/auth/controllers"
 	auth_pipe "github.com/kinsittr/kinsittr-api/auth/pipes"
 	auth_router "github.com/kinsittr/kinsittr-api/auth/routers"
+	auth_services "github.com/kinsittr/kinsittr-api/auth/services"
 	bookings_controller "github.com/kinsittr/kinsittr-api/bookings/controllers"
 	bookings_pipe "github.com/kinsittr/kinsittr-api/bookings/pipes"
 	bookings_router "github.com/kinsittr/kinsittr-api/bookings/routers"
@@ -57,6 +58,7 @@ import (
 	cloudinaryapi "github.com/kinsittr/kinsittr-api/shared/cloudinary"
 	"github.com/kinsittr/kinsittr-api/shared/mail"
 	stripeapi "github.com/kinsittr/kinsittr-api/shared/stripe"
+	recovery_worker "github.com/kinsittr/kinsittr-api/workers/recovery"
 )
 
 func New(cfg *config.Config) (*fiber.App, error) {
@@ -86,8 +88,22 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	// repositories
 	repositories.InitRepositories(pool)
 
+	workerCtx, stopWorkers := context.WithCancel(context.Background())
+	app.Hooks().OnShutdown(func() error {
+		stopWorkers()
+		return nil
+	})
+	recovery_worker.StartCleanup(workerCtx, account.AccountRepo, recovery_worker.CleanupConfig{
+		Interval:  cfg.RecoveryCleanupInterval,
+		Retention: cfg.RecoveryTokenRetention,
+	})
+
 	// auth
 	authPipe := auth_pipe.NewAuthPipe(account.AccountRepo, profile_repo.ProfileRepo, cfg.JWTSecret, cfg.JWTRefreshSecret)
+	if cfg.MailConfigured() {
+		resendProvider := mail.NewResendProvider(cfg.ResendAPIKey, cfg.ContactFromEmail)
+		authPipe.SetRecoveryEmailService(auth_services.NewEmailService(resendProvider), cfg.WebOrigin)
+	}
 	authController := auth_controller.NewAuthController(authPipe)
 
 	// nanny public

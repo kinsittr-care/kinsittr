@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -21,6 +22,7 @@ type mockAccountRepo struct {
 	userByID          models.User
 	createParentUser  models.User
 	createRefreshErr  error
+	recoveryToken     models.PasswordRecoveryToken
 }
 
 func (m *mockAccountRepo) UserExistsByEmail(_ context.Context, _ string) (bool, error) {
@@ -63,6 +65,28 @@ func (m *mockAccountRepo) UpdateUserPassword(_ context.Context, _ uuid.UUID, _ s
 	return nil
 }
 func (m *mockAccountRepo) DeactivateUser(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockAccountRepo) CreatePasswordRecoveryToken(_ context.Context, token models.PasswordRecoveryToken) error {
+	m.recoveryToken = token
+	return nil
+}
+func (m *mockAccountRepo) GetPasswordRecoveryTokenByHash(_ context.Context, _ string) (models.PasswordRecoveryToken, error) {
+	return m.recoveryToken, nil
+}
+func (m *mockAccountRepo) CountPasswordRecoveryTokensSince(_ context.Context, _ uuid.UUID, _ time.Time) (int, error) {
+	return 0, nil
+}
+func (m *mockAccountRepo) AllowAuthRateLimit(_ context.Context, _ string, _ int, _ time.Duration) (bool, error) {
+	return true, nil
+}
+func (m *mockAccountRepo) DeleteStalePasswordRecoveryTokens(_ context.Context, _ time.Time) (int64, error) {
+	return 0, nil
+}
+func (m *mockAccountRepo) ExpirePasswordRecoveryTokensByUserID(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockAccountRepo) ResetUserPasswordWithRecoveryToken(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ string) error {
 	return nil
 }
 
@@ -230,6 +254,63 @@ func TestAuthControllerLogin(t *testing.T) {
 		})
 		if req.Success || req.Message != "invalid_email_or_password" {
 			t.Fatalf("unexpected response: %+v", req)
+		}
+	})
+}
+
+func TestAuthControllerRecovery(t *testing.T) {
+	user := models.User{
+		ID:        uuid.New(),
+		Firstname: "Jordan",
+		Lastname:  "Lee",
+		Email:     "jordan@example.com",
+		Password:  mustHashPassword(t, "oldsecure"),
+		Role:      models.ParentUserRole,
+		IsActive:  true,
+	}
+	repo := &mockAccountRepo{userByEmail: user, userByID: user}
+	pipe := pipes.NewAuthPipe(repo, &mockProfileRepo{}, "controller-jwt-secret", "controller-refresh-secret")
+	controller := NewAuthController(pipe)
+
+	app := fiber.New()
+	app.Post("/recovery/request", controller.RequestRecovery)
+	app.Post("/recovery/verify", controller.VerifyRecovery)
+	app.Post("/recovery/reset", controller.ResetRecovery)
+
+	t.Run("request returns generic success", func(t *testing.T) {
+		res := doJSONRequest(t, app, http.MethodPost, "/recovery/request", map[string]any{
+			"email": "jordan@example.com",
+		})
+		if !res.Success || res.Message != "recovery_request_accepted" {
+			t.Fatalf("unexpected response: %+v", res)
+		}
+		if repo.recoveryToken.ID == uuid.Nil {
+			t.Fatal("expected recovery token to be created")
+		}
+	})
+
+	t.Run("verify rejects invalid token", func(t *testing.T) {
+		repo.recoveryToken = models.PasswordRecoveryToken{}
+		res := doJSONRequest(t, app, http.MethodPost, "/recovery/verify", map[string]any{
+			"token": "valid-length-token-value-1234567890",
+		})
+		if res.Success || res.Message != "invalid_recovery_token" {
+			t.Fatalf("unexpected response: %+v", res)
+		}
+	})
+
+	t.Run("reset accepts active token", func(t *testing.T) {
+		repo.recoveryToken = models.PasswordRecoveryToken{
+			ID:        uuid.New(),
+			UserID:    user.ID,
+			ExpiresAt: time.Now().Add(time.Minute),
+		}
+		res := doJSONRequest(t, app, http.MethodPost, "/recovery/reset", map[string]any{
+			"token":        "valid-length-token-value-1234567890",
+			"new_password": "newsecurepass",
+		})
+		if !res.Success || res.Message != "password_reset" {
+			t.Fatalf("unexpected response: %+v", res)
 		}
 	})
 }

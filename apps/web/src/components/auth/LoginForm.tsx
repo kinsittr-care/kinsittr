@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, SyntheticEvent, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ApiRequestError, ApiResponse } from "@/src/utils/api/api";
 import { establishAuthSession, loginUser } from "@/src/utils/api/auth";
@@ -105,6 +106,12 @@ export default function LoginForm({
           onChange={handleChange}
           style={inputStyle}
         />
+      </div>
+
+      <div className="text-right -mt-2">
+        <Link href="/auth/forgot-password" className="text-[13px] font-semibold" style={{ color: "var(--teal)" }}>
+          Forgot password?
+        </Link>
       </div>
 
       {error && (

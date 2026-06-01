@@ -58,5 +58,23 @@ func AuthRoutes(controller *controllers.AuthController, jwtSecret string) []api.
 			Middlewares: []typings.FiberMiddleware{middleware.RequireAuth(jwtSecret)},
 			Handler:     controller.DeactivateAccount,
 		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPost),
+			Path:        "/recovery/request",
+			Middlewares: []typings.FiberMiddleware{},
+			Handler:     controller.RequestRecovery,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPost),
+			Path:        "/recovery/verify",
+			Middlewares: []typings.FiberMiddleware{},
+			Handler:     controller.VerifyRecovery,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPost),
+			Path:        "/recovery/reset",
+			Middlewares: []typings.FiberMiddleware{},
+			Handler:     controller.ResetRecovery,
+		},
 	}
 }
