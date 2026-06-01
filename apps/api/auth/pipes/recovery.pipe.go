@@ -146,7 +146,7 @@ func (p *AuthPipe) allowRecoveryRate(ctx context.Context, suffix string, scope s
 		log.Printf("auth_recovery_rate_limited scope=%s", scope)
 		return false
 	}
-	return err == nil && allowed
+	return true
 }
 
 func (p *AuthPipe) validRecoveryToken(ctx context.Context, rawToken string) (models.PasswordRecoveryToken, error) {

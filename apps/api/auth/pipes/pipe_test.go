@@ -3,6 +3,7 @@ package pipes
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/kinsittr/kinsittr-api/auth/services"
 	"github.com/kinsittr/kinsittr-api/models"
 	accountrepo "github.com/kinsittr/kinsittr-api/repositories/account"
+	"github.com/kinsittr/kinsittr-api/shared/mail"
 	"github.com/kinsittr/kinsittr-api/shared/token"
 )
 
@@ -184,6 +186,16 @@ func (m *mockProfileRepo) UpdateParentSettings(_ context.Context, settings model
 }
 func (m *mockProfileRepo) DeleteNannyProfile(_ context.Context, _ uuid.UUID) error  { return nil }
 func (m *mockProfileRepo) DeleteParentProfile(_ context.Context, _ uuid.UUID) error { return nil }
+
+type mockMailProvider struct {
+	message mail.Message
+	err     error
+}
+
+func (m *mockMailProvider) Send(_ context.Context, message mail.Message) error {
+	m.message = message
+	return m.err
+}
 
 func newAuthPipeForTests(repo accountrepo.AccountRepository, profileRepo *mockProfileRepo) *AuthPipe {
 	return NewAuthPipe(repo, profileRepo, testJWTSecret, testJWTRefreshSecret)
@@ -501,6 +513,29 @@ func TestAuthPipeRecovery(t *testing.T) {
 		}
 		if len(repo.rateLimitKeys) != 2 {
 			t.Fatalf("expected IP and email rate limit checks, got %v", repo.rateLimitKeys)
+		}
+	})
+
+	t.Run("configured email service receives normalized recipient and recovery link", func(t *testing.T) {
+		user := validUser(models.ParentUserRole)
+		user.Email = "jordan@example.com"
+		repo := &mockAccountRepo{userByEmail: user}
+		provider := &mockMailProvider{}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+		pipe.SetRecoveryEmailService(services.NewEmailService(provider), " https://kinsittr.test/ ")
+
+		res := pipe.RequestRecovery(context.Background(), dtos.RecoveryRequestDTO{Email: " JORDAN@EXAMPLE.COM "}, "127.0.0.1")
+		if !res.Success || string(res.Message) != messages.Recovery_Request_Accepted {
+			t.Fatalf("expected success, got success=%v message=%s", res.Success, res.Message)
+		}
+		if provider.message.ToEmail != "jordan@example.com" {
+			t.Fatalf("expected normalized recipient, got %q", provider.message.ToEmail)
+		}
+		if !strings.Contains(provider.message.TextContent, "https://kinsittr.test/auth/reset-password?token=") {
+			t.Fatalf("expected text recovery link with token query, got %q", provider.message.TextContent)
+		}
+		if !strings.Contains(provider.message.HTMLContent, "https://kinsittr.test/auth/reset-password?token=") {
+			t.Fatalf("expected HTML recovery link with token query, got %q", provider.message.HTMLContent)
 		}
 	})
 
