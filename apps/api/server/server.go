@@ -54,8 +54,8 @@ import (
 	reviews_pipe "github.com/kinsittr/kinsittr-api/reviews/pipes"
 	reviews_router "github.com/kinsittr/kinsittr-api/reviews/routers"
 	"github.com/kinsittr/kinsittr-api/shared/api"
-	"github.com/kinsittr/kinsittr-api/shared/mail"
 	cloudinaryapi "github.com/kinsittr/kinsittr-api/shared/cloudinary"
+	"github.com/kinsittr/kinsittr-api/shared/mail"
 	stripeapi "github.com/kinsittr/kinsittr-api/shared/stripe"
 )
 
@@ -65,7 +65,9 @@ func New(cfg *config.Config) (*fiber.App, error) {
 		return nil, err
 	}
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		BodyLimit: 6 * 1024 * 1024,
+	})
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: cfg.WebOrigin,

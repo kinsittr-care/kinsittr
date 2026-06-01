@@ -30,6 +30,8 @@ The API is organized by feature area. Controllers parse requests and delegate to
 
 Shared infrastructure includes JWT auth, refresh-session storage, role middleware, PostgreSQL migrations, Resend-backed mail delivery, and reusable response/validation helpers. Email currently powers contact submissions and admin invite delivery when Resend configuration is present.
 
+File uploads in v1 are limited to nanny public profile avatars through Cloudinary. Verification or screening documents should use a separate private document upload flow rather than the public avatar path.
+
 ## Frontend Flow
 
 The web app uses Next.js App Router with TanStack Query for API state. API integrations live under `apps/web/src/utils/api`, while shared response and domain types live under `apps/web/src/types/api`.

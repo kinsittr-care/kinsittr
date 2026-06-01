@@ -51,7 +51,7 @@ func (r *pgRepository) ListVerifiedNannies(ctx context.Context, filter ListVerif
 	query := fmt.Sprintf(`
 		SELECT id, user_id, display_name, bio, COALESCE(specialties, '{}'::text[]),
 		       rate_per_hour, service_type, currency, verification_status, verified_at,
-		       stripe_account_id, stripe_onboarded, rating_avg, rating_count, city, province, created_at, updated_at
+		       stripe_account_id, stripe_onboarded, rating_avg, rating_count, COALESCE(avatar_url, ''), city, province, created_at, updated_at
 		FROM nanny_profiles
 		WHERE %s
 		ORDER BY %s
@@ -81,6 +81,7 @@ func (r *pgRepository) ListVerifiedNannies(ctx context.Context, filter ListVerif
 			&nanny.StripeOnboarded,
 			&nanny.RatingAvg,
 			&nanny.RatingCount,
+			&nanny.AvatarURL,
 			&nanny.City,
 			&nanny.Province,
 			&nanny.CreatedAt,
@@ -103,7 +104,7 @@ func (r *pgRepository) GetVerifiedNannyByID(ctx context.Context, nannyID uuid.UU
 	err := r.db.QueryRow(ctx, `
 		SELECT id, user_id, display_name, bio, COALESCE(specialties, '{}'::text[]),
 		       rate_per_hour, service_type, currency, verification_status, verified_at,
-		       stripe_account_id, stripe_onboarded, rating_avg, rating_count, city, province, created_at, updated_at
+		       stripe_account_id, stripe_onboarded, rating_avg, rating_count, COALESCE(avatar_url, ''), city, province, created_at, updated_at
 		FROM nanny_profiles
 		WHERE id = $1 AND verification_status = $2
 	`, nannyID, models.VerifiedVerificationStatus).Scan(
@@ -121,6 +122,7 @@ func (r *pgRepository) GetVerifiedNannyByID(ctx context.Context, nannyID uuid.UU
 		&nanny.StripeOnboarded,
 		&nanny.RatingAvg,
 		&nanny.RatingCount,
+		&nanny.AvatarURL,
 		&nanny.City,
 		&nanny.Province,
 		&nanny.CreatedAt,

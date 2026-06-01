@@ -8,6 +8,7 @@ export interface Nanny {
   reviews: number;
   years?: number;
   bio: string;
+  avatarUrl?: string;
   tags?: string[];
   available?: boolean;
 }

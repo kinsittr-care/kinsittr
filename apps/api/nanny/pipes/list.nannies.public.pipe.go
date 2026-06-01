@@ -128,6 +128,7 @@ func (p *NannyPipe) ListPublic(ctx context.Context, query dtos.ListPublicNannies
 			Currency:    nanny.Currency,
 			RatingAvg:   nanny.RatingAvg,
 			RatingCount: nanny.RatingCount,
+			AvatarURL:   nanny.AvatarURL,
 			City:        nanny.City,
 			Province:    nanny.Province,
 		})

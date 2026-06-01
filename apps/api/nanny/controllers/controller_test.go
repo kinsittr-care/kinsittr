@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"bytes"
 	"context"
+	"mime/multipart"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -48,7 +50,7 @@ func (m *mockNannyProfileRepo) UpdateNannyProfile(_ context.Context, _ models.Na
 	return m.updatedNanny, nil
 }
 func (m *mockNannyProfileRepo) UpdateNannyAvatar(_ context.Context, _ uuid.UUID, _ string, _ string) (models.NannyProfile, error) {
-	return models.NannyProfile{}, nil
+	return m.updatedNanny, nil
 }
 func (m *mockNannyProfileRepo) UpdateParentProfile(_ context.Context, p models.ParentProfile) (models.ParentProfile, error) {
 	return p, nil
@@ -70,7 +72,9 @@ func nannyController(repo *mockNannyRepo, profileRepo *mockNannyProfileRepo) *Na
 }
 
 func nannyTestApp(controller *NannyController, role models.UserRole) *fiber.App {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		BodyLimit: 6 * 1024 * 1024,
+	})
 	app.Use(func(c *fiber.Ctx) error {
 		c.Locals("auth.user_id", uuid.New())
 		c.Locals("auth.role", role)
@@ -80,6 +84,8 @@ func nannyTestApp(controller *NannyController, role models.UserRole) *fiber.App 
 	app.Get("/nannies/:id", controller.GetPublicByID)
 	app.Get("/profile", controller.GetOwnProfile)
 	app.Patch("/profile", controller.UpdateOwnProfile)
+	app.Post("/avatar", controller.UploadAvatar)
+	app.Delete("/avatar", controller.DeleteAvatar)
 	return app
 }
 
@@ -128,4 +134,65 @@ func TestNannyControllerOwnProfileAuthAndValidation(t *testing.T) {
 	if resp.StatusCode != fiber.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", resp.StatusCode)
 	}
+}
+
+func TestNannyControllerAvatarValidation(t *testing.T) {
+	controller := nannyController(&mockNannyRepo{}, &mockNannyProfileRepo{})
+
+	resp, err := nannyTestApp(controller, models.ParentUserRole).Test(httptest.NewRequest(fiber.MethodPost, "/avatar", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != fiber.StatusForbidden {
+		t.Fatalf("expected 403, got %d", resp.StatusCode)
+	}
+
+	resp, err = nannyTestApp(controller, models.NannyUserRole).Test(httptest.NewRequest(fiber.MethodPost, "/avatar", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != fiber.StatusBadRequest {
+		t.Fatalf("expected 400 for missing multipart file, got %d", resp.StatusCode)
+	}
+
+	body, contentType := multipartAvatarBody(t, make([]byte, maxAvatarUploadBytes+1))
+	req := httptest.NewRequest(fiber.MethodPost, "/avatar", body)
+	req.Header.Set("Content-Type", contentType)
+	resp, err = nannyTestApp(controller, models.NannyUserRole).Test(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != fiber.StatusBadRequest {
+		t.Fatalf("expected 400 for oversized avatar, got %d", resp.StatusCode)
+	}
+}
+
+func TestNannyControllerDeleteAvatarAuth(t *testing.T) {
+	controller := nannyController(&mockNannyRepo{}, &mockNannyProfileRepo{})
+
+	resp, err := nannyTestApp(controller, models.ParentUserRole).Test(httptest.NewRequest(fiber.MethodDelete, "/avatar", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != fiber.StatusForbidden {
+		t.Fatalf("expected 403, got %d", resp.StatusCode)
+	}
+}
+
+func multipartAvatarBody(t *testing.T, data []byte) (*bytes.Buffer, string) {
+	t.Helper()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("avatar", "avatar.png")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := part.Write(data); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return body, writer.FormDataContentType()
 }

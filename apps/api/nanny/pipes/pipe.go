@@ -1,11 +1,19 @@
 package pipes
 
 import (
+	"context"
+
 	"github.com/kinsittr/kinsittr-api/models"
 	"github.com/kinsittr/kinsittr-api/repositories/nanny"
 	"github.com/kinsittr/kinsittr-api/repositories/profile"
 	cloudinaryapi "github.com/kinsittr/kinsittr-api/shared/cloudinary"
 )
+
+type cloudinaryClient interface {
+	Configured() bool
+	UploadImage(ctx context.Context, data []byte, folder, publicID string) (cloudinaryapi.UploadResult, error)
+	DeleteImage(ctx context.Context, publicID string) error
+}
 
 type PublicNannyCard struct {
 	ID          string             `json:"id"`
@@ -17,6 +25,7 @@ type PublicNannyCard struct {
 	Currency    models.Currency    `json:"currency"`
 	RatingAvg   float64            `json:"rating_avg"`
 	RatingCount int                `json:"rating_count"`
+	AvatarURL   string             `json:"avatar_url"`
 	City        string             `json:"city"`
 	Province    string             `json:"province"`
 }
@@ -37,7 +46,7 @@ type PublicNannyListData struct {
 type NannyPipe struct {
 	repo        nanny.NannyRepository
 	profileRepo profile.ProfileRepository
-	cloudinary  *cloudinaryapi.Client
+	cloudinary  cloudinaryClient
 }
 
 func NewNannyPipe(repo nanny.NannyRepository, profileRepo profile.ProfileRepository) *NannyPipe {
@@ -47,6 +56,6 @@ func NewNannyPipe(repo nanny.NannyRepository, profileRepo profile.ProfileReposit
 	}
 }
 
-func (p *NannyPipe) SetCloudinaryClient(c *cloudinaryapi.Client) {
+func (p *NannyPipe) SetCloudinaryClient(c cloudinaryClient) {
 	p.cloudinary = c
 }

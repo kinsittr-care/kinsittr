@@ -1,9 +1,10 @@
 interface AvatarProps {
   initials: string;
+  src?: string;
   size?: number;
 }
 
-export default function Avatar({ initials, size = 44 }: AvatarProps) {
+export default function Avatar({ initials, src, size = 44 }: AvatarProps) {
   return (
     <div
       style={{
@@ -15,7 +16,16 @@ export default function Avatar({ initials, size = 44 }: AvatarProps) {
         boxShadow: "0 2px 8px rgba(58,90,90,.28)",
       }}
     >
-      {initials}
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={`${initials} avatar`}
+          style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
+        />
+      ) : (
+        initials
+      )}
     </div>
   );
 }

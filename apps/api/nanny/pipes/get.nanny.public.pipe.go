@@ -37,6 +37,7 @@ func (p *NannyPipe) GetPublicByID(ctx context.Context, nannyID uuid.UUID) *share
 				Currency:    nanny.Currency,
 				RatingAvg:   nanny.RatingAvg,
 				RatingCount: nanny.RatingCount,
+				AvatarURL:   nanny.AvatarURL,
 				City:        nanny.City,
 				Province:    nanny.Province,
 			},

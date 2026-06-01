@@ -37,6 +37,8 @@ Server route:
 ### Nanny
 - `GET /api/v1/nanny/profile` — return the authenticated nanny's own profile
 - `PATCH /api/v1/nanny/profile` — update the authenticated nanny's own profile
+- `POST /api/v1/nanny/avatar` — upload or replace the authenticated nanny's public profile avatar
+- `DELETE /api/v1/nanny/avatar` — remove the authenticated nanny's public profile avatar
 - `GET /api/v1/nanny/bookings` — list bookings for the authenticated nanny
 - `GET /api/v1/nanny/bookings/:id` — return one nanny booking
 - `PATCH /api/v1/nanny/bookings/:id/approve` — approve a pending booking and open the conversation
