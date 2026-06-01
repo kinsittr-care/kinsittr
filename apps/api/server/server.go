@@ -58,6 +58,7 @@ import (
 	cloudinaryapi "github.com/kinsittr/kinsittr-api/shared/cloudinary"
 	"github.com/kinsittr/kinsittr-api/shared/mail"
 	stripeapi "github.com/kinsittr/kinsittr-api/shared/stripe"
+	recovery_worker "github.com/kinsittr/kinsittr-api/workers/recovery"
 )
 
 func New(cfg *config.Config) (*fiber.App, error) {
@@ -86,6 +87,16 @@ func New(cfg *config.Config) (*fiber.App, error) {
 
 	// repositories
 	repositories.InitRepositories(pool)
+
+	workerCtx, stopWorkers := context.WithCancel(context.Background())
+	app.Hooks().OnShutdown(func() error {
+		stopWorkers()
+		return nil
+	})
+	recovery_worker.StartCleanup(workerCtx, account.AccountRepo, recovery_worker.CleanupConfig{
+		Interval:  cfg.RecoveryCleanupInterval,
+		Retention: cfg.RecoveryTokenRetention,
+	})
 
 	// auth
 	authPipe := auth_pipe.NewAuthPipe(account.AccountRepo, profile_repo.ProfileRepo, cfg.JWTSecret, cfg.JWTRefreshSecret)

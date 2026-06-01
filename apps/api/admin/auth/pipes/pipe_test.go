@@ -75,6 +75,10 @@ func (m *mockAccountRepo) AllowAuthRateLimit(context.Context, string, int, time.
 	return true, nil
 }
 
+func (m *mockAccountRepo) DeleteStalePasswordRecoveryTokens(context.Context, time.Time) (int64, error) {
+	return 0, nil
+}
+
 func (m *mockAccountRepo) ExpirePasswordRecoveryTokensByUserID(context.Context, uuid.UUID) error {
 	return nil
 }

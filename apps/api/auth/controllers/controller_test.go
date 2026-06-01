@@ -80,6 +80,9 @@ func (m *mockAccountRepo) CountPasswordRecoveryTokensSince(_ context.Context, _ 
 func (m *mockAccountRepo) AllowAuthRateLimit(_ context.Context, _ string, _ int, _ time.Duration) (bool, error) {
 	return true, nil
 }
+func (m *mockAccountRepo) DeleteStalePasswordRecoveryTokens(_ context.Context, _ time.Time) (int64, error) {
+	return 0, nil
+}
 func (m *mockAccountRepo) ExpirePasswordRecoveryTokensByUserID(_ context.Context, _ uuid.UUID) error {
 	return nil
 }

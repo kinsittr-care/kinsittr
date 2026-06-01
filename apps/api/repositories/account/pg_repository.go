@@ -325,6 +325,17 @@ func (r *pgRepository) AllowAuthRateLimit(ctx context.Context, key string, max i
 	return count <= max, nil
 }
 
+func (r *pgRepository) DeleteStalePasswordRecoveryTokens(ctx context.Context, before time.Time) (int64, error) {
+	tag, err := r.db.Exec(ctx, `
+		DELETE FROM password_recovery_tokens
+		WHERE expires_at < $1 OR (used_at IS NOT NULL AND used_at < $1)
+	`, before)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
+}
+
 func (r *pgRepository) CreateRefreshSession(ctx context.Context, session models.RefreshSession) error {
 	_, err := r.db.Exec(ctx, `
 		INSERT INTO refresh_sessions (id, user_id, expires_at)

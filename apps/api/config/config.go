@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 )
 
 type Config struct {
@@ -23,6 +24,8 @@ type Config struct {
 	CloudinaryCloudName     string
 	CloudinaryAPIKey        string
 	CloudinaryAPISecret     string
+	RecoveryCleanupInterval time.Duration
+	RecoveryTokenRetention  time.Duration
 }
 
 func Load() (*Config, error) {
@@ -42,6 +45,8 @@ func Load() (*Config, error) {
 		CloudinaryCloudName:     os.Getenv("CLOUDINARY_CLOUD_NAME"),
 		CloudinaryAPIKey:        os.Getenv("CLOUDINARY_API_KEY"),
 		CloudinaryAPISecret:     os.Getenv("CLOUDINARY_API_SECRET"),
+		RecoveryCleanupInterval: getDurationEnv("RECOVERY_CLEANUP_INTERVAL", time.Hour),
+		RecoveryTokenRetention:  getDurationEnv("RECOVERY_TOKEN_RETENTION", 24*time.Hour),
 	}
 	cfg.PlatformFeeRate = getFloatEnv("PLATFORM_FEE_RATE", 0.10)
 
@@ -88,6 +93,18 @@ func getFloatEnv(key string, fallback float64) float64 {
 	}
 	parsed, err := strconv.ParseFloat(value, 64)
 	if err != nil {
+		return fallback
+	}
+	return parsed
+}
+
+func getDurationEnv(key string, fallback time.Duration) time.Duration {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+	parsed, err := time.ParseDuration(value)
+	if err != nil || parsed <= 0 {
 		return fallback
 	}
 	return parsed
