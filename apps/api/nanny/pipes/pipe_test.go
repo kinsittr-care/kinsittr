@@ -10,6 +10,7 @@ import (
 	"github.com/kinsittr/kinsittr-api/nanny/dtos"
 	"github.com/kinsittr/kinsittr-api/nanny/messages"
 	nannyrepo "github.com/kinsittr/kinsittr-api/repositories/nanny"
+	cloudinaryapi "github.com/kinsittr/kinsittr-api/shared/cloudinary"
 )
 
 // ── mock repos ────────────────────────────────────────────────────────────────
@@ -34,6 +35,8 @@ type mockProfileRepo struct {
 	nannyProfileErr error
 	updatedNanny    models.NannyProfile
 	updateNannyErr  error
+	avatarURL       string
+	avatarPublicID  string
 }
 
 func (m *mockProfileRepo) GetNannyProfileByUserID(_ context.Context, _ uuid.UUID) (models.NannyProfile, error) {
@@ -42,8 +45,10 @@ func (m *mockProfileRepo) GetNannyProfileByUserID(_ context.Context, _ uuid.UUID
 func (m *mockProfileRepo) UpdateNannyProfile(_ context.Context, _ models.NannyProfile) (models.NannyProfile, error) {
 	return m.updatedNanny, m.updateNannyErr
 }
-func (m *mockProfileRepo) UpdateNannyAvatar(_ context.Context, _ uuid.UUID, _ string, _ string) (models.NannyProfile, error) {
-	return models.NannyProfile{}, nil
+func (m *mockProfileRepo) UpdateNannyAvatar(_ context.Context, _ uuid.UUID, avatarURL string, avatarPublicID string) (models.NannyProfile, error) {
+	m.avatarURL = avatarURL
+	m.avatarPublicID = avatarPublicID
+	return m.updatedNanny, m.updateNannyErr
 }
 func (m *mockProfileRepo) GetParentProfileByUserID(_ context.Context, _ uuid.UUID) (models.ParentProfile, error) {
 	return models.ParentProfile{}, nil
@@ -68,6 +73,31 @@ func (m *mockProfileRepo) UpdateParentSettings(_ context.Context, settings model
 }
 func (m *mockProfileRepo) DeleteNannyProfile(_ context.Context, _ uuid.UUID) error  { return nil }
 func (m *mockProfileRepo) DeleteParentProfile(_ context.Context, _ uuid.UUID) error { return nil }
+
+type fakeCloudinaryClient struct {
+	configured     bool
+	uploadResult   cloudinaryapi.UploadResult
+	uploadErr      error
+	deleteErr      error
+	uploadedFolder string
+	uploadedPublic string
+	deletedPublic  string
+}
+
+func (f *fakeCloudinaryClient) Configured() bool {
+	return f.configured
+}
+
+func (f *fakeCloudinaryClient) UploadImage(_ context.Context, _ []byte, folder string, publicID string) (cloudinaryapi.UploadResult, error) {
+	f.uploadedFolder = folder
+	f.uploadedPublic = publicID
+	return f.uploadResult, f.uploadErr
+}
+
+func (f *fakeCloudinaryClient) DeleteImage(_ context.Context, publicID string) error {
+	f.deletedPublic = publicID
+	return f.deleteErr
+}
 
 // ── normalizeSpecialty ────────────────────────────────────────────────────────
 
@@ -431,6 +461,139 @@ func TestUpdateOwnProfile(t *testing.T) {
 		}
 		if res.Data == nil || res.Data.DisplayName != "Jane Doe" {
 			t.Errorf("data mismatch: %+v", res.Data)
+		}
+	})
+}
+
+func TestUploadAvatar(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+	profileID := uuid.New()
+	validPNG := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
+
+	t.Run("missing cloudinary config", func(t *testing.T) {
+		p := NewNannyPipe(&mockNannyRepo{}, &mockProfileRepo{})
+		res := p.UploadAvatar(ctx, userID, validPNG)
+		if res.Success || string(res.Message) != messages.Cloudinary_Not_Configured {
+			t.Fatalf("expected %s, got success=%v msg=%s", messages.Cloudinary_Not_Configured, res.Success, res.Message)
+		}
+	})
+
+	t.Run("invalid file rejected", func(t *testing.T) {
+		p := NewNannyPipe(&mockNannyRepo{}, &mockProfileRepo{})
+		p.SetCloudinaryClient(&fakeCloudinaryClient{configured: true})
+		res := p.UploadAvatar(ctx, userID, nil)
+		if res.Success || string(res.Message) != messages.Avatar_Invalid_File {
+			t.Fatalf("expected %s, got success=%v msg=%s", messages.Avatar_Invalid_File, res.Success, res.Message)
+		}
+	})
+
+	t.Run("oversized file rejected", func(t *testing.T) {
+		p := NewNannyPipe(&mockNannyRepo{}, &mockProfileRepo{})
+		p.SetCloudinaryClient(&fakeCloudinaryClient{configured: true})
+		res := p.UploadAvatar(ctx, userID, make([]byte, maxAvatarBytes+1))
+		if res.Success || string(res.Message) != messages.Avatar_Too_Large {
+			t.Fatalf("expected %s, got success=%v msg=%s", messages.Avatar_Too_Large, res.Success, res.Message)
+		}
+	})
+
+	t.Run("unsupported content rejected", func(t *testing.T) {
+		p := NewNannyPipe(&mockNannyRepo{}, &mockProfileRepo{})
+		p.SetCloudinaryClient(&fakeCloudinaryClient{configured: true})
+		res := p.UploadAvatar(ctx, userID, []byte("not an image"))
+		if res.Success || string(res.Message) != messages.Avatar_Invalid_Type {
+			t.Fatalf("expected %s, got success=%v msg=%s", messages.Avatar_Invalid_Type, res.Success, res.Message)
+		}
+	})
+
+	t.Run("success stores url and public id", func(t *testing.T) {
+		updated := models.NannyProfile{ID: profileID, AvatarURL: "https://cdn/new.png", AvatarPublicID: "new-public"}
+		pr := &mockProfileRepo{
+			nannyProfile: models.NannyProfile{ID: profileID},
+			updatedNanny: updated,
+		}
+		cloudinary := &fakeCloudinaryClient{
+			configured:   true,
+			uploadResult: cloudinaryapi.UploadResult{SecureURL: "https://cdn/new.png", PublicID: "new-public"},
+		}
+		p := NewNannyPipe(&mockNannyRepo{}, pr)
+		p.SetCloudinaryClient(cloudinary)
+
+		res := p.UploadAvatar(ctx, userID, validPNG)
+		if !res.Success || string(res.Message) != messages.Avatar_Uploaded {
+			t.Fatalf("expected success, got success=%v msg=%s", res.Success, res.Message)
+		}
+		if pr.avatarURL != "https://cdn/new.png" || pr.avatarPublicID != "new-public" {
+			t.Fatalf("avatar update mismatch: url=%s public=%s", pr.avatarURL, pr.avatarPublicID)
+		}
+		if cloudinary.uploadedFolder != avatarFolder || cloudinary.uploadedPublic != profileID.String() {
+			t.Fatalf("upload target mismatch: folder=%s public=%s", cloudinary.uploadedFolder, cloudinary.uploadedPublic)
+		}
+	})
+
+	t.Run("repository update failure returns upload failure", func(t *testing.T) {
+		pr := &mockProfileRepo{
+			nannyProfile:   models.NannyProfile{ID: profileID},
+			updateNannyErr: errors.New("db"),
+		}
+		p := NewNannyPipe(&mockNannyRepo{}, pr)
+		p.SetCloudinaryClient(&fakeCloudinaryClient{
+			configured:   true,
+			uploadResult: cloudinaryapi.UploadResult{SecureURL: "https://cdn/new.png", PublicID: "new-public"},
+		})
+
+		res := p.UploadAvatar(ctx, userID, validPNG)
+		if res.Success || string(res.Message) != messages.Avatar_Upload_Failed {
+			t.Fatalf("expected %s, got success=%v msg=%s", messages.Avatar_Upload_Failed, res.Success, res.Message)
+		}
+	})
+}
+
+func TestDeleteAvatar(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+	profileID := uuid.New()
+
+	t.Run("missing cloudinary config", func(t *testing.T) {
+		p := NewNannyPipe(&mockNannyRepo{}, &mockProfileRepo{})
+		res := p.DeleteAvatar(ctx, userID)
+		if res.Success || string(res.Message) != messages.Cloudinary_Not_Configured {
+			t.Fatalf("expected %s, got success=%v msg=%s", messages.Cloudinary_Not_Configured, res.Success, res.Message)
+		}
+	})
+
+	t.Run("success deletes asset and clears fields", func(t *testing.T) {
+		pr := &mockProfileRepo{
+			nannyProfile: models.NannyProfile{ID: profileID, AvatarURL: "https://cdn/old.png", AvatarPublicID: "old-public"},
+			updatedNanny: models.NannyProfile{ID: profileID},
+		}
+		cloudinary := &fakeCloudinaryClient{configured: true}
+		p := NewNannyPipe(&mockNannyRepo{}, pr)
+		p.SetCloudinaryClient(cloudinary)
+
+		res := p.DeleteAvatar(ctx, userID)
+		if !res.Success || string(res.Message) != messages.Avatar_Deleted {
+			t.Fatalf("expected success, got success=%v msg=%s", res.Success, res.Message)
+		}
+		if cloudinary.deletedPublic != "old-public" {
+			t.Fatalf("expected old-public deleted, got %s", cloudinary.deletedPublic)
+		}
+		if pr.avatarURL != "" || pr.avatarPublicID != "" {
+			t.Fatalf("expected avatar fields cleared, got url=%s public=%s", pr.avatarURL, pr.avatarPublicID)
+		}
+	})
+
+	t.Run("delete failure returns failure", func(t *testing.T) {
+		pr := &mockProfileRepo{
+			nannyProfile: models.NannyProfile{ID: profileID, AvatarPublicID: "old-public"},
+			updatedNanny: models.NannyProfile{ID: profileID},
+		}
+		p := NewNannyPipe(&mockNannyRepo{}, pr)
+		p.SetCloudinaryClient(&fakeCloudinaryClient{configured: true, deleteErr: errors.New("cloudinary")})
+
+		res := p.DeleteAvatar(ctx, userID)
+		if res.Success || string(res.Message) != messages.Avatar_Delete_Failed {
+			t.Fatalf("expected %s, got success=%v msg=%s", messages.Avatar_Delete_Failed, res.Success, res.Message)
 		}
 	})
 }

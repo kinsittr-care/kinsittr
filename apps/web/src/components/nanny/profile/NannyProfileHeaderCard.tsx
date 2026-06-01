@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { NannyProfile, UpdateNannyProfilePayload } from "@/src/types/api/api";
-import { ownNannyProfileQueryKey, uploadNannyAvatar } from "@/src/utils/api/nanny";
+import { deleteNannyAvatar, ownNannyProfileQueryKey, uploadNannyAvatar } from "@/src/utils/api/nanny";
 import NannyAvatar from "../NannyAvatar";
 import { N } from "../tokens";
 import { getInitials } from "./nannyProfileHelpers";
@@ -33,6 +33,21 @@ export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCard
       setUploadError(error instanceof Error ? error.message : "Upload failed");
     },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteNannyAvatar,
+    onMutate: () => {
+      setUploadError("");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ownNannyProfileQueryKey() });
+    },
+    onError: (error) => {
+      setUploadError(error instanceof Error ? error.message : "Could not remove photo");
+    },
+  });
+
+  const avatarActionPending = uploadMutation.isPending || deleteMutation.isPending;
 
   function handleAvatarChange(file: File | undefined) {
     setUploadError("");
@@ -119,7 +134,7 @@ export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCard
             handleAvatarChange(e.target.files?.[0]);
             e.target.value = "";
           }}
-          disabled={uploadMutation.isPending}
+          disabled={avatarActionPending}
         />
         <button
           style={{
@@ -128,14 +143,32 @@ export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCard
             border: `1px solid ${N.border}`,
             borderRadius: 10,
             fontSize: 13.5,
-            color: uploadMutation.isPending ? N.inkMute : N.greenDk,
-            cursor: uploadMutation.isPending ? "not-allowed" : "pointer",
+            color: avatarActionPending ? N.inkMute : N.greenDk,
+            cursor: avatarActionPending ? "not-allowed" : "pointer",
           }}
-          disabled={uploadMutation.isPending}
+          disabled={avatarActionPending}
           onClick={() => fileInputRef.current?.click()}
         >
           {uploadMutation.isPending ? "Uploading…" : "Change photo"}
         </button>
+        {profile.avatar_url && (
+          <button
+            style={{
+              marginLeft: 8,
+              padding: "9px 16px",
+              background: "transparent",
+              border: `1px solid ${N.border}`,
+              borderRadius: 10,
+              fontSize: 13.5,
+              color: avatarActionPending ? N.inkMute : "#b42318",
+              cursor: avatarActionPending ? "not-allowed" : "pointer",
+            }}
+            disabled={avatarActionPending}
+            onClick={() => deleteMutation.mutate()}
+          >
+            {deleteMutation.isPending ? "Removing…" : "Remove photo"}
+          </button>
+        )}
         {uploadError && (
           <div
             role="alert"

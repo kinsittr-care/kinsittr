@@ -69,5 +69,6 @@ export function mapPublicNannyToCard(nanny: PublicNannyCard): Nanny {
     reviews: nanny.rating_count,
     bio: nanny.bio,
     tags: nanny.specialties,
+    avatarUrl: nanny.avatar_url,
   };
 }

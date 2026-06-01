@@ -79,3 +79,15 @@ export async function uploadNannyAvatar(file: File): Promise<ApiResponse<NannyPr
     throw new ApiRequestError("Upload failed");
   }
 }
+
+export async function deleteNannyAvatar(): Promise<ApiResponse<NannyProfile>> {
+  return apiRequest<NannyProfile>(
+    "/api/v1/nanny/avatar",
+    {
+      method: "DELETE",
+    },
+    {
+      requiresAuth: true,
+    },
+  );
+}

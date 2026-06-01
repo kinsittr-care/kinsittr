@@ -47,7 +47,7 @@ export default function NannyCard({ nanny, onBook, delay = 0 }: NannyCardProps) 
     >
       <div className="flex gap-[18px] items-start">
         <div style={{ position: "relative" }}>
-          <Avatar initials={nanny.initials} size={54} />
+          <Avatar initials={nanny.initials} src={nanny.avatarUrl} size={54} />
           {nanny.available && (
             <div
               style={{

@@ -65,6 +65,7 @@ export interface NannyProfile {
   rating_avg: number;
   rating_count: number;
   avatar_url?: string;
+  avatar_public_id?: string;
   city: string;
   province: string;
   created_at: string;
