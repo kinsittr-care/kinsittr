@@ -2,9 +2,11 @@ package pipes
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/kinsittr/kinsittr-api/auth/services"
 	"github.com/kinsittr/kinsittr-api/models"
 	"github.com/kinsittr/kinsittr-api/repositories/account"
 	"github.com/kinsittr/kinsittr-api/repositories/profile"
@@ -29,6 +31,8 @@ type AuthPipe struct {
 	profileRepo      profile.ProfileRepository
 	jwtSecret        string
 	jwtRefreshSecret string
+	emailService     *services.EmailService
+	webOrigin        string
 }
 
 func NewAuthPipe(repo account.AccountRepository, profileRepo profile.ProfileRepository, jwtSecret, jwtRefreshSecret string) *AuthPipe {
@@ -38,6 +42,11 @@ func NewAuthPipe(repo account.AccountRepository, profileRepo profile.ProfileRepo
 		jwtSecret:        jwtSecret,
 		jwtRefreshSecret: jwtRefreshSecret,
 	}
+}
+
+func (p *AuthPipe) SetRecoveryEmailService(emailService *services.EmailService, webOrigin string) {
+	p.emailService = emailService
+	p.webOrigin = strings.TrimRight(strings.TrimSpace(webOrigin), "/")
 }
 
 func (p *AuthPipe) generateTokenPair(ctx context.Context, userID uuid.UUID, role models.UserRole) (string, string, error) {

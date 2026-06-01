@@ -2,6 +2,7 @@ package account
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -18,6 +19,13 @@ type AccountRepository interface {
 	CreateNannyAccount(ctx context.Context, user models.User, profile models.NannyProfile) (models.User, error)
 	UpdateUserPassword(ctx context.Context, userID uuid.UUID, passwordHash string) error
 	DeactivateUser(ctx context.Context, userID uuid.UUID) error
+
+	// password recovery
+	CreatePasswordRecoveryToken(ctx context.Context, token models.PasswordRecoveryToken) error
+	GetPasswordRecoveryTokenByHash(ctx context.Context, tokenHash string) (models.PasswordRecoveryToken, error)
+	CountPasswordRecoveryTokensSince(ctx context.Context, userID uuid.UUID, since time.Time) (int, error)
+	ExpirePasswordRecoveryTokensByUserID(ctx context.Context, userID uuid.UUID) error
+	ResetUserPasswordWithRecoveryToken(ctx context.Context, tokenID uuid.UUID, userID uuid.UUID, passwordHash string) error
 
 	// refresh sessions
 	CreateRefreshSession(ctx context.Context, session models.RefreshSession) error

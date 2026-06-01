@@ -16,6 +16,7 @@ import (
 	auth_controller "github.com/kinsittr/kinsittr-api/auth/controllers"
 	auth_pipe "github.com/kinsittr/kinsittr-api/auth/pipes"
 	auth_router "github.com/kinsittr/kinsittr-api/auth/routers"
+	auth_services "github.com/kinsittr/kinsittr-api/auth/services"
 	bookings_controller "github.com/kinsittr/kinsittr-api/bookings/controllers"
 	bookings_pipe "github.com/kinsittr/kinsittr-api/bookings/pipes"
 	bookings_router "github.com/kinsittr/kinsittr-api/bookings/routers"
@@ -88,6 +89,10 @@ func New(cfg *config.Config) (*fiber.App, error) {
 
 	// auth
 	authPipe := auth_pipe.NewAuthPipe(account.AccountRepo, profile_repo.ProfileRepo, cfg.JWTSecret, cfg.JWTRefreshSecret)
+	if cfg.MailConfigured() {
+		resendProvider := mail.NewResendProvider(cfg.ResendAPIKey, cfg.ContactFromEmail)
+		authPipe.SetRecoveryEmailService(auth_services.NewEmailService(resendProvider), cfg.WebOrigin)
+	}
 	authController := auth_controller.NewAuthController(authPipe)
 
 	// nanny public

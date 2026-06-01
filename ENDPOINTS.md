@@ -19,6 +19,9 @@ Server route:
 - `GET /api/v1/auth/me` — return the authenticated user session and role profile
 - `PATCH /api/v1/auth/password` — change password and revoke refresh sessions
 - `DELETE /api/v1/auth/account` — deactivate account and revoke refresh sessions
+- `POST /api/v1/auth/recovery/request` — start password recovery for a parent or nanny email
+- `POST /api/v1/auth/recovery/verify` — verify a recovery token before resetting password
+- `POST /api/v1/auth/recovery/reset` — set a new password with a valid recovery token
 
 ### Admin Auth
 - `POST /api/v1/admin/auth/login` — sign in an admin
@@ -157,15 +160,11 @@ Server route:
 ### Account / Security
 - `GET /api/v1/account/export` — export the authenticated user's account data
 
-### Auth Recovery
-- `POST /api/v1/auth/forgot-password` — start password reset flow
-- `POST /api/v1/auth/reset-password` — complete password reset with token/code
-
 ### Admin Follow-Ups
 - Add admin roles and permissions for v1.1
 
 ## Notes
 
 - Public nanny list supports `page`, `limit`, `city`, `province`, `min_rate`, `max_rate`, repeated `specialty`, `service_type`, and `sort`.
-- Contact and admin invite email delivery require Resend configuration.
+- Contact, auth recovery, and admin invite email delivery require Resend configuration.
 - Admin invite acceptance creates the admin account but does not issue auth tokens; the admin signs in after accepting.

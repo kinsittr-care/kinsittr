@@ -40,12 +40,23 @@ type mockAccountRepo struct {
 	deleteRefreshByUserErr  error
 	updatePasswordErr       error
 	deactivateUserErr       error
+	recoveryToken           models.PasswordRecoveryToken
+	recoveryTokenErr        error
+	recoveryCount           int
+	recoveryCountErr        error
+	createRecoveryErr       error
+	expireRecoveryErr       error
+	resetRecoveryErr        error
 
 	createdRefreshSession models.RefreshSession
 	rotatedOldSessionID   uuid.UUID
 	rotatedNewSession     models.RefreshSession
 	deletedSessionID      uuid.UUID
 	deletedRefreshUserID  uuid.UUID
+	createdRecoveryToken  models.PasswordRecoveryToken
+	resetRecoveryTokenID  uuid.UUID
+	resetRecoveryUserID   uuid.UUID
+	resetRecoveryPassword string
 }
 
 func (m *mockAccountRepo) UserExistsByEmail(_ context.Context, _ string) (bool, error) {
@@ -97,6 +108,25 @@ func (m *mockAccountRepo) UpdateUserPassword(_ context.Context, _ uuid.UUID, _ s
 }
 func (m *mockAccountRepo) DeactivateUser(_ context.Context, _ uuid.UUID) error {
 	return m.deactivateUserErr
+}
+func (m *mockAccountRepo) CreatePasswordRecoveryToken(_ context.Context, token models.PasswordRecoveryToken) error {
+	m.createdRecoveryToken = token
+	return m.createRecoveryErr
+}
+func (m *mockAccountRepo) GetPasswordRecoveryTokenByHash(_ context.Context, _ string) (models.PasswordRecoveryToken, error) {
+	return m.recoveryToken, m.recoveryTokenErr
+}
+func (m *mockAccountRepo) CountPasswordRecoveryTokensSince(_ context.Context, _ uuid.UUID, _ time.Time) (int, error) {
+	return m.recoveryCount, m.recoveryCountErr
+}
+func (m *mockAccountRepo) ExpirePasswordRecoveryTokensByUserID(_ context.Context, _ uuid.UUID) error {
+	return m.expireRecoveryErr
+}
+func (m *mockAccountRepo) ResetUserPasswordWithRecoveryToken(_ context.Context, tokenID uuid.UUID, userID uuid.UUID, passwordHash string) error {
+	m.resetRecoveryTokenID = tokenID
+	m.resetRecoveryUserID = userID
+	m.resetRecoveryPassword = passwordHash
+	return m.resetRecoveryErr
 }
 
 type mockProfileRepo struct {
@@ -420,6 +450,114 @@ func TestAuthPipeLogout(t *testing.T) {
 		res := pipe.Logout(context.Background(), dtos.RefreshDTO{RefreshToken: refreshToken})
 		if res.Success || string(res.Message) != messages.Invalid_Or_Expired_Token {
 			t.Fatalf("expected %s, got success=%v message=%s", messages.Invalid_Or_Expired_Token, res.Success, res.Message)
+		}
+	})
+}
+
+func TestAuthPipeRecovery(t *testing.T) {
+	t.Run("unknown email returns generic success without token", func(t *testing.T) {
+		repo := &mockAccountRepo{}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+
+		res := pipe.RequestRecovery(context.Background(), dtos.RecoveryRequestDTO{Email: "missing@example.com"}, "127.0.0.1")
+		if !res.Success || string(res.Message) != messages.Recovery_Request_Accepted {
+			t.Fatalf("expected generic success, got success=%v message=%s", res.Success, res.Message)
+		}
+		if repo.createdRecoveryToken.ID != uuid.Nil {
+			t.Fatal("expected no recovery token for unknown email")
+		}
+	})
+
+	t.Run("active parent creates recovery token", func(t *testing.T) {
+		user := validUser(models.ParentUserRole)
+		repo := &mockAccountRepo{userByEmail: user}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+
+		res := pipe.RequestRecovery(context.Background(), dtos.RecoveryRequestDTO{Email: " JORDAN@EXAMPLE.COM "}, "127.0.0.1")
+		if !res.Success || string(res.Message) != messages.Recovery_Request_Accepted {
+			t.Fatalf("expected success, got success=%v message=%s", res.Success, res.Message)
+		}
+		if repo.createdRecoveryToken.ID == uuid.Nil || repo.createdRecoveryToken.UserID != user.ID {
+			t.Fatalf("expected recovery token for user, got %+v", repo.createdRecoveryToken)
+		}
+		if repo.createdRecoveryToken.TokenHash == "" {
+			t.Fatal("expected hashed token")
+		}
+	})
+
+	t.Run("email rate limit returns generic success without token", func(t *testing.T) {
+		user := validUser(models.ParentUserRole)
+		repo := &mockAccountRepo{userByEmail: user, recoveryCount: maxRecoveryRequestsPerHour}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+
+		res := pipe.RequestRecovery(context.Background(), dtos.RecoveryRequestDTO{Email: user.Email}, "127.0.0.1")
+		if !res.Success || string(res.Message) != messages.Recovery_Request_Accepted {
+			t.Fatalf("expected generic success, got success=%v message=%s", res.Success, res.Message)
+		}
+		if repo.createdRecoveryToken.ID != uuid.Nil {
+			t.Fatal("expected no token when email recovery limit is reached")
+		}
+	})
+
+	t.Run("verify rejects expired token", func(t *testing.T) {
+		repo := &mockAccountRepo{
+			recoveryToken: models.PasswordRecoveryToken{
+				ID:        uuid.New(),
+				UserID:    uuid.New(),
+				ExpiresAt: time.Now().Add(-time.Minute),
+			},
+		}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+
+		res := pipe.VerifyRecovery(context.Background(), dtos.RecoveryVerifyDTO{Token: "valid-length-token-value-1234567890"})
+		if res.Success || string(res.Message) != messages.Invalid_Recovery_Token {
+			t.Fatalf("expected %s, got success=%v message=%s", messages.Invalid_Recovery_Token, res.Success, res.Message)
+		}
+	})
+
+	t.Run("verify accepts active token for active user", func(t *testing.T) {
+		user := validUser(models.ParentUserRole)
+		repo := &mockAccountRepo{
+			recoveryToken: models.PasswordRecoveryToken{
+				ID:        uuid.New(),
+				UserID:    user.ID,
+				ExpiresAt: time.Now().Add(time.Minute),
+			},
+			userByID: user,
+		}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+
+		res := pipe.VerifyRecovery(context.Background(), dtos.RecoveryVerifyDTO{Token: "valid-length-token-value-1234567890"})
+		if !res.Success || string(res.Message) != messages.Recovery_Token_Verified {
+			t.Fatalf("expected success, got success=%v message=%s", res.Success, res.Message)
+		}
+	})
+
+	t.Run("reset updates password and uses token", func(t *testing.T) {
+		user := validUser(models.NannyUserRole)
+		tokenID := uuid.New()
+		repo := &mockAccountRepo{
+			recoveryToken: models.PasswordRecoveryToken{
+				ID:        tokenID,
+				UserID:    user.ID,
+				ExpiresAt: time.Now().Add(time.Minute),
+			},
+			userByID: user,
+		}
+		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
+
+		res := pipe.ResetRecoveryPassword(context.Background(), dtos.RecoveryResetDTO{
+			Token:       "valid-length-token-value-1234567890",
+			NewPassword: "newsecurepass",
+		})
+		if !res.Success || string(res.Message) != messages.Password_Reset {
+			t.Fatalf("expected success, got success=%v message=%s", res.Success, res.Message)
+		}
+		if repo.resetRecoveryTokenID != tokenID || repo.resetRecoveryUserID != user.ID {
+			t.Fatalf("expected reset token/user IDs, got token=%s user=%s", repo.resetRecoveryTokenID, repo.resetRecoveryUserID)
+		}
+		if !services.CheckPassword(repo.resetRecoveryPassword, "newsecurepass") {
+			t.Fatal("expected stored reset password hash to match new password")
 		}
 	})
 }
