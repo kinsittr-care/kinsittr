@@ -2,10 +2,12 @@ package server
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	fiberlogger "github.com/gofiber/fiber/v2/middleware/logger"
 	admin_auth_controller "github.com/kinsittr/kinsittr-api/admin/auth/controllers"
 	admin_auth_pipe "github.com/kinsittr/kinsittr-api/admin/auth/pipes"
 	admin_auth_router "github.com/kinsittr/kinsittr-api/admin/auth/routers"
@@ -78,6 +80,11 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	app := fiber.New(fiber.Config{
 		BodyLimit: 6 * 1024 * 1024,
 	})
+
+	app.Use(fiberlogger.New(fiberlogger.Config{
+		Format: "${time} method=${method} path=${path} status=${status} latency=${latency} ip=${ip}\n",
+		Output: log.Writer(),
+	}))
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: cfg.WebOrigin,
