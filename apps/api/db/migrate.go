@@ -32,13 +32,16 @@ func RunMigrationsFromURL(ctx context.Context, databaseURL string, cfg Migration
 		return fmt.Errorf("database URL is required")
 	}
 
+	log.Print("db_migrations_pool_create_start")
 	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
+		log.Printf("db_migrations_pool_create_failed err=%v", err)
 		return err
 	}
 	defer pool.Close()
 
 	if err := pool.Ping(ctx); err != nil {
+		log.Printf("db_migrations_ping_failed err=%v", err)
 		return err
 	}
 	return RunMigrations(ctx, pool, cfg)
@@ -48,14 +51,17 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool, cfg MigrationConfig)
 	if pool == nil {
 		return fmt.Errorf("database pool is required")
 	}
+	log.Print("db_migrations_start")
 
 	conn, err := pool.Acquire(ctx)
 	if err != nil {
+		log.Printf("db_migrations_connection_acquire_failed err=%v", err)
 		return err
 	}
 	defer conn.Release()
 
 	if err := acquireMigrationLock(ctx, conn, cfg.LockTimeout); err != nil {
+		log.Printf("db_migration_lock_failed err=%v", err)
 		return err
 	}
 	defer func() {
@@ -65,11 +71,13 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool, cfg MigrationConfig)
 	}()
 
 	if err := ensureMigrationTable(ctx, conn); err != nil {
+		log.Printf("db_migration_table_ensure_failed err=%v", err)
 		return err
 	}
 
 	files, err := migrationFiles()
 	if err != nil {
+		log.Printf("db_migration_files_load_failed err=%v", err)
 		return err
 	}
 	if len(files) == 0 {
@@ -81,18 +89,21 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool, cfg MigrationConfig)
 	for _, file := range files {
 		sqlBytes, err := migrationsFS.ReadFile(file)
 		if err != nil {
+			log.Printf("db_migration_read_failed file=%s err=%v", file, err)
 			return err
 		}
 		version := path.Base(file)
 		checksum := migrationChecksum(sqlBytes)
 		alreadyApplied, err := migrationApplied(ctx, conn, version, checksum)
 		if err != nil {
+			log.Printf("db_migration_check_failed version=%s err=%v", version, err)
 			return err
 		}
 		if alreadyApplied {
 			continue
 		}
 		if err := applyMigration(ctx, conn, string(sqlBytes), version, checksum); err != nil {
+			log.Printf("db_migration_apply_failed version=%s err=%v", version, err)
 			return err
 		}
 		applied++
@@ -111,13 +122,16 @@ func BaselineMigrationsFromURL(ctx context.Context, databaseURL string, cfg Migr
 		return fmt.Errorf("database URL is required")
 	}
 
+	log.Print("db_migrations_baseline_pool_create_start")
 	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
+		log.Printf("db_migrations_baseline_pool_create_failed err=%v", err)
 		return err
 	}
 	defer pool.Close()
 
 	if err := pool.Ping(ctx); err != nil {
+		log.Printf("db_migrations_baseline_ping_failed err=%v", err)
 		return err
 	}
 	return BaselineMigrations(ctx, pool, cfg)
@@ -127,14 +141,17 @@ func BaselineMigrations(ctx context.Context, pool *pgxpool.Pool, cfg MigrationCo
 	if pool == nil {
 		return fmt.Errorf("database pool is required")
 	}
+	log.Print("db_migrations_baseline_start")
 
 	conn, err := pool.Acquire(ctx)
 	if err != nil {
+		log.Printf("db_migrations_baseline_connection_acquire_failed err=%v", err)
 		return err
 	}
 	defer conn.Release()
 
 	if err := acquireMigrationLock(ctx, conn, cfg.LockTimeout); err != nil {
+		log.Printf("db_migration_baseline_lock_failed err=%v", err)
 		return err
 	}
 	defer func() {
@@ -144,11 +161,13 @@ func BaselineMigrations(ctx context.Context, pool *pgxpool.Pool, cfg MigrationCo
 	}()
 
 	if err := ensureMigrationTable(ctx, conn); err != nil {
+		log.Printf("db_migration_baseline_table_ensure_failed err=%v", err)
 		return err
 	}
 
 	files, err := migrationFiles()
 	if err != nil {
+		log.Printf("db_migration_baseline_files_load_failed err=%v", err)
 		return err
 	}
 
@@ -156,12 +175,14 @@ func BaselineMigrations(ctx context.Context, pool *pgxpool.Pool, cfg MigrationCo
 	for _, file := range files {
 		sqlBytes, err := migrationsFS.ReadFile(file)
 		if err != nil {
+			log.Printf("db_migration_baseline_read_failed file=%s err=%v", file, err)
 			return err
 		}
 		version := path.Base(file)
 		checksum := migrationChecksum(sqlBytes)
 		changed, err := baselineMigration(ctx, conn, version, checksum)
 		if err != nil {
+			log.Printf("db_migration_baseline_failed version=%s err=%v", version, err)
 			return err
 		}
 		if changed {
@@ -204,6 +225,7 @@ func acquireMigrationLock(ctx context.Context, conn *pgxpool.Conn, timeout time.
 	if timeout <= 0 {
 		timeout = 30 * time.Second
 	}
+	log.Printf("db_migration_lock_wait timeout=%s", timeout)
 
 	lockCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -217,11 +239,13 @@ func acquireMigrationLock(ctx context.Context, conn *pgxpool.Conn, timeout time.
 			return err
 		}
 		if locked {
+			log.Print("db_migration_lock_acquired")
 			return nil
 		}
 
 		select {
 		case <-lockCtx.Done():
+			log.Printf("db_migration_lock_timeout timeout=%s", timeout)
 			return fmt.Errorf("migration lock timeout after %s", timeout)
 		case <-ticker.C:
 		}
