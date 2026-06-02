@@ -67,15 +67,19 @@ func (p *AdminPipe) ListConversationMessages(ctx context.Context, conversationID
 }
 
 func (p *AdminPipe) LockConversation(ctx context.Context, adminUserID, conversationID uuid.UUID, dto dtos.AdminConversationActionDTO) *shared.PipeRes[AdminConversationData] {
+	action := string(models.AdminLockConversationAction)
 	reason := strings.TrimSpace(dto.Reason)
 	if reason == "" || len(reason) > 500 {
+		logAdminActionResult(action, adminUserID, "conversation", conversationID, "invalid_request", nil)
 		return pipeError[AdminConversationData](messages.Invalid_Admin_Request)
 	}
 	current, err := p.repo.GetConversationByID(ctx, conversationID)
 	if err != nil {
+		logAdminActionResult(action, adminUserID, "conversation", conversationID, "failed", err)
 		return pipeError[AdminConversationData](messages.Invalid_Admin_Request)
 	}
 	if current.ID == uuid.Nil {
+		logAdminActionResult(action, adminUserID, "conversation", conversationID, "not_found", nil)
 		return pipeError[AdminConversationData](messages.Admin_Conversation_Not_Found)
 	}
 	record, err := p.repo.LockConversation(ctx, repository.AdminConversationActionParams{
@@ -85,25 +89,32 @@ func (p *AdminPipe) LockConversation(ctx context.Context, adminUserID, conversat
 		Reason:         reason,
 	})
 	if err != nil {
+		logAdminActionResult(action, adminUserID, "conversation", conversationID, "failed", err)
 		return pipeError[AdminConversationData](messages.Invalid_Admin_Request)
 	}
 	if record.ID == uuid.Nil {
+		logAdminActionResult(action, adminUserID, "conversation", conversationID, "not_found", nil)
 		return pipeError[AdminConversationData](messages.Admin_Conversation_Not_Found)
 	}
 	data := toAdminConversationData(record)
+	logAdminActionResult(action, adminUserID, "conversation", conversationID, "success", nil)
 	return pipeSuccess(messages.Admin_Conversation_Locked, &data)
 }
 
 func (p *AdminPipe) UnlockConversation(ctx context.Context, adminUserID, conversationID uuid.UUID, dto dtos.AdminConversationActionDTO) *shared.PipeRes[AdminConversationData] {
+	action := string(models.AdminUnlockConversationAction)
 	reason := strings.TrimSpace(dto.Reason)
 	if reason == "" || len(reason) > 500 {
+		logAdminActionResult(action, adminUserID, "conversation", conversationID, "invalid_request", nil)
 		return pipeError[AdminConversationData](messages.Invalid_Admin_Request)
 	}
 	current, err := p.repo.GetConversationByID(ctx, conversationID)
 	if err != nil {
+		logAdminActionResult(action, adminUserID, "conversation", conversationID, "failed", err)
 		return pipeError[AdminConversationData](messages.Invalid_Admin_Request)
 	}
 	if current.ID == uuid.Nil {
+		logAdminActionResult(action, adminUserID, "conversation", conversationID, "not_found", nil)
 		return pipeError[AdminConversationData](messages.Admin_Conversation_Not_Found)
 	}
 	record, err := p.repo.UnlockConversation(ctx, repository.AdminConversationActionParams{
@@ -113,25 +124,32 @@ func (p *AdminPipe) UnlockConversation(ctx context.Context, adminUserID, convers
 		Reason:         reason,
 	})
 	if err != nil {
+		logAdminActionResult(action, adminUserID, "conversation", conversationID, "failed", err)
 		return pipeError[AdminConversationData](messages.Invalid_Admin_Request)
 	}
 	if record.ID == uuid.Nil {
+		logAdminActionResult(action, adminUserID, "conversation", conversationID, "not_found", nil)
 		return pipeError[AdminConversationData](messages.Admin_Conversation_Not_Found)
 	}
 	data := toAdminConversationData(record)
+	logAdminActionResult(action, adminUserID, "conversation", conversationID, "success", nil)
 	return pipeSuccess(messages.Admin_Conversation_Unlocked, &data)
 }
 
 func (p *AdminPipe) HideMessage(ctx context.Context, adminUserID, conversationID, messageID uuid.UUID, dto dtos.AdminConversationActionDTO) *shared.PipeRes[AdminMessageData] {
+	action := string(models.AdminHideMessageAction)
 	reason := strings.TrimSpace(dto.Reason)
 	if reason == "" || len(reason) > 500 {
+		logAdminActionResult(action, adminUserID, "message", messageID, "invalid_request", nil)
 		return pipeError[AdminMessageData](messages.Invalid_Admin_Request)
 	}
 	conversation, err := p.repo.GetConversationByID(ctx, conversationID)
 	if err != nil {
+		logAdminActionResult(action, adminUserID, "message", messageID, "failed", err)
 		return pipeError[AdminMessageData](messages.Invalid_Admin_Request)
 	}
 	if conversation.ID == uuid.Nil {
+		logAdminActionResult(action, adminUserID, "message", messageID, "conversation_not_found", nil)
 		return pipeError[AdminMessageData](messages.Admin_Conversation_Not_Found)
 	}
 	record, err := p.repo.HideMessage(ctx, repository.AdminConversationActionParams{
@@ -142,11 +160,14 @@ func (p *AdminPipe) HideMessage(ctx context.Context, adminUserID, conversationID
 		Reason:         reason,
 	})
 	if err != nil {
+		logAdminActionResult(action, adminUserID, "message", messageID, "failed", err)
 		return pipeError[AdminMessageData](messages.Invalid_Admin_Request)
 	}
 	if record.ID == uuid.Nil {
+		logAdminActionResult(action, adminUserID, "message", messageID, "not_found", nil)
 		return pipeError[AdminMessageData](messages.Admin_Message_Not_Found)
 	}
 	data := toAdminMessageData(record)
+	logAdminActionResult(action, adminUserID, "message", messageID, "success", nil)
 	return pipeSuccess(messages.Admin_Message_Hidden, &data)
 }

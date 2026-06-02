@@ -2,6 +2,7 @@ package pipes
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -169,6 +170,14 @@ func pipeSuccess[T any](message string, data *T) *shared.PipeRes[T] {
 		Message: shared.CreatePipeMessage(message),
 		Data:    data,
 	}
+}
+
+func logBookingEvent(action string, bookingID uuid.UUID, actorID uuid.UUID, role models.UserRole, result string, err error) {
+	if err != nil {
+		log.Printf("booking_%s booking_id=%s actor_id=%s role=%s result=%s err=%v", action, bookingID, actorID, role, result, err)
+		return
+	}
+	log.Printf("booking_%s booking_id=%s actor_id=%s role=%s result=%s", action, bookingID, actorID, role, result)
 }
 
 func parseBookingDateTime(dateValue, timeValue string, timezoneOffsetMinutes int) (time.Time, time.Time, error) {

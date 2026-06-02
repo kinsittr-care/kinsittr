@@ -6,6 +6,9 @@
 # Go
 apps/api/bin/
 apps/api/tmp/
+apps/api/logs/
+logs/
+*.log
 
 # Node
 apps/web/node_modules/
@@ -24,4 +27,3 @@ NANNY_VIEW_DESIGN.md
 ADMIN_DESIGN.md
 
 todos
-

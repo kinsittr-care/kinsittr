@@ -1,6 +1,7 @@
 package pipes
 
 import (
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -77,6 +78,14 @@ func pipeError[T any](message string) *shared.PipeRes[T] {
 
 func pipeSuccess[T any](message string, data *T) *shared.PipeRes[T] {
 	return &shared.PipeRes[T]{Success: true, Message: shared.CreatePipeMessage(message), Data: data}
+}
+
+func logNotificationEvent(action string, userID uuid.UUID, role models.UserRole, result string, err error) {
+	if err != nil {
+		log.Printf("notification_%s user_id=%s role=%s result=%s err=%v", action, userID, role, result, err)
+		return
+	}
+	log.Printf("notification_%s user_id=%s role=%s result=%s", action, userID, role, result)
 }
 
 func validNotificationRole(role models.UserRole) bool {

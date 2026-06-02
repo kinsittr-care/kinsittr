@@ -2,10 +2,12 @@ package server
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	fiberlogger "github.com/gofiber/fiber/v2/middleware/logger"
 	admin_auth_controller "github.com/kinsittr/kinsittr-api/admin/auth/controllers"
 	admin_auth_pipe "github.com/kinsittr/kinsittr-api/admin/auth/pipes"
 	admin_auth_router "github.com/kinsittr/kinsittr-api/admin/auth/routers"
@@ -62,22 +64,36 @@ import (
 )
 
 func New(cfg *config.Config) (*fiber.App, error) {
+	log.Print("api_database_connect_start")
 	pool, err := db.Connect(context.Background(), cfg.DatabaseURL)
 	if err != nil {
+		log.Printf("api_database_connect_failed err=%v", err)
 		return nil, err
 	}
+	log.Print("api_database_connect_success")
 	if cfg.AutoMigrate {
+		log.Printf("api_auto_migrate_start lock_timeout=%s", cfg.MigrationLockTimeout)
 		if err := db.RunMigrations(context.Background(), pool, db.MigrationConfig{
 			LockTimeout: cfg.MigrationLockTimeout,
 		}); err != nil {
 			pool.Close()
+			log.Printf("api_auto_migrate_failed err=%v", err)
 			return nil, err
 		}
+		log.Print("api_auto_migrate_complete")
+	} else {
+		log.Print("api_auto_migrate_skipped")
 	}
 
 	app := fiber.New(fiber.Config{
 		BodyLimit: 6 * 1024 * 1024,
 	})
+
+	log.Print("api_request_logger_configured fields=method,path,status,latency,ip")
+	app.Use(fiberlogger.New(fiberlogger.Config{
+		Format: "${time} method=${method} path=${path} status=${status} latency=${latency} ip=${ip}\n",
+		Output: log.Writer(),
+	}))
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: cfg.WebOrigin,
@@ -98,13 +114,16 @@ func New(cfg *config.Config) (*fiber.App, error) {
 
 	workerCtx, stopWorkers := context.WithCancel(context.Background())
 	app.Hooks().OnShutdown(func() error {
+		log.Print("api_shutdown_started")
 		stopWorkers()
+		log.Print("api_shutdown_complete")
 		return nil
 	})
 	recovery_worker.StartCleanup(workerCtx, account.AccountRepo, recovery_worker.CleanupConfig{
 		Interval:  cfg.RecoveryCleanupInterval,
 		Retention: cfg.RecoveryTokenRetention,
 	})
+	log.Printf("api_worker_started name=password_recovery_cleanup interval=%s retention=%s", cfg.RecoveryCleanupInterval, cfg.RecoveryTokenRetention)
 
 	// auth
 	authPipe := auth_pipe.NewAuthPipe(account.AccountRepo, profile_repo.ProfileRepo, cfg.JWTSecret, cfg.JWTRefreshSecret)

@@ -3,6 +3,7 @@ package pipes
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"math"
 
 	"github.com/google/uuid"
@@ -129,4 +130,20 @@ func pipeError[T any](message string) *shared.PipeRes[T] {
 
 func pipeSuccess[T any](message string, data *T) *shared.PipeRes[T] {
 	return &shared.PipeRes[T]{Success: true, Message: shared.CreatePipeMessage(message), Data: data}
+}
+
+func logPaymentEvent(action string, bookingID uuid.UUID, parentProfileID uuid.UUID, nannyProfileID uuid.UUID, result string, err error) {
+	if err != nil {
+		log.Printf("payment_%s booking_id=%s parent_profile_id=%s nanny_profile_id=%s result=%s err=%v", action, bookingID, parentProfileID, nannyProfileID, result, err)
+		return
+	}
+	log.Printf("payment_%s booking_id=%s parent_profile_id=%s nanny_profile_id=%s result=%s", action, bookingID, parentProfileID, nannyProfileID, result)
+}
+
+func logStripeWebhookEvent(eventID, eventType, result string, err error) {
+	if err != nil {
+		log.Printf("stripe_webhook event_id=%s event_type=%s result=%s err=%v", eventID, eventType, result, err)
+		return
+	}
+	log.Printf("stripe_webhook event_id=%s event_type=%s result=%s", eventID, eventType, result)
 }

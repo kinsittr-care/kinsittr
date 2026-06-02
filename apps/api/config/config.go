@@ -26,6 +26,11 @@ type Config struct {
 	CloudinaryAPISecret     string
 	AutoMigrate             bool
 	MigrationLockTimeout    time.Duration
+	LogToFile               bool
+	LogDir                  string
+	LogFile                 string
+	LogMaxSizeMB            int
+	LogMaxBackups           int
 	RecoveryCleanupInterval time.Duration
 	RecoveryTokenRetention  time.Duration
 }
@@ -49,6 +54,11 @@ func Load() (*Config, error) {
 		CloudinaryAPISecret:     os.Getenv("CLOUDINARY_API_SECRET"),
 		AutoMigrate:             getBoolEnv("AUTO_MIGRATE", false),
 		MigrationLockTimeout:    getDurationEnv("MIGRATION_LOCK_TIMEOUT", 30*time.Second),
+		LogToFile:               getBoolEnv("LOG_TO_FILE", true),
+		LogDir:                  getEnv("LOG_DIR", "logs"),
+		LogFile:                 getEnv("LOG_FILE", "api.log"),
+		LogMaxSizeMB:            getIntEnv("LOG_MAX_SIZE_MB", 20),
+		LogMaxBackups:           getIntEnv("LOG_MAX_BACKUPS", 5),
 		RecoveryCleanupInterval: getDurationEnv("RECOVERY_CLEANUP_INTERVAL", time.Hour),
 		RecoveryTokenRetention:  getDurationEnv("RECOVERY_TOKEN_RETENTION", 24*time.Hour),
 	}
@@ -109,6 +119,18 @@ func getBoolEnv(key string, fallback bool) bool {
 	}
 	parsed, err := strconv.ParseBool(value)
 	if err != nil {
+		return fallback
+	}
+	return parsed
+}
+
+func getIntEnv(key string, fallback int) int {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.Atoi(value)
+	if err != nil || parsed <= 0 {
 		return fallback
 	}
 	return parsed

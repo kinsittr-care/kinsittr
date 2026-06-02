@@ -2,12 +2,14 @@ package pipes
 
 import (
 	"context"
+	"log"
 	"strings"
 
 	"github.com/kinsittr/kinsittr-api/contact/dtos"
 	"github.com/kinsittr/kinsittr-api/contact/messages"
 	"github.com/kinsittr/kinsittr-api/contact/services"
 	shared "github.com/kinsittr/kinsittr-api/shared"
+	apilogging "github.com/kinsittr/kinsittr-api/shared/logging"
 )
 
 type ContactPipe struct {
@@ -35,6 +37,8 @@ func normalizeContactDTO(dto dtos.ContactDTO) dtos.ContactDTO {
 
 func (p *ContactPipe) SendContactMessage(ctx context.Context, dto dtos.ContactDTO) *shared.PipeRes[any] {
 	dto = normalizeContactDTO(dto)
+	fromHash, fromDomain := apilogging.EmailLogFields(dto.Email)
+	toHash, toDomain := apilogging.EmailLogFields(p.toEmail)
 
 	if err := p.emailService.SendContactMessage(
 		ctx,
@@ -46,12 +50,14 @@ func (p *ContactPipe) SendContactMessage(ctx context.Context, dto dtos.ContactDT
 		dto.Subject,
 		dto.Message,
 	); err != nil {
+		log.Printf("contact_email_send_failed from_email_hash=%s from_email_domain=%s to_email_hash=%s to_email_domain=%s role=%s err=%v", fromHash, fromDomain, toHash, toDomain, dto.Role, err)
 		return &shared.PipeRes[any]{
 			Success: false,
 			Message: shared.CreatePipeMessage(messages.Send_Failed),
 		}
 	}
 
+	log.Printf("contact_email_send_success from_email_hash=%s from_email_domain=%s to_email_hash=%s to_email_domain=%s role=%s", fromHash, fromDomain, toHash, toDomain, dto.Role)
 	return &shared.PipeRes[any]{
 		Success: true,
 		Message: shared.CreatePipeMessage(messages.Message_Sent),

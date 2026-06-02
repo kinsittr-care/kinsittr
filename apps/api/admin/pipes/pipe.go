@@ -3,6 +3,7 @@ package pipes
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/url"
 	"strings"
 	"time"
@@ -64,6 +65,14 @@ func pipeSuccess[T any](message string, data *T) *shared.PipeRes[T] {
 		Message: shared.CreatePipeMessage(message),
 		Data:    data,
 	}
+}
+
+func logAdminActionResult(action string, actorID uuid.UUID, targetType string, targetID uuid.UUID, result string, err error) {
+	if err != nil {
+		log.Printf("admin_action action=%s actor_id=%s target_type=%s target_id=%s result=%s err=%v", action, actorID, targetType, targetID, result, err)
+		return
+	}
+	log.Printf("admin_action action=%s actor_id=%s target_type=%s target_id=%s result=%s", action, actorID, targetType, targetID, result)
 }
 
 func normalizePageLimit(page, limit int) (int, int) {

@@ -46,14 +46,18 @@ func (p *AdminPipe) UpdateScreeningSteps(ctx context.Context, nannyProfileID uui
 }
 
 func (p *AdminPipe) StartScreening(ctx context.Context, adminUserID, nannyProfileID uuid.UUID) *shared.PipeRes[AdminNannyData] {
+	action := string(models.AdminUnderReviewNannyAction)
 	current, err := p.repo.GetNannyByID(ctx, nannyProfileID)
 	if err != nil {
+		logAdminActionResult(action, adminUserID, "nanny", nannyProfileID, "failed", err)
 		return pipeError[AdminNannyData](messages.Invalid_Admin_Request)
 	}
 	if current.ID == uuid.Nil {
+		logAdminActionResult(action, adminUserID, "nanny", nannyProfileID, "not_found", nil)
 		return notFoundNanny[AdminNannyData]()
 	}
 	if current.VerificationStatus != models.PendingVerificationStatus {
+		logAdminActionResult(action, adminUserID, "nanny", nannyProfileID, "blocked", nil)
 		if !isScreeningEditable(current.VerificationStatus) {
 			return pipeError[AdminNannyData](messages.Admin_Screening_Closed)
 		}
@@ -68,28 +72,36 @@ func (p *AdminPipe) StartScreening(ctx context.Context, adminUserID, nannyProfil
 		ToStatus:       models.UnderReviewVerificationStatus,
 	})
 	if err != nil {
+		logAdminActionResult(action, adminUserID, "nanny", nannyProfileID, "failed", err)
 		return pipeError[AdminNannyData](messages.Invalid_Admin_Request)
 	}
 	if record.ID == uuid.Nil {
+		logAdminActionResult(action, adminUserID, "nanny", nannyProfileID, "blocked", nil)
 		return pipeError[AdminNannyData](messages.Admin_Nanny_Action_Blocked)
 	}
 	data := toAdminNannyData(record)
+	logAdminActionResult(action, adminUserID, "nanny", nannyProfileID, "success", nil)
 	return pipeSuccess(messages.Admin_Screening_Started, &data)
 }
 
 func (p *AdminPipe) ResetScreening(ctx context.Context, adminUserID, nannyProfileID uuid.UUID, dto dtos.AdminNannyActionDTO) *shared.PipeRes[AdminNannyData] {
+	action := string(models.AdminResetNannyAction)
 	reason := strings.TrimSpace(dto.Reason)
 	if reason == "" || len(reason) > 500 {
+		logAdminActionResult(action, adminUserID, "nanny", nannyProfileID, "invalid_request", nil)
 		return pipeError[AdminNannyData](messages.Invalid_Admin_Request)
 	}
 	current, err := p.repo.GetNannyByID(ctx, nannyProfileID)
 	if err != nil {
+		logAdminActionResult(action, adminUserID, "nanny", nannyProfileID, "failed", err)
 		return pipeError[AdminNannyData](messages.Invalid_Admin_Request)
 	}
 	if current.ID == uuid.Nil {
+		logAdminActionResult(action, adminUserID, "nanny", nannyProfileID, "not_found", nil)
 		return notFoundNanny[AdminNannyData]()
 	}
 	if current.VerificationStatus != models.RejectedVerificationStatus {
+		logAdminActionResult(action, adminUserID, "nanny", nannyProfileID, "blocked", nil)
 		return pipeError[AdminNannyData](messages.Invalid_Admin_Request)
 	}
 
@@ -102,27 +114,33 @@ func (p *AdminPipe) ResetScreening(ctx context.Context, adminUserID, nannyProfil
 		ToStatus:       models.PendingVerificationStatus,
 	})
 	if err != nil {
+		logAdminActionResult(action, adminUserID, "nanny", nannyProfileID, "failed", err)
 		return pipeError[AdminNannyData](messages.Invalid_Admin_Request)
 	}
 	if record.ID == uuid.Nil {
+		logAdminActionResult(action, adminUserID, "nanny", nannyProfileID, "not_found", nil)
 		return notFoundNanny[AdminNannyData]()
 	}
 	data := toAdminNannyData(record)
+	logAdminActionResult(action, adminUserID, "nanny", nannyProfileID, "success", nil)
 	return pipeSuccess(messages.Admin_Screening_Reset, &data)
 }
 
 func (p *AdminPipe) VerifyNanny(ctx context.Context, adminUserID, nannyProfileID uuid.UUID) *shared.PipeRes[AdminNannyData] {
 	current, err := p.repo.GetNannyByID(ctx, nannyProfileID)
 	if err != nil {
+		logAdminActionResult(string(models.AdminVerifyNannyAction), adminUserID, "nanny", nannyProfileID, "failed", err)
 		return pipeError[AdminNannyData](messages.Invalid_Admin_Request)
 	}
 	if current.ID == uuid.Nil {
+		logAdminActionResult(string(models.AdminVerifyNannyAction), adminUserID, "nanny", nannyProfileID, "not_found", nil)
 		return notFoundNanny[AdminNannyData]()
 	}
 	if current.VerificationStatus != models.UnderReviewVerificationStatus ||
 		!current.DocsReviewed ||
 		!current.ReferencesChecked ||
 		!current.InterviewDone {
+		logAdminActionResult(string(models.AdminVerifyNannyAction), adminUserID, "nanny", nannyProfileID, "blocked", nil)
 		return pipeError[AdminNannyData](messages.Admin_Nanny_Action_Blocked)
 	}
 	return p.updateNannyStatus(ctx, adminUserID, nannyProfileID, models.VerifiedVerificationStatus, models.AdminVerifyNannyAction, "", []string{string(models.UnderReviewVerificationStatus)}, messages.Admin_Nanny_Verified)
@@ -131,6 +149,7 @@ func (p *AdminPipe) VerifyNanny(ctx context.Context, adminUserID, nannyProfileID
 func (p *AdminPipe) RejectNanny(ctx context.Context, adminUserID, nannyProfileID uuid.UUID, dto dtos.AdminNannyActionDTO) *shared.PipeRes[AdminNannyData] {
 	reason := strings.TrimSpace(dto.Reason)
 	if reason == "" || len(reason) > 500 {
+		logAdminActionResult(string(models.AdminRejectNannyAction), adminUserID, "nanny", nannyProfileID, "invalid_request", nil)
 		return pipeError[AdminNannyData](messages.Invalid_Admin_Request)
 	}
 	return p.updateNannyStatus(ctx, adminUserID, nannyProfileID, models.RejectedVerificationStatus, models.AdminRejectNannyAction, reason, []string{string(models.UnderReviewVerificationStatus)}, messages.Admin_Nanny_Rejected)
@@ -146,12 +165,15 @@ func (p *AdminPipe) updateNannyStatus(ctx context.Context, adminUserID, nannyPro
 		ToStatus:       status,
 	})
 	if err != nil {
+		logAdminActionResult(string(action), adminUserID, "nanny", nannyProfileID, "failed", err)
 		return pipeError[AdminNannyData](messages.Invalid_Admin_Request)
 	}
 	if record.ID == uuid.Nil {
+		logAdminActionResult(string(action), adminUserID, "nanny", nannyProfileID, "blocked", nil)
 		return pipeError[AdminNannyData](messages.Admin_Nanny_Action_Blocked)
 	}
 	data := toAdminNannyData(record)
+	logAdminActionResult(string(action), adminUserID, "nanny", nannyProfileID, "success", nil)
 	return pipeSuccess(message, &data)
 }
 

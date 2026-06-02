@@ -1,9 +1,11 @@
 package pipes
 
 import (
+	"log"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	conversation_messages "github.com/kinsittr/kinsittr-api/conversations/messages"
 	"github.com/kinsittr/kinsittr-api/models"
 	messages_repo "github.com/kinsittr/kinsittr-api/repositories/messages"
@@ -128,6 +130,14 @@ func pipeSuccess[T any](message string, data *T) *shared.PipeRes[T] {
 		Message: shared.CreatePipeMessage(message),
 		Data:    data,
 	}
+}
+
+func logConversationEvent(action string, conversationID uuid.UUID, userID uuid.UUID, role models.UserRole, result string, err error) {
+	if err != nil {
+		log.Printf("conversation_%s conversation_id=%s user_id=%s role=%s result=%s err=%v", action, conversationID, userID, role, result, err)
+		return
+	}
+	log.Printf("conversation_%s conversation_id=%s user_id=%s role=%s result=%s", action, conversationID, userID, role, result)
 }
 
 func conversationNotFound[T any]() *shared.PipeRes[T] {

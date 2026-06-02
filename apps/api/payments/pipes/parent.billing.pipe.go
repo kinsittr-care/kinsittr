@@ -13,27 +13,34 @@ import (
 
 func (p *PaymentsPipe) CreateParentSetupIntent(ctx context.Context, userID uuid.UUID) *shared.PipeRes[SetupIntentData] {
 	if p.stripe == nil || !p.stripe.Configured() {
+		logPaymentEvent("setup_intent", uuid.Nil, uuid.Nil, uuid.Nil, "stripe_not_configured", nil)
 		return pipeError[SetupIntentData](messages.Stripe_Not_Configured)
 	}
 	billing, err := p.repo.GetParentBillingContext(ctx, userID)
 	if err != nil || billing.ParentProfileID == uuid.Nil {
+		logPaymentEvent("setup_intent", uuid.Nil, uuid.Nil, uuid.Nil, "profile_not_found", err)
 		return pipeError[SetupIntentData](messages.Payment_Profile_Not_Found)
 	}
 	customerID := strings.TrimSpace(billing.StripeCustomerID)
 	if customerID == "" {
 		customer, err := p.stripe.CreateCustomer(ctx, billing.Email, billing.DisplayName, "parent-customer-"+billing.ParentProfileID.String())
 		if err != nil {
+			logPaymentEvent("customer_create", uuid.Nil, billing.ParentProfileID, uuid.Nil, "stripe_failed", err)
 			return pipeError[SetupIntentData](messages.Invalid_Payment_Request)
 		}
 		customerID = customer.ID
 		if err := p.repo.UpdateParentStripeCustomer(ctx, billing.ParentProfileID, customerID); err != nil {
+			logPaymentEvent("customer_create", uuid.Nil, billing.ParentProfileID, uuid.Nil, "record_failed", err)
 			return pipeError[SetupIntentData](messages.Invalid_Payment_Request)
 		}
+		logPaymentEvent("customer_create", uuid.Nil, billing.ParentProfileID, uuid.Nil, "success", nil)
 	}
 	intent, err := p.stripe.CreateSetupIntent(ctx, customerID)
 	if err != nil {
+		logPaymentEvent("setup_intent", uuid.Nil, billing.ParentProfileID, uuid.Nil, "stripe_failed", err)
 		return pipeError[SetupIntentData](messages.Invalid_Payment_Request)
 	}
+	logPaymentEvent("setup_intent", uuid.Nil, billing.ParentProfileID, uuid.Nil, "success", nil)
 	data := SetupIntentData{CustomerID: customerID, ClientSecret: intent.ClientSecret}
 	return pipeSuccess(messages.Payment_Setup_Created, &data)
 }

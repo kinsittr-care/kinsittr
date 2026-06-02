@@ -5,9 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	api_logging "github.com/kinsittr/kinsittr-api/shared/logging"
 )
 
 const resendURL = "https://api.resend.com/emails"
@@ -29,6 +32,7 @@ func NewResendProvider(apiKey string, fromEmail string) *ResendProvider {
 }
 
 func (p *ResendProvider) Send(ctx context.Context, message Message) error {
+	toHash, toDomain := api_logging.EmailLogFields(message.ToEmail)
 	payload := map[string]any{
 		"from":    p.fromEmail,
 		"to":      []string{message.ToEmail},
@@ -43,11 +47,13 @@ func (p *ResendProvider) Send(ctx context.Context, message Message) error {
 
 	body, err := json.Marshal(payload)
 	if err != nil {
+		log.Printf("mail_resend_send_failed to_email_hash=%s to_email_domain=%s result=marshal_failed err=%v", toHash, toDomain, err)
 		return fmt.Errorf("marshal resend payload: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, resendURL, bytes.NewReader(body))
 	if err != nil {
+		log.Printf("mail_resend_send_failed to_email_hash=%s to_email_domain=%s result=request_create_failed err=%v", toHash, toDomain, err)
 		return fmt.Errorf("create resend request: %w", err)
 	}
 
@@ -56,11 +62,13 @@ func (p *ResendProvider) Send(ctx context.Context, message Message) error {
 
 	res, err := p.httpClient.Do(req)
 	if err != nil {
+		log.Printf("mail_resend_send_failed to_email_hash=%s to_email_domain=%s result=request_failed err=%v", toHash, toDomain, err)
 		return fmt.Errorf("send resend request: %w", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode >= http.StatusBadRequest {
+		log.Printf("mail_resend_send_failed to_email_hash=%s to_email_domain=%s result=provider_status status=%d", toHash, toDomain, res.StatusCode)
 		return fmt.Errorf("resend returned status %d", res.StatusCode)
 	}
 

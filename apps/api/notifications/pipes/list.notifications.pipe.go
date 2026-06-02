@@ -13,6 +13,7 @@ import (
 
 func (p *NotificationsPipe) List(ctx context.Context, userID uuid.UUID, role models.UserRole, dto dtos.ListNotificationsQueryDTO) *shared.PipeRes[NotificationListData] {
 	if userID == uuid.Nil || !validNotificationRole(role) {
+		logNotificationEvent("list", userID, role, "forbidden", nil)
 		return pipeError[NotificationListData](messages.Forbidden_Notifications_Access)
 	}
 
@@ -23,6 +24,7 @@ func (p *NotificationsPipe) List(ctx context.Context, userID uuid.UUID, role mod
 		UnreadOnly: dto.UnreadOnly,
 	})
 	if err != nil {
+		logNotificationEvent("list", userID, role, "failed", err)
 		return pipeError[NotificationListData](messages.Invalid_Notification_Request)
 	}
 
@@ -30,5 +32,6 @@ func (p *NotificationsPipe) List(ctx context.Context, userID uuid.UUID, role mod
 	for _, item := range items {
 		data.Items = append(data.Items, toNotificationData(item))
 	}
+	logNotificationEvent("list", userID, role, "success", nil)
 	return pipeSuccess(messages.Notifications_Listed, &data)
 }
