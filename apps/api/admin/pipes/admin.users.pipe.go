@@ -32,15 +32,18 @@ func (p *AdminPipe) ListAdmins(ctx context.Context, dto dtos.ListAdminMessagesQu
 }
 
 func (p *AdminPipe) InviteAdmin(ctx context.Context, invitedBy uuid.UUID, dto dtos.InviteAdminDTO) *shared.PipeRes[AdminInviteData] {
+	action := "invite"
 	firstname := strings.TrimSpace(dto.Firstname)
 	lastname := strings.TrimSpace(dto.Lastname)
 	email := strings.ToLower(strings.TrimSpace(dto.Email))
 	if firstname == "" || lastname == "" || email == "" || !strings.Contains(email, "@") {
+		logAdminActionResult(action, invitedBy, "admin_invite", uuid.Nil, "invalid_request", nil)
 		return pipeError[AdminInviteData](messages.Invalid_Admin_Request)
 	}
 
 	token, err := generateAdminInviteToken()
 	if err != nil {
+		logAdminActionResult(action, invitedBy, "admin_invite", uuid.Nil, "failed", err)
 		return pipeError[AdminInviteData](messages.Invalid_Admin_Request)
 	}
 	invite, err := p.repo.CreateAdminInvite(ctx, repository.InviteAdminParams{
@@ -53,6 +56,7 @@ func (p *AdminPipe) InviteAdmin(ctx context.Context, invitedBy uuid.UUID, dto dt
 		ExpiresAt: time.Now().UTC().Add(72 * time.Hour),
 	})
 	if err != nil {
+		logAdminActionResult(action, invitedBy, "admin_invite", uuid.Nil, "failed", err)
 		return pipeError[AdminInviteData](messages.Invalid_Admin_Request)
 	}
 	data := toAdminInviteData(invite, token)
@@ -65,9 +69,11 @@ func (p *AdminPipe) InviteAdmin(ctx context.Context, invitedBy uuid.UUID, dto dt
 			invite.ExpiresAt.Format(time.RFC1123),
 		)
 		if err != nil {
+			logAdminActionResult(action, invitedBy, "admin_invite", invite.ID, "email_failed", err)
 			return pipeError[AdminInviteData](messages.Invalid_Admin_Request)
 		}
 	}
+	logAdminActionResult(action, invitedBy, "admin_invite", invite.ID, "success", nil)
 	return pipeSuccess(messages.Admin_Admin_Invited, &data)
 }
 
@@ -92,17 +98,22 @@ func (p *AdminPipe) AcceptAdminInvite(ctx context.Context, dto dtos.AcceptAdminI
 }
 
 func (p *AdminPipe) DisableAdmin(ctx context.Context, currentAdminID, targetAdminID uuid.UUID) *shared.PipeRes[AdminUserData] {
+	action := "disable"
 	if targetAdminID == uuid.Nil || targetAdminID == currentAdminID {
+		logAdminActionResult(action, currentAdminID, "admin", targetAdminID, "invalid_request", nil)
 		return pipeError[AdminUserData](messages.Invalid_Admin_Request)
 	}
 	record, err := p.repo.DisableAdmin(ctx, targetAdminID)
 	if err != nil {
+		logAdminActionResult(action, currentAdminID, "admin", targetAdminID, "failed", err)
 		return pipeError[AdminUserData](messages.Invalid_Admin_Request)
 	}
 	if record.ID == uuid.Nil {
+		logAdminActionResult(action, currentAdminID, "admin", targetAdminID, "not_found", nil)
 		return pipeError[AdminUserData](messages.Admin_User_Not_Found)
 	}
 	data := toAdminUserData(record)
+	logAdminActionResult(action, currentAdminID, "admin", targetAdminID, "success", nil)
 	return pipeSuccess(messages.Admin_Admin_Disabled, &data)
 }
 
