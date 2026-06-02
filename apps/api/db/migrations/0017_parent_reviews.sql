@@ -1,6 +1,12 @@
 ALTER TABLE bookings
+    DROP CONSTRAINT IF EXISTS bookings_id_parent_nanny_unique;
+
+ALTER TABLE bookings
     ADD CONSTRAINT bookings_id_parent_nanny_unique
     UNIQUE (id, parent_profile_id, nanny_profile_id);
+
+ALTER TABLE nanny_reviews
+    DROP CONSTRAINT IF EXISTS nanny_reviews_booking_participants_fk;
 
 ALTER TABLE nanny_reviews
     ADD CONSTRAINT nanny_reviews_booking_participants_fk

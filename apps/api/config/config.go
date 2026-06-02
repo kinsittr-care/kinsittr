@@ -24,6 +24,8 @@ type Config struct {
 	CloudinaryCloudName     string
 	CloudinaryAPIKey        string
 	CloudinaryAPISecret     string
+	AutoMigrate             bool
+	MigrationLockTimeout    time.Duration
 	RecoveryCleanupInterval time.Duration
 	RecoveryTokenRetention  time.Duration
 }
@@ -45,6 +47,8 @@ func Load() (*Config, error) {
 		CloudinaryCloudName:     os.Getenv("CLOUDINARY_CLOUD_NAME"),
 		CloudinaryAPIKey:        os.Getenv("CLOUDINARY_API_KEY"),
 		CloudinaryAPISecret:     os.Getenv("CLOUDINARY_API_SECRET"),
+		AutoMigrate:             getBoolEnv("AUTO_MIGRATE", false),
+		MigrationLockTimeout:    getDurationEnv("MIGRATION_LOCK_TIMEOUT", 30*time.Second),
 		RecoveryCleanupInterval: getDurationEnv("RECOVERY_CLEANUP_INTERVAL", time.Hour),
 		RecoveryTokenRetention:  getDurationEnv("RECOVERY_TOKEN_RETENTION", 24*time.Hour),
 	}
@@ -92,6 +96,18 @@ func getFloatEnv(key string, fallback float64) float64 {
 		return fallback
 	}
 	parsed, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return fallback
+	}
+	return parsed
+}
+
+func getBoolEnv(key string, fallback bool) bool {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.ParseBool(value)
 	if err != nil {
 		return fallback
 	}

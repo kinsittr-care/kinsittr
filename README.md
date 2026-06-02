@@ -67,7 +67,29 @@ SQL migrations live in:
 apps/api/db/migrations/
 ```
 
-Apply migrations in order against the configured PostgreSQL database. The schema currently covers users, parent and nanny profiles, refresh sessions, bookings, booking change requests, conversations, messages, notifications, reviews, screening records, admin actions, and admin invites.
+The API can apply embedded migrations on startup when `AUTO_MIGRATE=true`. Applied files are tracked in `schema_migrations` with checksums, failures are recorded in `schema_migration_failures`, and the runner uses a PostgreSQL advisory lock so only one API instance migrates at a time. `MIGRATION_LOCK_TIMEOUT` controls how long startup waits for the lock.
+
+For deployment pipelines, migrations can be run without starting the HTTP server:
+
+```bash
+cd apps/api
+go run ./cmd/migrate
+```
+
+The migration command loads `apps/api/.env` when run from `apps/api`. For an existing database that was migrated manually before `schema_migrations` existed, baseline the current embedded migration set once instead of re-running old SQL:
+
+```bash
+cd apps/api
+go run ./cmd/migrate --baseline
+```
+
+Baseline mode records embedded migration filenames and checksums only; it does not validate that the live schema matches those files. Use it only after confirming the database already has the expected schema.
+
+Keep `AUTO_MIGRATE=false` in production if migrations are handled by a separate deploy step, especially for existing databases that were migrated manually before `schema_migrations` existed.
+
+Migration files run inside database transactions. Avoid non-transactional PostgreSQL statements such as `CREATE INDEX CONCURRENTLY`, `DROP INDEX CONCURRENTLY`, and `VACUUM` unless the runner is extended for non-transactional migrations.
+
+The schema currently covers users, parent and nanny profiles, refresh sessions, bookings, booking change requests, conversations, messages, notifications, reviews, screening records, admin actions, and admin invites.
 
 ## Verification
 

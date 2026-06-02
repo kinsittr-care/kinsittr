@@ -66,6 +66,14 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	if err != nil {
 		return nil, err
 	}
+	if cfg.AutoMigrate {
+		if err := db.RunMigrations(context.Background(), pool, db.MigrationConfig{
+			LockTimeout: cfg.MigrationLockTimeout,
+		}); err != nil {
+			pool.Close()
+			return nil, err
+		}
+	}
 
 	app := fiber.New(fiber.Config{
 		BodyLimit: 6 * 1024 * 1024,
