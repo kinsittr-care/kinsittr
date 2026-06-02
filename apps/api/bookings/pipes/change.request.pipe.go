@@ -17,11 +17,13 @@ import (
 func (p *BookingsPipe) CreateChangeRequest(ctx context.Context, userID uuid.UUID, role models.UserRole, bookingID uuid.UUID, dto dtos.CreateBookingChangeRequestDTO) *shared.PipeRes[BookingChangeRequestData] {
 	booking, errMessage := p.getOwnedBookingByRole(ctx, userID, role, bookingID)
 	if errMessage != "" {
+		logBookingEvent("change_request_create", bookingID, userID, role, errMessage, nil)
 		return pipeError[BookingChangeRequestData](errMessage)
 	}
 
 	reason := strings.TrimSpace(dto.Reason)
 	if reason == "" {
+		logBookingEvent("change_request_create", bookingID, userID, role, "missing_reason", nil)
 		return pipeError[BookingChangeRequestData](messages.Invalid_Booking_Request)
 	}
 
@@ -38,41 +40,51 @@ func (p *BookingsPipe) CreateChangeRequest(ctx context.Context, userID uuid.UUID
 	switch request.Type {
 	case models.CancelBookingChangeRequestType:
 		if booking.Status != models.ApprovedBookingStatus {
+			logBookingEvent("change_request_create", booking.ID, userID, role, "cancel_blocked_status", nil)
 			return pipeError[BookingChangeRequestData](messages.Cannot_Create_Booking_Change_Request)
 		}
 	case models.RescheduleBookingChangeRequestType:
 		if booking.Status != models.PendingBookingStatus && booking.Status != models.ApprovedBookingStatus {
+			logBookingEvent("change_request_create", booking.ID, userID, role, "reschedule_blocked_status", nil)
 			return pipeError[BookingChangeRequestData](messages.Cannot_Create_Booking_Change_Request)
 		}
 		if dto.Date == "" || dto.StartTime == "" || dto.Duration == 0 {
+			logBookingEvent("change_request_create", booking.ID, userID, role, "invalid_reschedule_fields", nil)
 			return pipeError[BookingChangeRequestData](messages.Invalid_Booking_Request)
 		}
 		date, startTime, err := parseBookingDateTime(dto.Date, dto.StartTime, dto.TimezoneOffsetMinutes)
 		if err != nil {
+			logBookingEvent("change_request_create", booking.ID, userID, role, "invalid_datetime", err)
 			return pipeError[BookingChangeRequestData](messages.Invalid_Booking_Request)
 		}
 		if !startTime.After(time.Now().UTC()) {
+			logBookingEvent("change_request_create", booking.ID, userID, role, "start_in_past", nil)
 			return pipeError[BookingChangeRequestData](messages.Booking_Start_In_Past)
 		}
 		conflict, err := p.repo.HasNannyApprovedBookingConflictExcluding(ctx, booking.NannyProfileID, startTime, dto.Duration, booking.ID)
 		if err != nil {
+			logBookingEvent("change_request_create", booking.ID, userID, role, "conflict_check_failed", err)
 			return pipeError[BookingChangeRequestData](messages.Cannot_Create_Booking_Change_Request)
 		}
 		if conflict {
+			logBookingEvent("change_request_create", booking.ID, userID, role, "nanny_time_unavailable", nil)
 			return pipeError[BookingChangeRequestData](messages.Nanny_Time_Unavailable)
 		}
 		request.ProposedDate = &date
 		request.ProposedStartTime = &startTime
 		request.ProposedDuration = &dto.Duration
 	default:
+		logBookingEvent("change_request_create", booking.ID, userID, role, "invalid_type", nil)
 		return pipeError[BookingChangeRequestData](messages.Invalid_Booking_Request)
 	}
 
 	created, err := p.repo.CreateBookingChangeRequest(ctx, request)
 	if err != nil {
 		if errors.Is(err, bookings.ErrPendingChangeRequestExists) {
+			logBookingEvent("change_request_create", booking.ID, userID, role, "already_pending", err)
 			return pipeError[BookingChangeRequestData](messages.Booking_Change_Request_Already_Pending)
 		}
+		logBookingEvent("change_request_create", booking.ID, userID, role, "failed", err)
 		return pipeError[BookingChangeRequestData](messages.Cannot_Create_Booking_Change_Request)
 	}
 
@@ -92,6 +104,7 @@ func (p *BookingsPipe) CreateChangeRequest(ctx context.Context, userID uuid.UUID
 			Data:  notificationData(map[string]string{"booking_id": booking.ID.String(), "change_request_id": created.ID.String()}),
 		})
 	}
+	logBookingEvent("change_request_create", booking.ID, userID, role, "success", nil)
 	return pipeSuccess(messages.Booking_Change_Request_Created, &data)
 }
 
@@ -117,38 +130,47 @@ func (p *BookingsPipe) ListChangeRequests(ctx context.Context, userID uuid.UUID,
 func (p *BookingsPipe) AcceptChangeRequest(ctx context.Context, userID uuid.UUID, role models.UserRole, bookingID, requestID uuid.UUID, dto dtos.ResolveBookingChangeRequestDTO) *shared.PipeRes[BookingChangeRequestResolutionData] {
 	booking, errMessage := p.getOwnedBookingByRole(ctx, userID, role, bookingID)
 	if errMessage != "" {
+		logBookingEvent("change_request_accept", bookingID, userID, role, errMessage, nil)
 		return pipeError[BookingChangeRequestResolutionData](errMessage)
 	}
 
 	request, errMessage := p.getResolvableChangeRequest(ctx, userID, booking.ID, requestID)
 	if errMessage != "" {
+		logBookingEvent("change_request_accept", booking.ID, userID, role, errMessage, nil)
 		return pipeError[BookingChangeRequestResolutionData](errMessage)
 	}
 
 	if request.Type == models.CancelBookingChangeRequestType && booking.Status != models.ApprovedBookingStatus {
+		logBookingEvent("change_request_accept", booking.ID, userID, role, "cancel_blocked_status", nil)
 		return pipeError[BookingChangeRequestResolutionData](messages.Cannot_Resolve_Booking_Change_Request)
 	}
 	if request.Type == models.RescheduleBookingChangeRequestType {
 		if booking.Status != models.PendingBookingStatus && booking.Status != models.ApprovedBookingStatus {
+			logBookingEvent("change_request_accept", booking.ID, userID, role, "reschedule_blocked_status", nil)
 			return pipeError[BookingChangeRequestResolutionData](messages.Cannot_Resolve_Booking_Change_Request)
 		}
 		if request.ProposedStartTime == nil || request.ProposedDuration == nil {
+			logBookingEvent("change_request_accept", booking.ID, userID, role, "missing_reschedule_fields", nil)
 			return pipeError[BookingChangeRequestResolutionData](messages.Cannot_Resolve_Booking_Change_Request)
 		}
 		if !request.ProposedStartTime.After(time.Now().UTC()) {
+			logBookingEvent("change_request_accept", booking.ID, userID, role, "start_in_past", nil)
 			return pipeError[BookingChangeRequestResolutionData](messages.Booking_Start_In_Past)
 		}
 		conflict, err := p.repo.HasNannyApprovedBookingConflictExcluding(ctx, booking.NannyProfileID, *request.ProposedStartTime, *request.ProposedDuration, booking.ID)
 		if err != nil {
+			logBookingEvent("change_request_accept", booking.ID, userID, role, "conflict_check_failed", err)
 			return pipeError[BookingChangeRequestResolutionData](messages.Cannot_Resolve_Booking_Change_Request)
 		}
 		if conflict {
+			logBookingEvent("change_request_accept", booking.ID, userID, role, "nanny_time_unavailable", nil)
 			return pipeError[BookingChangeRequestResolutionData](messages.Nanny_Time_Unavailable)
 		}
 	}
 
 	updatedBooking, accepted, err := p.repo.AcceptBookingChangeRequest(ctx, request.BookingID, request.ID, strings.TrimSpace(dto.ResponseNote))
 	if err != nil || updatedBooking.ID == uuid.Nil || accepted.ID == uuid.Nil {
+		logBookingEvent("change_request_accept", booking.ID, userID, role, "failed", err)
 		return pipeError[BookingChangeRequestResolutionData](messages.Cannot_Resolve_Booking_Change_Request)
 	}
 
@@ -164,22 +186,26 @@ func (p *BookingsPipe) AcceptChangeRequest(ctx context.Context, userID uuid.UUID
 		Body:   "Your booking change request was accepted.",
 		Data:   notificationData(map[string]string{"booking_id": booking.ID.String(), "change_request_id": accepted.ID.String()}),
 	})
+	logBookingEvent("change_request_accept", booking.ID, userID, role, "success", nil)
 	return pipeSuccess(messages.Booking_Change_Request_Accepted, &data)
 }
 
 func (p *BookingsPipe) DeclineChangeRequest(ctx context.Context, userID uuid.UUID, role models.UserRole, bookingID, requestID uuid.UUID, dto dtos.ResolveBookingChangeRequestDTO) *shared.PipeRes[BookingChangeRequestData] {
 	booking, errMessage := p.getOwnedBookingByRole(ctx, userID, role, bookingID)
 	if errMessage != "" {
+		logBookingEvent("change_request_decline", bookingID, userID, role, errMessage, nil)
 		return pipeError[BookingChangeRequestData](errMessage)
 	}
 
 	request, errMessage := p.getResolvableChangeRequest(ctx, userID, booking.ID, requestID)
 	if errMessage != "" {
+		logBookingEvent("change_request_decline", booking.ID, userID, role, errMessage, nil)
 		return pipeError[BookingChangeRequestData](errMessage)
 	}
 
 	declined, err := p.repo.DeclineBookingChangeRequest(ctx, request.BookingID, request.ID, strings.TrimSpace(dto.ResponseNote))
 	if err != nil || declined.ID == uuid.Nil {
+		logBookingEvent("change_request_decline", booking.ID, userID, role, "failed", err)
 		return pipeError[BookingChangeRequestData](messages.Cannot_Resolve_Booking_Change_Request)
 	}
 
@@ -192,6 +218,7 @@ func (p *BookingsPipe) DeclineChangeRequest(ctx context.Context, userID uuid.UUI
 		Body:   "Your booking change request was declined.",
 		Data:   notificationData(map[string]string{"booking_id": booking.ID.String(), "change_request_id": declined.ID.String()}),
 	})
+	logBookingEvent("change_request_decline", booking.ID, userID, role, "success", nil)
 	return pipeSuccess(messages.Booking_Change_Request_Declined, &data)
 }
 

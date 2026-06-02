@@ -16,30 +16,37 @@ import (
 func (p *BookingsPipe) Create(ctx context.Context, userID uuid.UUID, dto dtos.CreateBookingDTO) *shared.PipeRes[BookingData] {
 	parentProfile, err := p.profileRepo.GetParentProfileByUserID(ctx, userID)
 	if err != nil {
+		logBookingEvent("create", uuid.Nil, userID, models.ParentUserRole, "parent_profile_lookup_failed", err)
 		return pipeError[BookingData](messages.Invalid_Booking_Request)
 	}
 	if parentProfile.ID == uuid.Nil {
+		logBookingEvent("create", uuid.Nil, userID, models.ParentUserRole, "parent_profile_not_found", nil)
 		return pipeError[BookingData](messages.Parent_Profile_Not_Found)
 	}
 
 	nannyID, err := parseUUID(dto.NannyID)
 	if err != nil {
+		logBookingEvent("create", uuid.Nil, userID, models.ParentUserRole, "invalid_nanny_id", err)
 		return pipeError[BookingData](messages.Invalid_Booking_Request)
 	}
 
 	nannyProfile, err := p.nannyRepo.GetVerifiedNannyByID(ctx, nannyID)
 	if err != nil {
+		logBookingEvent("create", uuid.Nil, userID, models.ParentUserRole, "nanny_lookup_failed", err)
 		return pipeError[BookingData](messages.Invalid_Booking_Request)
 	}
 	if nannyProfile.ID == uuid.Nil {
+		logBookingEvent("create", uuid.Nil, userID, models.ParentUserRole, "nanny_profile_not_found", nil)
 		return pipeError[BookingData](messages.Nanny_Profile_Not_Found)
 	}
 
 	dateOnly, startDateTime, err := parseBookingDateTime(dto.Date, dto.StartTime, dto.TimezoneOffsetMinutes)
 	if err != nil {
+		logBookingEvent("create", uuid.Nil, userID, models.ParentUserRole, "invalid_datetime", err)
 		return pipeError[BookingData](messages.Invalid_Booking_Request)
 	}
 	if !startDateTime.After(time.Now().UTC()) {
+		logBookingEvent("create", uuid.Nil, userID, models.ParentUserRole, "start_in_past", nil)
 		return pipeError[BookingData](messages.Booking_Start_In_Past)
 	}
 
@@ -51,9 +58,11 @@ func (p *BookingsPipe) Create(ctx context.Context, userID uuid.UUID, dto dtos.Cr
 		dto.Duration,
 	)
 	if err != nil {
+		logBookingEvent("create", uuid.Nil, userID, models.ParentUserRole, "parent_conflict_check_failed", err)
 		return pipeError[BookingData](messages.Invalid_Booking_Request)
 	}
 	if hasExistingBooking {
+		logBookingEvent("create", uuid.Nil, userID, models.ParentUserRole, "parent_existing_booking", nil)
 		return pipeError[BookingData](messages.Booking_Already_Exists)
 	}
 
@@ -64,9 +73,11 @@ func (p *BookingsPipe) Create(ctx context.Context, userID uuid.UUID, dto dtos.Cr
 		dto.Duration,
 	)
 	if err != nil {
+		logBookingEvent("create", uuid.Nil, userID, models.ParentUserRole, "nanny_conflict_check_failed", err)
 		return pipeError[BookingData](messages.Invalid_Booking_Request)
 	}
 	if hasApprovedConflict {
+		logBookingEvent("create", uuid.Nil, userID, models.ParentUserRole, "nanny_time_unavailable", nil)
 		return pipeError[BookingData](messages.Nanny_Time_Unavailable)
 	}
 
@@ -83,10 +94,13 @@ func (p *BookingsPipe) Create(ctx context.Context, userID uuid.UUID, dto dtos.Cr
 	if err != nil {
 		switch {
 		case errors.Is(err, bookings.ErrBookingAlreadyExists):
+			logBookingEvent("create", uuid.Nil, userID, models.ParentUserRole, "parent_existing_booking", err)
 			return pipeError[BookingData](messages.Booking_Already_Exists)
 		case errors.Is(err, bookings.ErrNannyTimeUnavailable):
+			logBookingEvent("create", uuid.Nil, userID, models.ParentUserRole, "nanny_time_unavailable", err)
 			return pipeError[BookingData](messages.Nanny_Time_Unavailable)
 		}
+		logBookingEvent("create", uuid.Nil, userID, models.ParentUserRole, "failed", err)
 		return pipeError[BookingData](messages.Invalid_Booking_Request)
 	}
 
@@ -102,5 +116,6 @@ func (p *BookingsPipe) Create(ctx context.Context, userID uuid.UUID, dto dtos.Cr
 		Data:  notificationData(map[string]string{"booking_id": booking.ID.String()}),
 	})
 
+	logBookingEvent("create", booking.ID, userID, models.ParentUserRole, "success", nil)
 	return pipeSuccess(messages.Booking_Created, &data)
 }
