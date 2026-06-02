@@ -1,6 +1,8 @@
 package logging
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"log"
@@ -194,4 +196,26 @@ func backupGlob(path string) string {
 	ext := filepath.Ext(path)
 	base := strings.TrimSuffix(filepath.Base(path), ext)
 	return filepath.Join(dir, base+"-*"+ext)
+}
+
+func EmailHash(email string) string {
+	email = strings.ToLower(strings.TrimSpace(email))
+	if email == "" {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(email))
+	return hex.EncodeToString(sum[:8])
+}
+
+func EmailDomain(email string) string {
+	email = strings.ToLower(strings.TrimSpace(email))
+	_, domain, ok := strings.Cut(email, "@")
+	if !ok {
+		return ""
+	}
+	return domain
+}
+
+func EmailLogFields(email string) (string, string) {
+	return EmailHash(email), EmailDomain(email)
 }

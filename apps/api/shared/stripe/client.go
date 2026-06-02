@@ -311,7 +311,7 @@ func (c *Client) request(ctx context.Context, method, path string, values url.Va
 	}
 	if res.StatusCode >= 400 {
 		log.Printf("stripe_request_failed method=%s path=%s result=provider_status status=%d", method, logPath, res.StatusCode)
-		return fmt.Errorf("stripe_error_%d: %s", res.StatusCode, string(payload))
+		return fmt.Errorf("stripe_error_%d", res.StatusCode)
 	}
 	if err := json.Unmarshal(payload, output); err != nil {
 		log.Printf("stripe_request_failed method=%s path=%s result=decode_failed err=%v", method, logPath, err)

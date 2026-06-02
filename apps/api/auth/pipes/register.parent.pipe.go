@@ -11,17 +11,19 @@ import (
 	"github.com/kinsittr/kinsittr-api/auth/services"
 	"github.com/kinsittr/kinsittr-api/models"
 	shared "github.com/kinsittr/kinsittr-api/shared"
+	apilogging "github.com/kinsittr/kinsittr-api/shared/logging"
 )
 
 func (p *AuthPipe) RegisterParent(ctx context.Context, dto dtos.RegisterParentDTO) *shared.PipeRes[AuthTokenPair] {
 	dto.Email = strings.ToLower(strings.TrimSpace(dto.Email))
+	emailHash, emailDomain := apilogging.EmailLogFields(dto.Email)
 
 	exists, err := p.repo.UserExistsByEmail(ctx, dto.Email)
 	if err != nil || exists {
 		if err != nil {
-			log.Printf("auth_parent_register_failed email=%s reason=email_check err=%v", dto.Email, err)
+			log.Printf("auth_parent_register_failed email_hash=%s email_domain=%s reason=email_check err=%v", emailHash, emailDomain, err)
 		} else {
-			log.Printf("auth_parent_register_failed email=%s reason=email_exists", dto.Email)
+			log.Printf("auth_parent_register_failed email_hash=%s email_domain=%s reason=email_exists", emailHash, emailDomain)
 		}
 		return &shared.PipeRes[AuthTokenPair]{
 			Success: false,
@@ -31,7 +33,7 @@ func (p *AuthPipe) RegisterParent(ctx context.Context, dto dtos.RegisterParentDT
 
 	hash, err := services.HashPassword(dto.Password)
 	if err != nil {
-		log.Printf("auth_parent_register_failed email=%s reason=password_hash err=%v", dto.Email, err)
+		log.Printf("auth_parent_register_failed email_hash=%s email_domain=%s reason=password_hash err=%v", emailHash, emailDomain, err)
 		return &shared.PipeRes[AuthTokenPair]{Success: false, Message: shared.CreatePipeMessage(messages.Registration_Failed)}
 	}
 
@@ -54,17 +56,17 @@ func (p *AuthPipe) RegisterParent(ctx context.Context, dto dtos.RegisterParentDT
 		Province:     strings.TrimSpace(dto.Province),
 	})
 	if err != nil {
-		log.Printf("auth_parent_register_failed email=%s reason=create_account err=%v", dto.Email, err)
+		log.Printf("auth_parent_register_failed email_hash=%s email_domain=%s reason=create_account err=%v", emailHash, emailDomain, err)
 		return &shared.PipeRes[AuthTokenPair]{Success: false, Message: shared.CreatePipeMessage(messages.Registration_Failed)}
 	}
 
 	access, refresh, err := p.generateTokenPair(ctx, user.ID, user.Role)
 	if err != nil {
-		log.Printf("auth_parent_register_failed user_id=%s email=%s reason=token_generation err=%v", user.ID, dto.Email, err)
+		log.Printf("auth_parent_register_failed user_id=%s email_hash=%s email_domain=%s reason=token_generation err=%v", user.ID, emailHash, emailDomain, err)
 		return &shared.PipeRes[AuthTokenPair]{Success: false, Message: shared.CreatePipeMessage(messages.Registration_Failed)}
 	}
 
-	log.Printf("auth_parent_register_success user_id=%s email=%s", user.ID, dto.Email)
+	log.Printf("auth_parent_register_success user_id=%s email_hash=%s email_domain=%s", user.ID, emailHash, emailDomain)
 	return &shared.PipeRes[AuthTokenPair]{
 		Success: true,
 		Message: shared.CreatePipeMessage(messages.Registered_Successfully),

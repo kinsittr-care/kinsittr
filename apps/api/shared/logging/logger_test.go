@@ -52,3 +52,16 @@ func TestBackupGlob(t *testing.T) {
 		t.Fatalf("expected %q, got %q", want, got)
 	}
 }
+
+func TestEmailLogFields(t *testing.T) {
+	hash, domain := EmailLogFields(" Test@Example.COM ")
+	if hash == "" {
+		t.Fatal("expected email hash")
+	}
+	if domain != "example.com" {
+		t.Fatalf("expected normalized domain, got %q", domain)
+	}
+	if strings.Contains(hash, "test") || strings.Contains(hash, "example") {
+		t.Fatalf("expected hash not to contain email fragments, got %q", hash)
+	}
+}
