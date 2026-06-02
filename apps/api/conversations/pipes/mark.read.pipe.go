@@ -20,38 +20,47 @@ func (p *ConversationsPipe) MarkRead(ctx context.Context, userID uuid.UUID, role
 	case models.ParentUserRole:
 		parentProfile, profileErr := p.profileRepo.GetParentProfileByUserID(ctx, userID)
 		if profileErr != nil {
+			logConversationEvent("mark_read", conversationID, userID, role, "parent_profile_lookup_failed", profileErr)
 			return pipeError[ConversationData](conversation_messages.Invalid_Message_Request)
 		}
 		if parentProfile.ID == uuid.Nil {
+			logConversationEvent("mark_read", conversationID, userID, role, "conversation_not_found", nil)
 			return conversationNotFound[ConversationData]()
 		}
 		record, err = p.repo.GetParentConversationByID(ctx, conversationID, parentProfile.ID, userID)
 	case models.NannyUserRole:
 		nannyProfile, profileErr := p.profileRepo.GetNannyProfileByUserID(ctx, userID)
 		if profileErr != nil {
+			logConversationEvent("mark_read", conversationID, userID, role, "nanny_profile_lookup_failed", profileErr)
 			return pipeError[ConversationData](conversation_messages.Invalid_Message_Request)
 		}
 		if nannyProfile.ID == uuid.Nil {
+			logConversationEvent("mark_read", conversationID, userID, role, "conversation_not_found", nil)
 			return conversationNotFound[ConversationData]()
 		}
 		record, err = p.repo.GetNannyConversationByID(ctx, conversationID, nannyProfile.ID, userID)
 	default:
+		logConversationEvent("mark_read", conversationID, userID, role, "forbidden_role", nil)
 		return pipeError[ConversationData](conversation_messages.Forbidden_Conversation_Access)
 	}
 	if err != nil {
+		logConversationEvent("mark_read", conversationID, userID, role, "conversation_lookup_failed", err)
 		return pipeError[ConversationData](conversation_messages.Invalid_Message_Request)
 	}
 	if record.ID == uuid.Nil {
+		logConversationEvent("mark_read", conversationID, userID, role, "conversation_not_found", nil)
 		return conversationNotFound[ConversationData]()
 	}
 
 	read, err := p.repo.MarkConversationRead(ctx, conversationID, userID)
 	if err != nil {
+		logConversationEvent("mark_read", conversationID, userID, role, "failed", err)
 		return pipeError[ConversationData](conversation_messages.Invalid_Message_Request)
 	}
 
 	record.UnreadCount = 0
 	record.LastReadAt = &read.LastReadAt
 	data := toConversationData(record)
+	logConversationEvent("mark_read", conversationID, userID, role, "success", nil)
 	return pipeSuccess(conversation_messages.Conversation_Read, &data)
 }

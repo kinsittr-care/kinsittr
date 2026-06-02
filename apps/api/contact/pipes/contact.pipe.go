@@ -2,6 +2,7 @@ package pipes
 
 import (
 	"context"
+	"log"
 	"strings"
 
 	"github.com/kinsittr/kinsittr-api/contact/dtos"
@@ -46,12 +47,14 @@ func (p *ContactPipe) SendContactMessage(ctx context.Context, dto dtos.ContactDT
 		dto.Subject,
 		dto.Message,
 	); err != nil {
+		log.Printf("contact_email_send_failed from_email=%s to_email=%s role=%s err=%v", dto.Email, p.toEmail, dto.Role, err)
 		return &shared.PipeRes[any]{
 			Success: false,
 			Message: shared.CreatePipeMessage(messages.Send_Failed),
 		}
 	}
 
+	log.Printf("contact_email_send_success from_email=%s to_email=%s role=%s", dto.Email, p.toEmail, dto.Role)
 	return &shared.PipeRes[any]{
 		Success: true,
 		Message: shared.CreatePipeMessage(messages.Message_Sent),

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -62,9 +63,11 @@ func (c *Client) UploadImage(ctx context.Context, data []byte, folder, publicID 
 
 	fw, err := w.CreateFormFile("file", "image")
 	if err != nil {
+		log.Printf("cloudinary_upload_failed folder=%s public_id=%s result=form_file_failed err=%v", folder, publicID, err)
 		return UploadResult{}, err
 	}
 	if _, err := fw.Write(data); err != nil {
+		log.Printf("cloudinary_upload_failed folder=%s public_id=%s result=file_write_failed err=%v", folder, publicID, err)
 		return UploadResult{}, err
 	}
 
@@ -80,26 +83,31 @@ func (c *Client) UploadImage(ctx context.Context, data []byte, folder, publicID 
 	endpoint := fmt.Sprintf("%s/%s/image/upload", apiBase, c.cloudName)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, &buf)
 	if err != nil {
+		log.Printf("cloudinary_upload_failed folder=%s public_id=%s result=request_create_failed err=%v", folder, publicID, err)
 		return UploadResult{}, err
 	}
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
 	resp, err := c.http.Do(req)
 	if err != nil {
+		log.Printf("cloudinary_upload_failed folder=%s public_id=%s result=request_failed err=%v", folder, publicID, err)
 		return UploadResult{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.Printf("cloudinary_upload_failed folder=%s public_id=%s result=response_read_failed err=%v", folder, publicID, err)
 		return UploadResult{}, err
 	}
 	if resp.StatusCode >= 400 {
+		log.Printf("cloudinary_upload_failed folder=%s public_id=%s result=provider_status status=%d", folder, publicID, resp.StatusCode)
 		return UploadResult{}, fmt.Errorf("cloudinary_error_%d: %s", resp.StatusCode, string(body))
 	}
 
 	var result UploadResult
 	if err := json.Unmarshal(body, &result); err != nil {
+		log.Printf("cloudinary_upload_failed folder=%s public_id=%s result=decode_failed err=%v", folder, publicID, err)
 		return UploadResult{}, err
 	}
 	return result, nil
@@ -122,18 +130,21 @@ func (c *Client) DeleteImage(ctx context.Context, publicID string) error {
 	endpoint := fmt.Sprintf("%s/%s/image/destroy", apiBase, c.cloudName)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(values.Encode()))
 	if err != nil {
+		log.Printf("cloudinary_delete_failed public_id=%s result=request_create_failed err=%v", publicID, err)
 		return err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := c.http.Do(req)
 	if err != nil {
+		log.Printf("cloudinary_delete_failed public_id=%s result=request_failed err=%v", publicID, err)
 		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
 		body, _ := io.ReadAll(resp.Body)
+		log.Printf("cloudinary_delete_failed public_id=%s result=provider_status status=%d", publicID, resp.StatusCode)
 		return fmt.Errorf("cloudinary_error_%d: %s", resp.StatusCode, string(body))
 	}
 	return nil

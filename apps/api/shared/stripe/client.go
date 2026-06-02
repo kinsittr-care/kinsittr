@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -276,7 +277,9 @@ func mergeRequestOptions(opts ...requestOptions) requestOptions {
 }
 
 func (c *Client) request(ctx context.Context, method, path string, values url.Values, output any, opts requestOptions) error {
+	logPath := sanitizeStripeLogPath(path)
 	if !c.Configured() {
+		log.Printf("stripe_request_failed method=%s path=%s result=not_configured", method, logPath)
 		return errors.New("stripe_not_configured")
 	}
 	var body io.Reader
@@ -285,6 +288,7 @@ func (c *Client) request(ctx context.Context, method, path string, values url.Va
 	}
 	req, err := http.NewRequestWithContext(ctx, method, apiBase+path, body)
 	if err != nil {
+		log.Printf("stripe_request_failed method=%s path=%s result=request_create_failed err=%v", method, logPath, err)
 		return err
 	}
 	req.SetBasicAuth(c.secretKey, "")
@@ -296,15 +300,34 @@ func (c *Client) request(ctx context.Context, method, path string, values url.Va
 	}
 	res, err := c.http.Do(req)
 	if err != nil {
+		log.Printf("stripe_request_failed method=%s path=%s result=request_failed err=%v", method, logPath, err)
 		return err
 	}
 	defer res.Body.Close()
 	payload, err := io.ReadAll(res.Body)
 	if err != nil {
+		log.Printf("stripe_request_failed method=%s path=%s result=response_read_failed err=%v", method, logPath, err)
 		return err
 	}
 	if res.StatusCode >= 400 {
+		log.Printf("stripe_request_failed method=%s path=%s result=provider_status status=%d", method, logPath, res.StatusCode)
 		return fmt.Errorf("stripe_error_%d: %s", res.StatusCode, string(payload))
 	}
-	return json.Unmarshal(payload, output)
+	if err := json.Unmarshal(payload, output); err != nil {
+		log.Printf("stripe_request_failed method=%s path=%s result=decode_failed err=%v", method, logPath, err)
+		return err
+	}
+	return nil
+}
+
+func sanitizeStripeLogPath(path string) string {
+	path = strings.SplitN(path, "?", 2)[0]
+	switch {
+	case strings.HasPrefix(path, "/customers/"):
+		return "/customers/:id"
+	case strings.HasPrefix(path, "/payment_methods/") && strings.HasSuffix(path, "/detach"):
+		return "/payment_methods/:id/detach"
+	default:
+		return path
+	}
 }
