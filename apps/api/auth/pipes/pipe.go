@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/auth/services"
@@ -82,4 +83,14 @@ func pipeSuccess[T any](message string, data *T) *shared.PipeRes[T] {
 		Message: shared.CreatePipeMessage(message),
 		Data:    data,
 	}
+}
+
+func defaultDisplayName(firstname, lastname string) string {
+	firstname = strings.TrimSpace(firstname)
+	lastname = strings.TrimSpace(lastname)
+	if lastname == "" {
+		return firstname
+	}
+	initial := []rune(lastname)[0]
+	return firstname + " " + string(unicode.ToUpper(initial)) + "."
 }

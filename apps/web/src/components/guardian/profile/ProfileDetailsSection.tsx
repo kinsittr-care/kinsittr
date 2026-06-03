@@ -33,8 +33,10 @@ const inputStyle: React.CSSProperties = {
 
 type ProfileDraft = {
   display_name: string;
+  phone: string;
   city: string;
   province: string;
+  children_ages: string[];
 };
 
 interface ProfileDetailsSectionProps {
@@ -53,11 +55,12 @@ export default function ProfileDetailsSection({
   const isMobile = useIsMobile();
   const [editProfile, setEditProfile] = useState(false);
   const [profileDraft, setProfileDraft] = useState<ProfileDraft>(() => draftFromProfile(profile));
+  const [draftError, setDraftError] = useState<string | null>(null);
   const session = getStoredAuthSession();
   const user = session?.user;
   const displayEmail = user?.email ?? "Not provided";
-  const displayPhone = user?.phone || "Not provided";
-  const displayCity = `${profile.city}, ${profile.province}`;
+  const displayPhone = profile.phone || user?.phone || "Not provided";
+  const displayCity = profile.city && profile.province ? `${profile.city}, ${profile.province}` : "Not provided";
   const initials = initialsFromName(profile.display_name);
 
   return (
@@ -100,6 +103,7 @@ export default function ProfileDetailsSection({
           onClick={() => {
             if (!editProfile) {
               setProfileDraft(draftFromProfile(profile));
+              setDraftError(null);
             }
             setEditProfile((prev) => !prev);
           }}
@@ -140,6 +144,7 @@ export default function ProfileDetailsSection({
           {(
             [
               ["Display name", "display_name"],
+              ["Phone", "phone"],
               ["City", "city"],
               ["Province", "province"],
             ] as [string, keyof ProfileDraft][]
@@ -155,28 +160,76 @@ export default function ProfileDetailsSection({
               />
             </div>
           ))}
+          <div style={{ gridColumn: isMobile ? "span 1" : "span 2" }}>
+            <label style={labelStyle}>Children ages</label>
+            <div className="flex gap-[10px] flex-wrap" style={{ marginBottom: 12 }}>
+              {profileDraft.children_ages.map((age, index) => (
+                <input
+                  key={index}
+                  aria-label={`Child ${index + 1} age`}
+                  type="number"
+                  min={0}
+                  max={18}
+                  value={age}
+                  onChange={(event) =>
+                    setProfileDraft((prev) => ({
+                      ...prev,
+                      children_ages: prev.children_ages.map((value, draftIndex) =>
+                        draftIndex === index ? event.target.value : value,
+                      ),
+                    }))
+                  }
+                  style={{ ...inputStyle, width: 84, marginBottom: 0 }}
+                />
+              ))}
+              <button
+                className="btn-outline"
+                style={{ alignSelf: "start", padding: "9px 14px", fontSize: 13, borderStyle: "dashed" }}
+                type="button"
+                onClick={() =>
+                  setProfileDraft((prev) => ({
+                    ...prev,
+                    children_ages: [...prev.children_ages, "0"],
+                  }))
+                }
+              >
+                + Add child
+              </button>
+            </div>
+          </div>
           <button
             className="btn-cta"
             style={{ gridColumn: isMobile ? "span 1" : "span 2", width: "fit-content", fontSize: 14, padding: "10px 20px" }}
             disabled={isSaving}
             onClick={async () => {
+              const childrenAges = profileDraft.children_ages.map((age) => Number(age));
+              if (
+                !childrenAges.length ||
+                childrenAges.some((age) => !Number.isInteger(age) || age < 0 || age > 18)
+              ) {
+                setDraftError("Enter at least one child age between 0 and 18.");
+                return;
+              }
+
               const updated = await onSave({
                 display_name: profileDraft.display_name,
-                num_children: profile.num_children,
-                children_ages: profile.children_ages,
+                phone: profileDraft.phone,
+                num_children: childrenAges.length,
+                children_ages: childrenAges,
                 city: profileDraft.city,
                 province: profileDraft.province,
               });
               if (updated) {
                 setEditProfile(false);
+                setDraftError(null);
               }
             }}
           >
             {isSaving ? "Saving..." : "Save changes"}
           </button>
-          {errorMessage && (
+          {(draftError || errorMessage) && (
             <div style={{ gridColumn: isMobile ? "span 1" : "span 2", color: "#c0392b", fontSize: 13 }}>
-              {errorMessage}
+              {draftError || errorMessage}
             </div>
           )}
         </div>
@@ -188,8 +241,10 @@ export default function ProfileDetailsSection({
 function draftFromProfile(profile: ParentProfile): ProfileDraft {
   return {
     display_name: profile.display_name,
+    phone: profile.phone,
     city: profile.city,
     province: profile.province,
+    children_ages: profile.children_ages.length ? profile.children_ages.map((age) => String(age)) : ["0"],
   };
 }
 

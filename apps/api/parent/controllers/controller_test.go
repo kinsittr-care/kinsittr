@@ -98,7 +98,7 @@ func TestParentControllerProfile(t *testing.T) {
 		t.Fatalf("expected 200, got %d", resp.StatusCode)
 	}
 
-	body := `{"display_name":"Alex Parent","num_children":1,"children_ages":[3],"city":"Toronto","province":"ON"}`
+	body := `{"display_name":"Alex Parent","phone":"+14165550100","num_children":1,"children_ages":[3],"city":"Toronto","province":"ON"}`
 	req := httptest.NewRequest(fiber.MethodPatch, "/profile", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	resp, err = parentTestApp(controller, models.ParentUserRole).Test(req)

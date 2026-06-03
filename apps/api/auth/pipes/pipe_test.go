@@ -53,6 +53,8 @@ type mockAccountRepo struct {
 	resetRecoveryErr        error
 
 	createdRefreshSession models.RefreshSession
+	createdParentProfile  models.ParentProfile
+	createdNannyProfile   models.NannyProfile
 	rotatedOldSessionID   uuid.UUID
 	rotatedNewSession     models.RefreshSession
 	deletedSessionID      uuid.UUID
@@ -76,13 +78,15 @@ func (m *mockAccountRepo) GetUserByEmail(_ context.Context, _ string) (models.Us
 func (m *mockAccountRepo) GetUserByID(_ context.Context, _ uuid.UUID) (models.User, error) {
 	return m.userByID, m.userByIDErr
 }
-func (m *mockAccountRepo) CreateParentAccount(_ context.Context, user models.User, _ models.ParentProfile) (models.User, error) {
+func (m *mockAccountRepo) CreateParentAccount(_ context.Context, user models.User, profile models.ParentProfile) (models.User, error) {
+	m.createdParentProfile = profile
 	if m.createParentUser.ID != uuid.Nil {
 		return m.createParentUser, m.createParentErr
 	}
 	return user, m.createParentErr
 }
-func (m *mockAccountRepo) CreateNannyAccount(_ context.Context, user models.User, _ models.NannyProfile) (models.User, error) {
+func (m *mockAccountRepo) CreateNannyAccount(_ context.Context, user models.User, profile models.NannyProfile) (models.User, error) {
+	m.createdNannyProfile = profile
 	if m.createNannyUser.ID != uuid.Nil {
 		return m.createNannyUser, m.createNannyErr
 	}
@@ -279,15 +283,10 @@ func TestAuthPipeRegisterParent(t *testing.T) {
 		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
 
 		res := pipe.RegisterParent(context.Background(), dtos.RegisterParentDTO{
-			Firstname:    "Jordan",
-			Lastname:     "Lee",
-			Email:        "jordan@example.com",
-			Password:     "verysecure",
-			DisplayName:  "Jordan",
-			NumChildren:  1,
-			ChildrenAges: []int{4},
-			City:         "Toronto",
-			Province:     "ON",
+			Firstname: "Jordan",
+			Lastname:  "Lee",
+			Email:     "jordan@example.com",
+			Password:  "verysecure",
 		})
 
 		if res.Success || string(res.Message) != messages.Email_Already_In_Use {
@@ -301,15 +300,10 @@ func TestAuthPipeRegisterParent(t *testing.T) {
 		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
 
 		res := pipe.RegisterParent(context.Background(), dtos.RegisterParentDTO{
-			Firstname:    "Jordan",
-			Lastname:     "Lee",
-			Email:        "  JORDAN@EXAMPLE.COM ",
-			Password:     "verysecure",
-			DisplayName:  "Jordan",
-			NumChildren:  1,
-			ChildrenAges: []int{4},
-			City:         "Toronto",
-			Province:     "ON",
+			Firstname: "Jordan",
+			Lastname:  "Lee",
+			Email:     "  JORDAN@EXAMPLE.COM ",
+			Password:  "verysecure",
 		})
 
 		if !res.Success || string(res.Message) != messages.Registered_Successfully {
@@ -317,6 +311,9 @@ func TestAuthPipeRegisterParent(t *testing.T) {
 		}
 		if res.Data == nil || res.Data.User.Role != models.ParentUserRole {
 			t.Fatalf("expected parent user in response, got %+v", res.Data)
+		}
+		if repo.createdParentProfile.DisplayName != "Jordan L." || repo.createdParentProfile.NumChildren != 0 || len(repo.createdParentProfile.ChildrenAges) != 0 {
+			t.Fatalf("expected default parent profile, got %+v", repo.createdParentProfile)
 		}
 	})
 }
@@ -328,16 +325,10 @@ func TestAuthPipeRegisterNanny(t *testing.T) {
 		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
 
 		res := pipe.RegisterNanny(context.Background(), dtos.RegisterNannyDTO{
-			Firstname:   "Taylor",
-			Lastname:    "Smith",
-			Email:       "taylor@example.com",
-			Password:    "verysecure",
-			DisplayName: "Taylor",
-			ServiceType: "",
-			Bio:         "Experienced caregiver with over five years of childcare.",
-			RatePerHour: 30,
-			City:        "Toronto",
-			Province:    "ON",
+			Firstname: "Taylor",
+			Lastname:  "Smith",
+			Email:     "taylor@example.com",
+			Password:  "verysecure",
 		})
 
 		if !res.Success || string(res.Message) != messages.Registered_Successfully {
@@ -345,6 +336,12 @@ func TestAuthPipeRegisterNanny(t *testing.T) {
 		}
 		if res.Data == nil || res.Data.User.Role != models.NannyUserRole {
 			t.Fatalf("expected nanny user in response, got %+v", res.Data)
+		}
+		if repo.createdNannyProfile.DisplayName != "Taylor S." ||
+			repo.createdNannyProfile.ServiceType != models.NannyServiceType ||
+			repo.createdNannyProfile.RatePerHour != 0 ||
+			repo.createdNannyProfile.Bio != "" {
+			t.Fatalf("expected default nanny profile, got %+v", repo.createdNannyProfile)
 		}
 	})
 }

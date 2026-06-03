@@ -1,9 +1,12 @@
 package config
 
 import (
+	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -36,6 +39,8 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
+	loadDotEnv(".env")
+
 	cfg := &Config{
 		Port:                    getEnv("PORT", "4006"),
 		WebOrigin:               getEnv("WEB_ORIGIN", "http://localhost:3000"),
@@ -146,4 +151,32 @@ func getDurationEnv(key string, fallback time.Duration) time.Duration {
 		return fallback
 	}
 	return parsed
+}
+
+func loadDotEnv(path string) {
+	file, err := os.Open(path)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		key, value, ok := strings.Cut(line, "=")
+		if !ok {
+			continue
+		}
+		key = strings.TrimSpace(key)
+		if key == "" || os.Getenv(key) != "" {
+			continue
+		}
+		os.Setenv(key, strings.Trim(strings.TrimSpace(value), `"'`))
+	}
+	if err := scanner.Err(); err != nil {
+		log.Printf("dotenv_read_failed path=%s err=%v", path, err)
+	}
 }

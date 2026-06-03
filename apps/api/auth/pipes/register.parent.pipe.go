@@ -44,16 +44,16 @@ func (p *AuthPipe) RegisterParent(ctx context.Context, dto dtos.RegisterParentDT
 		Email:       dto.Email,
 		Password:    hash,
 		Role:        models.ParentUserRole,
-		Phone:       strings.TrimSpace(dto.Phone),
+		Phone:       "",
 		CountryCode: "CA",
 	}, models.ParentProfile{
 		ID:           uuid.New(),
 		UserID:       uuid.Nil,
-		DisplayName:  strings.TrimSpace(dto.DisplayName),
-		NumChildren:  dto.NumChildren,
-		ChildrenAges: dto.ChildrenAges,
-		City:         strings.TrimSpace(dto.City),
-		Province:     strings.TrimSpace(dto.Province),
+		DisplayName:  defaultDisplayName(dto.Firstname, dto.Lastname),
+		NumChildren:  0,
+		ChildrenAges: []int{},
+		City:         "",
+		Province:     "",
 	})
 	if err != nil {
 		log.Printf("auth_parent_register_failed email_hash=%s email_domain=%s reason=create_account err=%v", emailHash, emailDomain, err)

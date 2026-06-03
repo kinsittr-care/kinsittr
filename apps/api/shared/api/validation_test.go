@@ -123,6 +123,7 @@ func TestValidateAPIData(t *testing.T) {
 func TestValidateNannyProfileDTO(t *testing.T) {
 	validDTO := nannyDtos.UpdateNannyProfileDTO{
 		DisplayName: "Jane Doe",
+		Phone:       "+14165550100",
 		Bio:         "Experienced caregiver with 5 years of childcare.",
 		RatePerHour: 28.0,
 		City:        "Toronto",

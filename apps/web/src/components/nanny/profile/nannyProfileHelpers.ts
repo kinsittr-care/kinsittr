@@ -14,6 +14,7 @@ export function getInitials(name: string) {
 export function profileToPayload(profile: NannyProfile): UpdateNannyProfilePayload {
   return {
     display_name: profile.display_name,
+    phone: profile.phone,
     bio: profile.bio,
     specialties: profile.specialties ?? [],
     rate_per_hour: profile.rate_per_hour,

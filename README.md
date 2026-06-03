@@ -16,7 +16,7 @@ todos/        Planning notes and implementation backlog
 
 Parents discover KinSittr through the marketing pages, create an account, complete their profile, and browse verified nannies. The browse experience is backed by public nanny search with server-side filters for location, rate, specialties, and sorting. Once a parent finds a nanny, they can request a booking and track it through pending, approved, declined, cancelled, completed, and change-request states.
 
-Nannies register with a profile that is treated as the source of their public listing after verification. They manage their own profile, review booking requests, approve or decline work, complete approved bookings after the service window, and participate in conversations created from approved bookings.
+Nannies register with a lightweight account flow, then complete their profile in-app before their public listing is useful for verification and discovery. They manage their own profile, review booking requests, approve or decline work, complete approved bookings after the service window, and participate in conversations created from approved bookings.
 
 Messaging starts from bookings rather than open-ended chat. A conversation is created when a booking is approved, and both sides can view threads, send messages, mark conversations as read, and receive notifications for relevant activity.
 

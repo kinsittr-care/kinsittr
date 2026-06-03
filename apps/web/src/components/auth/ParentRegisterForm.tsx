@@ -29,26 +29,19 @@ const initialValues: RegisterParentPayload = {
   lastname: "",
   email: "",
   password: "",
-  phone: "",
-  display_name: "",
-  num_children: 1,
-  children_ages: [],
-  city: "",
-  province: "",
 };
 
 export default function ParentRegisterForm({ onSuccess }: ParentRegisterFormProps) {
   const router = useRouter();
   const [values, setValues] = useState<RegisterParentPayload>(initialValues);
-  const [childrenAgesInput, setChildrenAgesInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setValues((v) => ({
       ...v,
-      [name]: name === "num_children" ? Number(value) : value,
+      [name]: value,
     }));
   };
 
@@ -56,14 +49,9 @@ export default function ParentRegisterForm({ onSuccess }: ParentRegisterFormProp
     e.preventDefault();
     setError("");
 
-    const ages = childrenAgesInput
-      .split(",")
-      .map((s) => parseInt(s.trim(), 10))
-      .filter((n) => !isNaN(n));
-
     setIsSubmitting(true);
     try {
-      const response = await registerParent({ ...values, children_ages: ages });
+      const response = await registerParent(values);
       const session = await establishAuthSession(response.data as NonNullable<typeof response.data>);
       onSuccess?.();
       router.push(getPostAuthRedirectPath(session.user));
@@ -99,45 +87,6 @@ export default function ParentRegisterForm({ onSuccess }: ParentRegisterFormProp
       <div>
         <label className={labelClass} style={{ color: "var(--muted)" }}>Password</label>
         <input name="password" type="password" required placeholder="Min. 8 characters" className={inputClass} value={values.password} onChange={handleChange} style={inputStyle} />
-      </div>
-
-      <div>
-        <label className={labelClass} style={{ color: "var(--muted)" }}>Display name</label>
-        <input name="display_name" type="text" required placeholder="The Lee family" className={inputClass} value={values.display_name} onChange={handleChange} style={inputStyle} />
-      </div>
-
-      <div className="grid grid-cols-2 gap-[14px] max-sm:grid-cols-1">
-        <div>
-          <label className={labelClass} style={{ color: "var(--muted)" }}>City</label>
-          <input name="city" type="text" required placeholder="Toronto" className={inputClass} value={values.city} onChange={handleChange} style={inputStyle} />
-        </div>
-        <div>
-          <label className={labelClass} style={{ color: "var(--muted)" }}>Province</label>
-          <input name="province" type="text" required placeholder="ON" className={inputClass} value={values.province} onChange={handleChange} style={inputStyle} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-[14px] max-sm:grid-cols-1">
-        <div>
-          <label className={labelClass} style={{ color: "var(--muted)" }}>No. of children</label>
-          <input name="num_children" type="number" required min={1} max={10} className={inputClass} value={values.num_children} onChange={handleChange} style={inputStyle} />
-        </div>
-        <div>
-          <label className={labelClass} style={{ color: "var(--muted)" }}>Ages (comma-separated)</label>
-          <input
-            type="text"
-            placeholder="3, 6, 9"
-            className={inputClass}
-            value={childrenAgesInput}
-            onChange={(e) => setChildrenAgesInput(e.target.value)}
-            style={inputStyle}
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className={labelClass} style={{ color: "var(--muted)" }}>Phone <span style={{ color: "var(--faint)", fontWeight: 400 }}>(optional)</span></label>
-        <input name="phone" type="tel" placeholder="+1 416 000 0000" className={inputClass} value={values.phone} onChange={handleChange} style={inputStyle} />
       </div>
 
       {error && (
