@@ -23,6 +23,7 @@ export default function ProfileView() {
     mutationFn: updateParentProfile,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: parentProfileQueryKey() });
+      await queryClient.invalidateQueries({ queryKey: ["auth-me"] });
     },
   });
 
@@ -70,19 +71,33 @@ export default function ProfileView() {
             errorMessage={updateMutation.error instanceof Error ? updateMutation.error.message : null}
             onSave={saveProfile}
           />
-          <ChildrenSection
-            key={`${profile.id}-${profile.updated_at}`}
-            profile={profile}
-            isSaving={updateMutation.isPending}
-            onSave={async (childrenAges: number[]) => {
-              const nextProfile = await saveProfile(profilePayload(profile, { children_ages: childrenAges }));
-              return nextProfile;
-            }}
-          />
+          {hasParentProfileDetails(profile) && (
+            <ChildrenSection
+              key={`${profile.id}-${profile.updated_at}`}
+              profile={profile}
+              isSaving={updateMutation.isPending}
+              onSave={async (childrenAges: number[]) => {
+                const nextProfile = await saveProfile(profilePayload(profile, {
+                  num_children: childrenAges.length,
+                  children_ages: childrenAges,
+                }));
+                return nextProfile;
+              }}
+            />
+          )}
         </>
       )}
       <BookingHistorySection />
     </div>
+  );
+}
+
+function hasParentProfileDetails(profile: ParentProfile) {
+  return Boolean(
+    profile.display_name.trim() &&
+      profile.phone.trim() &&
+      profile.city.trim() &&
+      profile.province.trim(),
   );
 }
 
@@ -92,6 +107,7 @@ function profilePayload(
 ): UpdateParentProfilePayload {
   return {
     display_name: profile.display_name,
+    phone: profile.phone,
     num_children: profile.num_children,
     children_ages: profile.children_ages,
     city: profile.city,

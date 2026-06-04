@@ -11,13 +11,12 @@ import (
 	"github.com/kinsittr/kinsittr-api/auth/services"
 	"github.com/kinsittr/kinsittr-api/models"
 	shared "github.com/kinsittr/kinsittr-api/shared"
-	apilogging "github.com/kinsittr/kinsittr-api/shared/logging"
+	api_logging "github.com/kinsittr/kinsittr-api/shared/logging"
 )
 
 func (p *AuthPipe) RegisterNanny(ctx context.Context, dto dtos.RegisterNannyDTO) *shared.PipeRes[AuthTokenPair] {
 	dto.Email = strings.ToLower(strings.TrimSpace(dto.Email))
-	dto.ServiceType = models.NannyServiceType
-	emailHash, emailDomain := apilogging.EmailLogFields(dto.Email)
+	emailHash, emailDomain := api_logging.EmailLogFields(dto.Email)
 
 	exists, err := p.repo.UserExistsByEmail(ctx, dto.Email)
 	if err != nil || exists {
@@ -45,18 +44,18 @@ func (p *AuthPipe) RegisterNanny(ctx context.Context, dto dtos.RegisterNannyDTO)
 		Email:       dto.Email,
 		Password:    hash,
 		Role:        models.NannyUserRole,
-		Phone:       strings.TrimSpace(dto.Phone),
+		Phone:       "",
 		CountryCode: "CA",
 	}, models.NannyProfile{
 		ID:          uuid.New(),
 		UserID:      uuid.Nil,
-		DisplayName: strings.TrimSpace(dto.DisplayName),
-		Bio:         strings.TrimSpace(dto.Bio),
-		RatePerHour: dto.RatePerHour,
-		ServiceType: dto.ServiceType,
+		DisplayName: defaultDisplayName(dto.Firstname, dto.Lastname),
+		Bio:         "",
+		RatePerHour: 0,
+		ServiceType: models.NannyServiceType,
 		Currency:    models.CAD,
-		City:        strings.TrimSpace(dto.City),
-		Province:    strings.TrimSpace(dto.Province),
+		City:        "",
+		Province:    "",
 	})
 	if err != nil {
 		log.Printf("auth_nanny_register_failed email_hash=%s email_domain=%s reason=create_account err=%v", emailHash, emailDomain, err)
@@ -73,6 +72,6 @@ func (p *AuthPipe) RegisterNanny(ctx context.Context, dto dtos.RegisterNannyDTO)
 	return &shared.PipeRes[AuthTokenPair]{
 		Success: true,
 		Message: shared.CreatePipeMessage(messages.Registered_Successfully),
-		Data:    &AuthTokenPair{AccessToken: access, RefreshToken: refresh, User: user},
+		Data:    &AuthTokenPair{AccessToken: access, RefreshToken: refresh},
 	}
 }

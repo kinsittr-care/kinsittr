@@ -25,6 +25,7 @@ func (p *NannyPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto 
 	profile, err := p.profileRepo.UpdateNannyProfile(ctx, models.NannyProfile{
 		UserID:      userID,
 		DisplayName: strings.TrimSpace(dto.DisplayName),
+		Phone:       strings.TrimSpace(dto.Phone),
 		Bio:         strings.TrimSpace(dto.Bio),
 		Specialties: specialties,
 		RatePerHour: dto.RatePerHour,

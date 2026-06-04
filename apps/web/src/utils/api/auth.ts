@@ -47,6 +47,12 @@ export async function getCurrentSession() {
   });
 }
 
+async function getCurrentSessionWithAccessToken(accessToken: string) {
+  return apiRequest<AuthSessionPayload>("/api/v1/auth/me", undefined, {
+    accessToken,
+  });
+}
+
 export async function logoutUser(refreshToken: string) {
   return apiRequest("/api/v1/auth/logout", {
     method: "POST",
@@ -102,16 +108,18 @@ export async function resetPasswordWithRecovery(payload: RecoveryResetPayload) {
 }
 
 export async function establishAuthSession(auth: AuthTokenPair): Promise<AuthSession> {
-  if (!auth.access_token || !auth.refresh_token || !auth.user) {
+  if (!auth.access_token || !auth.refresh_token) {
     throw new Error("Authentication response is incomplete.");
   }
 
-  const baseSession = buildSessionFromTokenPair(auth);
-  saveAuthSession(baseSession);
-
   try {
-    const currentSession = await getCurrentSession();
+    const currentSession = await getCurrentSessionWithAccessToken(auth.access_token);
     if (currentSession.data) {
+      const baseSession: AuthSession = {
+        accessToken: auth.access_token,
+        refreshToken: auth.refresh_token,
+        user: auth.user ?? currentSession.data.user,
+      };
       const mergedSession = mergeSessionWithPayload(baseSession, currentSession.data);
       saveAuthSession(mergedSession);
       return mergedSession;
@@ -121,5 +129,11 @@ export async function establishAuthSession(auth: AuthTokenPair): Promise<AuthSes
     throw error;
   }
 
-  return baseSession;
+  if (auth.user) {
+    const baseSession = buildSessionFromTokenPair(auth);
+    saveAuthSession(baseSession);
+    return baseSession;
+  }
+
+  throw new Error("Authentication response is missing user data.");
 }

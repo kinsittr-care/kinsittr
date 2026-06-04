@@ -8,6 +8,7 @@ import BookingSheet from "../compositions/BookingSheet";
 import type { ReactNode } from "react";
 import type { Booking } from "@/src/types/api/api";
 import { parentBookingQueryKey } from "@/src/utils/api/bookings";
+import ProfileCompletionBanner from "../../shared/ProfileCompletionBanner";
 
 function ShellInner({ children }: { children: ReactNode }) {
   const { bookingNanny, setBookingNanny } = useDashboard();
@@ -17,6 +18,7 @@ function ShellInner({ children }: { children: ReactNode }) {
   return (
     <div style={{ height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       <AppNav />
+      <ProfileCompletionBanner role="parent" />
       <div style={{ flex: 1, overflow: "hidden", display: "flex" }}>
         {children}
       </div>

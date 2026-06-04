@@ -19,6 +19,7 @@ export default function NannyProfileForm({ profile }: { profile: NannyProfile })
     onSuccess: async () => {
       setMessage("Profile updated.");
       await queryClient.invalidateQueries({ queryKey: ownNannyProfileQueryKey() });
+      await queryClient.invalidateQueries({ queryKey: ["auth-me"] });
     },
     onError: (error) => {
       setMessage(error instanceof Error ? error.message : "Unable to update profile.");
@@ -71,6 +72,10 @@ function BasicFields({
       <div>
         <label style={labelStyle}>City</label>
         <input style={inputStyle} value={form.city} onChange={(event) => updateField("city", event.target.value)} />
+      </div>
+      <div>
+        <label style={labelStyle}>Phone</label>
+        <input style={inputStyle} value={form.phone} onChange={(event) => updateField("phone", event.target.value)} />
       </div>
       <div>
         <label style={labelStyle}>Province</label>

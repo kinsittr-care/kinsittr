@@ -413,6 +413,7 @@ func TestUpdateOwnProfile(t *testing.T) {
 
 	validDTO := dtos.UpdateNannyProfileDTO{
 		DisplayName: "Jane Doe",
+		Phone:       "+14165550100",
 		Bio:         "Experienced caregiver with 5 years.",
 		Specialties: []string{"Bilingual", "infant care"},
 		RatePerHour: 30.0,

@@ -20,6 +20,7 @@ type mockProfileRepo struct {
 	settingsErr       error
 	updatedSettings   models.ParentSettings
 	updateSettingsErr error
+	lastParentUpdate  models.ParentProfile
 }
 
 func (m *mockProfileRepo) CreateNannyProfile(_ context.Context, p models.NannyProfile) (models.NannyProfile, error) {
@@ -40,7 +41,8 @@ func (m *mockProfileRepo) UpdateNannyProfile(_ context.Context, p models.NannyPr
 func (m *mockProfileRepo) UpdateNannyAvatar(_ context.Context, _ uuid.UUID, _ string, _ string) (models.NannyProfile, error) {
 	return models.NannyProfile{}, nil
 }
-func (m *mockProfileRepo) UpdateParentProfile(_ context.Context, _ models.ParentProfile) (models.ParentProfile, error) {
+func (m *mockProfileRepo) UpdateParentProfile(_ context.Context, p models.ParentProfile) (models.ParentProfile, error) {
+	m.lastParentUpdate = p
 	return m.updatedParent, m.updateParentErr
 }
 func (m *mockProfileRepo) GetOrCreateParentSettings(_ context.Context, userID uuid.UUID) (models.ParentSettings, error) {
@@ -82,7 +84,7 @@ func TestUpdateOwnProfile(t *testing.T) {
 	userID := uuid.New()
 	dto := dtos.UpdateParentProfileDTO{
 		DisplayName: " Alex Parent ", NumChildren: 2, ChildrenAges: []int{4, 7},
-		City: " Toronto ", Province: " ON ",
+		Phone: " +14165550100 ", City: " Toronto ", Province: " ON ",
 	}
 
 	t.Run("repo error", func(t *testing.T) {
@@ -94,9 +96,13 @@ func TestUpdateOwnProfile(t *testing.T) {
 
 	t.Run("success trims string fields", func(t *testing.T) {
 		updated := models.ParentProfile{ID: uuid.New(), DisplayName: "Alex Parent", City: "Toronto", Province: "ON"}
-		res := NewParentPipe(&mockProfileRepo{updatedParent: updated}).UpdateOwnProfile(context.Background(), userID, dto)
+		repo := &mockProfileRepo{updatedParent: updated}
+		res := NewParentPipe(repo).UpdateOwnProfile(context.Background(), userID, dto)
 		if !res.Success || string(res.Message) != messages.Parent_Profile_Updated || res.Data.DisplayName != "Alex Parent" {
 			t.Fatalf("unexpected response: success=%v msg=%s data=%+v", res.Success, res.Message, res.Data)
+		}
+		if repo.lastParentUpdate.Phone != "+14165550100" {
+			t.Fatalf("expected normalized phone, got %q", repo.lastParentUpdate.Phone)
 		}
 	})
 }

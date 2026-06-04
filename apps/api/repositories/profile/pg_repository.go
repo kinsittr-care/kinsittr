@@ -33,6 +33,7 @@ func (r *pgRepository) CreateNannyProfile(ctx context.Context, p models.NannyPro
 		&created.VerifiedAt, &created.StripeAccountID, &created.StripeOnboarded, &created.RatingAvg, &created.RatingCount,
 		&created.AvatarURL, &created.AvatarPublicID, &created.City, &created.Province, &created.CreatedAt, &created.UpdatedAt,
 	)
+	created.Phone = p.Phone
 	return created, err
 }
 
@@ -50,17 +51,20 @@ func (r *pgRepository) CreateParentProfile(ctx context.Context, p models.ParentP
 		&created.City, &created.Province, &created.StripeCustomerID, &created.StripeDefaultPaymentMethodID,
 		&created.CreatedAt, &created.UpdatedAt,
 	)
+	created.Phone = p.Phone
 	return created, err
 }
 
 func (r *pgRepository) GetNannyProfileByUserID(ctx context.Context, userID uuid.UUID) (models.NannyProfile, error) {
 	var p models.NannyProfile
 	err := r.db.QueryRow(ctx, `
-		SELECT id, user_id, display_name, bio, COALESCE(specialties, '{}'::text[]), rate_per_hour, service_type, currency, verification_status, verified_at,
-		       stripe_account_id, stripe_onboarded, rating_avg, rating_count, COALESCE(avatar_url, ''), COALESCE(avatar_public_id, ''), city, province, created_at, updated_at
-		FROM nanny_profiles WHERE user_id = $1
+		SELECT p.id, p.user_id, p.display_name, COALESCE(u.phone, ''), p.bio, COALESCE(p.specialties, '{}'::text[]), p.rate_per_hour, p.service_type, p.currency, p.verification_status, p.verified_at,
+		       p.stripe_account_id, p.stripe_onboarded, p.rating_avg, p.rating_count, COALESCE(p.avatar_url, ''), COALESCE(p.avatar_public_id, ''), p.city, p.province, p.created_at, p.updated_at
+		FROM nanny_profiles p
+		JOIN users u ON u.id = p.user_id
+		WHERE p.user_id = $1
 	`, userID).Scan(
-		&p.ID, &p.UserID, &p.DisplayName, &p.Bio, &p.Specialties,
+		&p.ID, &p.UserID, &p.DisplayName, &p.Phone, &p.Bio, &p.Specialties,
 		&p.RatePerHour, &p.ServiceType, &p.Currency, &p.VerificationStatus,
 		&p.VerifiedAt, &p.StripeAccountID, &p.StripeOnboarded, &p.RatingAvg, &p.RatingCount,
 		&p.AvatarURL, &p.AvatarPublicID, &p.City, &p.Province, &p.CreatedAt, &p.UpdatedAt,
@@ -74,10 +78,12 @@ func (r *pgRepository) GetNannyProfileByUserID(ctx context.Context, userID uuid.
 func (r *pgRepository) GetParentProfileByUserID(ctx context.Context, userID uuid.UUID) (models.ParentProfile, error) {
 	var p models.ParentProfile
 	err := r.db.QueryRow(ctx, `
-		SELECT id, user_id, display_name, num_children, children_ages, city, province, COALESCE(stripe_customer_id, ''), COALESCE(stripe_default_payment_method_id, ''), created_at, updated_at
-		FROM parent_profiles WHERE user_id = $1
+		SELECT p.id, p.user_id, p.display_name, COALESCE(u.phone, ''), p.num_children, p.children_ages, p.city, p.province, COALESCE(p.stripe_customer_id, ''), COALESCE(p.stripe_default_payment_method_id, ''), p.created_at, p.updated_at
+		FROM parent_profiles p
+		JOIN users u ON u.id = p.user_id
+		WHERE p.user_id = $1
 	`, userID).Scan(
-		&p.ID, &p.UserID, &p.DisplayName,
+		&p.ID, &p.UserID, &p.DisplayName, &p.Phone,
 		&p.NumChildren, &p.ChildrenAges,
 		&p.City, &p.Province, &p.StripeCustomerID, &p.StripeDefaultPaymentMethodID,
 		&p.CreatedAt, &p.UpdatedAt,
@@ -89,8 +95,20 @@ func (r *pgRepository) GetParentProfileByUserID(ctx context.Context, userID uuid
 }
 
 func (r *pgRepository) UpdateNannyProfile(ctx context.Context, p models.NannyProfile) (models.NannyProfile, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return models.NannyProfile{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	if _, err := tx.Exec(ctx, `
+		UPDATE users SET phone = $1, updated_at = NOW() WHERE id = $2
+	`, p.Phone, p.UserID); err != nil {
+		return models.NannyProfile{}, err
+	}
+
 	var updated models.NannyProfile
-	err := r.db.QueryRow(ctx, `
+	err = tx.QueryRow(ctx, `
 		UPDATE nanny_profiles
 		SET display_name = $1, bio = $2, specialties = $3, rate_per_hour = $4, city = $5, province = $6, updated_at = NOW()
 		WHERE user_id = $7
@@ -104,19 +122,27 @@ func (r *pgRepository) UpdateNannyProfile(ctx context.Context, p models.NannyPro
 		&updated.VerifiedAt, &updated.StripeAccountID, &updated.StripeOnboarded, &updated.RatingAvg, &updated.RatingCount,
 		&updated.AvatarURL, &updated.AvatarPublicID, &updated.City, &updated.Province, &updated.CreatedAt, &updated.UpdatedAt,
 	)
-	return updated, err
+	if err != nil {
+		return models.NannyProfile{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return models.NannyProfile{}, err
+	}
+	updated.Phone = p.Phone
+	return updated, nil
 }
 
 func (r *pgRepository) UpdateNannyAvatar(ctx context.Context, userID uuid.UUID, avatarURL string, avatarPublicID string) (models.NannyProfile, error) {
 	var updated models.NannyProfile
 	err := r.db.QueryRow(ctx, `
-		UPDATE nanny_profiles
+		UPDATE nanny_profiles p
 		SET avatar_url = $1, avatar_public_id = $2, updated_at = NOW()
-		WHERE user_id = $3
-		RETURNING id, user_id, display_name, bio, COALESCE(specialties, '{}'::text[]), rate_per_hour, service_type, currency, verification_status, verified_at,
-		          stripe_account_id, stripe_onboarded, rating_avg, rating_count, COALESCE(avatar_url, ''), COALESCE(avatar_public_id, ''), city, province, created_at, updated_at
+		FROM users u
+		WHERE p.user_id = $3 AND u.id = p.user_id
+		RETURNING p.id, p.user_id, p.display_name, COALESCE(u.phone, ''), p.bio, COALESCE(p.specialties, '{}'::text[]), p.rate_per_hour, p.service_type, p.currency, p.verification_status, p.verified_at,
+		          p.stripe_account_id, p.stripe_onboarded, p.rating_avg, p.rating_count, COALESCE(p.avatar_url, ''), COALESCE(p.avatar_public_id, ''), p.city, p.province, p.created_at, p.updated_at
 	`, avatarURL, avatarPublicID, userID).Scan(
-		&updated.ID, &updated.UserID, &updated.DisplayName, &updated.Bio, &updated.Specialties,
+		&updated.ID, &updated.UserID, &updated.DisplayName, &updated.Phone, &updated.Bio, &updated.Specialties,
 		&updated.RatePerHour, &updated.ServiceType, &updated.Currency, &updated.VerificationStatus,
 		&updated.VerifiedAt, &updated.StripeAccountID, &updated.StripeOnboarded, &updated.RatingAvg, &updated.RatingCount,
 		&updated.AvatarURL, &updated.AvatarPublicID, &updated.City, &updated.Province, &updated.CreatedAt, &updated.UpdatedAt,
@@ -125,8 +151,20 @@ func (r *pgRepository) UpdateNannyAvatar(ctx context.Context, userID uuid.UUID, 
 }
 
 func (r *pgRepository) UpdateParentProfile(ctx context.Context, p models.ParentProfile) (models.ParentProfile, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return models.ParentProfile{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	if _, err := tx.Exec(ctx, `
+		UPDATE users SET phone = $1, updated_at = NOW() WHERE id = $2
+	`, p.Phone, p.UserID); err != nil {
+		return models.ParentProfile{}, err
+	}
+
 	var updated models.ParentProfile
-	err := r.db.QueryRow(ctx, `
+	err = tx.QueryRow(ctx, `
 		UPDATE parent_profiles
 		SET display_name = $1, num_children = $2, children_ages = $3, city = $4, province = $5, updated_at = NOW()
 		WHERE user_id = $6
@@ -139,7 +177,14 @@ func (r *pgRepository) UpdateParentProfile(ctx context.Context, p models.ParentP
 		&updated.City, &updated.Province, &updated.StripeCustomerID, &updated.StripeDefaultPaymentMethodID,
 		&updated.CreatedAt, &updated.UpdatedAt,
 	)
-	return updated, err
+	if err != nil {
+		return models.ParentProfile{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return models.ParentProfile{}, err
+	}
+	updated.Phone = p.Phone
+	return updated, nil
 }
 
 func scanParentSettings(row pgx.Row) (models.ParentSettings, error) {

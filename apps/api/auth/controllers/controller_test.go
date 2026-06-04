@@ -207,15 +207,10 @@ func TestAuthControllerRegisterParent(t *testing.T) {
 
 	t.Run("valid payload returns 201", func(t *testing.T) {
 		res := doJSONRequest(t, app, http.MethodPost, "/register-parent", map[string]any{
-			"firstname":     "Jordan",
-			"lastname":      "Lee",
-			"email":         "jordan@example.com",
-			"password":      "verysecure",
-			"display_name":  "Jordan",
-			"num_children":  1,
-			"children_ages": []int{4},
-			"city":          "Toronto",
-			"province":      "ON",
+			"firstname": "Jordan",
+			"lastname":  "Lee",
+			"email":     "jordan@example.com",
+			"password":  "verysecure",
 		})
 		if !res.Success || res.Message != "registered_successfully" {
 			t.Fatalf("unexpected response: %+v", res)

@@ -14,6 +14,7 @@ func (p *ParentPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto
 	profile, err := p.profileRepo.UpdateParentProfile(ctx, models.ParentProfile{
 		UserID:       userID,
 		DisplayName:  normalizeString(dto.DisplayName),
+		Phone:        normalizeString(dto.Phone),
 		NumChildren:  dto.NumChildren,
 		ChildrenAges: dto.ChildrenAges,
 		City:         normalizeString(dto.City),

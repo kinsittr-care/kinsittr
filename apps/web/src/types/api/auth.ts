@@ -10,12 +10,6 @@ export interface RegisterParentPayload {
   lastname: string;
   email: string;
   password: string;
-  phone?: string;
-  display_name: string;
-  num_children: number;
-  children_ages: number[];
-  city: string;
-  province: string;
 }
 
 export interface RegisterNannyPayload {
@@ -23,13 +17,6 @@ export interface RegisterNannyPayload {
   lastname: string;
   email: string;
   password: string;
-  phone?: string;
-  display_name: string;
-  service_type: "nanny";
-  bio: string;
-  rate_per_hour: number;
-  city: string;
-  province: string;
 }
 
 export interface AuthUser {

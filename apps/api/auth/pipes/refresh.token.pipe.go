@@ -64,6 +64,6 @@ func (p *AuthPipe) Refresh(ctx context.Context, dto dtos.RefreshDTO) *shared.Pip
 	return &shared.PipeRes[AuthTokenPair]{
 		Success: true,
 		Message: shared.CreatePipeMessage(messages.Token_Refreshed_Successfully),
-		Data:    &AuthTokenPair{AccessToken: access, RefreshToken: refresh, User: user},
+		Data:    &AuthTokenPair{AccessToken: access, RefreshToken: refresh, User: &user},
 	}
 }

@@ -39,6 +39,7 @@ function formatApiErrorMessage(message: string) {
 
 interface ApiRequestOptions {
   requiresAuth?: boolean;
+  accessToken?: string;
   refreshPath?: string;
   retryOnUnauthorized?: boolean;
 }
@@ -107,7 +108,7 @@ export async function apiRequest<TResponse>(
   const session = options.requiresAuth ? getStoredAuthSession() : null;
   const headers = buildApiHeaders(
     init,
-    options.requiresAuth ? session?.accessToken : undefined,
+    options.accessToken ?? (options.requiresAuth ? session?.accessToken : undefined),
   );
 
   let response = await fetch(`${apiBaseUrl}${path}`, {

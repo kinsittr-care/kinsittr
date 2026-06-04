@@ -29,13 +29,6 @@ const initialValues: RegisterNannyPayload = {
   lastname: "",
   email: "",
   password: "",
-  phone: "",
-  display_name: "",
-  service_type: "nanny",
-  bio: "",
-  rate_per_hour: 20,
-  city: "",
-  province: "",
 };
 
 export default function NannyRegisterForm({ onSuccess }: NannyRegisterFormProps) {
@@ -44,11 +37,11 @@ export default function NannyRegisterForm({ onSuccess }: NannyRegisterFormProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setValues((v) => ({
       ...v,
-      [name]: name === "rate_per_hour" ? Number(value) : value,
+      [name]: value,
     }));
   };
 
@@ -93,58 +86,6 @@ export default function NannyRegisterForm({ onSuccess }: NannyRegisterFormProps)
       <div>
         <label className={labelClass} style={{ color: "var(--muted)" }}>Password</label>
         <input name="password" type="password" required placeholder="Min. 8 characters" className={inputClass} value={values.password} onChange={handleChange} style={inputStyle} />
-      </div>
-
-      <div>
-        <label className={labelClass} style={{ color: "var(--muted)" }}>Display name</label>
-        <input name="display_name" type="text" required placeholder="Jordan Lee" className={inputClass} value={values.display_name} onChange={handleChange} style={inputStyle} />
-      </div>
-
-      <div>
-        <label className={labelClass} style={{ color: "var(--muted)" }}>Service type</label>
-        <input
-          type="text"
-          value="Nanny / Caregiver"
-          className={inputClass}
-          style={inputStyle}
-          disabled
-          readOnly
-        />
-      </div>
-
-      <div>
-        <label className={labelClass} style={{ color: "var(--muted)" }}>Bio</label>
-        <textarea
-          name="bio"
-          required
-          placeholder="Tell families a bit about yourself and your experience…"
-          rows={4}
-          className={inputClass}
-          value={values.bio}
-          onChange={handleChange}
-          style={{ ...inputStyle, resize: "vertical" }}
-        />
-      </div>
-
-      <div>
-        <label className={labelClass} style={{ color: "var(--muted)" }}>Rate per hour (CAD)</label>
-        <input name="rate_per_hour" type="number" required min={10} step={0.5} className={inputClass} value={values.rate_per_hour} onChange={handleChange} style={inputStyle} />
-      </div>
-
-      <div className="grid grid-cols-2 gap-[14px] max-sm:grid-cols-1">
-        <div>
-          <label className={labelClass} style={{ color: "var(--muted)" }}>City</label>
-          <input name="city" type="text" required placeholder="Toronto" className={inputClass} value={values.city} onChange={handleChange} style={inputStyle} />
-        </div>
-        <div>
-          <label className={labelClass} style={{ color: "var(--muted)" }}>Province</label>
-          <input name="province" type="text" required placeholder="ON" className={inputClass} value={values.province} onChange={handleChange} style={inputStyle} />
-        </div>
-      </div>
-
-      <div>
-        <label className={labelClass} style={{ color: "var(--muted)" }}>Phone <span style={{ color: "var(--faint)", fontWeight: 400 }}>(optional)</span></label>
-        <input name="phone" type="tel" placeholder="+1 416 000 0000" className={inputClass} value={values.phone} onChange={handleChange} style={inputStyle} />
       </div>
 
       {error && (

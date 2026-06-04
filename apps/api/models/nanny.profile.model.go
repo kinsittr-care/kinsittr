@@ -26,6 +26,7 @@ type NannyProfile struct {
 	ID                 uuid.UUID          `json:"id"`
 	UserID             uuid.UUID          `json:"user_id"`
 	DisplayName        string             `json:"display_name"`
+	Phone              string             `json:"phone"`
 	Bio                string             `json:"bio"`
 	Specialties        []string           `json:"specialties"`
 	RatePerHour        float64            `json:"rate_per_hour"`

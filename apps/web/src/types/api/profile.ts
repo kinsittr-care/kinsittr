@@ -2,6 +2,7 @@ export interface ParentProfile {
   id: string;
   user_id: string;
   display_name: string;
+  phone: string;
   num_children: number;
   children_ages: number[];
   city: string;
@@ -13,6 +14,7 @@ export interface ParentProfile {
 
 export interface UpdateParentProfilePayload {
   display_name: string;
+  phone: string;
   num_children: number;
   children_ages: number[];
   city: string;
@@ -53,6 +55,7 @@ export interface NannyProfile {
   id: string;
   user_id: string;
   display_name: string;
+  phone: string;
   bio: string;
   specialties: string[];
   rate_per_hour: number;
@@ -74,6 +77,7 @@ export interface NannyProfile {
 
 export interface UpdateNannyProfilePayload {
   display_name: string;
+  phone: string;
   bio: string;
   specialties: string[];
   rate_per_hour: number;

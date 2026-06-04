@@ -145,8 +145,8 @@ func TestAdminLogin(t *testing.T) {
 		if !res.Success || res.Data == nil {
 			t.Fatalf("expected successful admin login, got %#v", res)
 		}
-		if res.Data.User.Role != models.AdminUserRole {
-			t.Fatalf("expected admin role, got %q", res.Data.User.Role)
+		if res.Data.AccessToken == "" || res.Data.RefreshToken == "" || res.Data.User != nil {
+			t.Fatalf("expected compact admin token response without user, got %#v", res.Data)
 		}
 		if repo.createdRefreshSession.ID == uuid.Nil {
 			t.Fatal("expected refresh session to be created")
