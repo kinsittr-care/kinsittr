@@ -10,12 +10,12 @@ import (
 	"github.com/kinsittr/kinsittr-api/auth/messages"
 	"github.com/kinsittr/kinsittr-api/auth/services"
 	shared "github.com/kinsittr/kinsittr-api/shared"
-	apilogging "github.com/kinsittr/kinsittr-api/shared/logging"
+	api_logging "github.com/kinsittr/kinsittr-api/shared/logging"
 )
 
 func (p *AuthPipe) Login(ctx context.Context, dto dtos.LoginDTO) *shared.PipeRes[AuthTokenPair] {
 	email := strings.ToLower(strings.TrimSpace(dto.Email))
-	emailHash, emailDomain := apilogging.EmailLogFields(email)
+	emailHash, emailDomain := api_logging.EmailLogFields(email)
 
 	user, err := p.repo.GetUserByEmail(ctx, email)
 	if err != nil || user.ID == uuid.Nil {
@@ -52,6 +52,6 @@ func (p *AuthPipe) Login(ctx context.Context, dto dtos.LoginDTO) *shared.PipeRes
 	return &shared.PipeRes[AuthTokenPair]{
 		Success: true,
 		Message: shared.CreatePipeMessage(messages.Logged_In_Successfully),
-		Data:    &AuthTokenPair{AccessToken: access, RefreshToken: refresh, User: user},
+		Data:    &AuthTokenPair{AccessToken: access, RefreshToken: refresh},
 	}
 }

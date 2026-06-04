@@ -11,12 +11,12 @@ import (
 	"github.com/kinsittr/kinsittr-api/auth/services"
 	"github.com/kinsittr/kinsittr-api/models"
 	shared "github.com/kinsittr/kinsittr-api/shared"
-	apilogging "github.com/kinsittr/kinsittr-api/shared/logging"
+	api_logging "github.com/kinsittr/kinsittr-api/shared/logging"
 )
 
 func (p *AuthPipe) RegisterParent(ctx context.Context, dto dtos.RegisterParentDTO) *shared.PipeRes[AuthTokenPair] {
 	dto.Email = strings.ToLower(strings.TrimSpace(dto.Email))
-	emailHash, emailDomain := apilogging.EmailLogFields(dto.Email)
+	emailHash, emailDomain := api_logging.EmailLogFields(dto.Email)
 
 	exists, err := p.repo.UserExistsByEmail(ctx, dto.Email)
 	if err != nil || exists {
@@ -70,6 +70,6 @@ func (p *AuthPipe) RegisterParent(ctx context.Context, dto dtos.RegisterParentDT
 	return &shared.PipeRes[AuthTokenPair]{
 		Success: true,
 		Message: shared.CreatePipeMessage(messages.Registered_Successfully),
-		Data:    &AuthTokenPair{AccessToken: access, RefreshToken: refresh, User: user},
+		Data:    &AuthTokenPair{AccessToken: access, RefreshToken: refresh},
 	}
 }

@@ -11,12 +11,12 @@ import (
 	auth_services "github.com/kinsittr/kinsittr-api/auth/services"
 	"github.com/kinsittr/kinsittr-api/models"
 	shared "github.com/kinsittr/kinsittr-api/shared"
-	apilogging "github.com/kinsittr/kinsittr-api/shared/logging"
+	api_logging "github.com/kinsittr/kinsittr-api/shared/logging"
 )
 
 func (p *AdminAuthPipe) Login(ctx context.Context, dto dtos.LoginDTO) *shared.PipeRes[AdminAuthTokenPair] {
 	email := strings.ToLower(strings.TrimSpace(dto.Email))
-	emailHash, emailDomain := apilogging.EmailLogFields(email)
+	emailHash, emailDomain := api_logging.EmailLogFields(email)
 
 	user, err := p.repo.GetUserByEmail(ctx, email)
 	if err != nil || user.ID == uuid.Nil || user.Role != models.AdminUserRole {
@@ -42,6 +42,5 @@ func (p *AdminAuthPipe) Login(ctx context.Context, dto dtos.LoginDTO) *shared.Pi
 	return pipeSuccess(messages.Admin_Logged_In, &AdminAuthTokenPair{
 		AccessToken:  access,
 		RefreshToken: refresh,
-		User:         user,
 	})
 }

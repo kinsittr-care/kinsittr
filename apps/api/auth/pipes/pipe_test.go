@@ -245,8 +245,8 @@ func TestAuthPipeLogin(t *testing.T) {
 		if string(res.Message) != messages.Logged_In_Successfully {
 			t.Fatalf("unexpected message: %s", res.Message)
 		}
-		if res.Data == nil || res.Data.AccessToken == "" || res.Data.RefreshToken == "" {
-			t.Fatalf("expected tokens in response, got %+v", res.Data)
+		if res.Data == nil || res.Data.AccessToken == "" || res.Data.RefreshToken == "" || res.Data.User != nil {
+			t.Fatalf("expected compact token response without user, got %+v", res.Data)
 		}
 		if repo.createdRefreshSession.ID == uuid.Nil {
 			t.Fatal("expected refresh session to be persisted")
@@ -294,7 +294,7 @@ func TestAuthPipeRegisterParent(t *testing.T) {
 		}
 	})
 
-	t.Run("success returns registered token pair", func(t *testing.T) {
+	t.Run("success returns compact token pair", func(t *testing.T) {
 		user := validUser(models.ParentUserRole)
 		repo := &mockAccountRepo{createParentUser: user}
 		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
@@ -309,8 +309,8 @@ func TestAuthPipeRegisterParent(t *testing.T) {
 		if !res.Success || string(res.Message) != messages.Registered_Successfully {
 			t.Fatalf("expected success %s, got success=%v message=%s", messages.Registered_Successfully, res.Success, res.Message)
 		}
-		if res.Data == nil || res.Data.User.Role != models.ParentUserRole {
-			t.Fatalf("expected parent user in response, got %+v", res.Data)
+		if res.Data == nil || res.Data.AccessToken == "" || res.Data.RefreshToken == "" || res.Data.User != nil {
+			t.Fatalf("expected compact token response without user, got %+v", res.Data)
 		}
 		if repo.createdParentProfile.DisplayName != "Jordan L." || repo.createdParentProfile.NumChildren != 0 || len(repo.createdParentProfile.ChildrenAges) != 0 {
 			t.Fatalf("expected default parent profile, got %+v", repo.createdParentProfile)
@@ -319,7 +319,7 @@ func TestAuthPipeRegisterParent(t *testing.T) {
 }
 
 func TestAuthPipeRegisterNanny(t *testing.T) {
-	t.Run("success forces nanny service type and returns tokens", func(t *testing.T) {
+	t.Run("success forces nanny service type and returns compact tokens", func(t *testing.T) {
 		user := validUser(models.NannyUserRole)
 		repo := &mockAccountRepo{createNannyUser: user}
 		pipe := newAuthPipeForTests(repo, &mockProfileRepo{})
@@ -334,8 +334,8 @@ func TestAuthPipeRegisterNanny(t *testing.T) {
 		if !res.Success || string(res.Message) != messages.Registered_Successfully {
 			t.Fatalf("expected success %s, got success=%v message=%s", messages.Registered_Successfully, res.Success, res.Message)
 		}
-		if res.Data == nil || res.Data.User.Role != models.NannyUserRole {
-			t.Fatalf("expected nanny user in response, got %+v", res.Data)
+		if res.Data == nil || res.Data.AccessToken == "" || res.Data.RefreshToken == "" || res.Data.User != nil {
+			t.Fatalf("expected compact token response without user, got %+v", res.Data)
 		}
 		if repo.createdNannyProfile.DisplayName != "Taylor S." ||
 			repo.createdNannyProfile.ServiceType != models.NannyServiceType ||

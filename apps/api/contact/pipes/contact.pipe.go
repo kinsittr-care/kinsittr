@@ -9,7 +9,7 @@ import (
 	"github.com/kinsittr/kinsittr-api/contact/messages"
 	"github.com/kinsittr/kinsittr-api/contact/services"
 	shared "github.com/kinsittr/kinsittr-api/shared"
-	apilogging "github.com/kinsittr/kinsittr-api/shared/logging"
+	api_logging "github.com/kinsittr/kinsittr-api/shared/logging"
 )
 
 type ContactPipe struct {
@@ -37,8 +37,8 @@ func normalizeContactDTO(dto dtos.ContactDTO) dtos.ContactDTO {
 
 func (p *ContactPipe) SendContactMessage(ctx context.Context, dto dtos.ContactDTO) *shared.PipeRes[any] {
 	dto = normalizeContactDTO(dto)
-	fromHash, fromDomain := apilogging.EmailLogFields(dto.Email)
-	toHash, toDomain := apilogging.EmailLogFields(p.toEmail)
+	fromHash, fromDomain := api_logging.EmailLogFields(dto.Email)
+	toHash, toDomain := api_logging.EmailLogFields(p.toEmail)
 
 	if err := p.emailService.SendContactMessage(
 		ctx,
