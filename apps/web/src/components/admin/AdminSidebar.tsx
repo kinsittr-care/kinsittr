@@ -21,6 +21,7 @@ import {
   adminScreeningNanniesQueryKey,
   listAdminScreeningNannies,
 } from "@/src/utils/api/admin/screening";
+import { useLogout } from "../auth/useLogout";
 
 const navItems = [
   {
@@ -84,6 +85,7 @@ function formatSidebarBadge(total: number | undefined) {
 
 export default function AdminSidebar({ user }: { user: AuthUser | null }) {
   const pathname = usePathname();
+  const logout = useLogout("admin");
   const screeningBadgeQuery = useQuery({
     queryKey: adminScreeningNanniesQueryKey(screeningBadgeParams),
     queryFn: () => listAdminScreeningNannies(screeningBadgeParams),
@@ -246,6 +248,24 @@ export default function AdminSidebar({ user }: { user: AuthUser | null }) {
           <div style={{ fontSize: 12, color: A.inkSoft, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user?.email ?? ""}</div>
         </div>
       </div>
+      <button
+        type="button"
+        onClick={logout}
+        style={{
+          margin: "0 24px",
+          padding: "10px 14px",
+          borderRadius: 10,
+          border: "1px solid transparent",
+          background: "transparent",
+          color: "#b42318",
+          fontSize: 14,
+          fontWeight: 700,
+          cursor: "pointer",
+          textAlign: "left",
+        }}
+      >
+        Log out
+      </button>
     </aside>
   );
 }

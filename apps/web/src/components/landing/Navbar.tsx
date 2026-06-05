@@ -48,8 +48,8 @@ export default function Navbar() {
         </div>
 
         <div className="flex gap-[10px] items-center max-md:hidden">
-          <Link href="/contact" className="btn-nav-ghost">I&apos;m a nanny</Link>
-          <Link href="/contact" className="btn-nav">Find a nanny</Link>
+          <Link href="/auth/nanny" className="btn-nav-ghost">I&apos;m a nanny</Link>
+          <Link href="/auth/parent" className="btn-nav">Find a nanny</Link>
         </div>
 
         <button
@@ -121,14 +121,14 @@ export default function Navbar() {
 
             <div className="mt-5 flex flex-col gap-3">
               <Link
-                href="/contact"
+                href="/auth/nanny"
                 className="btn-nav-ghost text-center"
                 onClick={() => setMenuOpen(false)}
               >
                 I&apos;m a nanny
               </Link>
               <Link
-                href="/contact"
+                href="/auth/parent"
                 className="btn-nav text-center"
                 onClick={() => setMenuOpen(false)}
               >

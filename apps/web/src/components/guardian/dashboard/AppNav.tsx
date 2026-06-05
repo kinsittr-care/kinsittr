@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Avatar from "./Avatar";
@@ -12,6 +11,14 @@ import {
 } from "@/src/utils/api/conversations";
 import ParentNotificationsPanel from "@/src/components/guardian/notifications/ParentNotificationsPanel";
 import { cn } from "@/lib/utils";
+import { useLogout } from "@/src/components/auth/useLogout";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const NAV_TABS = [
   { id: "browse", label: "Browse", href: "/parent" },
@@ -21,7 +28,7 @@ const NAV_TABS = [
 export default function AppNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const logout = useLogout("parent");
 
   const { data: conversationsData } = useQuery({
     queryKey: conversationsQueryKey({ page: 1, limit: 1 }),
@@ -77,64 +84,60 @@ export default function AppNav() {
           <ParentNotificationsPanel />
         </div>
 
-        {/* User avatar */}
-        <div className="relative ml-1">
-          <button
-            onClick={() => setDropdownOpen((p) => !p)}
-            className="size-[38px] rounded-full bg-teal text-white border-none cursor-pointer font-semibold text-sm tracking-wide shadow-[0_2px_8px_rgba(58,90,90,.32)] transition-transform hover:scale-105 font-sans"
-            aria-label="Open user menu"
-          >
-            JL
-          </button>
-
-          {dropdownOpen && (
-            <div className="absolute right-0 top-[calc(100%+10px)] bg-white border border-border rounded-[14px] shadow-[0_12px_48px_rgba(40,30,20,.14)] w-52 z-50 overflow-hidden">
-              {/* User info */}
-              <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-border">
+        <div className="ml-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="size-[38px] rounded-full bg-teal text-white border-none cursor-pointer font-semibold text-sm tracking-wide shadow-[0_2px_8px_rgba(58,90,90,.32)] transition-transform hover:scale-105 font-sans"
+                aria-label="Open user menu"
+              >
+                JL
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              sideOffset={10}
+              className="w-52 overflow-hidden rounded-[14px] border-border bg-white p-0 shadow-[0_12px_48px_rgba(40,30,20,.14)]"
+            >
+              <div className="flex items-center gap-2.5 px-4 py-3.5">
                 <Avatar initials="JL" size={34} />
                 <div>
                   <div className="font-semibold text-sm text-brand-text">Jordan Lee</div>
                   <div className="text-xs text-brand-faint">jordan.lee@email.com</div>
                 </div>
               </div>
+              <DropdownMenuSeparator className="m-0 bg-border" />
 
-              {/* Menu items */}
               {[
                 { label: "Profile", href: "/parent/profile", icon: "👤" },
                 { label: "Reviews", href: "/parent/reviews", icon: "★" },
                 { label: "Billing", href: "/parent/billing", icon: "💳" },
                 { label: "Settings", href: "/parent/settings", icon: "⚙" },
               ].map(({ label, href, icon }) => (
-                <button
+                <DropdownMenuItem
                   key={label}
-                  onClick={() => { router.push(href); setDropdownOpen(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 bg-transparent border-0 border-b border-border text-sm cursor-pointer text-brand-text text-left font-sans transition-colors hover:bg-teal-lt"
+                  onSelect={() => router.push(href)}
+                  className="cursor-pointer gap-3 rounded-none border-b border-border px-4 py-3 text-sm text-brand-text focus:bg-teal-lt focus:text-brand-text"
                 >
                   <span className="text-base">{icon}</span>
                   {label}
-                </button>
+                </DropdownMenuItem>
               ))}
 
-              {/* Log out */}
-              <button
-                className="w-full flex items-center gap-3 px-4 py-3 bg-transparent border-0 text-sm cursor-pointer text-red-600 text-left font-sans transition-colors hover:bg-red-50"
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={logout}
+                className="cursor-pointer gap-3 rounded-none px-4 py-3 text-sm text-red-600 focus:bg-red-50 focus:text-red-600"
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M6 14H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h3M11 11l3-3-3-3M14 8H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 Log out
-              </button>
-            </div>
-          )}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </nav>
-
-      {dropdownOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setDropdownOpen(false)}
-        />
-      )}
     </>
   );
 }

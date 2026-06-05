@@ -116,7 +116,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ marginTop: 10, color: A.inkMid, fontSize: 13 }}>
-      <strong style={{ color: A.ink }}>{label}:</strong> {value || "Not provided"}
+      <strong style={{ color: A.ink }}>{label}:</strong> {value || "not set"}
     </div>
   );
 }

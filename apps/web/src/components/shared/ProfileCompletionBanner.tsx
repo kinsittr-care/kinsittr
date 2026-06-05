@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import type { AuthSessionPayload, NannyProfile, ParentProfile } from "@/src/types/api/api";
@@ -23,32 +22,15 @@ export default function ProfileCompletionBanner({ role }: { role: ProfileRole })
 
   const copy =
     role === "parent"
-      ? {
-          title: "Complete your family profile",
-          body: "Add your phone, location, and child details so nannies have enough context before bookings.",
-          href: "/parent/profile",
-          cta: "Complete parent profile",
-        }
-      : {
-          title: "Complete your caregiver profile",
-          body: "Add your phone, location, bio, specialties, and rate so parents can confidently book you.",
-          href: "/nanny/profile",
-          cta: "Complete nanny profile",
-        };
+      ? { title: "Complete your family profile to get started" }
+      : { title: "Complete your nanny profile to get started" };
 
   return (
     <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-amber-950">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-semibold">{copy.title}</p>
-          <p className="text-sm text-amber-800">{copy.body}</p>
-        </div>
-        <Link
-          href={copy.href}
-          className="inline-flex w-fit rounded-full bg-amber-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-900"
-        >
-          {copy.cta}
-        </Link>
+        </div>        
       </div>
     </div>
   );

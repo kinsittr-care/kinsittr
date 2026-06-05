@@ -8,6 +8,8 @@ import { establishAuthSession, loginUser } from "@/src/utils/api/auth";
 import { getPostAuthRedirectPath } from "@/src/utils/api/auth-routing";
 import { clearAuthSession } from "@/src/utils/api/session";
 import { AuthSession, AuthTokenPair, AuthUser, LoginPayload } from "@/src/types/api/api";
+import PasswordField from "./PasswordField";
+import AuthErrorDialog from "./AuthErrorDialog";
 
 const inputClass = `
   w-full border-[1.5px] rounded-[10px] px-[14px] py-3 text-[14px] outline-none transition-all
@@ -96,15 +98,12 @@ export default function LoginForm({
         >
           Password
         </label>
-        <input
-          name="password"
-          type="password"
-          required
-          placeholder="••••••••"
-          className={inputClass}
+        <PasswordField
           value={values.password}
           onChange={handleChange}
-          style={inputStyle}
+          placeholder="••••••••"
+          inputClass={inputClass}
+          inputStyle={inputStyle}
         />
       </div>
 
@@ -114,11 +113,7 @@ export default function LoginForm({
         </Link>
       </div>
 
-      {error && (
-        <p className="text-[13px]" style={{ color: "#b34b39" }}>
-          {error}
-        </p>
-      )}
+      <AuthErrorDialog message={error} onClose={() => setError("")} />
 
       <button
         type="submit"

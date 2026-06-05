@@ -9,6 +9,7 @@ import type { ReactNode } from "react";
 import type { Booking } from "@/src/types/api/api";
 import { parentBookingQueryKey } from "@/src/utils/api/bookings";
 import ProfileCompletionBanner from "../../shared/ProfileCompletionBanner";
+import AuthGuard from "../../auth/AuthGuard";
 
 function ShellInner({ children }: { children: ReactNode }) {
   const { bookingNanny, setBookingNanny } = useDashboard();
@@ -38,8 +39,10 @@ function ShellInner({ children }: { children: ReactNode }) {
 
 export default function DashboardShell({ children }: { children: ReactNode }) {
   return (
-    <DashboardProvider>
-      <ShellInner>{children}</ShellInner>
-    </DashboardProvider>
+    <AuthGuard role="parent">
+      <DashboardProvider>
+        <ShellInner>{children}</ShellInner>
+      </DashboardProvider>
+    </AuthGuard>
   );
 }

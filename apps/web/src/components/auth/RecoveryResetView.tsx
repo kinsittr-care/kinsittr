@@ -90,7 +90,7 @@ export default function RecoveryResetView({ token }: RecoveryResetViewProps) {
       <div className="flex flex-col gap-5 text-center">
         <div>
           <h2 className="font-display text-[24px] leading-tight">Password updated</h2>
-          <p className="mt-3 text-[14px] leading-6" style={{ color: "var(--muted)" }}>
+          <p className="mt-3 text-[14px] leading-6" style={{ color: "var(--faint)" }}>
             You can now sign in with your new password.
           </p>
         </div>
@@ -116,7 +116,7 @@ export default function RecoveryResetView({ token }: RecoveryResetViewProps) {
     <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
       <div>
         <h2 className="font-display text-[24px] leading-tight">Create a new password</h2>
-        <p className="mt-3 text-[14px] leading-6" style={{ color: "var(--muted)" }}>
+        <p className="mt-3 text-[14px] leading-6" style={{ color: "var(--faint)" }}>
           Choose a new password with at least 8 characters.
         </p>
       </div>

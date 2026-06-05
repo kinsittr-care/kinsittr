@@ -28,7 +28,7 @@ export default function AuthTabs({ role }: AuthTabsProps) {
             className="flex-1 rounded-[9px] py-[9px] text-[13px] font-semibold transition-all"
             style={{
               background: activeTab === tab ? "#fff" : "transparent",
-              color: activeTab === tab ? "var(--brand-text)" : "var(--muted)",
+              color: activeTab === tab ? "var(--brand-text)" : "var(--faint)",
               boxShadow: activeTab === tab ? "0 1px 6px rgba(0,0,0,.08)" : "none",
             }}
           >

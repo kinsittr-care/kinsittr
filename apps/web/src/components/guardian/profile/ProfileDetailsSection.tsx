@@ -11,7 +11,7 @@ import { formatMonthYear } from "@/src/utils/format";
 const labelStyle: React.CSSProperties = {
   fontSize: 12,
   fontWeight: 500,
-  color: "var(--muted)",
+  color: "var(--faint)",
   display: "block",
   marginBottom: 6,
   textTransform: "uppercase",
@@ -58,9 +58,9 @@ export default function ProfileDetailsSection({
   const [draftError, setDraftError] = useState<string | null>(null);
   const session = getStoredAuthSession();
   const user = session?.user;
-  const displayEmail = user?.email ?? "Not provided";
-  const displayPhone = profile.phone || user?.phone || "Not provided";
-  const displayCity = profile.city && profile.province ? `${profile.city}, ${profile.province}` : "Not provided";
+  const displayEmail = user?.email ?? "not set";
+  const displayPhone = profile.phone || user?.phone || "not set";
+  const displayCity = profile.city && profile.province ? `${profile.city}, ${profile.province}` : "not set";
   const initials = initialsFromName(profile.display_name);
 
   return (
