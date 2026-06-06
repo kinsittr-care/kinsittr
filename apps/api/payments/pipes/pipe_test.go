@@ -58,6 +58,12 @@ func (m *mockPaymentRepo) UpdateNannyStripeAccount(context.Context, uuid.UUID, s
 func (m *mockPaymentRepo) UpdateNannyStripeOnboardedByAccountID(context.Context, string, bool) error {
 	return nil
 }
+func (m *mockPaymentRepo) GetNannyPayoutSettings(context.Context, uuid.UUID) (paymentrepo.NannyPayoutSettings, error) {
+	return paymentrepo.NannyPayoutSettings{}, nil
+}
+func (m *mockPaymentRepo) UpdateNannyPayoutSettings(context.Context, uuid.UUID, string) (paymentrepo.NannyPayoutSettings, error) {
+	return paymentrepo.NannyPayoutSettings{}, nil
+}
 func (m *mockPaymentRepo) UpdateParentStripeCustomer(context.Context, uuid.UUID, string) error {
 	return nil
 }

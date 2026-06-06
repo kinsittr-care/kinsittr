@@ -113,7 +113,7 @@ export default function ParentNotificationsPanel() {
         side="bottom"
         align="end"
         sideOffset={10}
-        className="w-80 p-0"
+        className="w-[calc(100vw-2rem)] max-w-80 p-0"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
@@ -149,7 +149,7 @@ export default function ParentNotificationsPanel() {
         )}
 
         {/* List */}
-        <ScrollArea className="max-h-[400px]">
+        <ScrollArea className="max-h-[min(400px,70vh)]">
           {listQuery.isLoading && (
             <p className="px-4 py-5 text-sm text-muted-foreground">Loading...</p>
           )}

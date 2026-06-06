@@ -31,10 +31,38 @@ type Account struct {
 	ChargesEnabled   bool   `json:"charges_enabled"`
 	PayoutsEnabled   bool   `json:"payouts_enabled"`
 	DetailsSubmitted bool   `json:"details_submitted"`
+	Requirements     struct {
+		CurrentlyDue   []string `json:"currently_due"`
+		EventuallyDue  []string `json:"eventually_due"`
+		DisabledReason string   `json:"disabled_reason"`
+	} `json:"requirements"`
 }
 
 type AccountLink struct {
 	URL string `json:"url"`
+}
+
+type LoginLink struct {
+	URL string `json:"url"`
+}
+
+type BalanceAmount struct {
+	Amount   int64  `json:"amount"`
+	Currency string `json:"currency"`
+}
+
+type Balance struct {
+	Available []BalanceAmount `json:"available"`
+	Pending   []BalanceAmount `json:"pending"`
+}
+
+type Payout struct {
+	ID          string `json:"id"`
+	Amount      int64  `json:"amount"`
+	Currency    string `json:"currency"`
+	Status      string `json:"status"`
+	ArrivalDate int64  `json:"arrival_date"`
+	Created     int64  `json:"created"`
 }
 
 type Customer struct {
@@ -108,6 +136,41 @@ func (c *Client) CreateAccountLink(ctx context.Context, accountID, refreshURL, r
 	values.Set("return_url", returnURL)
 	values.Set("type", "account_onboarding")
 	return postForm[AccountLink](ctx, c, "/account_links", values)
+}
+
+func (c *Client) GetAccount(ctx context.Context, accountID string) (Account, error) {
+	var account Account
+	if err := getForm(ctx, c, "/accounts/"+url.PathEscape(accountID), nil, &account); err != nil {
+		return Account{}, err
+	}
+	return account, nil
+}
+
+func (c *Client) CreateLoginLink(ctx context.Context, accountID string) (LoginLink, error) {
+	return postForm[LoginLink](ctx, c, "/accounts/"+url.PathEscape(accountID)+"/login_links", url.Values{})
+}
+
+func (c *Client) GetConnectedBalance(ctx context.Context, accountID string) (Balance, error) {
+	var balance Balance
+	if err := getFormWithOptions(ctx, c, "/balance", nil, &balance, requestOptions{StripeAccount: accountID}); err != nil {
+		return Balance{}, err
+	}
+	return balance, nil
+}
+
+func (c *Client) ListConnectedPayouts(ctx context.Context, accountID string, limit int) ([]Payout, error) {
+	if limit <= 0 || limit > 100 {
+		limit = 10
+	}
+	values := url.Values{}
+	values.Set("limit", strconv.Itoa(limit))
+	var response struct {
+		Data []Payout `json:"data"`
+	}
+	if err := getFormWithOptions(ctx, c, "/payouts", values, &response, requestOptions{StripeAccount: accountID}); err != nil {
+		return nil, err
+	}
+	return response.Data, nil
 }
 
 func (c *Client) CreateCustomer(ctx context.Context, email, name, idempotencyKey string) (Customer, error) {
@@ -248,6 +311,7 @@ func parseSignatureHeader(header string) (string, string) {
 
 type requestOptions struct {
 	IdempotencyKey string
+	StripeAccount  string
 }
 
 func postForm[T any](ctx context.Context, c *Client, path string, values url.Values, opts ...requestOptions) (T, error) {
@@ -259,11 +323,17 @@ func postForm[T any](ctx context.Context, c *Client, path string, values url.Val
 }
 
 func getForm(ctx context.Context, c *Client, path string, values url.Values, output any) error {
+	return getFormWithOptions(ctx, c, path, values, output, requestOptions{})
+}
+
+func getFormWithOptions(ctx context.Context, c *Client, path string, values url.Values, output any, opts requestOptions) error {
 	target := path
-	if encoded := values.Encode(); encoded != "" {
-		target += "?" + encoded
+	if values != nil {
+		if encoded := values.Encode(); encoded != "" {
+			target += "?" + encoded
+		}
 	}
-	return c.request(ctx, http.MethodGet, target, nil, output, requestOptions{})
+	return c.request(ctx, http.MethodGet, target, nil, output, opts)
 }
 
 func mergeRequestOptions(opts ...requestOptions) requestOptions {
@@ -271,6 +341,9 @@ func mergeRequestOptions(opts ...requestOptions) requestOptions {
 	for _, opt := range opts {
 		if opt.IdempotencyKey != "" {
 			merged.IdempotencyKey = opt.IdempotencyKey
+		}
+		if opt.StripeAccount != "" {
+			merged.StripeAccount = opt.StripeAccount
 		}
 	}
 	return merged
@@ -294,6 +367,9 @@ func (c *Client) request(ctx context.Context, method, path string, values url.Va
 	req.SetBasicAuth(c.secretKey, "")
 	if opts.IdempotencyKey != "" {
 		req.Header.Set("Idempotency-Key", opts.IdempotencyKey)
+	}
+	if opts.StripeAccount != "" {
+		req.Header.Set("Stripe-Account", opts.StripeAccount)
 	}
 	if values != nil {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -325,6 +401,10 @@ func sanitizeStripeLogPath(path string) string {
 	switch {
 	case strings.HasPrefix(path, "/customers/"):
 		return "/customers/:id"
+	case strings.HasPrefix(path, "/accounts/") && strings.HasSuffix(path, "/login_links"):
+		return "/accounts/:id/login_links"
+	case strings.HasPrefix(path, "/accounts/"):
+		return "/accounts/:id"
 	case strings.HasPrefix(path, "/payment_methods/") && strings.HasSuffix(path, "/detach"):
 		return "/payment_methods/:id/detach"
 	default:

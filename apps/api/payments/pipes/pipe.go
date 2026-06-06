@@ -33,8 +33,41 @@ type StripeConnectData struct {
 }
 
 type StripeStatusData struct {
-	AccountID string `json:"account_id,omitempty"`
-	Onboarded bool   `json:"onboarded"`
+	AccountID                 string   `json:"account_id,omitempty"`
+	Onboarded                 bool     `json:"onboarded"`
+	ChargesEnabled            bool     `json:"charges_enabled"`
+	PayoutsEnabled            bool     `json:"payouts_enabled"`
+	DetailsSubmitted          bool     `json:"details_submitted"`
+	RequirementsCurrentlyDue  []string `json:"requirements_currently_due"`
+	RequirementsEventuallyDue []string `json:"requirements_eventually_due"`
+	DisabledReason            string   `json:"disabled_reason,omitempty"`
+}
+
+type StripeBalanceAmountData struct {
+	Amount   float64 `json:"amount"`
+	Currency string  `json:"currency"`
+}
+
+type StripeBalanceData struct {
+	Available []StripeBalanceAmountData `json:"available"`
+	Pending   []StripeBalanceAmountData `json:"pending"`
+}
+
+type StripePayoutData struct {
+	ID          string  `json:"id"`
+	Amount      float64 `json:"amount"`
+	Currency    string  `json:"currency"`
+	Status      string  `json:"status"`
+	ArrivalDate string  `json:"arrival_date"`
+	CreatedAt   string  `json:"created_at"`
+}
+
+type StripePayoutListData struct {
+	Items []StripePayoutData `json:"items"`
+}
+
+type NannyPayoutSettingsData struct {
+	Schedule string `json:"schedule"`
 }
 
 type SetupIntentData struct {

@@ -106,6 +106,44 @@ func (r *pgRepository) UpdateNannyStripeOnboardedByAccountID(ctx context.Context
 	return err
 }
 
+func (r *pgRepository) GetNannyPayoutSettings(ctx context.Context, userID uuid.UUID) (NannyPayoutSettings, error) {
+	var settings NannyPayoutSettings
+	err := r.db.QueryRow(ctx, `
+		INSERT INTO nanny_payout_settings (nanny_profile_id)
+		SELECT np.id FROM nanny_profiles np WHERE np.user_id = $1
+		ON CONFLICT (nanny_profile_id) DO NOTHING
+		RETURNING nanny_profile_id, schedule
+	`, userID).Scan(&settings.NannyProfileID, &settings.Schedule)
+	if errors.Is(err, pgx.ErrNoRows) {
+		err = r.db.QueryRow(ctx, `
+			SELECT nps.nanny_profile_id, nps.schedule
+			FROM nanny_payout_settings nps
+			INNER JOIN nanny_profiles np ON np.id = nps.nanny_profile_id
+			WHERE np.user_id = $1
+		`, userID).Scan(&settings.NannyProfileID, &settings.Schedule)
+	}
+	if errors.Is(err, pgx.ErrNoRows) {
+		return NannyPayoutSettings{}, nil
+	}
+	return settings, err
+}
+
+func (r *pgRepository) UpdateNannyPayoutSettings(ctx context.Context, userID uuid.UUID, schedule string) (NannyPayoutSettings, error) {
+	var settings NannyPayoutSettings
+	err := r.db.QueryRow(ctx, `
+		INSERT INTO nanny_payout_settings (nanny_profile_id, schedule)
+		SELECT np.id, $2 FROM nanny_profiles np WHERE np.user_id = $1
+		ON CONFLICT (nanny_profile_id) DO UPDATE
+		SET schedule = EXCLUDED.schedule,
+		    updated_at = NOW()
+		RETURNING nanny_profile_id, schedule
+	`, userID, schedule).Scan(&settings.NannyProfileID, &settings.Schedule)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return NannyPayoutSettings{}, nil
+	}
+	return settings, err
+}
+
 func (r *pgRepository) UpdateParentStripeCustomer(ctx context.Context, parentProfileID uuid.UUID, customerID string) error {
 	_, err := r.db.Exec(ctx, `
 		UPDATE parent_profiles

@@ -44,6 +44,11 @@ type NannyConnectContext struct {
 	StripeOnboarded bool
 }
 
+type NannyPayoutSettings struct {
+	NannyProfileID uuid.UUID
+	Schedule       string
+}
+
 type CreatePaymentParams struct {
 	BookingID             uuid.UUID
 	ParentProfileID       uuid.UUID
@@ -63,6 +68,8 @@ type PaymentsRepository interface {
 	GetNannyConnectContext(ctx context.Context, userID uuid.UUID) (NannyConnectContext, error)
 	UpdateNannyStripeAccount(ctx context.Context, nannyProfileID uuid.UUID, accountID string, onboarded bool) error
 	UpdateNannyStripeOnboardedByAccountID(ctx context.Context, accountID string, onboarded bool) error
+	GetNannyPayoutSettings(ctx context.Context, userID uuid.UUID) (NannyPayoutSettings, error)
+	UpdateNannyPayoutSettings(ctx context.Context, userID uuid.UUID, schedule string) (NannyPayoutSettings, error)
 	UpdateParentStripeCustomer(ctx context.Context, parentProfileID uuid.UUID, customerID string) error
 	UpdateParentDefaultPaymentMethod(ctx context.Context, parentProfileID uuid.UUID, paymentMethodID string) error
 	GetPaymentByBookingID(ctx context.Context, bookingID uuid.UUID) (models.BookingPayment, error)

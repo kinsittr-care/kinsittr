@@ -23,6 +23,30 @@ func NannyPaymentRoutes(controller *controllers.PaymentsController, jwtSecret st
 			Middlewares: []typings.FiberMiddleware{auth},
 			Handler:     controller.CreateNannyConnectLink,
 		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/balance",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.GetNannyStripeBalance,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/payouts",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.ListNannyStripePayouts,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/payout-settings",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.GetNannyPayoutSettings,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPatch),
+			Path:        "/payout-settings",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.UpdateNannyPayoutSettings,
+		},
 	}
 }
 
