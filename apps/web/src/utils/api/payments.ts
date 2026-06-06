@@ -1,6 +1,9 @@
 import type {
   PaymentMethodData,
   PaymentMethodListData,
+  ListNannyEarningsParams,
+  NannyEarningsListData,
+  NannyEarningsSummaryData,
   NannyPayoutSettingsData,
   SetupIntentData,
   StripeBalanceData,
@@ -15,7 +18,12 @@ export const nannyStripeStatusQueryKey = ["nanny", "stripe-status"] as const;
 export const nannyStripeBalanceQueryKey = ["nanny", "stripe-balance"] as const;
 export const nannyStripePayoutsQueryKey = ["nanny", "stripe-payouts"] as const;
 export const nannyPayoutSettingsQueryKey = ["nanny", "payout-settings"] as const;
+export const nannyEarningsSummaryQueryKey = ["nanny", "earnings-summary"] as const;
 export const parentPaymentMethodsQueryKey = ["parent", "payment-methods"] as const;
+
+export function nannyEarningsQueryKey(params: ListNannyEarningsParams) {
+  return ["nanny", "earnings", params] as const;
+}
 
 export async function getNannyStripeStatus() {
   return apiRequest<StripeStatusData>("/api/v1/nanny/payments/status", undefined, {
@@ -56,6 +64,24 @@ export async function updateNannyPayoutSettings(payload: UpdateNannyPayoutSettin
       method: "PATCH",
       body: JSON.stringify(payload),
     },
+    { requiresAuth: true },
+  );
+}
+
+export async function getNannyEarningsSummary() {
+  return apiRequest<NannyEarningsSummaryData>("/api/v1/nanny/earnings/summary", undefined, {
+    requiresAuth: true,
+  });
+}
+
+export async function listNannyEarnings(params: ListNannyEarningsParams = {}) {
+  const query = new URLSearchParams();
+  if (params.page) query.set("page", String(params.page));
+  if (params.limit) query.set("limit", String(params.limit));
+  const queryString = query.toString();
+  return apiRequest<NannyEarningsListData>(
+    `/api/v1/nanny/earnings${queryString ? `?${queryString}` : ""}`,
+    undefined,
     { requiresAuth: true },
   );
 }

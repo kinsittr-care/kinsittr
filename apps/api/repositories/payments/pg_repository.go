@@ -3,6 +3,7 @@ package payments
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -142,6 +143,96 @@ func (r *pgRepository) UpdateNannyPayoutSettings(ctx context.Context, userID uui
 		return NannyPayoutSettings{}, nil
 	}
 	return settings, err
+}
+
+func (r *pgRepository) GetNannyEarningsSummary(ctx context.Context, userID uuid.UUID) (NannyEarningsSummary, error) {
+	now := time.Now().UTC()
+	thisMonthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+	nextMonthStart := thisMonthStart.AddDate(0, 1, 0)
+	lastMonthStart := thisMonthStart.AddDate(0, -1, 0)
+
+	var summary NannyEarningsSummary
+	err := r.db.QueryRow(ctx, `
+		SELECT
+			COALESCE(SUM(CASE WHEN b.date >= $2 AND b.date < $3 THEN bp.amount - bp.platform_fee ELSE 0 END), 0),
+			COUNT(bp.id) FILTER (WHERE b.date >= $2 AND b.date < $3),
+			COALESCE(SUM(CASE WHEN b.date >= $4 AND b.date < $2 THEN bp.amount - bp.platform_fee ELSE 0 END), 0),
+			COUNT(bp.id) FILTER (WHERE b.date >= $4 AND b.date < $2),
+			COALESCE(SUM(CASE WHEN b.id IS NOT NULL THEN bp.amount - bp.platform_fee ELSE 0 END), 0),
+			COUNT(b.id)
+		FROM nanny_profiles np
+		LEFT JOIN booking_payments bp ON bp.nanny_profile_id = np.id AND bp.status = $5
+		LEFT JOIN bookings b ON b.id = bp.booking_id AND b.status = $6
+		WHERE np.user_id = $1
+	`, userID, thisMonthStart, nextMonthStart, lastMonthStart, models.PaymentSucceeded, models.CompletedBookingStatus).Scan(
+		&summary.ThisMonthEarnings,
+		&summary.ThisMonthBookings,
+		&summary.LastMonthEarnings,
+		&summary.LastMonthBookings,
+		&summary.AllTimeEarnings,
+		&summary.AllTimeBookings,
+	)
+	return summary, err
+}
+
+func (r *pgRepository) ListNannyEarnings(ctx context.Context, userID uuid.UUID, page, limit int) ([]NannyEarningRecord, int, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	var total int
+	if err := r.db.QueryRow(ctx, `
+		SELECT COUNT(*)
+		FROM booking_payments bp
+		INNER JOIN bookings b ON b.id = bp.booking_id
+		INNER JOIN nanny_profiles np ON np.id = bp.nanny_profile_id
+		WHERE np.user_id = $1 AND bp.status = $2 AND b.status = $3
+	`, userID, models.PaymentSucceeded, models.CompletedBookingStatus).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	rows, err := r.db.Query(ctx, `
+		SELECT b.id, pp.display_name, b.date::date::text, to_char(b.start_time, 'HH24:MI'), b.duration,
+		       bp.amount, bp.platform_fee, bp.amount - bp.platform_fee, bp.currency, bp.status
+		FROM booking_payments bp
+		INNER JOIN bookings b ON b.id = bp.booking_id
+		INNER JOIN nanny_profiles np ON np.id = bp.nanny_profile_id
+		INNER JOIN parent_profiles pp ON pp.id = bp.parent_profile_id
+		WHERE np.user_id = $1 AND bp.status = $2 AND b.status = $3
+		ORDER BY b.date DESC, b.start_time DESC
+		LIMIT $4 OFFSET $5
+	`, userID, models.PaymentSucceeded, models.CompletedBookingStatus, limit, (page-1)*limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	records := make([]NannyEarningRecord, 0, limit)
+	for rows.Next() {
+		var record NannyEarningRecord
+		if err := rows.Scan(
+			&record.BookingID,
+			&record.ParentDisplayName,
+			&record.Date,
+			&record.StartTime,
+			&record.Duration,
+			&record.GrossAmount,
+			&record.PlatformFee,
+			&record.NetAmount,
+			&record.Currency,
+			&record.PaymentStatus,
+		); err != nil {
+			return nil, 0, err
+		}
+		records = append(records, record)
+	}
+	return records, total, rows.Err()
 }
 
 func (r *pgRepository) UpdateParentStripeCustomer(ctx context.Context, parentProfileID uuid.UUID, customerID string) error {

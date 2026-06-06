@@ -11,5 +11,6 @@ const (
 	Stripe_Onboarding_Created = "stripe_onboarding_created"
 	Stripe_Status_Fetched     = "stripe_status_fetched"
 	Stripe_Webhook_Processed  = "stripe_webhook_processed"
+	Earnings_Fetched          = "earnings_fetched"
 	Invalid_Payment_Request   = "invalid_payment_request"
 )

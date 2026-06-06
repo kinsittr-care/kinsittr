@@ -50,6 +50,24 @@ func NannyPaymentRoutes(controller *controllers.PaymentsController, jwtSecret st
 	}
 }
 
+func NannyEarningsRoutes(controller *controllers.PaymentsController, jwtSecret string) []api.RouterSchema {
+	auth := middleware.RequireAuth(jwtSecret)
+	return []api.RouterSchema{
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/summary",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.GetNannyEarningsSummary,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.ListNannyEarnings,
+		},
+	}
+}
+
 func ParentBillingRoutes(controller *controllers.PaymentsController, jwtSecret string) []api.RouterSchema {
 	auth := middleware.RequireAuth(jwtSecret)
 	return []api.RouterSchema{

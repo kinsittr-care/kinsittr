@@ -45,6 +45,8 @@ Server route:
 - `GET /api/v1/nanny/documents` — list the authenticated nanny's screening documents
 - `POST /api/v1/nanny/documents` — upload one screening document for the authenticated nanny
 - `DELETE /api/v1/nanny/documents/:id` — delete one screening document for the authenticated nanny
+- `GET /api/v1/nanny/earnings/summary` — return paid earnings totals for the authenticated nanny
+- `GET /api/v1/nanny/earnings` — list completed paid booking earnings for the authenticated nanny
 - `GET /api/v1/nanny/bookings` — list bookings for the authenticated nanny
 - `GET /api/v1/nanny/bookings/:id` — return one nanny booking
 - `PATCH /api/v1/nanny/bookings/:id/approve` — approve a pending booking and open the conversation

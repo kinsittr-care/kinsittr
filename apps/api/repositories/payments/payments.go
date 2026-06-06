@@ -49,6 +49,28 @@ type NannyPayoutSettings struct {
 	Schedule       string
 }
 
+type NannyEarningsSummary struct {
+	ThisMonthEarnings float64
+	ThisMonthBookings int
+	LastMonthEarnings float64
+	LastMonthBookings int
+	AllTimeEarnings   float64
+	AllTimeBookings   int
+}
+
+type NannyEarningRecord struct {
+	BookingID         uuid.UUID
+	ParentDisplayName string
+	Date              string
+	StartTime         string
+	Duration          int
+	GrossAmount       float64
+	PlatformFee       float64
+	NetAmount         float64
+	Currency          models.Currency
+	PaymentStatus     models.PaymentStatus
+}
+
 type CreatePaymentParams struct {
 	BookingID             uuid.UUID
 	ParentProfileID       uuid.UUID
@@ -70,6 +92,8 @@ type PaymentsRepository interface {
 	UpdateNannyStripeOnboardedByAccountID(ctx context.Context, accountID string, onboarded bool) error
 	GetNannyPayoutSettings(ctx context.Context, userID uuid.UUID) (NannyPayoutSettings, error)
 	UpdateNannyPayoutSettings(ctx context.Context, userID uuid.UUID, schedule string) (NannyPayoutSettings, error)
+	GetNannyEarningsSummary(ctx context.Context, userID uuid.UUID) (NannyEarningsSummary, error)
+	ListNannyEarnings(ctx context.Context, userID uuid.UUID, page, limit int) ([]NannyEarningRecord, int, error)
 	UpdateParentStripeCustomer(ctx context.Context, parentProfileID uuid.UUID, customerID string) error
 	UpdateParentDefaultPaymentMethod(ctx context.Context, parentProfileID uuid.UUID, paymentMethodID string) error
 	GetPaymentByBookingID(ctx context.Context, bookingID uuid.UUID) (models.BookingPayment, error)

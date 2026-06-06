@@ -58,9 +58,9 @@ import (
 	reviews_pipe "github.com/kinsittr/kinsittr-api/reviews/pipes"
 	reviews_router "github.com/kinsittr/kinsittr-api/reviews/routers"
 	"github.com/kinsittr/kinsittr-api/shared/api"
-	cloudinaryapi "github.com/kinsittr/kinsittr-api/shared/cloudinary"
+	cloudinary_api "github.com/kinsittr/kinsittr-api/shared/cloudinary"
 	"github.com/kinsittr/kinsittr-api/shared/mail"
-	stripeapi "github.com/kinsittr/kinsittr-api/shared/stripe"
+	stripe_api "github.com/kinsittr/kinsittr-api/shared/stripe"
 	recovery_worker "github.com/kinsittr/kinsittr-api/workers/recovery"
 )
 
@@ -138,7 +138,7 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	nannyPipe := nanny_pipe.NewNannyPipe(nanny_repo.NannyRepo, profile_repo.ProfileRepo)
 	nannyPipe.SetDocumentRepository(documents_repo.DocumentsRepo)
 	if cfg.CloudinaryConfigured() {
-		nannyPipe.SetCloudinaryClient(cloudinaryapi.NewClient(cfg.CloudinaryCloudName, cfg.CloudinaryAPIKey, cfg.CloudinaryAPISecret))
+		nannyPipe.SetCloudinaryClient(cloudinary_api.NewClient(cfg.CloudinaryCloudName, cfg.CloudinaryAPIKey, cfg.CloudinaryAPISecret))
 	}
 	nannyController := nanny_controller.NewNannyController(nannyPipe)
 
@@ -155,7 +155,7 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	notificationsController := notifications_controller.NewNotificationsController(notificationsPipe)
 
 	// payments
-	stripeClient := stripeapi.NewClient(cfg.StripeSecretKey)
+	stripeClient := stripe_api.NewClient(cfg.StripeSecretKey)
 	paymentsPipe := payments_pipe.NewPaymentsPipe(
 		payments_repo.PaymentsRepo,
 		profile_repo.ProfileRepo,
@@ -214,6 +214,8 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	api.BaseRouter(nannyBookingsGroup, reviews_router.NannyBookingReviewRoutes(reviewsController, cfg.JWTSecret))
 	nannyPaymentsGroup := nannyGroup.Group("/payments")
 	api.BaseRouter(nannyPaymentsGroup, payments_router.NannyPaymentRoutes(paymentsController, cfg.JWTSecret))
+	nannyEarningsGroup := nannyGroup.Group("/earnings")
+	api.BaseRouter(nannyEarningsGroup, payments_router.NannyEarningsRoutes(paymentsController, cfg.JWTSecret))
 	nannyReviewsGroup := nannyGroup.Group("/reviews")
 	api.BaseRouter(nannyReviewsGroup, reviews_router.NannyReviewRoutes(reviewsController, cfg.JWTSecret))
 	api.BaseRouter(nannyGroup, nanny_router.NannyRoutes(nannyController, cfg.JWTSecret))

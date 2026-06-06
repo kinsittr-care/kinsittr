@@ -64,6 +64,12 @@ func (m *mockPaymentRepo) GetNannyPayoutSettings(context.Context, uuid.UUID) (pa
 func (m *mockPaymentRepo) UpdateNannyPayoutSettings(context.Context, uuid.UUID, string) (paymentrepo.NannyPayoutSettings, error) {
 	return paymentrepo.NannyPayoutSettings{}, nil
 }
+func (m *mockPaymentRepo) GetNannyEarningsSummary(context.Context, uuid.UUID) (paymentrepo.NannyEarningsSummary, error) {
+	return paymentrepo.NannyEarningsSummary{}, nil
+}
+func (m *mockPaymentRepo) ListNannyEarnings(context.Context, uuid.UUID, int, int) ([]paymentrepo.NannyEarningRecord, int, error) {
+	return []paymentrepo.NannyEarningRecord{}, 0, nil
+}
 func (m *mockPaymentRepo) UpdateParentStripeCustomer(context.Context, uuid.UUID, string) error {
 	return nil
 }

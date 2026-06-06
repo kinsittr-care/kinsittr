@@ -70,6 +70,35 @@ type NannyPayoutSettingsData struct {
 	Schedule string `json:"schedule"`
 }
 
+type NannyEarningsSummaryData struct {
+	ThisMonthEarnings float64 `json:"this_month_earnings"`
+	ThisMonthBookings int     `json:"this_month_bookings"`
+	LastMonthEarnings float64 `json:"last_month_earnings"`
+	LastMonthBookings int     `json:"last_month_bookings"`
+	AllTimeEarnings   float64 `json:"all_time_earnings"`
+	AllTimeBookings   int     `json:"all_time_bookings"`
+}
+
+type NannyEarningData struct {
+	BookingID         string               `json:"booking_id"`
+	ParentDisplayName string               `json:"parent_display_name"`
+	Date              string               `json:"date"`
+	StartTime         string               `json:"start_time"`
+	Duration          int                  `json:"duration"`
+	GrossAmount       float64              `json:"gross_amount"`
+	PlatformFee       float64              `json:"platform_fee"`
+	NetAmount         float64              `json:"net_amount"`
+	Currency          string               `json:"currency"`
+	PaymentStatus     models.PaymentStatus `json:"payment_status"`
+}
+
+type NannyEarningsListData struct {
+	Items []NannyEarningData `json:"items"`
+	Page  int                `json:"page"`
+	Limit int                `json:"limit"`
+	Total int                `json:"total"`
+}
+
 type SetupIntentData struct {
 	CustomerID   string `json:"customer_id"`
 	ClientSecret string `json:"client_secret"`
