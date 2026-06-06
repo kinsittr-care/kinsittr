@@ -15,7 +15,7 @@ import (
 
 const specialtiesTotalCharacterLimit = 25
 
-func (p *NannyPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto dtos.UpdateNannyProfileDTO) *shared.PipeRes[models.NannyProfile] {
+func (p *NannyPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto dtos.UpdateNannyProfileDTO) *shared.PipeRes[OwnNannyProfile] {
 	specialties := make([]string, 0, len(dto.Specialties))
 	for _, specialty := range dto.Specialties {
 		normalized := normalizeSpecialty(specialty)
@@ -25,7 +25,7 @@ func (p *NannyPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto 
 		specialties = append(specialties, normalized)
 	}
 	if specialtiesCharacterCount(specialties) > specialtiesTotalCharacterLimit {
-		return &shared.PipeRes[models.NannyProfile]{
+		return &shared.PipeRes[OwnNannyProfile]{
 			Success: false,
 			Message: shared.CreatePipeMessage(messages.Invalid_Nanny_Profile),
 		}
@@ -41,16 +41,17 @@ func (p *NannyPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto 
 		Province:    normalizeLocationField(dto.Province),
 	})
 	if err != nil || profile.ID == uuid.Nil {
-		return &shared.PipeRes[models.NannyProfile]{
+		return &shared.PipeRes[OwnNannyProfile]{
 			Success: false,
 			Message: shared.CreatePipeMessage(messages.Nanny_Not_Found),
 		}
 	}
 
-	return &shared.PipeRes[models.NannyProfile]{
+	data := ownNannyProfileData(profile)
+	return &shared.PipeRes[OwnNannyProfile]{
 		Success: true,
 		Message: shared.CreatePipeMessage(messages.Nanny_Profile_Updated),
-		Data:    &profile,
+		Data:    &data,
 	}
 }
 
@@ -65,4 +66,3 @@ func specialtiesCharacterCount(values []string) int {
 	}
 	return total
 }
-

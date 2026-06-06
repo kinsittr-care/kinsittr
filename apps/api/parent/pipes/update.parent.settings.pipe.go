@@ -10,14 +10,14 @@ import (
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
 
-func (p *ParentPipe) UpdateOwnSettings(ctx context.Context, userID uuid.UUID, dto dtos.UpdateParentSettingsDTO) *shared.PipeRes[models.ParentSettings] {
+func (p *ParentPipe) UpdateOwnSettings(ctx context.Context, userID uuid.UUID, dto dtos.UpdateParentSettingsDTO) *shared.PipeRes[ParentSettingsData] {
 	profile, err := p.profileRepo.GetParentProfileByUserID(ctx, userID)
 	if err != nil || profile.ID == uuid.Nil {
-		return pipeError[models.ParentSettings](messages.Parent_Profile_Not_Found)
+		return pipeError[ParentSettingsData](messages.Parent_Profile_Not_Found)
 	}
 
 	if _, err := p.profileRepo.GetOrCreateParentSettings(ctx, userID); err != nil {
-		return pipeError[models.ParentSettings](messages.Invalid_Parent_Request)
+		return pipeError[ParentSettingsData](messages.Invalid_Parent_Request)
 	}
 
 	settings, err := p.profileRepo.UpdateParentSettings(ctx, models.ParentSettings{
@@ -34,8 +34,9 @@ func (p *ParentPipe) UpdateOwnSettings(ctx context.Context, userID uuid.UUID, dt
 		Timezone:           normalizeString(dto.Timezone),
 	})
 	if err != nil || settings.ID == uuid.Nil {
-		return pipeError[models.ParentSettings](messages.Invalid_Parent_Request)
+		return pipeError[ParentSettingsData](messages.Invalid_Parent_Request)
 	}
 
-	return pipeSuccess(messages.Parent_Settings_Updated, &settings)
+	data := parentSettingsData(settings)
+	return pipeSuccess(messages.Parent_Settings_Updated, &data)
 }

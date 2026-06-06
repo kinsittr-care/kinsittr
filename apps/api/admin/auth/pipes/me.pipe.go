@@ -15,5 +15,5 @@ func (p *AdminAuthPipe) Me(ctx context.Context, userID uuid.UUID) *shared.PipeRe
 		return pipeError[AdminSessionData](messages.Invalid_Admin_Session)
 	}
 
-	return pipeSuccess(messages.Admin_Current_User_Fetched, &AdminSessionData{User: user})
+	return pipeSuccess(messages.Admin_Current_User_Fetched, &AdminSessionData{User: adminAuthUserData(user)})
 }

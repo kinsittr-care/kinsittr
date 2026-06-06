@@ -36,6 +36,25 @@ type PublicNannyProfile struct {
 	VerifiedAt         string                    `json:"verified_at,omitempty"`
 }
 
+type OwnNannyProfile struct {
+	ID                 string                    `json:"id"`
+	DisplayName        string                    `json:"display_name"`
+	Phone              string                    `json:"phone"`
+	Bio                string                    `json:"bio"`
+	Specialties        []string                  `json:"specialties"`
+	RatePerHour        float64                   `json:"rate_per_hour"`
+	ServiceType        models.ServiceType        `json:"service_type"`
+	Currency           models.Currency           `json:"currency"`
+	VerificationStatus models.VerificationStatus `json:"verification_status"`
+	VerifiedAt         string                    `json:"verified_at,omitempty"`
+	StripeOnboarded    bool                      `json:"stripe_onboarded"`
+	RatingAvg          float64                   `json:"rating_avg"`
+	RatingCount        int                       `json:"rating_count"`
+	AvatarURL          string                    `json:"avatar_url"`
+	City               string                    `json:"city"`
+	Province           string                    `json:"province"`
+}
+
 type PublicNannyListData struct {
 	Items []PublicNannyCard `json:"items"`
 	Page  int               `json:"page"`

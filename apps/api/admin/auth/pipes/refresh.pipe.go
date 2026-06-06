@@ -57,7 +57,6 @@ func (p *AdminAuthPipe) Refresh(ctx context.Context, dto dtos.RefreshDTO) *share
 	return pipeSuccess(messages.Admin_Token_Refreshed, &AdminAuthTokenPair{
 		AccessToken:  access,
 		RefreshToken: refresh,
-		User:         &user,
 	})
 }
 
