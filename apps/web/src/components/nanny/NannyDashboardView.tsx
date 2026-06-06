@@ -23,6 +23,7 @@ export default function NannyDashboardView() {
     sessionQuery.data?.data?.nanny_profile?.display_name ||
     sessionQuery.data?.data?.user.firstname ||
     "there";
+  const session = sessionQuery.data?.data;
   const today = formatNannyDashboardDate(new Date());
   const bookings = bookingsQuery.data?.data?.items ?? EMPTY_BOOKINGS;
   const bookingError =
@@ -48,7 +49,11 @@ export default function NannyDashboardView() {
           isError={bookingsQuery.isError}
           errorMessage={bookingError}
         />
-        <DashboardChecklist />
+        <DashboardChecklist
+          profile={session?.nanny_profile}
+          fallbackPhone={session?.user.phone}
+          isLoading={sessionQuery.isLoading}
+        />
       </div>
     </div>
   );

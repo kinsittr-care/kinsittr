@@ -65,7 +65,10 @@ function isNannyProfileComplete(profile: NannyProfile | undefined, phone: string
       text(profile.city) &&
       text(profile.province) &&
       profile.rate_per_hour > 0 &&
-      profile.specialties.length > 0,
+      profile.specialties.length > 0 &&
+      text(profile.avatar_url) &&
+      profile.stripe_onboarded &&
+      profile.verification_status === "verified",
   );
 }
 
