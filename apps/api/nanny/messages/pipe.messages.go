@@ -10,6 +10,7 @@ const (
 
 	// -
 	Nanny_Not_Found           = "nanny_not_found"
+	Invalid_Nanny_Profile     = "invalid_nanny_profile"
 	Invalid_Nanny_ID          = "invalid_nanny_id"
 	Forbidden_Profile         = "forbidden_profile"
 	Invalid_Public_Query      = "invalid_public_query"

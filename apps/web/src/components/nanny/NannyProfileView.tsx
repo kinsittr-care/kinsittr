@@ -12,8 +12,8 @@ export default function NannyProfileView() {
   });
 
   return (
-    <div style={{ padding: "40px 48px 80px", overflowY: "auto", flex: 1 }}>
-      <div style={{ marginBottom: 32 }}>
+    <div className="flex-1 overflow-y-auto px-4 pt-6 pb-16 md:px-12 md:pt-10 md:pb-20">
+      <div className="mb-7 md:mb-8">
         <h1
           style={{
             fontFamily: "DM Serif Display, var(--font-dm-serif), serif",

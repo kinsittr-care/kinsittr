@@ -76,7 +76,6 @@ export interface NannyProfile {
 }
 
 export interface UpdateNannyProfilePayload {
-  display_name: string;
   phone: string;
   bio: string;
   specialties: string[];

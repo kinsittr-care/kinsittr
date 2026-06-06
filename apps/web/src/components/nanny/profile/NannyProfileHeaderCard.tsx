@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { NannyProfile, UpdateNannyProfilePayload } from "@/src/types/api/api";
+import type { NannyProfile } from "@/src/types/api/api";
 import { deleteNannyAvatar, ownNannyProfileQueryKey, uploadNannyAvatar } from "@/src/utils/api/nanny";
 import NannyAvatar from "../NannyAvatar";
 import { N } from "../tokens";
@@ -12,11 +12,10 @@ const maxAvatarBytes = 5 * 1024 * 1024;
 const allowedAvatarTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 interface NannyProfileHeaderCardProps {
-  form: UpdateNannyProfilePayload;
   profile: NannyProfile;
 }
 
-export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCardProps) {
+export function NannyProfileHeaderCard({ profile }: NannyProfileHeaderCardProps) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadError, setUploadError] = useState("");
@@ -65,20 +64,17 @@ export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCard
 
   return (
     <div
+      className="flex flex-col items-center gap-5 p-5 text-center sm:flex-row sm:gap-6 sm:p-7 sm:text-left"
       style={{
         background: N.card,
         border: `1px solid ${N.border}`,
         borderRadius: 18,
-        padding: "28px 32px",
         boxShadow: N.shadow,
         marginBottom: 18,
-        display: "flex",
-        alignItems: "center",
-        gap: 24,
       }}
     >
       <div style={{ position: "relative" }}>
-        <NannyAvatar initials={getInitials(form.display_name)} src={profile.avatar_url || undefined} size={80} tone="green" />
+        <NannyAvatar initials={getInitials(profile.display_name)} src={profile.avatar_url || undefined} size={80} tone="green" />
         {profile.verification_status === "verified" && (
           <div
             style={{
@@ -101,9 +97,9 @@ export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCard
           </div>
         )}
       </div>
-      <div>
+      <div className="min-w-0">
         <div style={{ fontFamily: "DM Serif Display, var(--font-dm-serif), serif", fontSize: 22, color: N.greenDk }}>
-          {form.display_name}
+          {profile.display_name}
         </div>
         <div
           style={{
@@ -124,7 +120,7 @@ export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCard
           {profile.verification_status.replaceAll("_", " ")} caregiver
         </div>
       </div>
-      <div style={{ marginLeft: "auto" }}>
+      <div className="w-full sm:ml-auto sm:w-auto">
         <input
           ref={fileInputRef}
           type="file"
@@ -136,42 +132,46 @@ export function NannyProfileHeaderCard({ form, profile }: NannyProfileHeaderCard
           }}
           disabled={avatarActionPending}
         />
-        <button
-          style={{
-            padding: "9px 16px",
-            background: N.cardSoft,
-            border: `1px solid ${N.border}`,
-            borderRadius: 10,
-            fontSize: 13.5,
-            color: avatarActionPending ? N.inkMute : N.greenDk,
-            cursor: avatarActionPending ? "not-allowed" : "pointer",
-          }}
-          disabled={avatarActionPending}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {uploadMutation.isPending ? "Uploading…" : "Change photo"}
-        </button>
-        {profile.avatar_url && (
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
           <button
+            className="w-full sm:w-auto"
             style={{
-              marginLeft: 8,
               padding: "9px 16px",
-              background: "transparent",
+              background: N.cardSoft,
               border: `1px solid ${N.border}`,
               borderRadius: 10,
               fontSize: 13.5,
-              color: avatarActionPending ? N.inkMute : "#b42318",
+              color: avatarActionPending ? N.inkMute : N.greenDk,
               cursor: avatarActionPending ? "not-allowed" : "pointer",
             }}
             disabled={avatarActionPending}
-            onClick={() => deleteMutation.mutate()}
+            onClick={() => fileInputRef.current?.click()}
           >
-            {deleteMutation.isPending ? "Removing…" : "Remove photo"}
+            {uploadMutation.isPending ? "Uploading…" : "Change photo"}
           </button>
-        )}
+          {profile.avatar_url && (
+            <button
+              className="w-full sm:w-auto"
+              style={{
+                padding: "9px 16px",
+                background: "transparent",
+                border: `1px solid ${N.border}`,
+                borderRadius: 10,
+                fontSize: 13.5,
+                color: avatarActionPending ? N.inkMute : "#b42318",
+                cursor: avatarActionPending ? "not-allowed" : "pointer",
+              }}
+              disabled={avatarActionPending}
+              onClick={() => deleteMutation.mutate()}
+            >
+              {deleteMutation.isPending ? "Removing…" : "Remove photo"}
+            </button>
+          )}
+        </div>
         {uploadError && (
           <div
             role="alert"
+            className="mx-auto sm:mx-0"
             style={{
               marginTop: 8,
               maxWidth: 220,
