@@ -91,6 +91,11 @@ export interface PublicNannyCard {
   province: string;
 }
 
+export interface PublicNannyProfile extends PublicNannyCard {
+  verification_status: string;
+  verified_at?: string | null;
+}
+
 export interface PublicNannyListData {
   items: PublicNannyCard[];
   page: number;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { NannyProfile, UpdateNannyProfilePayload } from "@/src/types/api/api";
 import { ownNannyProfileQueryKey, updateOwnNannyProfile } from "@/src/utils/api/nanny";
@@ -22,6 +23,7 @@ export default function NannyProfileForm({ profile }: { profile: NannyProfile })
   const [form, setForm] = useState<UpdateNannyProfilePayload>(() => profileToPayload(profile));
   const [specialtyText, setSpecialtyText] = useState(() => profile.specialties.join(", "));
   const [message, setMessage] = useState<string | null>(null);
+  const isPublicProfile = profile.verification_status === "verified";
 
   const updateMutation = useMutation({
     mutationFn: updateOwnNannyProfile,
@@ -63,7 +65,21 @@ export default function NannyProfileForm({ profile }: { profile: NannyProfile })
         <button className="w-full sm:w-auto" style={btnPrimary} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate(form)}>
           {updateMutation.isPending ? "Saving..." : "Save changes"}
         </button>
-        <button className="w-full sm:w-auto" style={btnGhost}>Preview public profile</button>
+        {isPublicProfile ? (
+          <Link className="w-full sm:w-auto" href={`/nannies/${profile.id}`} style={{ ...btnGhost, textAlign: "center" }} target="_blank">
+            Preview public profile
+          </Link>
+        ) : (
+          <button
+            className="w-full sm:w-auto"
+            style={{ ...btnGhost, cursor: "not-allowed", opacity: 0.62 }}
+            type="button"
+            disabled
+            title="Your public profile is available after KinSittr verifies your nanny account."
+          >
+            Preview after verification
+          </button>
+        )}
         {message && (
           <span style={{ color: updateMutation.isError ? N.rose : N.green, fontSize: 13.5, fontWeight: 600 }}>
             {message}

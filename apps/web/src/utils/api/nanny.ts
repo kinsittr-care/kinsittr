@@ -2,6 +2,7 @@ import type {
   ListPublicNanniesParams,
   NannyProfile,
   PublicNannyListData,
+  PublicNannyProfile,
   UpdateNannyProfilePayload,
 } from "@/src/types/api/api";
 import { ApiRequestError, type ApiResponse, apiRequest } from "@/src/utils/api/api";
@@ -36,6 +37,14 @@ export function ownNannyProfileQueryKey() {
 export async function listPublicNannies(params: ListPublicNanniesParams) {
   const queryString = buildListPublicNanniesQuery(params);
   return apiRequest<PublicNannyListData>(`/api/v1/nannies${queryString}`);
+}
+
+export function publicNannyProfileQueryKey(nannyId: string) {
+  return ["public-nanny-profile", nannyId] as const;
+}
+
+export async function getPublicNannyProfile(nannyId: string) {
+  return apiRequest<PublicNannyProfile>(`/api/v1/nannies/${encodeURIComponent(nannyId)}`);
 }
 
 export async function getOwnNannyProfile() {
