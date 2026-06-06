@@ -114,3 +114,18 @@ export interface ListPublicNanniesParams {
   service_type?: "nanny";
   sort?: "newest" | "oldest" | "rate_asc" | "rate_desc" | "rating_desc";
 }
+
+export interface NannyDocument {
+  id: string;
+  file_name: string;
+  file_url: string;
+  mime_type: string;
+  size_bytes: number;
+  resource_type: string;
+  created_at: string;
+}
+
+export interface NannyDocumentListData {
+  items: NannyDocument[];
+  total: number;
+}

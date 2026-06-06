@@ -127,11 +127,71 @@ func (r *pgRepository) ListNannies(ctx context.Context, filter ListNanniesFilter
 		}
 		records = append(records, record)
 	}
-	return records, total, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	if err := r.attachNannyDocuments(ctx, records); err != nil {
+		return nil, 0, err
+	}
+	return records, total, nil
 }
 
 func (r *pgRepository) GetNannyByID(ctx context.Context, nannyProfileID uuid.UUID) (NannyRecord, error) {
-	return scanNannyRecord(r.db.QueryRow(ctx, nannyRecordSelect+` WHERE np.id = $1`, nannyProfileID))
+	record, err := scanNannyRecord(r.db.QueryRow(ctx, nannyRecordSelect+` WHERE np.id = $1`, nannyProfileID))
+	if err != nil || record.ID == uuid.Nil {
+		return record, err
+	}
+	records := []NannyRecord{record}
+	if err := r.attachNannyDocuments(ctx, records); err != nil {
+		return NannyRecord{}, err
+	}
+	return records[0], nil
+}
+
+func (r *pgRepository) attachNannyDocuments(ctx context.Context, records []NannyRecord) error {
+	if len(records) == 0 {
+		return nil
+	}
+
+	ids := make([]uuid.UUID, 0, len(records))
+	indexByID := make(map[uuid.UUID]int, len(records))
+	for i := range records {
+		ids = append(ids, records[i].ID)
+		indexByID[records[i].ID] = i
+	}
+
+	rows, err := r.db.Query(ctx, `
+		SELECT id, nanny_profile_id, file_name, file_url, public_id, resource_type, mime_type, size_bytes, created_at, updated_at
+		FROM nanny_documents
+		WHERE nanny_profile_id = ANY($1)
+		ORDER BY created_at DESC
+	`, ids)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var document models.NannyDocument
+		if err := rows.Scan(
+			&document.ID,
+			&document.NannyProfileID,
+			&document.FileName,
+			&document.FileURL,
+			&document.PublicID,
+			&document.ResourceType,
+			&document.MimeType,
+			&document.SizeBytes,
+			&document.CreatedAt,
+			&document.UpdatedAt,
+		); err != nil {
+			return err
+		}
+		if idx, ok := indexByID[document.NannyProfileID]; ok {
+			records[idx].Documents = append(records[idx].Documents, document)
+		}
+	}
+	return rows.Err()
 }
 
 func (r *pgRepository) UpdateScreeningSteps(ctx context.Context, nannyProfileID uuid.UUID, params UpdateScreeningStepsParams) (NannyRecord, error) {

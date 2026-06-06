@@ -16,6 +16,7 @@ import {
   TESTING_PROVINCE,
   profileToPayload,
 } from "./nannyProfileHelpers";
+import { NannyDocumentUploadSection } from "./NannyDocumentUploadSection";
 import { NannyProfileHeaderCard } from "./NannyProfileHeaderCard";
 
 export default function NannyProfileForm({ profile }: { profile: NannyProfile }) {
@@ -86,6 +87,8 @@ export default function NannyProfileForm({ profile }: { profile: NannyProfile })
           </span>
         )}
       </div>
+
+      <NannyDocumentUploadSection />
     </>
   );
 }

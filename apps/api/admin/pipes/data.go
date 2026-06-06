@@ -13,6 +13,16 @@ type ScreeningStepsData struct {
 	InterviewDone     bool `json:"interview_done"`
 }
 
+type AdminNannyDocumentData struct {
+	ID           string    `json:"id"`
+	FileName     string    `json:"file_name"`
+	FileURL      string    `json:"file_url"`
+	MimeType     string    `json:"mime_type"`
+	SizeBytes    int64     `json:"size_bytes"`
+	ResourceType string    `json:"resource_type"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
 type AdminNannyData struct {
 	ID                 string                    `json:"id"`
 	UserID             string                    `json:"user_id"`
@@ -35,6 +45,7 @@ type AdminNannyData struct {
 	City               string                    `json:"city"`
 	Province           string                    `json:"province"`
 	ScreeningSteps     ScreeningStepsData        `json:"screening_steps"`
+	Documents          []AdminNannyDocumentData  `json:"documents"`
 	WaitingDays        int                       `json:"waiting_days"`
 	CreatedAt          time.Time                 `json:"created_at"`
 	UpdatedAt          time.Time                 `json:"updated_at"`
@@ -299,10 +310,27 @@ func toAdminNannyData(record repository.NannyRecord) AdminNannyData {
 			ReferencesChecked: record.ReferencesChecked,
 			InterviewDone:     record.InterviewDone,
 		},
+		Documents:   toAdminNannyDocumentsData(record.Documents),
 		WaitingDays: waitingDays,
 		CreatedAt:   record.CreatedAt,
 		UpdatedAt:   record.UpdatedAt,
 	}
+}
+
+func toAdminNannyDocumentsData(documents []models.NannyDocument) []AdminNannyDocumentData {
+	items := make([]AdminNannyDocumentData, 0, len(documents))
+	for _, document := range documents {
+		items = append(items, AdminNannyDocumentData{
+			ID:           document.ID.String(),
+			FileName:     document.FileName,
+			FileURL:      document.FileURL,
+			MimeType:     document.MimeType,
+			SizeBytes:    document.SizeBytes,
+			ResourceType: document.ResourceType,
+			CreatedAt:    document.CreatedAt,
+		})
+	}
+	return items
 }
 
 func toAdminNannyEarningsData(summary repository.NannyBookingSummary) AdminNannyEarningsData {

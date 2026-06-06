@@ -28,8 +28,9 @@ type Client struct {
 }
 
 type UploadResult struct {
-	SecureURL string `json:"secure_url"`
-	PublicID  string `json:"public_id"`
+	SecureURL    string `json:"secure_url"`
+	PublicID     string `json:"public_id"`
+	ResourceType string `json:"resource_type"`
 }
 
 func NewClient(cloudName, apiKey, apiSecret string) *Client {
@@ -48,6 +49,11 @@ func (c *Client) Configured() bool {
 }
 
 func (c *Client) UploadImage(ctx context.Context, data []byte, folder, publicID string) (UploadResult, error) {
+	return c.UploadFile(ctx, data, folder, publicID, "image", "image")
+}
+
+func (c *Client) UploadFile(ctx context.Context, data []byte, folder, publicID, fileName, resourceType string) (UploadResult, error) {
+	resourceType = normalizeResourceType(resourceType)
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 	params := map[string]string{
 		"folder":     folder,
@@ -61,7 +67,7 @@ func (c *Client) UploadImage(ctx context.Context, data []byte, folder, publicID 
 	var buf bytes.Buffer
 	w := multipart.NewWriter(&buf)
 
-	fw, err := w.CreateFormFile("file", "image")
+	fw, err := w.CreateFormFile("file", fileName)
 	if err != nil {
 		log.Printf("cloudinary_upload_failed folder=%s public_id=%s result=form_file_failed err=%v", folder, publicID, err)
 		return UploadResult{}, err
@@ -80,7 +86,7 @@ func (c *Client) UploadImage(ctx context.Context, data []byte, folder, publicID 
 	_ = w.WriteField("signature", signature)
 	w.Close()
 
-	endpoint := fmt.Sprintf("%s/%s/image/upload", apiBase, c.cloudName)
+	endpoint := fmt.Sprintf("%s/%s/%s/upload", apiBase, c.cloudName, resourceType)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, &buf)
 	if err != nil {
 		log.Printf("cloudinary_upload_failed folder=%s public_id=%s result=request_create_failed err=%v", folder, publicID, err)
@@ -110,10 +116,18 @@ func (c *Client) UploadImage(ctx context.Context, data []byte, folder, publicID 
 		log.Printf("cloudinary_upload_failed folder=%s public_id=%s result=decode_failed err=%v", folder, publicID, err)
 		return UploadResult{}, err
 	}
+	if result.ResourceType == "" {
+		result.ResourceType = resourceType
+	}
 	return result, nil
 }
 
 func (c *Client) DeleteImage(ctx context.Context, publicID string) error {
+	return c.DeleteFile(ctx, publicID, "image")
+}
+
+func (c *Client) DeleteFile(ctx context.Context, publicID string, resourceType string) error {
+	resourceType = normalizeResourceType(resourceType)
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 	params := map[string]string{
 		"public_id": publicID,
@@ -127,7 +141,7 @@ func (c *Client) DeleteImage(ctx context.Context, publicID string) error {
 	values.Set("api_key", c.apiKey)
 	values.Set("signature", signature)
 
-	endpoint := fmt.Sprintf("%s/%s/image/destroy", apiBase, c.cloudName)
+	endpoint := fmt.Sprintf("%s/%s/%s/destroy", apiBase, c.cloudName, resourceType)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(values.Encode()))
 	if err != nil {
 		log.Printf("cloudinary_delete_failed public_id=%s result=request_create_failed err=%v", publicID, err)
@@ -148,6 +162,16 @@ func (c *Client) DeleteImage(ctx context.Context, publicID string) error {
 		return fmt.Errorf("cloudinary_error_%d: %s", resp.StatusCode, string(body))
 	}
 	return nil
+}
+
+func normalizeResourceType(resourceType string) string {
+	trimmed := strings.TrimSpace(resourceType)
+	switch trimmed {
+	case "raw", "video":
+		return trimmed
+	default:
+		return "image"
+	}
 }
 
 func (c *Client) sign(params map[string]string) string {

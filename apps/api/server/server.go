@@ -47,6 +47,7 @@ import (
 	"github.com/kinsittr/kinsittr-api/repositories/account"
 	admin_repo "github.com/kinsittr/kinsittr-api/repositories/admin"
 	bookings_repo "github.com/kinsittr/kinsittr-api/repositories/bookings"
+	documents_repo "github.com/kinsittr/kinsittr-api/repositories/documents"
 	messages_repo "github.com/kinsittr/kinsittr-api/repositories/messages"
 	nanny_repo "github.com/kinsittr/kinsittr-api/repositories/nanny"
 	notifications_repo "github.com/kinsittr/kinsittr-api/repositories/notifications"
@@ -86,7 +87,7 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	}
 
 	app := fiber.New(fiber.Config{
-		BodyLimit: 6 * 1024 * 1024,
+		BodyLimit: 12 * 1024 * 1024,
 	})
 
 	log.Print("api_request_logger_configured fields=method,path,status,latency,ip")
@@ -135,6 +136,7 @@ func New(cfg *config.Config) (*fiber.App, error) {
 
 	// nanny public
 	nannyPipe := nanny_pipe.NewNannyPipe(nanny_repo.NannyRepo, profile_repo.ProfileRepo)
+	nannyPipe.SetDocumentRepository(documents_repo.DocumentsRepo)
 	if cfg.CloudinaryConfigured() {
 		nannyPipe.SetCloudinaryClient(cloudinaryapi.NewClient(cfg.CloudinaryCloudName, cfg.CloudinaryAPIKey, cfg.CloudinaryAPISecret))
 	}

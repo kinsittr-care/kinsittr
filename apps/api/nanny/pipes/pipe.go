@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/kinsittr/kinsittr-api/models"
+	"github.com/kinsittr/kinsittr-api/repositories/documents"
 	"github.com/kinsittr/kinsittr-api/repositories/nanny"
 	"github.com/kinsittr/kinsittr-api/repositories/profile"
 	cloudinaryapi "github.com/kinsittr/kinsittr-api/shared/cloudinary"
@@ -13,6 +14,8 @@ type cloudinaryClient interface {
 	Configured() bool
 	UploadImage(ctx context.Context, data []byte, folder, publicID string) (cloudinaryapi.UploadResult, error)
 	DeleteImage(ctx context.Context, publicID string) error
+	UploadFile(ctx context.Context, data []byte, folder, publicID, fileName, resourceType string) (cloudinaryapi.UploadResult, error)
+	DeleteFile(ctx context.Context, publicID string, resourceType string) error
 }
 
 type PublicNannyCard struct {
@@ -62,10 +65,26 @@ type PublicNannyListData struct {
 	Total int               `json:"total"`
 }
 
+type NannyDocumentData struct {
+	ID           string `json:"id"`
+	FileName     string `json:"file_name"`
+	FileURL      string `json:"file_url"`
+	MimeType     string `json:"mime_type"`
+	SizeBytes    int64  `json:"size_bytes"`
+	ResourceType string `json:"resource_type"`
+	CreatedAt    string `json:"created_at"`
+}
+
+type NannyDocumentListData struct {
+	Items []NannyDocumentData `json:"items"`
+	Total int                 `json:"total"`
+}
+
 type NannyPipe struct {
-	repo        nanny.NannyRepository
-	profileRepo profile.ProfileRepository
-	cloudinary  cloudinaryClient
+	repo         nanny.NannyRepository
+	profileRepo  profile.ProfileRepository
+	documentRepo documents.Repository
+	cloudinary   cloudinaryClient
 }
 
 func NewNannyPipe(repo nanny.NannyRepository, profileRepo profile.ProfileRepository) *NannyPipe {
@@ -77,4 +96,8 @@ func NewNannyPipe(repo nanny.NannyRepository, profileRepo profile.ProfileReposit
 
 func (p *NannyPipe) SetCloudinaryClient(c cloudinaryClient) {
 	p.cloudinary = c
+}
+
+func (p *NannyPipe) SetDocumentRepository(repo documents.Repository) {
+	p.documentRepo = repo
 }

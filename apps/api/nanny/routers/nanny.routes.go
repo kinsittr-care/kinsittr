@@ -36,5 +36,23 @@ func NannyRoutes(controller *controllers.NannyController, jwtSecret string) []ap
 			Middlewares: []typings.FiberMiddleware{auth},
 			Handler:     controller.DeleteAvatar,
 		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/documents",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.ListDocuments,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPost),
+			Path:        "/documents",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.UploadDocument,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodDelete),
+			Path:        "/documents/:id",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.DeleteDocument,
+		},
 	}
 }

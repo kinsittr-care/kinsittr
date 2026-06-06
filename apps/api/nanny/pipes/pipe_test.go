@@ -101,6 +101,17 @@ func (f *fakeCloudinaryClient) DeleteImage(_ context.Context, publicID string) e
 	return f.deleteErr
 }
 
+func (f *fakeCloudinaryClient) UploadFile(_ context.Context, _ []byte, folder string, publicID string, _ string, _ string) (cloudinaryapi.UploadResult, error) {
+	f.uploadedFolder = folder
+	f.uploadedPublic = publicID
+	return f.uploadResult, f.uploadErr
+}
+
+func (f *fakeCloudinaryClient) DeleteFile(_ context.Context, publicID string, _ string) error {
+	f.deletedPublic = publicID
+	return f.deleteErr
+}
+
 // ── normalizeSpecialty ────────────────────────────────────────────────────────
 
 func TestNormalizeSpecialty(t *testing.T) {

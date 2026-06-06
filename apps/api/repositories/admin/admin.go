@@ -33,6 +33,7 @@ type NannyRecord struct {
 	DocsReviewed      bool
 	ReferencesChecked bool
 	InterviewDone     bool
+	Documents         []models.NannyDocument
 }
 
 type ParentRecord struct {

@@ -1,5 +1,7 @@
 import type {
   ListPublicNanniesParams,
+  NannyDocument,
+  NannyDocumentListData,
   NannyProfile,
   PublicNannyListData,
   PublicNannyProfile,
@@ -33,6 +35,8 @@ export function publicNanniesQueryKey(params: ListPublicNanniesParams) {
 export function ownNannyProfileQueryKey() {
   return ["nanny-profile"] as const;
 }
+
+export const nannyDocumentsQueryKey = ["nanny-documents"] as const;
 
 export async function listPublicNannies(params: ListPublicNanniesParams) {
   const queryString = buildListPublicNanniesQuery(params);
@@ -92,6 +96,47 @@ export async function uploadNannyAvatar(file: File): Promise<ApiResponse<NannyPr
 export async function deleteNannyAvatar(): Promise<ApiResponse<NannyProfile>> {
   return apiRequest<NannyProfile>(
     "/api/v1/nanny/avatar",
+    {
+      method: "DELETE",
+    },
+    {
+      requiresAuth: true,
+    },
+  );
+}
+
+export async function listNannyDocuments() {
+  return apiRequest<NannyDocumentListData>("/api/v1/nanny/documents", undefined, {
+    requiresAuth: true,
+  });
+}
+
+export async function uploadNannyDocument(file: File): Promise<ApiResponse<NannyDocument>> {
+  const formData = new FormData();
+  formData.append("document", file);
+
+  try {
+    return await apiRequest<NannyDocument>(
+      "/api/v1/nanny/documents",
+      {
+        method: "POST",
+        body: formData,
+      },
+      {
+        requiresAuth: true,
+      },
+    );
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      throw error;
+    }
+    throw new ApiRequestError("Upload failed");
+  }
+}
+
+export async function deleteNannyDocument(documentId: string): Promise<ApiResponse<unknown>> {
+  return apiRequest<unknown>(
+    `/api/v1/nanny/documents/${encodeURIComponent(documentId)}`,
     {
       method: "DELETE",
     },
