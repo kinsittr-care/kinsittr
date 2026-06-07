@@ -29,6 +29,8 @@ export default function BookingSheet({ nanny, open, onClose, onBooked }: Booking
 
   if (!nanny) return null;
 
+  const titleID = "booking-sheet-title";
+  const descriptionID = "booking-sheet-description";
   const content = <BookingFormContent nanny={nanny} onClose={onClose} onBooked={onBooked} />;
 
   if (isMobile) {
@@ -48,11 +50,15 @@ export default function BookingSheet({ nanny, open, onClose, onBooked }: Booking
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
+        aria-describedby={descriptionID}
+        aria-labelledby={titleID}
         showCloseButton={false}
         className="p-0 overflow-hidden max-w-[460px]"
       >
-        <DialogTitle className="hidden"></DialogTitle>
-        <DialogDescription className="sr-only">
+        <DialogTitle id={titleID} className="sr-only">
+          Book {nanny.name}
+        </DialogTitle>
+        <DialogDescription id={descriptionID} className="sr-only">
           Choose a booking date, time, and duration for this nanny.
         </DialogDescription>
         {content}

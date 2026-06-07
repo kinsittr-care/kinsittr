@@ -44,6 +44,48 @@ type NannyConnectContext struct {
 	StripeOnboarded bool
 }
 
+type NannyPayoutSettings struct {
+	NannyProfileID uuid.UUID
+	Schedule       string
+}
+
+type PaymentReconciliationIssue struct {
+	IssueType             string
+	BookingID             uuid.UUID
+	ParentProfileID       uuid.UUID
+	NannyProfileID        uuid.UUID
+	BookingStatus         models.BookingStatus
+	PaymentStatus         models.PaymentStatus
+	StripePaymentIntentID string
+	StripeChargeID        string
+	StripeRefundID        string
+	Amount                float64
+	Currency              models.Currency
+	CreatedAt             string
+}
+
+type NannyEarningsSummary struct {
+	ThisMonthEarnings float64
+	ThisMonthBookings int
+	LastMonthEarnings float64
+	LastMonthBookings int
+	AllTimeEarnings   float64
+	AllTimeBookings   int
+}
+
+type NannyEarningRecord struct {
+	BookingID         uuid.UUID
+	ParentDisplayName string
+	Date              string
+	StartTime         string
+	Duration          int
+	GrossAmount       float64
+	PlatformFee       float64
+	NetAmount         float64
+	Currency          models.Currency
+	PaymentStatus     models.PaymentStatus
+}
+
 type CreatePaymentParams struct {
 	BookingID             uuid.UUID
 	ParentProfileID       uuid.UUID
@@ -63,8 +105,15 @@ type PaymentsRepository interface {
 	GetNannyConnectContext(ctx context.Context, userID uuid.UUID) (NannyConnectContext, error)
 	UpdateNannyStripeAccount(ctx context.Context, nannyProfileID uuid.UUID, accountID string, onboarded bool) error
 	UpdateNannyStripeOnboardedByAccountID(ctx context.Context, accountID string, onboarded bool) error
+	GetNannyPayoutSettings(ctx context.Context, userID uuid.UUID) (NannyPayoutSettings, error)
+	GetNannyPayoutSettingsByAccountID(ctx context.Context, accountID string) (NannyPayoutSettings, error)
+	UpdateNannyPayoutSettings(ctx context.Context, userID uuid.UUID, schedule string) (NannyPayoutSettings, error)
+	GetNannyEarningsSummary(ctx context.Context, userID uuid.UUID) (NannyEarningsSummary, error)
+	ListNannyEarnings(ctx context.Context, userID uuid.UUID, page, limit int) ([]NannyEarningRecord, int, error)
+	ListPaymentReconciliationIssues(ctx context.Context, page, limit int) ([]PaymentReconciliationIssue, int, error)
 	UpdateParentStripeCustomer(ctx context.Context, parentProfileID uuid.UUID, customerID string) error
 	UpdateParentDefaultPaymentMethod(ctx context.Context, parentProfileID uuid.UUID, paymentMethodID string) error
+	HasParentApprovedBookings(ctx context.Context, parentProfileID uuid.UUID) (bool, error)
 	GetPaymentByBookingID(ctx context.Context, bookingID uuid.UUID) (models.BookingPayment, error)
 	UpsertBookingPayment(ctx context.Context, params CreatePaymentParams) (models.BookingPayment, error)
 	UpdatePaymentStatusByIntentID(ctx context.Context, paymentIntentID string, status models.PaymentStatus, chargeID, failureMessage string) error

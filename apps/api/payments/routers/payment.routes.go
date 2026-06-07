@@ -23,6 +23,48 @@ func NannyPaymentRoutes(controller *controllers.PaymentsController, jwtSecret st
 			Middlewares: []typings.FiberMiddleware{auth},
 			Handler:     controller.CreateNannyConnectLink,
 		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/balance",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.GetNannyStripeBalance,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/payouts",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.ListNannyStripePayouts,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/payout-settings",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.GetNannyPayoutSettings,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodPatch),
+			Path:        "/payout-settings",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.UpdateNannyPayoutSettings,
+		},
+	}
+}
+
+func NannyEarningsRoutes(controller *controllers.PaymentsController, jwtSecret string) []api.RouterSchema {
+	auth := middleware.RequireAuth(jwtSecret)
+	return []api.RouterSchema{
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/summary",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.GetNannyEarningsSummary,
+		},
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/",
+			Middlewares: []typings.FiberMiddleware{auth},
+			Handler:     controller.ListNannyEarnings,
+		},
 	}
 }
 
@@ -63,6 +105,20 @@ func StripeWebhookRoutes(controller *controllers.PaymentsController) []api.Route
 			Path:        "/stripe",
 			Middlewares: nil,
 			Handler:     controller.StripeWebhook,
+		},
+	}
+}
+
+func AdminPaymentRoutes(controller *controllers.PaymentsController, jwtSecret string) []api.RouterSchema {
+	auth := middleware.RequireAuth(jwtSecret)
+	admin := middleware.RequireAdmin()
+	adminAuth := []typings.FiberMiddleware{auth, admin}
+	return []api.RouterSchema{
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/payments/reconciliation",
+			Middlewares: adminAuth,
+			Handler:     controller.ListPaymentReconciliationIssues,
 		},
 	}
 }

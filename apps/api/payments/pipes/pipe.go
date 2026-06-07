@@ -33,8 +33,73 @@ type StripeConnectData struct {
 }
 
 type StripeStatusData struct {
-	AccountID string `json:"account_id,omitempty"`
-	Onboarded bool   `json:"onboarded"`
+	AccountID                 string   `json:"account_id,omitempty"`
+	Onboarded                 bool     `json:"onboarded"`
+	ChargesEnabled            bool     `json:"charges_enabled"`
+	PayoutsEnabled            bool     `json:"payouts_enabled"`
+	DetailsSubmitted          bool     `json:"details_submitted"`
+	RequirementsCurrentlyDue  []string `json:"requirements_currently_due"`
+	RequirementsEventuallyDue []string `json:"requirements_eventually_due"`
+	DisabledReason            string   `json:"disabled_reason,omitempty"`
+}
+
+type StripeBalanceAmountData struct {
+	Amount   float64 `json:"amount"`
+	Currency string  `json:"currency"`
+}
+
+type StripeBalanceData struct {
+	Available []StripeBalanceAmountData `json:"available"`
+	Pending   []StripeBalanceAmountData `json:"pending"`
+}
+
+type StripePayoutData struct {
+	ID          string  `json:"id"`
+	Amount      float64 `json:"amount"`
+	Currency    string  `json:"currency"`
+	Status      string  `json:"status"`
+	ArrivalDate string  `json:"arrival_date"`
+	CreatedAt   string  `json:"created_at"`
+}
+
+type StripePayoutListData struct {
+	Items      []StripePayoutData `json:"items"`
+	Limit      int                `json:"limit"`
+	HasMore    bool               `json:"has_more"`
+	NextCursor string             `json:"next_cursor,omitempty"`
+}
+
+type NannyPayoutSettingsData struct {
+	Schedule string `json:"schedule"`
+}
+
+type NannyEarningsSummaryData struct {
+	ThisMonthEarnings float64 `json:"this_month_earnings"`
+	ThisMonthBookings int     `json:"this_month_bookings"`
+	LastMonthEarnings float64 `json:"last_month_earnings"`
+	LastMonthBookings int     `json:"last_month_bookings"`
+	AllTimeEarnings   float64 `json:"all_time_earnings"`
+	AllTimeBookings   int     `json:"all_time_bookings"`
+}
+
+type NannyEarningData struct {
+	BookingID         string               `json:"booking_id"`
+	ParentDisplayName string               `json:"parent_display_name"`
+	Date              string               `json:"date"`
+	StartTime         string               `json:"start_time"`
+	Duration          int                  `json:"duration"`
+	GrossAmount       float64              `json:"gross_amount"`
+	PlatformFee       float64              `json:"platform_fee"`
+	NetAmount         float64              `json:"net_amount"`
+	Currency          string               `json:"currency"`
+	PaymentStatus     models.PaymentStatus `json:"payment_status"`
+}
+
+type NannyEarningsListData struct {
+	Items []NannyEarningData `json:"items"`
+	Page  int                `json:"page"`
+	Limit int                `json:"limit"`
+	Total int                `json:"total"`
 }
 
 type SetupIntentData struct {
@@ -53,6 +118,28 @@ type PaymentMethodData struct {
 
 type PaymentMethodListData struct {
 	Items []PaymentMethodData `json:"items"`
+}
+
+type PaymentReconciliationIssueData struct {
+	IssueType             string               `json:"issue_type"`
+	BookingID             string               `json:"booking_id"`
+	ParentProfileID       string               `json:"parent_profile_id"`
+	NannyProfileID        string               `json:"nanny_profile_id"`
+	BookingStatus         models.BookingStatus `json:"booking_status"`
+	PaymentStatus         models.PaymentStatus `json:"payment_status"`
+	StripePaymentIntentID string               `json:"stripe_payment_intent_id,omitempty"`
+	StripeChargeID        string               `json:"stripe_charge_id,omitempty"`
+	StripeRefundID        string               `json:"stripe_refund_id,omitempty"`
+	Amount                float64              `json:"amount"`
+	Currency              string               `json:"currency"`
+	CreatedAt             string               `json:"created_at"`
+}
+
+type PaymentReconciliationListData struct {
+	Items []PaymentReconciliationIssueData `json:"items"`
+	Page  int                              `json:"page"`
+	Limit int                              `json:"limit"`
+	Total int                              `json:"total"`
 }
 
 func NewPaymentsPipe(repo paymentrepo.PaymentsRepository, profileRepo profile.ProfileRepository, stripeClient *stripeapi.Client, platformFeeRate float64, webhookSecret, refreshURL, returnURL string, notifyRepo ...notifyrepo.NotificationsRepository) *PaymentsPipe {

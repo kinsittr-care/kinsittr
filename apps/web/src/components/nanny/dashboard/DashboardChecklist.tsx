@@ -1,12 +1,5 @@
 import { N } from "../tokens";
-
-const steps = [
-  { label: "Profile photo uploaded",    done: true  },
-  { label: "Bio written (100+ chars)",  done: true  },
-  { label: "Hourly rate set",           done: true  },
-  { label: "References added (2+)",     done: false },
-  { label: "Background check complete", done: false },
-];
+import type { NannyProfile } from "@/src/types/api/api";
 
 const sectionTitle = {
   fontFamily: "DM Serif Display, var(--font-dm-serif), serif",
@@ -30,7 +23,16 @@ function CheckIcon({ done }: { done: boolean }) {
   );
 }
 
-export default function DashboardChecklist() {
+export default function DashboardChecklist({
+  profile,
+  fallbackPhone,
+  isLoading,
+}: {
+  profile: NannyProfile | undefined;
+  fallbackPhone: string | undefined;
+  isLoading: boolean;
+}) {
+  const steps = getProfileStrengthSteps(profile, fallbackPhone);
   const doneCount = steps.filter((s) => s.done).length;
   const pct = Math.round((doneCount / steps.length) * 100);
 
@@ -73,6 +75,8 @@ export default function DashboardChecklist() {
         </div>
       </div>
 
+      {isLoading && <p style={{ margin: "0 0 14px", fontSize: 13.5, color: N.inkFaint }}>Checking your profile...</p>}
+
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {steps.map((s) => (
           <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -92,4 +96,21 @@ export default function DashboardChecklist() {
       </div>
     </div>
   );
+}
+
+function getProfileStrengthSteps(profile: NannyProfile | undefined, fallbackPhone: string | undefined) {
+  return [
+    { label: "Profile photo uploaded", done: text(profile?.avatar_url) },
+    { label: "Phone number added", done: text(profile?.phone || fallbackPhone) },
+    { label: "Location selected", done: text(profile?.city) && text(profile?.province) },
+    { label: "Bio written", done: text(profile?.bio) },
+    { label: "Specialties selected", done: Boolean(profile?.specialties.length) },
+    { label: "Hourly rate set", done: Boolean(profile && profile.rate_per_hour > 0) },
+    { label: "Stripe payouts connected", done: Boolean(profile?.stripe_onboarded) },
+    { label: "Verification approved", done: profile?.verification_status === "verified" },
+  ];
+}
+
+function text(value: string | undefined | null) {
+  return Boolean(value?.trim());
 }

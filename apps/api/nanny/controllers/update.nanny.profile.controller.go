@@ -43,7 +43,7 @@ func (c *NannyController) UpdateOwnProfile(ctx *fiber.Ctx) error {
 
 	res := c.pipe.UpdateOwnProfile(ctx.Context(), userID, dto)
 	if !res.Success {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
+		return ctx.Status(updateProfilePipeStatus(string(res.Message))).JSON(fiber.Map{
 			"success": false,
 			"message": string(res.Message),
 		})
@@ -54,4 +54,11 @@ func (c *NannyController) UpdateOwnProfile(ctx *fiber.Ctx) error {
 		"message": string(res.Message),
 		"data":    res.Data,
 	})
+}
+
+func updateProfilePipeStatus(message string) int {
+	if message == messages.Invalid_Nanny_Profile {
+		return fiber.StatusBadRequest
+	}
+	return fiber.StatusNotFound
 }

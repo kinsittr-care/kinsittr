@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { loadStripe, type Stripe, type StripeCardElement } from "@stripe/stripe-js";
 import SectionCard from "../profile/SectionCard";
 import {
   createParentSetupIntent,
@@ -34,51 +35,8 @@ const inputStyle: React.CSSProperties = {
   marginBottom: 16,
 };
 
-type StripeCardElement = {
-  mount: (selector: string) => void;
-  destroy: () => void;
-};
-
-type StripeElements = {
-  create: (type: "card", options?: object) => StripeCardElement;
-};
-
-type StripeInstance = {
-  elements: () => StripeElements;
-  confirmCardSetup: (
-    clientSecret: string,
-    data: { payment_method: { card: StripeCardElement } },
-  ) => Promise<{ error?: { message?: string }; setupIntent?: { payment_method?: string } }>;
-};
-
-declare global {
-  interface Window {
-    Stripe?: (publishableKey: string) => StripeInstance;
-  }
-}
-
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-
-function loadStripeScript() {
-  return new Promise<void>((resolve, reject) => {
-    if (window.Stripe) {
-      resolve();
-      return;
-    }
-    const existing = document.querySelector<HTMLScriptElement>("script[src='https://js.stripe.com/v3/']");
-    if (existing) {
-      existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener("error", () => reject(new Error("Unable to load Stripe.")), { once: true });
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = "https://js.stripe.com/v3/";
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Unable to load Stripe."));
-    document.body.appendChild(script);
-  });
-}
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 export default function BillingView() {
   const queryClient = useQueryClient();
@@ -86,7 +44,7 @@ export default function BillingView() {
   const [cardError, setCardError] = useState("");
   const [cardSuccess, setCardSuccess] = useState("");
   const cardElementRef = useRef<StripeCardElement | null>(null);
-  const stripeRef = useRef<StripeInstance | null>(null);
+  const stripeRef = useRef<Stripe | null>(null);
   const setupMutation = useMutation({ mutationFn: createParentSetupIntent });
   const methodsQuery = useQuery({
     queryKey: parentPaymentMethodsQueryKey,
@@ -115,9 +73,8 @@ export default function BillingView() {
 
     async function mountCard() {
       try {
-        await loadStripeScript();
-        if (!active || !window.Stripe || !stripePublishableKey) return;
-        const stripe = window.Stripe(stripePublishableKey);
+        const stripe = await stripePromise;
+        if (!active || !stripe) return;
         const card = stripe.elements().create("card", {
           style: {
             base: {
@@ -170,9 +127,20 @@ export default function BillingView() {
         setCardError(result.error.message ?? "Unable to save card.");
         return;
       }
-      const paymentMethodID = result.setupIntent?.payment_method;
+      const paymentMethod = result.setupIntent?.payment_method;
+      const paymentMethodID = typeof paymentMethod === "string" ? paymentMethod : paymentMethod?.id;
       if (paymentMethodID) {
-        await setDefaultParentPaymentMethod(paymentMethodID);
+        try {
+          await setDefaultParentPaymentMethod(paymentMethodID);
+        } catch (error) {
+          await queryClient.invalidateQueries({ queryKey: parentPaymentMethodsQueryKey });
+          setCardError(
+            error instanceof Error
+              ? `Card saved in Stripe, but KinSittr could not set it as default: ${error.message}`
+              : "Card saved in Stripe, but KinSittr could not set it as default.",
+          );
+          return;
+        }
       }
       await queryClient.invalidateQueries({ queryKey: parentPaymentMethodsQueryKey });
       setCardSuccess("Card saved successfully.");

@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/models"
@@ -12,7 +13,9 @@ import (
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
 
-func (p *NannyPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto dtos.UpdateNannyProfileDTO) *shared.PipeRes[models.NannyProfile] {
+const specialtiesTotalCharacterLimit = 25
+
+func (p *NannyPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto dtos.UpdateNannyProfileDTO) *shared.PipeRes[OwnNannyProfile] {
 	specialties := make([]string, 0, len(dto.Specialties))
 	for _, specialty := range dto.Specialties {
 		normalized := normalizeSpecialty(specialty)
@@ -21,27 +24,45 @@ func (p *NannyPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto 
 		}
 		specialties = append(specialties, normalized)
 	}
+	if specialtiesCharacterCount(specialties) > specialtiesTotalCharacterLimit {
+		return &shared.PipeRes[OwnNannyProfile]{
+			Success: false,
+			Message: shared.CreatePipeMessage(messages.Invalid_Nanny_Profile),
+		}
+	}
 
 	profile, err := p.profileRepo.UpdateNannyProfile(ctx, models.NannyProfile{
 		UserID:      userID,
-		DisplayName: strings.TrimSpace(dto.DisplayName),
 		Phone:       strings.TrimSpace(dto.Phone),
 		Bio:         strings.TrimSpace(dto.Bio),
 		Specialties: specialties,
 		RatePerHour: dto.RatePerHour,
-		City:        strings.TrimSpace(dto.City),
-		Province:    strings.TrimSpace(dto.Province),
+		City:        normalizeLocationField(dto.City),
+		Province:    normalizeLocationField(dto.Province),
 	})
 	if err != nil || profile.ID == uuid.Nil {
-		return &shared.PipeRes[models.NannyProfile]{
+		return &shared.PipeRes[OwnNannyProfile]{
 			Success: false,
 			Message: shared.CreatePipeMessage(messages.Nanny_Not_Found),
 		}
 	}
 
-	return &shared.PipeRes[models.NannyProfile]{
+	data := ownNannyProfileData(profile)
+	return &shared.PipeRes[OwnNannyProfile]{
 		Success: true,
 		Message: shared.CreatePipeMessage(messages.Nanny_Profile_Updated),
-		Data:    &profile,
+		Data:    &data,
 	}
+}
+
+func normalizeLocationField(value string) string {
+	return strings.Join(strings.Fields(value), " ")
+}
+
+func specialtiesCharacterCount(values []string) int {
+	total := 0
+	for _, value := range values {
+		total += utf8.RuneCountInString(strings.TrimSpace(value))
+	}
+	return total
 }

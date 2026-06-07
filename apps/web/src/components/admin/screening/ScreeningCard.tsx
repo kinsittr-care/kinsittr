@@ -1,9 +1,10 @@
 import { A } from "../tokens";
 import AdminAvatar from "../compositions/AdminAvatar";
+import AdminNannyDocumentsList from "../compositions/AdminNannyDocumentsList";
 import AdminStepChip from "../compositions/AdminStepChip";
 import { TimerIcon, PinIcon, ArrowSmIcon } from "../compositions/admin-icons";
 import { btnGhostSm, btnPrimary } from "../compositions/admin-styles";
-import type { AdminVerificationStatus } from "@/src/types/api/admin";
+import type { AdminNannyDocument, AdminVerificationStatus } from "@/src/types/api/admin";
 
 export type Steps = { docs: boolean; refs: boolean; interview: boolean };
 
@@ -15,6 +16,7 @@ export type ScreeningApplicant = {
   submitted: string;
   waiting: number;
   status: AdminVerificationStatus;
+  documents: AdminNannyDocument[];
 };
 
 export default function ScreeningCard({
@@ -101,6 +103,12 @@ export default function ScreeningCard({
                 />
               </button>
             ))}
+          </div>
+          <div style={{ marginTop: 18 }}>
+            <div style={{ color: A.ink, fontSize: 13, fontWeight: 700 }}>
+              Uploaded documents ({applicant.documents.length})
+            </div>
+            <AdminNannyDocumentsList documents={applicant.documents} compact />
           </div>
         </div>
         <div

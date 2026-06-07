@@ -4,14 +4,13 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/kinsittr/kinsittr-api/models"
 	"github.com/kinsittr/kinsittr-api/nanny/messages"
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
 
-func (p *NannyPipe) DeleteAvatar(ctx context.Context, userID uuid.UUID) *shared.PipeRes[models.NannyProfile] {
+func (p *NannyPipe) DeleteAvatar(ctx context.Context, userID uuid.UUID) *shared.PipeRes[OwnNannyProfile] {
 	if p.cloudinary == nil || !p.cloudinary.Configured() {
-		return &shared.PipeRes[models.NannyProfile]{
+		return &shared.PipeRes[OwnNannyProfile]{
 			Success: false,
 			Message: shared.CreatePipeMessage(messages.Cloudinary_Not_Configured),
 		}
@@ -19,7 +18,7 @@ func (p *NannyPipe) DeleteAvatar(ctx context.Context, userID uuid.UUID) *shared.
 
 	profile, err := p.profileRepo.GetNannyProfileByUserID(ctx, userID)
 	if err != nil || profile.ID == uuid.Nil {
-		return &shared.PipeRes[models.NannyProfile]{
+		return &shared.PipeRes[OwnNannyProfile]{
 			Success: false,
 			Message: shared.CreatePipeMessage(messages.Nanny_Not_Found),
 		}
@@ -27,7 +26,7 @@ func (p *NannyPipe) DeleteAvatar(ctx context.Context, userID uuid.UUID) *shared.
 
 	if profile.AvatarPublicID != "" {
 		if err := p.cloudinary.DeleteImage(ctx, profile.AvatarPublicID); err != nil {
-			return &shared.PipeRes[models.NannyProfile]{
+			return &shared.PipeRes[OwnNannyProfile]{
 				Success: false,
 				Message: shared.CreatePipeMessage(messages.Avatar_Delete_Failed),
 			}
@@ -36,15 +35,16 @@ func (p *NannyPipe) DeleteAvatar(ctx context.Context, userID uuid.UUID) *shared.
 
 	updated, err := p.profileRepo.UpdateNannyAvatar(ctx, userID, "", "")
 	if err != nil || updated.ID == uuid.Nil {
-		return &shared.PipeRes[models.NannyProfile]{
+		return &shared.PipeRes[OwnNannyProfile]{
 			Success: false,
 			Message: shared.CreatePipeMessage(messages.Avatar_Delete_Failed),
 		}
 	}
 
-	return &shared.PipeRes[models.NannyProfile]{
+	response := ownNannyProfileData(updated)
+	return &shared.PipeRes[OwnNannyProfile]{
 		Success: true,
 		Message: shared.CreatePipeMessage(messages.Avatar_Deleted),
-		Data:    &updated,
+		Data:    &response,
 	}
 }

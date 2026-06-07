@@ -110,12 +110,12 @@ func (r *pgRepository) UpdateNannyProfile(ctx context.Context, p models.NannyPro
 	var updated models.NannyProfile
 	err = tx.QueryRow(ctx, `
 		UPDATE nanny_profiles
-		SET display_name = $1, bio = $2, specialties = $3, rate_per_hour = $4, city = $5, province = $6, updated_at = NOW()
-		WHERE user_id = $7
+		SET bio = $1, specialties = $2, rate_per_hour = $3, city = $4, province = $5, updated_at = NOW()
+		WHERE user_id = $6
 		RETURNING id, user_id, display_name, bio, COALESCE(specialties, '{}'::text[]), rate_per_hour, service_type, currency, verification_status, verified_at,
 		          stripe_account_id, stripe_onboarded, rating_avg, rating_count, COALESCE(avatar_url, ''), COALESCE(avatar_public_id, ''), city, province, created_at, updated_at
 	`,
-		p.DisplayName, p.Bio, p.Specialties, p.RatePerHour, p.City, p.Province, p.UserID,
+		p.Bio, p.Specialties, p.RatePerHour, p.City, p.Province, p.UserID,
 	).Scan(
 		&updated.ID, &updated.UserID, &updated.DisplayName, &updated.Bio, &updated.Specialties,
 		&updated.RatePerHour, &updated.ServiceType, &updated.Currency, &updated.VerificationStatus,

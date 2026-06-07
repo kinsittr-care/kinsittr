@@ -1,6 +1,7 @@
 import AdminPill, { type PillTone } from "./compositions/AdminPill";
 import AdminStars from "./compositions/AdminStars";
 import AdminAuditTimeline from "./compositions/AdminAuditTimeline";
+import AdminNannyDocumentsList from "./compositions/AdminNannyDocumentsList";
 import { btnApprove } from "./compositions/admin-styles";
 import { A } from "./tokens";
 import type { AdminAuditAction, AdminNannyDetailData, AdminVerificationStatus } from "@/src/types/api/admin";
@@ -84,6 +85,11 @@ export default function AdminNannyDetailPanel({
             {nanny.rating_avg.toFixed(1)} ({nanny.rating_count})
           </span>
         </div>
+      </div>
+
+      <div style={sectionStyle}>
+        <h3 style={sectionTitle}>Screening documents ({nanny.documents.length})</h3>
+        <AdminNannyDocumentsList documents={nanny.documents} />
       </div>
 
       <div style={sectionStyle}>

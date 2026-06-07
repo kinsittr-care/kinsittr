@@ -6,6 +6,8 @@ import { ApiRequestError } from "@/src/utils/api/api";
 import { establishAuthSession, registerParent } from "@/src/utils/api/auth";
 import { getPostAuthRedirectPath } from "@/src/utils/api/auth-routing";
 import { RegisterParentPayload } from "@/src/types/api/api";
+import PasswordField from "./PasswordField";
+import AuthErrorDialog from "./AuthErrorDialog";
 
 const inputClass = `
   w-full border-[1.5px] rounded-[10px] px-[14px] py-3 text-[14px] outline-none transition-all
@@ -70,30 +72,32 @@ export default function ParentRegisterForm({ onSuccess }: ParentRegisterFormProp
     <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
       <div className="grid grid-cols-2 gap-[14px] max-sm:grid-cols-1">
         <div>
-          <label className={labelClass} style={{ color: "var(--muted)" }}>First name</label>
+          <label className={labelClass} style={{ color: "var(--faint)" }}>First name</label>
           <input name="firstname" type="text" required placeholder="Jordan" className={inputClass} value={values.firstname} onChange={handleChange} style={inputStyle} />
         </div>
         <div>
-          <label className={labelClass} style={{ color: "var(--muted)" }}>Last name</label>
+          <label className={labelClass} style={{ color: "var(--faint)" }}>Last name</label>
           <input name="lastname" type="text" required placeholder="Lee" className={inputClass} value={values.lastname} onChange={handleChange} style={inputStyle} />
         </div>
       </div>
 
       <div>
-        <label className={labelClass} style={{ color: "var(--muted)" }}>Email</label>
+        <label className={labelClass} style={{ color: "var(--faint)" }}>Email</label>
         <input name="email" type="email" required placeholder="you@example.com" className={inputClass} value={values.email} onChange={handleChange} style={inputStyle} />
       </div>
 
       <div>
-        <label className={labelClass} style={{ color: "var(--muted)" }}>Password</label>
-        <input name="password" type="password" required placeholder="Min. 8 characters" className={inputClass} value={values.password} onChange={handleChange} style={inputStyle} />
+        <label className={labelClass} style={{ color: "var(--faint)" }}>Password</label>
+        <PasswordField
+          value={values.password}
+          onChange={handleChange}
+          placeholder="Min. 8 characters"
+          inputClass={inputClass}
+          inputStyle={inputStyle}
+        />
       </div>
 
-      {error && (
-        <p className="text-[13px]" style={{ color: "#b34b39" }}>
-          {error}
-        </p>
-      )}
+      <AuthErrorDialog message={error} onClose={() => setError("")} />
 
       <button
         type="submit"

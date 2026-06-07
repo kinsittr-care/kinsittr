@@ -12,13 +12,26 @@ import (
 )
 
 type AdminAuthTokenPair struct {
-	AccessToken  string       `json:"access_token"`
-	RefreshToken string       `json:"refresh_token"`
-	User         *models.User `json:"user,omitempty"`
+	AccessToken  string         `json:"access_token"`
+	RefreshToken string         `json:"refresh_token"`
+	User         *AdminAuthUser `json:"user,omitempty"`
 }
 
 type AdminSessionData struct {
-	User models.User `json:"user"`
+	User AdminAuthUser `json:"user"`
+}
+
+type AdminAuthUser struct {
+	ID          uuid.UUID       `json:"id"`
+	Firstname   string          `json:"firstname"`
+	Lastname    string          `json:"lastname"`
+	Email       string          `json:"email"`
+	Role        models.UserRole `json:"role"`
+	Phone       string          `json:"phone"`
+	IsActive    bool            `json:"is_active"`
+	CountryCode string          `json:"country_code"`
+	CreatedAt   time.Time       `json:"created_at"`
+	UpdatedAt   time.Time       `json:"updated_at"`
 }
 
 type AdminAuthPipe struct {
@@ -67,5 +80,20 @@ func pipeSuccess[T any](message string, data *T) *shared.PipeRes[T] {
 		Success: true,
 		Message: shared.CreatePipeMessage(message),
 		Data:    data,
+	}
+}
+
+func adminAuthUserData(user models.User) AdminAuthUser {
+	return AdminAuthUser{
+		ID:          user.ID,
+		Firstname:   user.Firstname,
+		Lastname:    user.Lastname,
+		Email:       user.Email,
+		Role:        user.Role,
+		Phone:       user.Phone,
+		IsActive:    user.IsActive,
+		CountryCode: user.CountryCode,
+		CreatedAt:   user.CreatedAt,
+		UpdatedAt:   user.UpdatedAt,
 	}
 }

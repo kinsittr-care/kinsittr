@@ -42,6 +42,11 @@ Server route:
 - `PATCH /api/v1/nanny/profile` — update the authenticated nanny's own profile
 - `POST /api/v1/nanny/avatar` — upload or replace the authenticated nanny's public profile avatar
 - `DELETE /api/v1/nanny/avatar` — remove the authenticated nanny's public profile avatar
+- `GET /api/v1/nanny/documents` — list the authenticated nanny's screening documents
+- `POST /api/v1/nanny/documents` — upload one screening document for the authenticated nanny
+- `DELETE /api/v1/nanny/documents/:id` — delete one screening document for the authenticated nanny
+- `GET /api/v1/nanny/earnings/summary` — return paid earnings totals for the authenticated nanny
+- `GET /api/v1/nanny/earnings` — list completed paid booking earnings for the authenticated nanny
 - `GET /api/v1/nanny/bookings` — list bookings for the authenticated nanny
 - `GET /api/v1/nanny/bookings/:id` — return one nanny booking
 - `PATCH /api/v1/nanny/bookings/:id/approve` — approve a pending booking and open the conversation
@@ -142,12 +147,17 @@ Server route:
 ### Payments
 - `GET /api/v1/nanny/payments/status` — return the authenticated nanny's Stripe Connect status
 - `POST /api/v1/nanny/payments/connect` — create or reuse a Stripe Express account and return an onboarding link
+- `GET /api/v1/nanny/payments/balance` — return Stripe Connect available and pending balances
+- `GET /api/v1/nanny/payments/payouts` — list Stripe Connect payouts with `limit` and `starting_after` cursor support
+- `GET /api/v1/nanny/payments/payout-settings` — return the nanny's payout schedule preference
+- `PATCH /api/v1/nanny/payments/payout-settings` — update payout schedule preference to daily or weekly
 - `POST /api/v1/nanny/bookings/:id/payment/retry` — retry payment and complete an eligible approved booking after billing is fixed
 - `POST /api/v1/parent/billing/setup-intent` — create a Stripe SetupIntent for saving a parent card
 - `GET /api/v1/parent/billing/payment-methods` — list the parent's saved payment methods
 - `PUT /api/v1/parent/billing/payment-methods/:id` — update a payment method or set default
 - `DELETE /api/v1/parent/billing/payment-methods/:id` — remove a saved payment method
 - `POST /api/v1/webhooks/stripe` — process Stripe account, payment intent, and refund webhooks
+- `GET /api/v1/admin/payments/reconciliation` — list booking/payment state mismatches for admin review
 
 ## Yet To Implement
 

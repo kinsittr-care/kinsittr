@@ -122,7 +122,6 @@ func TestValidateAPIData(t *testing.T) {
 
 func TestValidateNannyProfileDTO(t *testing.T) {
 	validDTO := nannyDtos.UpdateNannyProfileDTO{
-		DisplayName: "Jane Doe",
 		Phone:       "+14165550100",
 		Bio:         "Experienced caregiver with 5 years of childcare.",
 		RatePerHour: 28.0,
@@ -137,12 +136,12 @@ func TestValidateNannyProfileDTO(t *testing.T) {
 		}
 	})
 
-	t.Run("display name too short fails", func(t *testing.T) {
+	t.Run("phone too short fails", func(t *testing.T) {
 		dto := validDTO
-		dto.DisplayName = "J"
+		dto.Phone = "123"
 		ok, _ := ValidateAPIData(dto)
 		if ok {
-			t.Error("expected failure for display name < 2 chars")
+			t.Error("expected failure for phone < 7 chars")
 		}
 	})
 
@@ -152,6 +151,24 @@ func TestValidateNannyProfileDTO(t *testing.T) {
 		ok, _ := ValidateAPIData(dto)
 		if ok {
 			t.Error("expected failure for bio < 10 chars")
+		}
+	})
+
+	t.Run("bio too long fails", func(t *testing.T) {
+		dto := validDTO
+		dto.Bio = strings.Repeat("a", 451)
+		ok, _ := ValidateAPIData(dto)
+		if ok {
+			t.Error("expected failure for bio > 450 chars")
+		}
+	})
+
+	t.Run("too many specialties fail", func(t *testing.T) {
+		dto := validDTO
+		dto.Specialties = []string{"one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven"}
+		ok, _ := ValidateAPIData(dto)
+		if ok {
+			t.Error("expected failure for more than 10 specialties")
 		}
 	})
 

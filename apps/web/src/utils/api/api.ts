@@ -28,6 +28,8 @@ function formatApiErrorMessage(message: string) {
       return "Payment setup is missing. The parent needs a saved card and the nanny needs completed Stripe setup.";
     case "booking_payment_failed":
       return "Payment failed, so the booking could not be completed.";
+    case "payment_method_in_use":
+      return "Keep one saved card while you have approved bookings waiting to be charged.";
     case "admin_booking_payment_failed":
       return "Payment failed, so the admin completion could not be applied.";
     case "admin_booking_refund_failed":

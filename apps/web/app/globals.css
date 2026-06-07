@@ -263,8 +263,8 @@ body {
 .btn-nav-ghost {
   text-decoration: none; border-radius: 10px; padding: 8px 18px;
   font-size: 14px; font-weight: 500;
-  color: var(--muted); background: transparent;
-  border: 1.5px solid var(--border); transition: all .15s;
+  color: var(--faint); background: transparent;
+  border: 1.5px solid #b0a898; transition: all .15s;
 }
 .btn-nav-ghost:hover { color: var(--teal); border-color: var(--teal); }
 

@@ -6,6 +6,16 @@ export interface AdminScreeningSteps {
   interview_done: boolean;
 }
 
+export interface AdminNannyDocument {
+  id: string;
+  file_name: string;
+  file_url: string;
+  mime_type: string;
+  size_bytes: number;
+  resource_type: string;
+  created_at: string;
+}
+
 export interface AdminNanny {
   id: string;
   user_id: string;
@@ -28,6 +38,7 @@ export interface AdminNanny {
   city: string;
   province: string;
   screening_steps: AdminScreeningSteps;
+  documents: AdminNannyDocument[];
   waiting_days: number;
   created_at: string;
   updated_at: string;

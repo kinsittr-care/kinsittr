@@ -1,7 +1,12 @@
 import { N } from "../tokens";
-import { inputStyle, labelStyle } from "../nanny-styles";
 
-export default function IdentityTaxCard() {
+export default function IdentityTaxCard({
+  hasStripeAccount,
+  isOnboarded,
+}: {
+  hasStripeAccount: boolean;
+  isOnboarded: boolean;
+}) {
   return (
     <div
       style={{
@@ -21,31 +26,27 @@ export default function IdentityTaxCard() {
           marginBottom: 20,
         }}
       >
-        Identity &amp; tax info
+        Identity &amp; tax details
       </h2>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 20px" }}>
-        <div>
-          <label style={labelStyle}>Legal first name</label>
-          <input style={inputStyle} defaultValue="Amara" />
-        </div>
-        <div>
-          <label style={labelStyle}>Legal last name</label>
-          <input style={inputStyle} defaultValue="Kofi" />
-        </div>
-        <div>
-          <label style={labelStyle}>SIN (last 4 digits only)</label>
-          <input style={inputStyle} defaultValue="···· 8821" readOnly />
-        </div>
-        <div>
-          <label style={labelStyle}>Date of birth</label>
-          <input style={inputStyle} type="date" defaultValue="1997-03-14" />
-        </div>
-        <div style={{ gridColumn: "1 / -1" }}>
-          <label style={labelStyle}>Address</label>
-          <input style={inputStyle} defaultValue="42 Maple Street, Toronto, ON M4B 1Z3" />
-        </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <InfoStep label="Identity" status={isOnboarded ? "Complete" : hasStripeAccount ? "In Stripe" : "Not started"} />
+        <InfoStep label="Bank details" status={isOnboarded ? "Connected" : hasStripeAccount ? "In Stripe" : "Not started"} />
+        <InfoStep label="Tax details" status={isOnboarded ? "Handled" : hasStripeAccount ? "In Stripe" : "Not started"} />
       </div>
+      <p style={{ margin: "18px 0 0", fontSize: 13.5, lineHeight: 1.65, color: N.inkMute }}>
+        Stripe Express collects and verifies sensitive payout information such as identity, tax, and bank details.
+        KinSittr only stores the Stripe connection status needed to send payouts.
+      </p>
+    </div>
+  );
+}
+
+function InfoStep({ label, status }: { label: string; status: string }) {
+  return (
+    <div style={{ border: `1px solid ${N.border}`, borderRadius: 14, background: N.cardSoft, padding: "14px 16px" }}>
+      <div style={{ fontSize: 12, color: N.inkFaint, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em" }}>{label}</div>
+      <div style={{ marginTop: 8, fontSize: 15, color: N.greenDk, fontWeight: 700 }}>{status}</div>
     </div>
   );
 }

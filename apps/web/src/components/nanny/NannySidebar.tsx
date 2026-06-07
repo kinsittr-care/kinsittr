@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import NannyAvatar from "./NannyAvatar";
 import NannyNotificationsPanel from "./notifications/NannyNotificationsPanel";
+import { useLogout } from "../auth/useLogout";
 
 export const navItems = [
   {
@@ -158,6 +159,7 @@ export function NannyNavLinks({
 export default function NannySidebar() {
   const pathname = usePathname();
   const { displayName, initials, isVerified, pendingCount, hasConversations } = useNannySidebarData();
+  const logout = useLogout("nanny");
 
   return (
     <aside className="hidden md:flex w-[260px] shrink-0 h-full flex-col bg-nanny-bg border-r border-nanny-border py-6">
@@ -190,6 +192,16 @@ export default function NannySidebar() {
         </div>
         <NannyNotificationsPanel />
       </div>
+      <button
+        type="button"
+        onClick={logout}
+        className="mx-2.5 mt-3 flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M6 14H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h3M11 11l3-3-3-3M14 8H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Log out
+      </button>
     </aside>
   );
 }

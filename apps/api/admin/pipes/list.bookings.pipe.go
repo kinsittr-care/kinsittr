@@ -80,9 +80,15 @@ func (p *AdminPipe) CancelBooking(ctx context.Context, adminUserID, bookingID uu
 		logAdminActionResult(action, adminUserID, "booking", bookingID, "not_found", nil)
 		return pipeError[AdminBookingData](messages.Admin_Booking_Not_Found)
 	}
-	if current.Status != models.PendingBookingStatus && current.Status != models.ApprovedBookingStatus {
+	if current.Status != models.PendingBookingStatus && current.Status != models.ApprovedBookingStatus && current.Status != models.CompletedBookingStatus {
 		logAdminActionResult(action, adminUserID, "booking", bookingID, "blocked", nil)
 		return pipeError[AdminBookingData](messages.Admin_Booking_Action_Blocked)
+	}
+	if p.payments != nil {
+		if err := p.payments.RefundBooking(ctx, current.ID); err != nil {
+			logAdminActionResult(action, adminUserID, "booking", bookingID, "refund_failed", err)
+			return pipeError[AdminBookingData](messages.Admin_Booking_Refund_Failed)
+		}
 	}
 
 	record, err := p.repo.CancelBooking(ctx, repository.AdminBookingActionParams{
@@ -99,12 +105,6 @@ func (p *AdminPipe) CancelBooking(ctx context.Context, adminUserID, bookingID uu
 		return pipeError[AdminBookingData](messages.Admin_Booking_Action_Blocked)
 	}
 	data := toAdminBookingData(record)
-	if p.payments != nil {
-		if err := p.payments.RefundBooking(ctx, record.ID); err != nil {
-			logAdminActionResult(action, adminUserID, "booking", bookingID, "refund_failed", err)
-			return pipeError[AdminBookingData](messages.Admin_Booking_Refund_Failed)
-		}
-	}
 	p.notifyBookingParticipants(ctx, record, "Booking cancelled by admin", "An admin cancelled this booking.", models.BookingCancelledNotificationType)
 	logAdminActionResult(action, adminUserID, "booking", bookingID, "success", nil)
 	return pipeSuccess(messages.Admin_Booking_Cancelled, &data)

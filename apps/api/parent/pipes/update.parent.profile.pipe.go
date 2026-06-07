@@ -10,7 +10,7 @@ import (
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
 
-func (p *ParentPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto dtos.UpdateParentProfileDTO) *shared.PipeRes[models.ParentProfile] {
+func (p *ParentPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto dtos.UpdateParentProfileDTO) *shared.PipeRes[ParentProfileData] {
 	profile, err := p.profileRepo.UpdateParentProfile(ctx, models.ParentProfile{
 		UserID:       userID,
 		DisplayName:  normalizeString(dto.DisplayName),
@@ -21,8 +21,9 @@ func (p *ParentPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto
 		Province:     normalizeString(dto.Province),
 	})
 	if err != nil || profile.ID == uuid.Nil {
-		return pipeError[models.ParentProfile](messages.Parent_Profile_Not_Found)
+		return pipeError[ParentProfileData](messages.Parent_Profile_Not_Found)
 	}
 
-	return pipeSuccess(messages.Parent_Profile_Updated, &profile)
+	data := parentProfileData(profile)
+	return pipeSuccess(messages.Parent_Profile_Updated, &data)
 }

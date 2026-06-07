@@ -309,6 +309,7 @@ func (r *pgRepository) CancelBooking(ctx context.Context, params AdminBookingAct
 	return r.updateBookingWithAdminAction(ctx, params, models.AdminCancelBookingAction, []string{
 		string(models.PendingBookingStatus),
 		string(models.ApprovedBookingStatus),
+		string(models.CompletedBookingStatus),
 	}, models.CancelledBookingStatus)
 }
 

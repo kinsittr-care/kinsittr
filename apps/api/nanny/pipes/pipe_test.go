@@ -35,6 +35,7 @@ type mockProfileRepo struct {
 	nannyProfileErr error
 	updatedNanny    models.NannyProfile
 	updateNannyErr  error
+	lastNannyUpdate models.NannyProfile
 	avatarURL       string
 	avatarPublicID  string
 }
@@ -42,7 +43,8 @@ type mockProfileRepo struct {
 func (m *mockProfileRepo) GetNannyProfileByUserID(_ context.Context, _ uuid.UUID) (models.NannyProfile, error) {
 	return m.nannyProfile, m.nannyProfileErr
 }
-func (m *mockProfileRepo) UpdateNannyProfile(_ context.Context, _ models.NannyProfile) (models.NannyProfile, error) {
+func (m *mockProfileRepo) UpdateNannyProfile(_ context.Context, p models.NannyProfile) (models.NannyProfile, error) {
+	m.lastNannyUpdate = p
 	return m.updatedNanny, m.updateNannyErr
 }
 func (m *mockProfileRepo) UpdateNannyAvatar(_ context.Context, _ uuid.UUID, avatarURL string, avatarPublicID string) (models.NannyProfile, error) {
@@ -95,6 +97,17 @@ func (f *fakeCloudinaryClient) UploadImage(_ context.Context, _ []byte, folder s
 }
 
 func (f *fakeCloudinaryClient) DeleteImage(_ context.Context, publicID string) error {
+	f.deletedPublic = publicID
+	return f.deleteErr
+}
+
+func (f *fakeCloudinaryClient) UploadFile(_ context.Context, _ []byte, folder string, publicID string, _ string, _ string) (cloudinaryapi.UploadResult, error) {
+	f.uploadedFolder = folder
+	f.uploadedPublic = publicID
+	return f.uploadResult, f.uploadErr
+}
+
+func (f *fakeCloudinaryClient) DeleteFile(_ context.Context, publicID string, _ string) error {
 	f.deletedPublic = publicID
 	return f.deleteErr
 }
@@ -412,7 +425,6 @@ func TestUpdateOwnProfile(t *testing.T) {
 	userID := uuid.New()
 
 	validDTO := dtos.UpdateNannyProfileDTO{
-		DisplayName: "Jane Doe",
 		Phone:       "+14165550100",
 		Bio:         "Experienced caregiver with 5 years.",
 		Specialties: []string{"Bilingual", "infant care"},
@@ -452,7 +464,20 @@ func TestUpdateOwnProfile(t *testing.T) {
 		}
 	})
 
-	t.Run("display name and fields trimmed", func(t *testing.T) {
+	t.Run("specialties over total character limit fail", func(t *testing.T) {
+		updated := models.NannyProfile{ID: uuid.New(), DisplayName: "Jane Doe"}
+		pr := &mockProfileRepo{updatedNanny: updated}
+		p := NewNannyPipe(&mockNannyRepo{}, pr)
+
+		dto := validDTO
+		dto.Specialties = []string{"Infant care", "Special needs", "Montessori"}
+		res := p.UpdateOwnProfile(ctx, userID, dto)
+		if res.Success || string(res.Message) != messages.Invalid_Nanny_Profile {
+			t.Fatalf("expected %s, got success=%v msg=%s", messages.Invalid_Nanny_Profile, res.Success, res.Message)
+		}
+	})
+
+	t.Run("profile fields update successfully", func(t *testing.T) {
 		updated := models.NannyProfile{ID: uuid.New(), DisplayName: "Jane Doe"}
 		pr := &mockProfileRepo{updatedNanny: updated}
 		p := NewNannyPipe(&mockNannyRepo{}, pr)
@@ -462,6 +487,23 @@ func TestUpdateOwnProfile(t *testing.T) {
 		}
 		if res.Data == nil || res.Data.DisplayName != "Jane Doe" {
 			t.Errorf("data mismatch: %+v", res.Data)
+		}
+	})
+
+	t.Run("location fields are normalized", func(t *testing.T) {
+		updated := models.NannyProfile{ID: uuid.New(), DisplayName: "Jane Doe"}
+		pr := &mockProfileRepo{updatedNanny: updated}
+		p := NewNannyPipe(&mockNannyRepo{}, pr)
+		dto := validDTO
+		dto.City = "  North   York  "
+		dto.Province = "  Test   Province  "
+
+		res := p.UpdateOwnProfile(ctx, userID, dto)
+		if !res.Success {
+			t.Fatalf("expected success, got %s", res.Message)
+		}
+		if pr.lastNannyUpdate.City != "North York" || pr.lastNannyUpdate.Province != "Test Province" {
+			t.Fatalf("expected normalized location, got city=%q province=%q", pr.lastNannyUpdate.City, pr.lastNannyUpdate.Province)
 		}
 	})
 }

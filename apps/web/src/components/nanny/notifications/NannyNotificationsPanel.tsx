@@ -109,10 +109,10 @@ export default function NannyNotificationsPanel() {
       </PopoverTrigger>
 
       <PopoverContent
-        side="right"
+        side="bottom"
         align="end"
         sideOffset={8}
-        className="w-80 p-0 border-nanny-border"
+        className="w-[calc(100vw-2rem)] max-w-80 p-0 border-nanny-border"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-nanny-border">
@@ -147,7 +147,7 @@ export default function NannyNotificationsPanel() {
         )}
 
         {/* List */}
-        <ScrollArea className="max-h-[400px]">
+        <ScrollArea className="max-h-[min(400px,70vh)]">
           {listQuery.isLoading && (
             <p className="px-4 py-5 text-sm text-nanny-ink-faint">Loading...</p>
           )}

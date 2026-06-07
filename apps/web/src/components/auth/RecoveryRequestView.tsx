@@ -49,7 +49,7 @@ export default function RecoveryRequestView() {
       <div className="flex flex-col gap-5 text-center">
         <div>
           <h2 className="font-display text-[24px] leading-tight">Check your email</h2>
-          <p className="mt-3 text-[14px] leading-6" style={{ color: "var(--muted)" }}>
+          <p className="mt-3 text-[14px] leading-6" style={{ color: "var(--faint)" }}>
             If an account exists for that email, we sent a password reset link. The link expires soon.
           </p>
         </div>
@@ -64,7 +64,7 @@ export default function RecoveryRequestView() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
       <div>
         <h2 className="font-display text-[24px] leading-tight">Reset your password</h2>
-        <p className="mt-3 text-[14px] leading-6" style={{ color: "var(--muted)" }}>
+        <p className="mt-3 text-[14px] leading-6" style={{ color: "var(--faint)" }}>
           Enter your account email and we will send reset instructions if the account exists.
         </p>
       </div>

@@ -113,8 +113,28 @@ func (p *PaymentsPipe) DeleteParentPaymentMethod(ctx context.Context, userID uui
 	if strings.TrimSpace(billing.StripeCustomerID) == "" {
 		return pipeError[any](messages.Invalid_Payment_Request)
 	}
-	if _, ok := p.findParentPaymentMethod(ctx, billing.StripeCustomerID, paymentMethodID); !ok {
+	methods, err := p.stripe.ListCardPaymentMethods(ctx, billing.StripeCustomerID)
+	if err != nil {
 		return pipeError[any](messages.Invalid_Payment_Request)
+	}
+	found := false
+	for _, method := range methods {
+		if method.ID == paymentMethodID {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return pipeError[any](messages.Invalid_Payment_Request)
+	}
+	if len(methods) <= 1 {
+		hasApprovedBookings, err := p.repo.HasParentApprovedBookings(ctx, billing.ParentProfileID)
+		if err != nil {
+			return pipeError[any](messages.Invalid_Payment_Request)
+		}
+		if hasApprovedBookings {
+			return pipeError[any](messages.Payment_Method_In_Use)
+		}
 	}
 	if _, err := p.stripe.DetachPaymentMethod(ctx, paymentMethodID); err != nil {
 		return pipeError[any](messages.Invalid_Payment_Request)

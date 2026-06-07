@@ -1,13 +1,11 @@
 export interface ParentProfile {
   id: string;
-  user_id: string;
   display_name: string;
   phone: string;
   num_children: number;
   children_ages: number[];
   city: string;
   province: string;
-  stripe_customer_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -23,7 +21,6 @@ export interface UpdateParentProfilePayload {
 
 export interface ParentSettings {
   id: string;
-  user_id: string;
   notify_messages: boolean;
   notify_bookings: boolean;
   notify_reminders: boolean;
@@ -53,7 +50,6 @@ export interface UpdateParentSettingsPayload {
 
 export interface NannyProfile {
   id: string;
-  user_id: string;
   display_name: string;
   phone: string;
   bio: string;
@@ -63,20 +59,15 @@ export interface NannyProfile {
   currency: string;
   verification_status: string;
   verified_at?: string | null;
-  stripe_account_id?: string | null;
   stripe_onboarded: boolean;
   rating_avg: number;
   rating_count: number;
   avatar_url?: string;
-  avatar_public_id?: string;
   city: string;
   province: string;
-  created_at: string;
-  updated_at: string;
 }
 
 export interface UpdateNannyProfilePayload {
-  display_name: string;
   phone: string;
   bio: string;
   specialties: string[];
@@ -100,6 +91,11 @@ export interface PublicNannyCard {
   province: string;
 }
 
+export interface PublicNannyProfile extends PublicNannyCard {
+  verification_status: string;
+  verified_at?: string | null;
+}
+
 export interface PublicNannyListData {
   items: PublicNannyCard[];
   page: number;
@@ -117,4 +113,19 @@ export interface ListPublicNanniesParams {
   max_rate?: number;
   service_type?: "nanny";
   sort?: "newest" | "oldest" | "rate_asc" | "rate_desc" | "rating_desc";
+}
+
+export interface NannyDocument {
+  id: string;
+  file_name: string;
+  file_url: string;
+  mime_type: string;
+  size_bytes: number;
+  resource_type: string;
+  created_at: string;
+}
+
+export interface NannyDocumentListData {
+  items: NannyDocument[];
+  total: number;
 }

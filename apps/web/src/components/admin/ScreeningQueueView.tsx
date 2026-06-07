@@ -39,6 +39,7 @@ function mapApplicant(nanny: AdminNanny): ScreeningApplicant {
     submitted: formatShortDate(nanny.created_at),
     waiting: nanny.waiting_days,
     status: nanny.verification_status,
+    documents: nanny.documents,
   };
 }
 

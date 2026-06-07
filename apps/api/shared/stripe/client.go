@@ -31,10 +31,43 @@ type Account struct {
 	ChargesEnabled   bool   `json:"charges_enabled"`
 	PayoutsEnabled   bool   `json:"payouts_enabled"`
 	DetailsSubmitted bool   `json:"details_submitted"`
+	Requirements     struct {
+		CurrentlyDue   []string `json:"currently_due"`
+		EventuallyDue  []string `json:"eventually_due"`
+		DisabledReason string   `json:"disabled_reason"`
+	} `json:"requirements"`
 }
 
 type AccountLink struct {
 	URL string `json:"url"`
+}
+
+type LoginLink struct {
+	URL string `json:"url"`
+}
+
+type BalanceAmount struct {
+	Amount   int64  `json:"amount"`
+	Currency string `json:"currency"`
+}
+
+type Balance struct {
+	Available []BalanceAmount `json:"available"`
+	Pending   []BalanceAmount `json:"pending"`
+}
+
+type Payout struct {
+	ID          string `json:"id"`
+	Amount      int64  `json:"amount"`
+	Currency    string `json:"currency"`
+	Status      string `json:"status"`
+	ArrivalDate int64  `json:"arrival_date"`
+	Created     int64  `json:"created"`
+}
+
+type PayoutList struct {
+	Data    []Payout `json:"data"`
+	HasMore bool     `json:"has_more"`
 }
 
 type Customer struct {
@@ -50,9 +83,10 @@ type SetupIntent struct {
 }
 
 type PaymentMethod struct {
-	ID   string `json:"id"`
-	Type string `json:"type"`
-	Card struct {
+	ID       string `json:"id"`
+	Type     string `json:"type"`
+	Customer string `json:"customer"`
+	Card     struct {
 		Brand    string `json:"brand"`
 		Last4    string `json:"last4"`
 		ExpMonth int    `json:"exp_month"`
@@ -110,6 +144,42 @@ func (c *Client) CreateAccountLink(ctx context.Context, accountID, refreshURL, r
 	return postForm[AccountLink](ctx, c, "/account_links", values)
 }
 
+func (c *Client) GetAccount(ctx context.Context, accountID string) (Account, error) {
+	var account Account
+	if err := getForm(ctx, c, "/accounts/"+url.PathEscape(accountID), nil, &account); err != nil {
+		return Account{}, err
+	}
+	return account, nil
+}
+
+func (c *Client) CreateLoginLink(ctx context.Context, accountID string) (LoginLink, error) {
+	return postForm[LoginLink](ctx, c, "/accounts/"+url.PathEscape(accountID)+"/login_links", url.Values{})
+}
+
+func (c *Client) GetConnectedBalance(ctx context.Context, accountID string) (Balance, error) {
+	var balance Balance
+	if err := getFormWithOptions(ctx, c, "/balance", nil, &balance, requestOptions{StripeAccount: accountID}); err != nil {
+		return Balance{}, err
+	}
+	return balance, nil
+}
+
+func (c *Client) ListConnectedPayouts(ctx context.Context, accountID string, limit int, startingAfter string) (PayoutList, error) {
+	if limit <= 0 || limit > 100 {
+		limit = 10
+	}
+	values := url.Values{}
+	values.Set("limit", strconv.Itoa(limit))
+	if strings.TrimSpace(startingAfter) != "" {
+		values.Set("starting_after", strings.TrimSpace(startingAfter))
+	}
+	var response PayoutList
+	if err := getFormWithOptions(ctx, c, "/payouts", values, &response, requestOptions{StripeAccount: accountID}); err != nil {
+		return PayoutList{}, err
+	}
+	return response, nil
+}
+
 func (c *Client) CreateCustomer(ctx context.Context, email, name, idempotencyKey string) (Customer, error) {
 	values := url.Values{}
 	values.Set("email", email)
@@ -150,6 +220,14 @@ func (c *Client) ListCardPaymentMethods(ctx context.Context, customerID string) 
 	return response.Data, nil
 }
 
+func (c *Client) GetPaymentMethod(ctx context.Context, paymentMethodID string) (PaymentMethod, error) {
+	var method PaymentMethod
+	if err := getForm(ctx, c, "/payment_methods/"+url.PathEscape(paymentMethodID), nil, &method); err != nil {
+		return PaymentMethod{}, err
+	}
+	return method, nil
+}
+
 func (c *Client) GetCustomer(ctx context.Context, customerID string) (Customer, error) {
 	var customer Customer
 	if err := getForm(ctx, c, "/customers/"+url.PathEscape(customerID), nil, &customer); err != nil {
@@ -179,13 +257,26 @@ func (c *Client) CreateDestinationPaymentIntent(ctx context.Context, params Paym
 	values.Set("application_fee_amount", strconv.FormatInt(params.ApplicationFeeCents, 10))
 	values.Set("transfer_data[destination]", params.DestinationAccountID)
 	values.Set("metadata[booking_id]", params.BookingID)
-	return postForm[PaymentIntent](ctx, c, "/payment_intents", values, requestOptions{IdempotencyKey: "booking-charge-" + params.BookingID})
+	idempotencyKey := params.IdempotencyKey
+	if idempotencyKey == "" {
+		idempotencyKey = "booking-charge-" + params.BookingID
+	}
+	return postForm[PaymentIntent](ctx, c, "/payment_intents", values, requestOptions{IdempotencyKey: idempotencyKey})
 }
 
 func (c *Client) CreateRefund(ctx context.Context, chargeID, idempotencyKey string) (Refund, error) {
 	values := url.Values{}
 	values.Set("charge", chargeID)
 	return postForm[Refund](ctx, c, "/refunds", values, requestOptions{IdempotencyKey: idempotencyKey})
+}
+
+func (c *Client) UpdateConnectedPayoutSchedule(ctx context.Context, accountID, schedule string) (Account, error) {
+	values := url.Values{}
+	values.Set("settings[payouts][schedule][interval]", schedule)
+	if schedule == "weekly" {
+		values.Set("settings[payouts][schedule][weekly_anchor]", "monday")
+	}
+	return postForm[Account](ctx, c, "/accounts/"+url.PathEscape(accountID), values)
 }
 
 type PaymentIntentParams struct {
@@ -196,6 +287,7 @@ type PaymentIntentParams struct {
 	PaymentMethodID      string
 	DestinationAccountID string
 	BookingID            string
+	IdempotencyKey       string
 }
 
 func VerifyWebhook(payload []byte, header, secret string) (Event, error) {
@@ -248,6 +340,7 @@ func parseSignatureHeader(header string) (string, string) {
 
 type requestOptions struct {
 	IdempotencyKey string
+	StripeAccount  string
 }
 
 func postForm[T any](ctx context.Context, c *Client, path string, values url.Values, opts ...requestOptions) (T, error) {
@@ -259,11 +352,17 @@ func postForm[T any](ctx context.Context, c *Client, path string, values url.Val
 }
 
 func getForm(ctx context.Context, c *Client, path string, values url.Values, output any) error {
+	return getFormWithOptions(ctx, c, path, values, output, requestOptions{})
+}
+
+func getFormWithOptions(ctx context.Context, c *Client, path string, values url.Values, output any, opts requestOptions) error {
 	target := path
-	if encoded := values.Encode(); encoded != "" {
-		target += "?" + encoded
+	if values != nil {
+		if encoded := values.Encode(); encoded != "" {
+			target += "?" + encoded
+		}
 	}
-	return c.request(ctx, http.MethodGet, target, nil, output, requestOptions{})
+	return c.request(ctx, http.MethodGet, target, nil, output, opts)
 }
 
 func mergeRequestOptions(opts ...requestOptions) requestOptions {
@@ -271,6 +370,9 @@ func mergeRequestOptions(opts ...requestOptions) requestOptions {
 	for _, opt := range opts {
 		if opt.IdempotencyKey != "" {
 			merged.IdempotencyKey = opt.IdempotencyKey
+		}
+		if opt.StripeAccount != "" {
+			merged.StripeAccount = opt.StripeAccount
 		}
 	}
 	return merged
@@ -294,6 +396,9 @@ func (c *Client) request(ctx context.Context, method, path string, values url.Va
 	req.SetBasicAuth(c.secretKey, "")
 	if opts.IdempotencyKey != "" {
 		req.Header.Set("Idempotency-Key", opts.IdempotencyKey)
+	}
+	if opts.StripeAccount != "" {
+		req.Header.Set("Stripe-Account", opts.StripeAccount)
 	}
 	if values != nil {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -325,6 +430,10 @@ func sanitizeStripeLogPath(path string) string {
 	switch {
 	case strings.HasPrefix(path, "/customers/"):
 		return "/customers/:id"
+	case strings.HasPrefix(path, "/accounts/") && strings.HasSuffix(path, "/login_links"):
+		return "/accounts/:id/login_links"
+	case strings.HasPrefix(path, "/accounts/"):
+		return "/accounts/:id"
 	case strings.HasPrefix(path, "/payment_methods/") && strings.HasSuffix(path, "/detach"):
 		return "/payment_methods/:id/detach"
 	default:

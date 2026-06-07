@@ -157,7 +157,7 @@ function MobileFilterButton({
 
 function ResultMessage({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--muted)" }}>
+    <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--faint)" }}>
       {children}
     </div>
   );

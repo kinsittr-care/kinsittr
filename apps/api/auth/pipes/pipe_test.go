@@ -409,7 +409,7 @@ func TestAuthPipeMe(t *testing.T) {
 		if !res.Success || string(res.Message) != messages.Current_User_Fetched {
 			t.Fatalf("expected success %s, got success=%v message=%s", messages.Current_User_Fetched, res.Success, res.Message)
 		}
-		if res.Data == nil || res.Data.ParentProfile == nil || res.Data.ParentProfile.ID != parentProfile.ID {
+		if res.Data == nil || res.Data.ParentProfile == nil || res.Data.ParentProfile.ID != parentProfile.ID.String() {
 			t.Fatalf("expected parent profile in response, got %+v", res.Data)
 		}
 	})
