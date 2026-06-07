@@ -1,10 +1,12 @@
 import type {
   PaymentMethodData,
   PaymentMethodListData,
+  ListNannyPayoutsParams,
   ListNannyEarningsParams,
   NannyEarningsListData,
   NannyEarningsSummaryData,
   NannyPayoutSettingsData,
+  PaymentReconciliationListData,
   SetupIntentData,
   StripeBalanceData,
   StripeConnectData,
@@ -45,8 +47,12 @@ export async function getNannyStripeBalance() {
   });
 }
 
-export async function listNannyStripePayouts() {
-  return apiRequest<StripePayoutListData>("/api/v1/nanny/payments/payouts", undefined, {
+export async function listNannyStripePayouts(params: ListNannyPayoutsParams = {}) {
+  const query = new URLSearchParams();
+  if (params.limit) query.set("limit", String(params.limit));
+  if (params.starting_after) query.set("starting_after", params.starting_after);
+  const queryString = query.toString();
+  return apiRequest<StripePayoutListData>(`/api/v1/nanny/payments/payouts${queryString ? `?${queryString}` : ""}`, undefined, {
     requiresAuth: true,
   });
 }
@@ -117,6 +123,18 @@ export async function deleteParentPaymentMethod(paymentMethodId: string) {
   return apiRequest<null>(
     `/api/v1/parent/billing/payment-methods/${paymentMethodId}`,
     { method: "DELETE" },
+    { requiresAuth: true },
+  );
+}
+
+export async function listPaymentReconciliationIssues(params: { page?: number; limit?: number } = {}) {
+  const query = new URLSearchParams();
+  if (params.page) query.set("page", String(params.page));
+  if (params.limit) query.set("limit", String(params.limit));
+  const queryString = query.toString();
+  return apiRequest<PaymentReconciliationListData>(
+    `/api/v1/admin/payments/reconciliation${queryString ? `?${queryString}` : ""}`,
+    undefined,
     { requiresAuth: true },
   );
 }

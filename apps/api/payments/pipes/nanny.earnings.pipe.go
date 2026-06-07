@@ -73,3 +73,40 @@ func nannyEarningData(record paymentrepo.NannyEarningRecord) NannyEarningData {
 		PaymentStatus:     record.PaymentStatus,
 	}
 }
+
+func (p *PaymentsPipe) ListPaymentReconciliationIssues(ctx context.Context, page, limit int) *shared.PipeRes[PaymentReconciliationListData] {
+	page, limit = normalizeEarningsPageLimit(page, limit)
+	records, total, err := p.repo.ListPaymentReconciliationIssues(ctx, page, limit)
+	if err != nil {
+		return pipeError[PaymentReconciliationListData](messages.Invalid_Payment_Request)
+	}
+
+	items := make([]PaymentReconciliationIssueData, 0, len(records))
+	for _, record := range records {
+		items = append(items, paymentReconciliationIssueData(record))
+	}
+
+	return pipeSuccess(messages.Payment_Reconciliation_Listed, &PaymentReconciliationListData{
+		Items: items,
+		Page:  page,
+		Limit: limit,
+		Total: total,
+	})
+}
+
+func paymentReconciliationIssueData(record paymentrepo.PaymentReconciliationIssue) PaymentReconciliationIssueData {
+	return PaymentReconciliationIssueData{
+		IssueType:             record.IssueType,
+		BookingID:             record.BookingID.String(),
+		ParentProfileID:       record.ParentProfileID.String(),
+		NannyProfileID:        record.NannyProfileID.String(),
+		BookingStatus:         record.BookingStatus,
+		PaymentStatus:         record.PaymentStatus,
+		StripePaymentIntentID: record.StripePaymentIntentID,
+		StripeChargeID:        record.StripeChargeID,
+		StripeRefundID:        record.StripeRefundID,
+		Amount:                record.Amount,
+		Currency:              string(record.Currency),
+		CreatedAt:             record.CreatedAt,
+	}
+}

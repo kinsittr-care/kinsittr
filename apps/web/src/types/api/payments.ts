@@ -36,6 +36,9 @@ export interface StripePayoutData {
 
 export interface StripePayoutListData {
   items: StripePayoutData[];
+  limit: number;
+  has_more: boolean;
+  next_cursor?: string;
 }
 
 export type NannyPayoutSchedule = "daily" | "weekly";
@@ -76,6 +79,33 @@ export interface NannyEarningsListData {
 export interface ListNannyEarningsParams {
   page?: number;
   limit?: number;
+}
+
+export interface ListNannyPayoutsParams {
+  limit?: number;
+  starting_after?: string;
+}
+
+export interface PaymentReconciliationIssueData {
+  issue_type: string;
+  booking_id: string;
+  parent_profile_id: string;
+  nanny_profile_id: string;
+  booking_status: string;
+  payment_status: string;
+  stripe_payment_intent_id?: string;
+  stripe_charge_id?: string;
+  stripe_refund_id?: string;
+  amount: number;
+  currency: string;
+  created_at: string;
+}
+
+export interface PaymentReconciliationListData {
+  items: PaymentReconciliationIssueData[];
+  page: number;
+  limit: number;
+  total: number;
 }
 
 export interface UpdateNannyPayoutSettingsPayload {

@@ -49,7 +49,8 @@ func (c *PaymentsController) ListNannyStripePayouts(ctx *fiber.Ctx) error {
 	if !ok {
 		return paymentError(ctx, fiber.StatusBadRequest, messages.Invalid_Payment_Request)
 	}
-	res := c.pipe.ListNannyStripePayouts(ctx.Context(), userID)
+	limit := ctx.QueryInt("limit", 10)
+	res := c.pipe.ListNannyStripePayouts(ctx.Context(), userID, limit, ctx.Query("starting_after"))
 	if !res.Success {
 		return paymentError(ctx, paymentErrorStatus(string(res.Message)), string(res.Message))
 	}

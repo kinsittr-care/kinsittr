@@ -20,7 +20,7 @@ import {
 
 function EarningsStat({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className="w-[min(200px,72vw)] shrink-0 md:w-auto md:shrink-0 bg-nanny-card border border-nanny-border rounded-[18px] p-5 min-h-[130px] flex flex-col shadow-[var(--nanny-shadow)]">
+    <div className="w-[min(200px,72vw)] shrink-0 md:w-auto md:shrink-0 bg-nanny-card border border-nanny-border rounded-[18px] p-5 min-h-[130px] flex flex-col shadow-(--nanny-shadow)">
       <p className="text-[11px] font-semibold tracking-widest uppercase text-nanny-ink-mute">{label}</p>
       <p className="mt-auto pt-3 font-display text-[40px] leading-none tracking-tight text-nanny-green">{value}</p>
       <p className="mt-2.5 text-[13px] text-nanny-ink-mute">{sub}</p>
@@ -47,7 +47,7 @@ export default function NannyEarningsView() {
   });
   const payoutsQuery = useQuery({
     queryKey: nannyStripePayoutsQueryKey,
-    queryFn: listNannyStripePayouts,
+    queryFn: () => listNannyStripePayouts(),
     enabled: Boolean(statusQuery.data?.data?.onboarded),
   });
   const settingsQuery = useQuery({
@@ -67,7 +67,7 @@ export default function NannyEarningsView() {
           Earnings
         </h1>
         <p className="mt-2 text-sm md:text-[14.5px] text-nanny-ink-mute">
-          Completed paid bookings · Canada
+          Completed paid bookings
         </p>
       </div>
 

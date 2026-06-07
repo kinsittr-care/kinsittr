@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { N } from "../tokens";
 import { labelStyle } from "../nanny-styles";
@@ -17,24 +16,18 @@ export default function PayoutScheduleCard({
   settings: NannyPayoutSettingsData | undefined;
 }) {
   const queryClient = useQueryClient();
-  const [schedule, setSchedule] = useState<NannyPayoutSchedule>(settings?.schedule ?? "weekly");
   const updateMutation = useMutation({
     mutationFn: updateNannyPayoutSettings,
-    onSuccess: async (response) => {
-      if (response.data?.schedule) setSchedule(response.data.schedule);
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: nannyPayoutSettingsQueryKey });
     },
   });
+  const schedule = updateMutation.isPending ? updateMutation.variables.schedule : settings?.schedule ?? "weekly";
   const disabledCopy = hasStripeAccount
     ? "Finish Stripe setup before changing payout preferences."
     : "Connect Stripe before choosing a payout schedule.";
 
-  useEffect(() => {
-    if (settings?.schedule) setSchedule(settings.schedule);
-  }, [settings?.schedule]);
-
   function chooseSchedule(nextSchedule: NannyPayoutSchedule) {
-    setSchedule(nextSchedule);
     updateMutation.mutate({ schedule: nextSchedule });
   }
 

@@ -49,6 +49,21 @@ type NannyPayoutSettings struct {
 	Schedule       string
 }
 
+type PaymentReconciliationIssue struct {
+	IssueType             string
+	BookingID             uuid.UUID
+	ParentProfileID       uuid.UUID
+	NannyProfileID        uuid.UUID
+	BookingStatus         models.BookingStatus
+	PaymentStatus         models.PaymentStatus
+	StripePaymentIntentID string
+	StripeChargeID        string
+	StripeRefundID        string
+	Amount                float64
+	Currency              models.Currency
+	CreatedAt             string
+}
+
 type NannyEarningsSummary struct {
 	ThisMonthEarnings float64
 	ThisMonthBookings int
@@ -91,11 +106,14 @@ type PaymentsRepository interface {
 	UpdateNannyStripeAccount(ctx context.Context, nannyProfileID uuid.UUID, accountID string, onboarded bool) error
 	UpdateNannyStripeOnboardedByAccountID(ctx context.Context, accountID string, onboarded bool) error
 	GetNannyPayoutSettings(ctx context.Context, userID uuid.UUID) (NannyPayoutSettings, error)
+	GetNannyPayoutSettingsByAccountID(ctx context.Context, accountID string) (NannyPayoutSettings, error)
 	UpdateNannyPayoutSettings(ctx context.Context, userID uuid.UUID, schedule string) (NannyPayoutSettings, error)
 	GetNannyEarningsSummary(ctx context.Context, userID uuid.UUID) (NannyEarningsSummary, error)
 	ListNannyEarnings(ctx context.Context, userID uuid.UUID, page, limit int) ([]NannyEarningRecord, int, error)
+	ListPaymentReconciliationIssues(ctx context.Context, page, limit int) ([]PaymentReconciliationIssue, int, error)
 	UpdateParentStripeCustomer(ctx context.Context, parentProfileID uuid.UUID, customerID string) error
 	UpdateParentDefaultPaymentMethod(ctx context.Context, parentProfileID uuid.UUID, paymentMethodID string) error
+	HasParentApprovedBookings(ctx context.Context, parentProfileID uuid.UUID) (bool, error)
 	GetPaymentByBookingID(ctx context.Context, bookingID uuid.UUID) (models.BookingPayment, error)
 	UpsertBookingPayment(ctx context.Context, params CreatePaymentParams) (models.BookingPayment, error)
 	UpdatePaymentStatusByIntentID(ctx context.Context, paymentIntentID string, status models.PaymentStatus, chargeID, failureMessage string) error

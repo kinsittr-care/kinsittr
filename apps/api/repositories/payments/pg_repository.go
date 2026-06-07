@@ -129,6 +129,28 @@ func (r *pgRepository) GetNannyPayoutSettings(ctx context.Context, userID uuid.U
 	return settings, err
 }
 
+func (r *pgRepository) GetNannyPayoutSettingsByAccountID(ctx context.Context, accountID string) (NannyPayoutSettings, error) {
+	var settings NannyPayoutSettings
+	err := r.db.QueryRow(ctx, `
+		INSERT INTO nanny_payout_settings (nanny_profile_id)
+		SELECT np.id FROM nanny_profiles np WHERE np.stripe_account_id = $1
+		ON CONFLICT (nanny_profile_id) DO NOTHING
+		RETURNING nanny_profile_id, schedule
+	`, accountID).Scan(&settings.NannyProfileID, &settings.Schedule)
+	if errors.Is(err, pgx.ErrNoRows) {
+		err = r.db.QueryRow(ctx, `
+			SELECT nps.nanny_profile_id, nps.schedule
+			FROM nanny_payout_settings nps
+			INNER JOIN nanny_profiles np ON np.id = nps.nanny_profile_id
+			WHERE np.stripe_account_id = $1
+		`, accountID).Scan(&settings.NannyProfileID, &settings.Schedule)
+	}
+	if errors.Is(err, pgx.ErrNoRows) {
+		return NannyPayoutSettings{}, nil
+	}
+	return settings, err
+}
+
 func (r *pgRepository) UpdateNannyPayoutSettings(ctx context.Context, userID uuid.UUID, schedule string) (NannyPayoutSettings, error) {
 	var settings NannyPayoutSettings
 	err := r.db.QueryRow(ctx, `
@@ -146,13 +168,17 @@ func (r *pgRepository) UpdateNannyPayoutSettings(ctx context.Context, userID uui
 }
 
 func (r *pgRepository) GetNannyEarningsSummary(ctx context.Context, userID uuid.UUID) (NannyEarningsSummary, error) {
-	now := time.Now().UTC()
-	thisMonthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+	location, err := time.LoadLocation("America/Toronto")
+	if err != nil {
+		location = time.UTC
+	}
+	now := time.Now().In(location)
+	thisMonthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, location)
 	nextMonthStart := thisMonthStart.AddDate(0, 1, 0)
 	lastMonthStart := thisMonthStart.AddDate(0, -1, 0)
 
 	var summary NannyEarningsSummary
-	err := r.db.QueryRow(ctx, `
+	queryErr := r.db.QueryRow(ctx, `
 		SELECT
 			COALESCE(SUM(CASE WHEN b.date >= $2 AND b.date < $3 THEN bp.amount - bp.platform_fee ELSE 0 END), 0),
 			COUNT(bp.id) FILTER (WHERE b.date >= $2 AND b.date < $3),
@@ -164,7 +190,7 @@ func (r *pgRepository) GetNannyEarningsSummary(ctx context.Context, userID uuid.
 		LEFT JOIN booking_payments bp ON bp.nanny_profile_id = np.id AND bp.status = $5
 		LEFT JOIN bookings b ON b.id = bp.booking_id AND b.status = $6
 		WHERE np.user_id = $1
-	`, userID, thisMonthStart, nextMonthStart, lastMonthStart, models.PaymentSucceeded, models.CompletedBookingStatus).Scan(
+	`, userID, thisMonthStart.Format(time.DateOnly), nextMonthStart.Format(time.DateOnly), lastMonthStart.Format(time.DateOnly), models.PaymentSucceeded, models.CompletedBookingStatus).Scan(
 		&summary.ThisMonthEarnings,
 		&summary.ThisMonthBookings,
 		&summary.LastMonthEarnings,
@@ -172,7 +198,7 @@ func (r *pgRepository) GetNannyEarningsSummary(ctx context.Context, userID uuid.
 		&summary.AllTimeEarnings,
 		&summary.AllTimeBookings,
 	)
-	return summary, err
+	return summary, queryErr
 }
 
 func (r *pgRepository) ListNannyEarnings(ctx context.Context, userID uuid.UUID, page, limit int) ([]NannyEarningRecord, int, error) {
@@ -235,6 +261,105 @@ func (r *pgRepository) ListNannyEarnings(ctx context.Context, userID uuid.UUID, 
 	return records, total, rows.Err()
 }
 
+func (r *pgRepository) ListPaymentReconciliationIssues(ctx context.Context, page, limit int) ([]PaymentReconciliationIssue, int, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	baseQuery := `
+		WITH issues AS (
+			SELECT 'paid_booking_not_completed' AS issue_type,
+			       b.id AS booking_id, b.parent_profile_id, b.nanny_profile_id, b.status AS booking_status,
+			       bp.status AS payment_status, COALESCE(bp.stripe_payment_intent_id, '') AS stripe_payment_intent_id,
+			       COALESCE(bp.stripe_charge_id, '') AS stripe_charge_id, COALESCE(bp.stripe_refund_id, '') AS stripe_refund_id,
+			       bp.amount, bp.currency, bp.updated_at
+			FROM booking_payments bp
+			INNER JOIN bookings b ON b.id = bp.booking_id
+			WHERE bp.status = 'succeeded' AND b.status <> 'completed'
+
+			UNION ALL
+
+			SELECT 'completed_booking_without_succeeded_payment' AS issue_type,
+			       b.id AS booking_id, b.parent_profile_id, b.nanny_profile_id, b.status AS booking_status,
+			       COALESCE(bp.status, '') AS payment_status, COALESCE(bp.stripe_payment_intent_id, '') AS stripe_payment_intent_id,
+			       COALESCE(bp.stripe_charge_id, '') AS stripe_charge_id, COALESCE(bp.stripe_refund_id, '') AS stripe_refund_id,
+			       COALESCE(bp.amount, b.total_amount) AS amount, COALESCE(bp.currency, np.currency) AS currency, b.updated_at
+			FROM bookings b
+			INNER JOIN nanny_profiles np ON np.id = b.nanny_profile_id
+			LEFT JOIN booking_payments bp ON bp.booking_id = b.id
+			WHERE b.status = 'completed' AND (bp.id IS NULL OR bp.status <> 'succeeded')
+
+			UNION ALL
+
+			SELECT 'cancelled_booking_unrefunded' AS issue_type,
+			       b.id AS booking_id, b.parent_profile_id, b.nanny_profile_id, b.status AS booking_status,
+			       bp.status AS payment_status, COALESCE(bp.stripe_payment_intent_id, '') AS stripe_payment_intent_id,
+			       COALESCE(bp.stripe_charge_id, '') AS stripe_charge_id, COALESCE(bp.stripe_refund_id, '') AS stripe_refund_id,
+			       bp.amount, bp.currency, bp.updated_at
+			FROM booking_payments bp
+			INNER JOIN bookings b ON b.id = bp.booking_id
+			WHERE b.status = 'cancelled' AND bp.status IN ('succeeded', 'processing') AND COALESCE(bp.stripe_charge_id, '') <> ''
+
+			UNION ALL
+
+			SELECT 'refunded_payment_booking_not_cancelled' AS issue_type,
+			       b.id AS booking_id, b.parent_profile_id, b.nanny_profile_id, b.status AS booking_status,
+			       bp.status AS payment_status, COALESCE(bp.stripe_payment_intent_id, '') AS stripe_payment_intent_id,
+			       COALESCE(bp.stripe_charge_id, '') AS stripe_charge_id, COALESCE(bp.stripe_refund_id, '') AS stripe_refund_id,
+			       bp.amount, bp.currency, bp.updated_at
+			FROM booking_payments bp
+			INNER JOIN bookings b ON b.id = bp.booking_id
+			WHERE bp.status = 'refunded' AND b.status <> 'cancelled'
+		)
+	`
+
+	var total int
+	if err := r.db.QueryRow(ctx, baseQuery+`SELECT COUNT(*) FROM issues`).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	rows, err := r.db.Query(ctx, baseQuery+`
+		SELECT issue_type, booking_id, parent_profile_id, nanny_profile_id, booking_status, payment_status,
+		       stripe_payment_intent_id, stripe_charge_id, stripe_refund_id, amount, currency, updated_at::text
+		FROM issues
+		ORDER BY updated_at DESC
+		LIMIT $1 OFFSET $2
+	`, limit, (page-1)*limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	issues := make([]PaymentReconciliationIssue, 0, limit)
+	for rows.Next() {
+		var issue PaymentReconciliationIssue
+		if err := rows.Scan(
+			&issue.IssueType,
+			&issue.BookingID,
+			&issue.ParentProfileID,
+			&issue.NannyProfileID,
+			&issue.BookingStatus,
+			&issue.PaymentStatus,
+			&issue.StripePaymentIntentID,
+			&issue.StripeChargeID,
+			&issue.StripeRefundID,
+			&issue.Amount,
+			&issue.Currency,
+			&issue.CreatedAt,
+		); err != nil {
+			return nil, 0, err
+		}
+		issues = append(issues, issue)
+	}
+	return issues, total, rows.Err()
+}
+
 func (r *pgRepository) UpdateParentStripeCustomer(ctx context.Context, parentProfileID uuid.UUID, customerID string) error {
 	_, err := r.db.Exec(ctx, `
 		UPDATE parent_profiles
@@ -251,6 +376,18 @@ func (r *pgRepository) UpdateParentDefaultPaymentMethod(ctx context.Context, par
 		WHERE id = $2
 	`, paymentMethodID, parentProfileID)
 	return err
+}
+
+func (r *pgRepository) HasParentApprovedBookings(ctx context.Context, parentProfileID uuid.UUID) (bool, error) {
+	var exists bool
+	err := r.db.QueryRow(ctx, `
+		SELECT EXISTS (
+			SELECT 1
+			FROM bookings
+			WHERE parent_profile_id = $1 AND status = $2
+		)
+	`, parentProfileID, models.ApprovedBookingStatus).Scan(&exists)
+	return exists, err
 }
 
 func (r *pgRepository) GetPaymentByBookingID(ctx context.Context, bookingID uuid.UUID) (models.BookingPayment, error) {
@@ -296,7 +433,8 @@ func (r *pgRepository) UpdatePaymentStatusByIntentID(ctx context.Context, paymen
 		    failure_message = $3,
 		    updated_at = NOW()
 		WHERE stripe_payment_intent_id = $4
-	`, status, chargeID, failureMessage, paymentIntentID)
+		  AND status <> $5
+	`, status, chargeID, failureMessage, paymentIntentID, models.PaymentRefunded)
 	return err
 }
 

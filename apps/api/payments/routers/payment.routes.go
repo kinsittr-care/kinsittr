@@ -108,3 +108,17 @@ func StripeWebhookRoutes(controller *controllers.PaymentsController) []api.Route
 		},
 	}
 }
+
+func AdminPaymentRoutes(controller *controllers.PaymentsController, jwtSecret string) []api.RouterSchema {
+	auth := middleware.RequireAuth(jwtSecret)
+	admin := middleware.RequireAdmin()
+	adminAuth := []typings.FiberMiddleware{auth, admin}
+	return []api.RouterSchema{
+		{
+			RouteMethod: api.RouteMethod(fiber.MethodGet),
+			Path:        "/payments/reconciliation",
+			Middlewares: adminAuth,
+			Handler:     controller.ListPaymentReconciliationIssues,
+		},
+	}
+}

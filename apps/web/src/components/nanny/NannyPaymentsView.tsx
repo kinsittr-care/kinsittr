@@ -7,7 +7,6 @@ import StripeStatusCard from "./payments/StripeStatusCard";
 import PayoutScheduleCard from "./payments/PayoutScheduleCard";
 import IdentityTaxCard from "./payments/IdentityTaxCard";
 import BalanceSummaryCard from "./payments/BalanceSummaryCard";
-import { btnPrimary } from "./nanny-styles";
 import {
   getNannyPayoutSettings,
   getNannyStripeBalance,
@@ -34,7 +33,7 @@ export default function NannyPaymentsView() {
   });
   const payoutsQuery = useQuery({
     queryKey: nannyStripePayoutsQueryKey,
-    queryFn: listNannyStripePayouts,
+    queryFn: () => listNannyStripePayouts(),
     enabled: isOnboarded,
   });
   const settingsQuery = useQuery({
@@ -96,12 +95,6 @@ export default function NannyPaymentsView() {
         </div>
 
         <IdentityTaxCard hasStripeAccount={hasStripeAccount} isOnboarded={isOnboarded} />
-
-        <div>
-          <button style={{ ...btnPrimary, opacity: isOnboarded ? 1 : 0.55, cursor: isOnboarded ? "pointer" : "not-allowed" }} disabled={!isOnboarded}>
-            Save changes
-          </button>
-        </div>
       </div>
     </div>
   );

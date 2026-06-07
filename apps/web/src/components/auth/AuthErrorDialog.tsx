@@ -17,12 +17,19 @@ export default function AuthErrorDialog({
   message: string;
   onClose: () => void;
 }) {
+  const titleID = "auth-error-dialog-title";
+  const descriptionID = "auth-error-dialog-description";
+
   return (
     <Dialog open={Boolean(message)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="border-[#eadfd3] bg-[#fffdf8] text-[#33271f]">
+      <DialogContent
+        aria-describedby={descriptionID}
+        aria-labelledby={titleID}
+        className="border-[#eadfd3] bg-[#fffdf8] text-[#33271f]"
+      >
         <DialogHeader>
-          <DialogTitle>Authentication failed</DialogTitle>
-          <DialogDescription>
+          <DialogTitle id={titleID}>Authentication failed</DialogTitle>
+          <DialogDescription id={descriptionID}>
             {message}
           </DialogDescription>
         </DialogHeader>

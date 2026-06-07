@@ -65,6 +65,11 @@ type Payout struct {
 	Created     int64  `json:"created"`
 }
 
+type PayoutList struct {
+	Data    []Payout `json:"data"`
+	HasMore bool     `json:"has_more"`
+}
+
 type Customer struct {
 	ID              string `json:"id"`
 	InvoiceSettings struct {
@@ -78,9 +83,10 @@ type SetupIntent struct {
 }
 
 type PaymentMethod struct {
-	ID   string `json:"id"`
-	Type string `json:"type"`
-	Card struct {
+	ID       string `json:"id"`
+	Type     string `json:"type"`
+	Customer string `json:"customer"`
+	Card     struct {
 		Brand    string `json:"brand"`
 		Last4    string `json:"last4"`
 		ExpMonth int    `json:"exp_month"`
@@ -158,19 +164,20 @@ func (c *Client) GetConnectedBalance(ctx context.Context, accountID string) (Bal
 	return balance, nil
 }
 
-func (c *Client) ListConnectedPayouts(ctx context.Context, accountID string, limit int) ([]Payout, error) {
+func (c *Client) ListConnectedPayouts(ctx context.Context, accountID string, limit int, startingAfter string) (PayoutList, error) {
 	if limit <= 0 || limit > 100 {
 		limit = 10
 	}
 	values := url.Values{}
 	values.Set("limit", strconv.Itoa(limit))
-	var response struct {
-		Data []Payout `json:"data"`
+	if strings.TrimSpace(startingAfter) != "" {
+		values.Set("starting_after", strings.TrimSpace(startingAfter))
 	}
+	var response PayoutList
 	if err := getFormWithOptions(ctx, c, "/payouts", values, &response, requestOptions{StripeAccount: accountID}); err != nil {
-		return nil, err
+		return PayoutList{}, err
 	}
-	return response.Data, nil
+	return response, nil
 }
 
 func (c *Client) CreateCustomer(ctx context.Context, email, name, idempotencyKey string) (Customer, error) {
@@ -213,6 +220,14 @@ func (c *Client) ListCardPaymentMethods(ctx context.Context, customerID string) 
 	return response.Data, nil
 }
 
+func (c *Client) GetPaymentMethod(ctx context.Context, paymentMethodID string) (PaymentMethod, error) {
+	var method PaymentMethod
+	if err := getForm(ctx, c, "/payment_methods/"+url.PathEscape(paymentMethodID), nil, &method); err != nil {
+		return PaymentMethod{}, err
+	}
+	return method, nil
+}
+
 func (c *Client) GetCustomer(ctx context.Context, customerID string) (Customer, error) {
 	var customer Customer
 	if err := getForm(ctx, c, "/customers/"+url.PathEscape(customerID), nil, &customer); err != nil {
@@ -242,13 +257,26 @@ func (c *Client) CreateDestinationPaymentIntent(ctx context.Context, params Paym
 	values.Set("application_fee_amount", strconv.FormatInt(params.ApplicationFeeCents, 10))
 	values.Set("transfer_data[destination]", params.DestinationAccountID)
 	values.Set("metadata[booking_id]", params.BookingID)
-	return postForm[PaymentIntent](ctx, c, "/payment_intents", values, requestOptions{IdempotencyKey: "booking-charge-" + params.BookingID})
+	idempotencyKey := params.IdempotencyKey
+	if idempotencyKey == "" {
+		idempotencyKey = "booking-charge-" + params.BookingID
+	}
+	return postForm[PaymentIntent](ctx, c, "/payment_intents", values, requestOptions{IdempotencyKey: idempotencyKey})
 }
 
 func (c *Client) CreateRefund(ctx context.Context, chargeID, idempotencyKey string) (Refund, error) {
 	values := url.Values{}
 	values.Set("charge", chargeID)
 	return postForm[Refund](ctx, c, "/refunds", values, requestOptions{IdempotencyKey: idempotencyKey})
+}
+
+func (c *Client) UpdateConnectedPayoutSchedule(ctx context.Context, accountID, schedule string) (Account, error) {
+	values := url.Values{}
+	values.Set("settings[payouts][schedule][interval]", schedule)
+	if schedule == "weekly" {
+		values.Set("settings[payouts][schedule][weekly_anchor]", "monday")
+	}
+	return postForm[Account](ctx, c, "/accounts/"+url.PathEscape(accountID), values)
 }
 
 type PaymentIntentParams struct {
@@ -259,6 +287,7 @@ type PaymentIntentParams struct {
 	PaymentMethodID      string
 	DestinationAccountID string
 	BookingID            string
+	IdempotencyKey       string
 }
 
 func VerifyWebhook(payload []byte, header, secret string) (Event, error) {

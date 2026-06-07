@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/models"
 	"github.com/kinsittr/kinsittr-api/payments/messages"
 	shared "github.com/kinsittr/kinsittr-api/shared"
@@ -41,6 +42,9 @@ func (p *PaymentsPipe) HandleStripeWebhook(ctx context.Context, payload []byte, 
 		if err := p.repo.UpdateNannyStripeOnboardedByAccountID(ctx, account.ID, onboarded); err != nil {
 			logStripeWebhookEvent(event.ID, event.Type, "account_update_failed", err)
 			return pipeError[any](messages.Invalid_Payment_Request)
+		}
+		if onboarded {
+			p.syncConnectedPayoutSchedule(ctx, account.ID, uuid.Nil)
 		}
 	case "payment_intent.succeeded", "payment_intent.payment_failed", "payment_intent.processing", "payment_intent.canceled":
 		var intent stripe_api.PaymentIntent

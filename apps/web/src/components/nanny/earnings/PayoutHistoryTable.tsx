@@ -32,7 +32,7 @@ export default function PayoutHistoryTable({
     >
       <div style={{ padding: "18px 24px 14px", borderBottom: `1px solid ${N.borderSoft}` }}>
         <h2 style={{ fontFamily: "DM Serif Display, var(--font-dm-serif), serif", fontSize: 20, fontWeight: 400, color: N.greenDk }}>
-          Payout history
+          Earnings history
         </h2>
       </div>
 

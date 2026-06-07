@@ -79,6 +79,9 @@ func (p *PaymentsPipe) GetNannyStripeStatus(ctx context.Context, userID uuid.UUI
 			data.Onboarded = onboarded
 			if onboarded != profile.StripeOnboarded {
 				_ = p.repo.UpdateNannyStripeAccount(ctx, profile.ID, accountID, onboarded)
+				if onboarded {
+					p.syncConnectedPayoutSchedule(ctx, accountID, profile.ID)
+				}
 			}
 		}
 	}
@@ -109,28 +112,33 @@ func (p *PaymentsPipe) GetNannyStripeBalance(ctx context.Context, userID uuid.UU
 	return pipeSuccess(messages.Stripe_Status_Fetched, &data)
 }
 
-func (p *PaymentsPipe) ListNannyStripePayouts(ctx context.Context, userID uuid.UUID) *shared.PipeRes[StripePayoutListData] {
+func (p *PaymentsPipe) ListNannyStripePayouts(ctx context.Context, userID uuid.UUID, limit int, startingAfter string) *shared.PipeRes[StripePayoutListData] {
+	limit = normalizeStripePayoutLimit(limit)
 	connect, err := p.repo.GetNannyConnectContext(ctx, userID)
 	if err != nil || connect.NannyProfileID == uuid.Nil {
 		return pipeError[StripePayoutListData](messages.Payment_Profile_Not_Found)
 	}
 	if connect.StripeAccountID == "" || !connect.StripeOnboarded {
-		data := StripePayoutListData{Items: []StripePayoutData{}}
+		data := StripePayoutListData{Items: []StripePayoutData{}, Limit: limit}
 		return pipeSuccess(messages.Stripe_Status_Fetched, &data)
 	}
 	if p.stripe == nil || !p.stripe.Configured() {
 		return pipeError[StripePayoutListData](messages.Stripe_Not_Configured)
 	}
-	payouts, err := p.stripe.ListConnectedPayouts(ctx, connect.StripeAccountID, 10)
+	payouts, err := p.stripe.ListConnectedPayouts(ctx, connect.StripeAccountID, limit, startingAfter)
 	if err != nil {
 		logPaymentEvent("connect_payouts", uuid.Nil, uuid.Nil, connect.NannyProfileID, "stripe_failed", err)
 		return pipeError[StripePayoutListData](messages.Invalid_Payment_Request)
 	}
-	items := make([]StripePayoutData, 0, len(payouts))
-	for _, payout := range payouts {
+	items := make([]StripePayoutData, 0, len(payouts.Data))
+	for _, payout := range payouts.Data {
 		items = append(items, stripePayoutData(payout))
 	}
-	data := StripePayoutListData{Items: items}
+	nextCursor := ""
+	if payouts.HasMore && len(payouts.Data) > 0 {
+		nextCursor = payouts.Data[len(payouts.Data)-1].ID
+	}
+	data := StripePayoutListData{Items: items, Limit: limit, HasMore: payouts.HasMore, NextCursor: nextCursor}
 	return pipeSuccess(messages.Stripe_Status_Fetched, &data)
 }
 
@@ -147,6 +155,19 @@ func (p *PaymentsPipe) UpdateNannyPayoutSettings(ctx context.Context, userID uui
 	schedule := strings.ToLower(strings.TrimSpace(dto.Schedule))
 	if schedule != "daily" && schedule != "weekly" {
 		return pipeError[NannyPayoutSettingsData](messages.Invalid_Payment_Request)
+	}
+	connect, err := p.repo.GetNannyConnectContext(ctx, userID)
+	if err != nil || connect.NannyProfileID == uuid.Nil {
+		return pipeError[NannyPayoutSettingsData](messages.Payment_Profile_Not_Found)
+	}
+	if connect.StripeAccountID != "" && connect.StripeOnboarded {
+		if p.stripe == nil || !p.stripe.Configured() {
+			return pipeError[NannyPayoutSettingsData](messages.Stripe_Not_Configured)
+		}
+		if _, err := p.stripe.UpdateConnectedPayoutSchedule(ctx, connect.StripeAccountID, schedule); err != nil {
+			logPaymentEvent("connect_payout_schedule", uuid.Nil, uuid.Nil, connect.NannyProfileID, "stripe_failed", err)
+			return pipeError[NannyPayoutSettingsData](messages.Invalid_Payment_Request)
+		}
 	}
 	settings, err := p.repo.UpdateNannyPayoutSettings(ctx, userID, schedule)
 	if err != nil || settings.NannyProfileID == uuid.Nil {
@@ -203,4 +224,31 @@ func normalizePayoutSchedule(schedule string) string {
 		return "daily"
 	}
 	return "weekly"
+}
+
+func normalizeStripePayoutLimit(limit int) int {
+	if limit < 1 {
+		return 10
+	}
+	if limit > 100 {
+		return 100
+	}
+	return limit
+}
+
+func (p *PaymentsPipe) syncConnectedPayoutSchedule(ctx context.Context, accountID string, nannyProfileID uuid.UUID) {
+	if p.stripe == nil || !p.stripe.Configured() || strings.TrimSpace(accountID) == "" {
+		return
+	}
+	settings, err := p.repo.GetNannyPayoutSettingsByAccountID(ctx, accountID)
+	if err != nil || settings.NannyProfileID == uuid.Nil {
+		logPaymentEvent("connect_payout_schedule_sync", uuid.Nil, uuid.Nil, nannyProfileID, "settings_lookup_failed", err)
+		return
+	}
+	schedule := normalizePayoutSchedule(settings.Schedule)
+	if _, err := p.stripe.UpdateConnectedPayoutSchedule(ctx, accountID, schedule); err != nil {
+		logPaymentEvent("connect_payout_schedule_sync", uuid.Nil, uuid.Nil, nannyProfileID, "stripe_failed", err)
+		return
+	}
+	logPaymentEvent("connect_payout_schedule_sync", uuid.Nil, uuid.Nil, nannyProfileID, "success", nil)
 }

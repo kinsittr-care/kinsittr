@@ -245,6 +245,7 @@ func New(cfg *config.Config) (*fiber.App, error) {
 	adminAuthGroup := adminGroup.Group("/auth")
 	api.BaseRouter(adminAuthGroup, admin_auth_router.AdminAuthRoutes(adminAuthController, cfg.JWTSecret))
 	api.BaseRouter(adminGroup, admin_router.AdminRoutes(adminController, cfg.JWTSecret))
+	api.BaseRouter(adminGroup, payments_router.AdminPaymentRoutes(paymentsController, cfg.JWTSecret))
 	api.BaseRouter(adminGroup, reviews_router.AdminReviewRoutes(reviewsController, cfg.JWTSecret))
 
 	return app, nil

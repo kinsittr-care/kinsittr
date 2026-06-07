@@ -148,7 +148,7 @@ Server route:
 - `GET /api/v1/nanny/payments/status` — return the authenticated nanny's Stripe Connect status
 - `POST /api/v1/nanny/payments/connect` — create or reuse a Stripe Express account and return an onboarding link
 - `GET /api/v1/nanny/payments/balance` — return Stripe Connect available and pending balances
-- `GET /api/v1/nanny/payments/payouts` — list recent Stripe Connect payouts
+- `GET /api/v1/nanny/payments/payouts` — list Stripe Connect payouts with `limit` and `starting_after` cursor support
 - `GET /api/v1/nanny/payments/payout-settings` — return the nanny's payout schedule preference
 - `PATCH /api/v1/nanny/payments/payout-settings` — update payout schedule preference to daily or weekly
 - `POST /api/v1/nanny/bookings/:id/payment/retry` — retry payment and complete an eligible approved booking after billing is fixed
@@ -157,6 +157,7 @@ Server route:
 - `PUT /api/v1/parent/billing/payment-methods/:id` — update a payment method or set default
 - `DELETE /api/v1/parent/billing/payment-methods/:id` — remove a saved payment method
 - `POST /api/v1/webhooks/stripe` — process Stripe account, payment intent, and refund webhooks
+- `GET /api/v1/admin/payments/reconciliation` — list booking/payment state mismatches for admin review
 
 ## Yet To Implement
 

@@ -63,7 +63,10 @@ type StripePayoutData struct {
 }
 
 type StripePayoutListData struct {
-	Items []StripePayoutData `json:"items"`
+	Items      []StripePayoutData `json:"items"`
+	Limit      int                `json:"limit"`
+	HasMore    bool               `json:"has_more"`
+	NextCursor string             `json:"next_cursor,omitempty"`
 }
 
 type NannyPayoutSettingsData struct {
@@ -115,6 +118,28 @@ type PaymentMethodData struct {
 
 type PaymentMethodListData struct {
 	Items []PaymentMethodData `json:"items"`
+}
+
+type PaymentReconciliationIssueData struct {
+	IssueType             string               `json:"issue_type"`
+	BookingID             string               `json:"booking_id"`
+	ParentProfileID       string               `json:"parent_profile_id"`
+	NannyProfileID        string               `json:"nanny_profile_id"`
+	BookingStatus         models.BookingStatus `json:"booking_status"`
+	PaymentStatus         models.PaymentStatus `json:"payment_status"`
+	StripePaymentIntentID string               `json:"stripe_payment_intent_id,omitempty"`
+	StripeChargeID        string               `json:"stripe_charge_id,omitempty"`
+	StripeRefundID        string               `json:"stripe_refund_id,omitempty"`
+	Amount                float64              `json:"amount"`
+	Currency              string               `json:"currency"`
+	CreatedAt             string               `json:"created_at"`
+}
+
+type PaymentReconciliationListData struct {
+	Items []PaymentReconciliationIssueData `json:"items"`
+	Page  int                              `json:"page"`
+	Limit int                              `json:"limit"`
+	Total int                              `json:"total"`
 }
 
 func NewPaymentsPipe(repo paymentrepo.PaymentsRepository, profileRepo profile.ProfileRepository, stripeClient *stripeapi.Client, platformFeeRate float64, webhookSecret, refreshURL, returnURL string, notifyRepo ...notifyrepo.NotificationsRepository) *PaymentsPipe {
