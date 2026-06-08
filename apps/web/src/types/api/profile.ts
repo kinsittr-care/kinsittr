@@ -3,7 +3,7 @@ export interface ParentProfile {
   display_name: string;
   phone: string;
   num_children: number;
-  children_ages: number[];
+  children_ages: number[] | null;
   city: string;
   province: string;
   created_at: string;

@@ -12,16 +12,8 @@ export default function AdminPageHeader({
 }) {
   return (
     <div
-      style={{
-        display: "flex",
-        alignItems: "flex-end",
-        justifyContent: "space-between",
-        padding: "34px 40px 22px",
-        gap: 24,
-        borderBottom: `1px solid ${A.divider}`,
-        background: A.bg,
-        flexShrink: 0,
-      }}
+      className="flex flex-col gap-3 px-4 pt-6 pb-5 md:flex-row md:items-end md:justify-between md:gap-6 md:px-10 md:pt-8 md:pb-[22px]"
+      style={{ borderBottom: `1px solid ${A.divider}`, background: A.bg, flexShrink: 0 }}
     >
       <div>
         <h1
@@ -42,7 +34,7 @@ export default function AdminPageHeader({
           </div>
         )}
       </div>
-      {right}
+      {right && <div className="overflow-x-auto pb-0.5 [scrollbar-width:none]">{right}</div>}
     </div>
   );
 }

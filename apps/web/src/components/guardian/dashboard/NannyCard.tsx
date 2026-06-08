@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Nanny } from "./types";
 import Avatar from "./Avatar";
 import Tag from "./Tag";
+import { formatLocationPart } from "@/src/utils/format";
 
 function StarRating({ rating, reviews }: { rating: number; reviews: number }) {
   const full = Math.floor(rating);
@@ -63,11 +64,11 @@ export default function NannyCard({ nanny, onBook, delay = 0 }: NannyCardProps) 
           <div className="flex justify-between items-start" style={{ marginBottom: 4 }}>
             <div>
               <h3 style={{ fontWeight: 600, fontSize: 17, marginBottom: 3 }}>{nanny.name}</h3>
-              <div className="flex items-center gap-1" style={{ color: "var(--muted)", fontSize: 13, marginBottom: 6 }}>
+              <div className="flex items-center gap-1" style={{ color: "var(--faint)", fontSize: 13, marginBottom: 6 }}>
                 <svg width="10" height="13" viewBox="0 0 10 13" fill="#c0392b" aria-hidden="true">
                   <path d="M5 0C2.24 0 0 2.24 0 5c0 3.75 5 8 5 8s5-4.25 5-8c0-2.76-2.24-5-5-5zm0 6.5A1.5 1.5 0 1 1 5 3.5a1.5 1.5 0 0 1 0 3z" />
                 </svg>
-                {nanny.city}
+                {formatLocationPart(nanny.city)}
               </div>
               <StarRating rating={nanny.rating} reviews={nanny.reviews} />
             </div>

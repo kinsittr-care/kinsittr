@@ -48,78 +48,32 @@ export default function ScreeningCard({
         boxShadow: A.shadow,
       }}
     >
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 18 }}>
-        <AdminAvatar initials={applicant.initials} size={56} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontFamily: "var(--font-dm-serif), serif",
-              fontSize: 22,
-              color: A.ink,
-              lineHeight: 1.1,
-            }}
-          >
-            {applicant.name}
-          </div>
-          <div
-            style={{
-              marginTop: 7,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              fontSize: 13.5,
-              color: A.inkSoft,
-            }}
-          >
-            <span style={{ color: A.clay, display: "flex" }}>
-              <PinIcon />
-            </span>
-            {applicant.city}
-            <span style={{ opacity: 0.5 }}>·</span>
-            Submitted {applicant.submitted}
-          </div>
-          <div
-            style={{
-              display: "flex",
-              gap: 10,
-              marginTop: 18,
-              flexWrap: "wrap",
-            }}
-          >
-            {(["docs", "refs", "interview"] as const).map((key) => (
-              <button
-                key={key}
-                disabled={!canUpdateSteps || isBusy}
-                onClick={() => onToggle(key)}
-                style={{
-                  all: "unset",
-                  cursor: canUpdateSteps && !isBusy ? "pointer" : "not-allowed",
-                  opacity: canUpdateSteps ? 1 : 0.6,
-                }}
-              >
-                <AdminStepChip
-                  label={key === "docs" ? "Docs reviewed" : key === "refs" ? "References checked" : "Interview done"}
-                  done={steps[key]}
-                />
-              </button>
-            ))}
-          </div>
-          <div style={{ marginTop: 18 }}>
-            <div style={{ color: A.ink, fontSize: 13, fontWeight: 700 }}>
-              Uploaded documents ({applicant.documents.length})
+      <div className="flex flex-col gap-4 sm:grid sm:grid-cols-[56px_minmax(0,1fr)_minmax(160px,auto)] sm:items-start sm:gap-x-[18px]">
+        <div className="flex items-start gap-4 sm:contents">
+          <AdminAvatar initials={applicant.initials} size={56} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontFamily: "var(--font-dm-serif), serif",
+                fontSize: 22,
+                color: A.ink,
+                lineHeight: 1.1,
+              }}
+            >
+              {applicant.name}
             </div>
-            <AdminNannyDocumentsList documents={applicant.documents} compact />
+            <div className="mt-[7px] flex flex-wrap items-center gap-2 text-[13.5px]" style={{ color: A.inkSoft }}>
+              <span style={{ color: A.clay, display: "flex" }}>
+                <PinIcon />
+              </span>
+              <span>{applicant.city}</span>
+              <span style={{ opacity: 0.5 }}>·</span>
+              <span>Submitted {applicant.submitted}</span>
+            </div>
           </div>
         </div>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-end",
-            gap: 14,
-            minWidth: 160,
-          }}
-        >
+
+        <div className="flex w-full flex-col gap-3 sm:col-start-3 sm:row-start-1 sm:w-auto sm:items-end sm:gap-[14px]">
           <div
             style={{
               display: "inline-flex",
@@ -136,18 +90,47 @@ export default function ScreeningCard({
             Waiting {applicant.waiting} day{applicant.waiting > 1 ? "s" : ""}
           </div>
           {applicant.status === "pending" ? (
-            <button disabled={isBusy} onClick={onStart} style={{ ...btnPrimary, opacity: isBusy ? 0.65 : 1 }}>
+            <button className="w-full sm:w-auto" disabled={isBusy} onClick={onStart} style={{ ...btnPrimary, opacity: isBusy ? 0.65 : 1 }}>
               Start review <ArrowSmIcon />
             </button>
           ) : canReset ? (
-            <button disabled={isBusy} onClick={onReset} style={{ ...btnGhostSm, opacity: isBusy ? 0.65 : 1 }}>
+            <button className="w-full sm:w-auto" disabled={isBusy} onClick={onReset} style={{ ...btnGhostSm, opacity: isBusy ? 0.65 : 1 }}>
               Reset
             </button>
           ) : (
-            <button disabled style={{ ...btnPrimary, opacity: 0.65, cursor: "not-allowed" }}>
+            <button className="w-full sm:w-auto" disabled style={{ ...btnPrimary, opacity: 0.65, cursor: "not-allowed" }}>
               In review <ArrowSmIcon />
             </button>
           )}
+        </div>
+
+        <div className="flex flex-wrap gap-2 sm:col-start-2 sm:mt-[2px] sm:gap-[10px]">
+          {(["docs", "refs", "interview"] as const).map((key) => (
+            <button
+              key={key}
+              disabled={!canUpdateSteps || isBusy}
+              onClick={() => onToggle(key)}
+              style={{
+                all: "unset",
+                cursor: canUpdateSteps && !isBusy ? "pointer" : "not-allowed",
+                opacity: canUpdateSteps ? 1 : 0.6,
+              }}
+            >
+              <AdminStepChip
+                label={key === "docs" ? "Docs reviewed" : key === "refs" ? "References checked" : "Interview done"}
+                done={steps[key]}
+              />
+            </button>
+          ))}
+        </div>
+
+        <div className="min-w-0 sm:col-start-2 sm:col-span-2">
+          <div style={{ color: A.ink, fontSize: 13, fontWeight: 700 }}>
+            Uploaded documents ({applicant.documents.length})
+          </div>
+          <div className="max-h-[180px] overflow-y-auto pr-1 sm:max-h-none sm:overflow-visible sm:pr-0">
+            <AdminNannyDocumentsList documents={applicant.documents} compact />
+          </div>
         </div>
       </div>
     </div>

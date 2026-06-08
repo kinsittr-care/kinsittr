@@ -9,7 +9,7 @@ export interface AdminParent {
   user_is_active: boolean;
   display_name: string;
   num_children: number;
-  children_ages: number[];
+  children_ages: number[] | null;
   city: string;
   province: string;
   stripe_customer_id: string;

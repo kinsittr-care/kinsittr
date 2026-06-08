@@ -8,7 +8,7 @@ import AdminReasonDialog, { type AdminReasonDialogState } from "./AdminReasonDia
 import ScreeningCard, { type ScreeningApplicant, type Steps } from "./screening/ScreeningCard";
 import { btnGhost } from "./compositions/admin-styles";
 import type { AdminNanny, ListAdminScreeningNanniesParams } from "@/src/types/api/admin";
-import { formatShortDate } from "@/src/utils/format";
+import { formatLocation, formatShortDate } from "@/src/utils/format";
 import {
   adminScreeningNanniesQueryKey,
   listAdminScreeningNannies,
@@ -35,7 +35,7 @@ function mapApplicant(nanny: AdminNanny): ScreeningApplicant {
     id: nanny.id,
     name: nanny.display_name,
     initials: initialsFor(nanny),
-    city: `${nanny.city}, ${nanny.province}`,
+    city: formatLocation(nanny.city, nanny.province),
     submitted: formatShortDate(nanny.created_at),
     waiting: nanny.waiting_days,
     status: nanny.verification_status,
@@ -153,14 +153,7 @@ export default function ScreeningQueueView() {
           </div>
         }
       />
-      <div
-        style={{
-          padding: "24px 40px 40px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 16,
-        }}
-      >
+      <div className="flex flex-col gap-4 px-4 py-5 md:px-10 md:py-6">
         {actionError && (
           <p style={{ color: "#b34b39", fontSize: 14, margin: 0 }}>
             {actionError instanceof Error ? actionError.message : "Unable to update screening queue."}

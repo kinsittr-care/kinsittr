@@ -10,11 +10,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import BookingFormContent from "../dashboard/BookingFormContent";
 
 interface BookingSheetProps {
@@ -35,15 +35,15 @@ export default function BookingSheet({ nanny, open, onClose, onBooked }: Booking
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
-        <DrawerContent className="max-h-[92dvh] overflow-y-auto">
-          <DrawerTitle className="hidden"></DrawerTitle>
-          <DrawerDescription className="sr-only">
+      <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
+        <SheetContent side="bottom" showCloseButton={false} className="max-h-[92dvh] overflow-y-auto p-0">
+          <SheetTitle className="sr-only">Book {nanny.name}</SheetTitle>
+          <SheetDescription className="sr-only">
             Choose a booking date, time, and duration for this nanny.
-          </DrawerDescription>
+          </SheetDescription>
           {content}
-        </DrawerContent>
-      </Drawer>
+        </SheetContent>
+      </Sheet>
     );
   }
 

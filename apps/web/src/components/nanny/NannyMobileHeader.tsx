@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  Drawer,
-  DrawerContent,
-  DrawerClose,
-} from "@/components/ui/drawer";
+  Sheet,
+  SheetContent,
+  SheetClose,
+} from "@/components/ui/sheet";
 import { NannyNavLinks, useNannySidebarData } from "./NannySidebar";
 import NannyAvatar from "./NannyAvatar";
 import NannyNotificationsPanel from "./notifications/NannyNotificationsPanel";
@@ -45,10 +45,10 @@ export default function NannyMobileHeader() {
         <NannyNotificationsPanel />
       </header>
 
-      {/* Drawer nav */}
-      <Drawer open={open} onOpenChange={setOpen} direction="left">
-        <DrawerContent className="bg-nanny-bg border-nanny-border flex flex-col pt-0">
-          {/* Drawer header */}
+      {/* Mobile nav */}
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="left" showCloseButton={false} className="bg-nanny-bg border-nanny-border flex flex-col pt-0">
+          {/* Sheet header */}
           <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-nanny-border-soft">
             <div className="flex items-center gap-2.5">
               <div className="size-8 rounded-[9px] bg-nanny-green flex items-center justify-center text-[#f6efd9] font-display text-lg">
@@ -59,7 +59,7 @@ export default function NannyMobileHeader() {
                 <div className="text-[11px] text-nanny-ink-mute tracking-widest uppercase mt-0.5">Caregiver</div>
               </div>
             </div>
-            <DrawerClose asChild>
+            <SheetClose asChild>
               <Button
                 variant="ghost"
                 size="icon-sm"
@@ -68,7 +68,7 @@ export default function NannyMobileHeader() {
               >
                 <X className="size-4" />
               </Button>
-            </DrawerClose>
+            </SheetClose>
           </div>
 
           {/* Nav links */}
@@ -101,8 +101,8 @@ export default function NannyMobileHeader() {
             </svg>
             Log out
           </button>
-        </DrawerContent>
-      </Drawer>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }

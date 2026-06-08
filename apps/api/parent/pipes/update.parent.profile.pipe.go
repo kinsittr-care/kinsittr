@@ -17,8 +17,8 @@ func (p *ParentPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto
 		Phone:        normalizeString(dto.Phone),
 		NumChildren:  dto.NumChildren,
 		ChildrenAges: dto.ChildrenAges,
-		City:         normalizeString(dto.City),
-		Province:     normalizeString(dto.Province),
+		City:         normalizeLocationString(dto.City),
+		Province:     normalizeLocationString(dto.Province),
 	})
 	if err != nil || profile.ID == uuid.Nil {
 		return pipeError[ParentProfileData](messages.Parent_Profile_Not_Found)

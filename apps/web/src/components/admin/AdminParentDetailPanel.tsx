@@ -3,7 +3,7 @@ import AdminAuditTimeline from "./compositions/AdminAuditTimeline";
 import { btnApprove } from "./compositions/admin-styles";
 import { A } from "./tokens";
 import type { AdminAuditAction, AdminParentDetailData } from "@/src/types/api/admin";
-import { formatCurrency, formatDateOnlyShort } from "@/src/utils/format";
+import { formatCurrency, formatDateOnlyShort, formatLocation } from "@/src/utils/format";
 
 export default function AdminParentDetailPanel({
   actions,
@@ -33,6 +33,7 @@ export default function AdminParentDetailPanel({
   }
 
   const { parent, bookings } = detail;
+  const childrenAges = Array.isArray(parent.children_ages) ? parent.children_ages : [];
 
   return (
     <aside style={panelStyle}>
@@ -64,8 +65,8 @@ export default function AdminParentDetailPanel({
       <div style={sectionStyle}>
         <h3 style={sectionTitle}>Profile</h3>
         <Detail label="Name" value={`${parent.user_firstname} ${parent.user_lastname}`.trim()} />
-        <Detail label="Location" value={`${parent.city}, ${parent.province}`} />
-        <Detail label="Children ages" value={parent.children_ages.length ? parent.children_ages.join(", ") : "None listed"} />
+        <Detail label="Location" value={formatLocation(parent.city, parent.province, "not set")} />
+        <Detail label="Children ages" value={childrenAges.length ? childrenAges.join(", ") : "None listed"} />
         <Detail label="Stripe customer" value={parent.stripe_customer_id || "Not created"} />
       </div>
 

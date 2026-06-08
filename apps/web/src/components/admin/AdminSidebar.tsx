@@ -23,7 +23,7 @@ import {
 } from "@/src/utils/api/admin/screening";
 import { useLogout } from "../auth/useLogout";
 
-const navItems = [
+export const navItems = [
   {
     href: "/admin",
     label: "Screening Queue",
@@ -71,7 +71,7 @@ const navItems = [
 ];
 
 const badgeColors = {
-  red:   { bg: A.red,   fg: "#fff" },
+  red: { bg: A.red, fg: "#fff" },
   amber: { bg: A.amber, fg: "#fff" },
 };
 
@@ -83,165 +83,139 @@ function formatSidebarBadge(total: number | undefined) {
   return total > 99 ? "99+" : String(total);
 }
 
-export default function AdminSidebar({ user }: { user: AuthUser | null }) {
-  const pathname = usePathname();
-  const logout = useLogout("admin");
+export type AdminBadgeValues = { screening: string | null; reviews: string | null };
+
+export function useAdminSidebarBadges(enabled = true): AdminBadgeValues {
   const screeningBadgeQuery = useQuery({
     queryKey: adminScreeningNanniesQueryKey(screeningBadgeParams),
     queryFn: () => listAdminScreeningNannies(screeningBadgeParams),
+    enabled,
     staleTime: 30_000,
   });
   const flaggedReviewsBadgeQuery = useQuery({
     queryKey: adminReviewsQueryKey(flaggedReviewsBadgeParams),
     queryFn: () => listAdminReviews(flaggedReviewsBadgeParams),
+    enabled,
     staleTime: 30_000,
   });
+  return {
+    screening: formatSidebarBadge(screeningBadgeQuery.data?.data?.total),
+    reviews: formatSidebarBadge(flaggedReviewsBadgeQuery.data?.data?.total),
+  };
+}
+
+export function AdminNavLinks({
+  pathname,
+  badgeValues,
+  onNavigate,
+}: {
+  pathname: string;
+  badgeValues: AdminBadgeValues;
+  onNavigate?: () => void;
+}) {
+  const isActive = (href: string) =>
+    href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
+
+  return (
+    <nav style={{ display: "flex", flexDirection: "column", gap: 2, padding: "0 12px", flex: 1 }}>
+      {navItems.map((item) => {
+        const active = isActive(item.href);
+        const bc = item.badgeTone ? badgeColors[item.badgeTone] : null;
+        const badge = item.badgeKey ? badgeValues[item.badgeKey] : null;
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "11px 14px",
+              borderRadius: 10,
+              fontSize: 14.5,
+              fontWeight: active ? 600 : 500,
+              color: active ? A.clay : A.inkMid,
+              background: active ? "#fff" : "transparent",
+              border: active ? `1px solid ${A.border}` : "1px solid transparent",
+              boxShadow: active ? "0 1px 2px rgba(80,40,20,.05)" : "none",
+              textDecoration: "none",
+              transition: "all .15s",
+            }}
+          >
+            <span style={{ display: "flex" }}>{item.icon}</span>
+            <span style={{ flex: 1 }}>{item.label}</span>
+            {badge && bc && (
+              <span
+                style={{
+                  minWidth: 20,
+                  height: 20,
+                  padding: "0 6px",
+                  borderRadius: 999,
+                  background: bc.bg,
+                  color: bc.fg,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {badge}
+              </span>
+            )}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+export default function AdminSidebar({
+  user,
+  badgeValues,
+}: {
+  user: AuthUser | null;
+  badgeValues: AdminBadgeValues;
+}) {
+  const pathname = usePathname();
+  const logout = useLogout("admin");
   const displayName = user ? `${user.firstname} ${user.lastname}`.trim() : "Admin";
   const initials = user
     ? `${user.firstname[0] ?? ""}${user.lastname[0] ?? ""}`.toUpperCase()
     : "AD";
-  const isActive = (href: string) =>
-    href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
-  const badgeValues = {
-    screening: formatSidebarBadge(screeningBadgeQuery.data?.data?.total),
-    reviews: formatSidebarBadge(flaggedReviewsBadgeQuery.data?.data?.total),
-  };
 
   return (
     <aside
+      className="hidden md:flex"
       style={{
         width: 264,
         flexShrink: 0,
         height: "100%",
         background: A.sidebar,
         borderRight: `1px solid ${A.border}`,
-        display: "flex",
         flexDirection: "column",
         padding: "24px 0",
       }}
     >
       {/* Logo */}
-      <div
-        style={{
-          padding: "4px 22px 22px",
-          borderBottom: `1px solid ${A.borderSoft}`,
-          marginBottom: 18,
-        }}
-      >
+      <div style={{ padding: "4px 22px 22px", borderBottom: `1px solid ${A.borderSoft}`, marginBottom: 18 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div
-            style={{
-              width: 30,
-              height: 30,
-              borderRadius: 8,
-              background: A.clay,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#fff",
-              fontFamily: "var(--font-dm-serif), serif",
-              fontSize: 16,
-            }}
-          >
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: A.clay, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: "var(--font-dm-serif), serif", fontSize: 16 }}>
             k
           </div>
           <div>
-            <div
-              style={{
-                fontFamily: "var(--font-dm-serif), serif",
-                fontSize: 19,
-                color: A.ink,
-                lineHeight: 1,
-              }}
-            >
-              KinSittr
-            </div>
-            <div
-              style={{
-                fontSize: 11,
-                color: A.inkSoft,
-                letterSpacing: ".12em",
-                textTransform: "uppercase",
-                marginTop: 3,
-              }}
-            >
-              Admin Console
-            </div>
+            <div style={{ fontFamily: "var(--font-dm-serif), serif", fontSize: 19, color: A.ink, lineHeight: 1 }}>KinSittr</div>
+            <div style={{ fontSize: 11, color: A.inkSoft, letterSpacing: ".12em", textTransform: "uppercase", marginTop: 3 }}>Admin Console</div>
           </div>
         </div>
       </div>
 
       {/* Nav */}
-      <nav
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-          padding: "0 12px",
-          flex: 1,
-        }}
-      >
-        {navItems.map((item) => {
-          const active = isActive(item.href);
-          const bc = item.badgeTone ? badgeColors[item.badgeTone] : null;
-          const badge = item.badgeKey ? badgeValues[item.badgeKey] : null;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "11px 14px",
-                borderRadius: 10,
-                fontSize: 14.5,
-                fontWeight: active ? 600 : 500,
-                color: active ? A.clay : A.inkMid,
-                background: active ? "#fff" : "transparent",
-                border: active ? `1px solid ${A.border}` : "1px solid transparent",
-                boxShadow: active ? "0 1px 2px rgba(80,40,20,.05)" : "none",
-                textDecoration: "none",
-                transition: "all .15s",
-              }}
-            >
-              <span style={{ display: "flex" }}>{item.icon}</span>
-              <span style={{ flex: 1 }}>{item.label}</span>
-              {badge && bc && (
-                <span
-                  style={{
-                    minWidth: 20,
-                    height: 20,
-                    padding: "0 6px",
-                    borderRadius: 999,
-                    background: bc.bg,
-                    color: bc.fg,
-                    fontSize: 11,
-                    fontWeight: 700,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {badge}
-                </span>
-              )}
-            </Link>
-          );
-        })}
-      </nav>
+      <AdminNavLinks pathname={pathname} badgeValues={badgeValues} />
 
       {/* Admin user */}
-      <div
-        style={{
-          padding: "18px 18px 14px",
-          margin: "0 12px",
-          borderTop: `1px solid ${A.borderSoft}`,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
+      <div style={{ padding: "18px 18px 14px", margin: "0 12px", borderTop: `1px solid ${A.borderSoft}`, display: "flex", alignItems: "center", gap: 12 }}>
         <AdminAvatar initials={initials} size={40} tone="clay" />
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: A.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</div>
@@ -251,18 +225,7 @@ export default function AdminSidebar({ user }: { user: AuthUser | null }) {
       <button
         type="button"
         onClick={logout}
-        style={{
-          margin: "0 24px",
-          padding: "10px 14px",
-          borderRadius: 10,
-          border: "1px solid transparent",
-          background: "transparent",
-          color: "#b42318",
-          fontSize: 14,
-          fontWeight: 700,
-          cursor: "pointer",
-          textAlign: "left",
-        }}
+        style={{ margin: "0 24px", padding: "10px 14px", borderRadius: 10, border: "1px solid transparent", background: "transparent", color: "#b42318", fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "left" }}
       >
         Log out
       </button>

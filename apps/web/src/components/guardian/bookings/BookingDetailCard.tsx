@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Booking } from "@/src/types/api/api";
 import { getParentBookingById, parentBookingQueryKey } from "@/src/utils/api/bookings";
-import { describeBookingTime, formatCurrency, formatShortDateCA } from "@/src/utils/format";
+import { describeBookingTime, formatCurrency, formatLocation, formatShortDateCA } from "@/src/utils/format";
 import SectionCard from "../profile/SectionCard";
 import BookingStatusBadge from "./BookingStatusBadge";
 import PaymentStatusBadge from "./PaymentStatusBadge";
@@ -44,7 +44,7 @@ export default function BookingDetailCard({ bookingId }: BookingDetailCardProps)
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 18 }}>{booking.nanny_display_name ?? "Selected nanny"}</div>
                   <div style={{ color: "var(--muted)", fontSize: 13, marginTop: 2 }}>
-                    {[booking.nanny_city, booking.nanny_province].filter(Boolean).join(", ")}
+                    {formatLocation(booking.nanny_city, booking.nanny_province, "Location not set")}
                   </div>
                 </div>
                 <div className="flex flex-wrap justify-end gap-2">

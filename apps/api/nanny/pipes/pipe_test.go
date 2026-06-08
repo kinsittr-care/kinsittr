@@ -502,7 +502,7 @@ func TestUpdateOwnProfile(t *testing.T) {
 		if !res.Success {
 			t.Fatalf("expected success, got %s", res.Message)
 		}
-		if pr.lastNannyUpdate.City != "North York" || pr.lastNannyUpdate.Province != "Test Province" {
+		if pr.lastNannyUpdate.City != "north york" || pr.lastNannyUpdate.Province != "test province" {
 			t.Fatalf("expected normalized location, got city=%q province=%q", pr.lastNannyUpdate.City, pr.lastNannyUpdate.Province)
 		}
 	})

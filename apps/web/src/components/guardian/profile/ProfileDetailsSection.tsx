@@ -6,7 +6,12 @@ import SectionCard from "./SectionCard";
 import { useIsMobile } from "../dashboard/useIsMobile";
 import type { ParentProfile, UpdateParentProfilePayload } from "@/src/types/api/api";
 import { getStoredAuthSession } from "@/src/utils/api/session";
-import { formatMonthYear } from "@/src/utils/format";
+import { formatLocation, formatLocationPart, formatMonthYear } from "@/src/utils/format";
+import {
+  CITIES_BY_PROVINCE,
+  PROVINCE_OPTIONS,
+  TESTING_PROVINCE,
+} from "@/src/components/nanny/profile/nannyProfileHelpers";
 
 const labelStyle: React.CSSProperties = {
   fontSize: 12,
@@ -32,7 +37,6 @@ const inputStyle: React.CSSProperties = {
 };
 
 type ProfileDraft = {
-  display_name: string;
   phone: string;
   city: string;
   province: string;
@@ -60,12 +64,27 @@ export default function ProfileDetailsSection({
   const user = session?.user;
   const displayEmail = user?.email ?? "not set";
   const displayPhone = profile.phone || user?.phone || "not set";
-  const displayCity = profile.city && profile.province ? `${profile.city}, ${profile.province}` : "not set";
+  const displayCity = formatLocation(profile.city, profile.province, "not set");
   const initials = initialsFromName(profile.display_name);
+  const profileComplete = isParentProfileComplete(profile, user?.phone ?? "");
+  const cityOptions = cityOptionsForProvince(profileDraft.province, profileDraft.city);
+  const usesFreeTextCity = profileDraft.province === TESTING_PROVINCE;
+
+  const updateDraft = <TKey extends keyof ProfileDraft>(key: TKey, value: ProfileDraft[TKey]) => {
+    setProfileDraft((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleProvinceChange = (province: string) => {
+    setProfileDraft((prev) => ({
+      ...prev,
+      province,
+      city: "",
+    }));
+  };
 
   return (
     <SectionCard title="Profile">
-      <div className="flex flex-col md:flex-row items-end md:items-center md:gap-5 border-b border-brand-border pb-5 mb-5">
+      <div className="flex flex-col items-start gap-4 border-b border-brand-border pb-5 mb-5 md:flex-row md:items-center md:gap-5">
         <div
           className="flex gap-3"
           style={{
@@ -78,19 +97,21 @@ export default function ProfileDetailsSection({
             <div style={{ fontWeight: 700, fontSize: 20 }}>{profile.display_name}</div>
             <div style={{ color: "var(--faint)", fontSize: 14, marginTop: 2 }}>{displayEmail}</div>
             <div className="flex flex-col md:flex-row items-start gap-[6px] mt-3.5">
-              <span
-                style={{
-                  background: "var(--teal-lt)",
-                  color: "var(--teal)",
-                  border: "1px solid var(--teal-mid)",
-                  borderRadius: 20,
-                  padding: "2px 10px",
-                  fontSize: 12,
-                  fontWeight: 500,
-                }}
-              >
-                Verified parent
-              </span>
+              {profileComplete && (
+                <span
+                  style={{
+                    background: "var(--teal-lt)",
+                    color: "var(--teal)",
+                    border: "1px solid var(--teal-mid)",
+                    borderRadius: 20,
+                    padding: "2px 10px",
+                    fontSize: 12,
+                    fontWeight: 500,
+                  }}
+                >
+                  Verified parent
+                </span>
+              )}
               <span style={{ fontSize: 12, color: "var(--faint)" }}>
                 Member since {formatMonthYear(profile.created_at)}
               </span>
@@ -141,25 +162,54 @@ export default function ProfileDetailsSection({
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "0 16px" }}>
-          {(
-            [
-              ["Display name", "display_name"],
-              ["Phone", "phone"],
-              ["City", "city"],
-              ["Province", "province"],
-            ] as [string, keyof ProfileDraft][]
-          ).map(([label, key]) => (
-            <div key={key}>
-              <label style={labelStyle}>{label}</label>
+          <div>
+            <label style={labelStyle}>Phone</label>
+            <input
+              value={profileDraft.phone}
+              onChange={(event) => updateDraft("phone", event.target.value)}
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Province</label>
+            <select
+              value={profileDraft.province}
+              onChange={(event) => handleProvinceChange(event.target.value)}
+              style={inputStyle}
+            >
+              <option value="">Select province</option>
+              {provinceOptionsForValue(profileDraft.province).map((province) => (
+                <option key={province} value={province}>
+                  {province}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>City</label>
+            {usesFreeTextCity ? (
               <input
-                value={profileDraft[key]}
-                onChange={(event) =>
-                  setProfileDraft((prev) => ({ ...prev, [key]: event.target.value }))
-                }
+                value={profileDraft.city}
+                placeholder="Enter city"
+                onChange={(event) => updateDraft("city", event.target.value)}
                 style={inputStyle}
               />
-            </div>
-          ))}
+            ) : (
+              <select
+                value={profileDraft.city}
+                disabled={!profileDraft.province}
+                onChange={(event) => updateDraft("city", event.target.value)}
+                style={inputStyle}
+              >
+                <option value="">{profileDraft.province ? "Select city" : "Select province first"}</option>
+                {cityOptions.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
           <div style={{ gridColumn: isMobile ? "span 1" : "span 2" }}>
             <label style={labelStyle}>Children ages</label>
             <div className="flex gap-[10px] flex-wrap" style={{ marginBottom: 12 }}>
@@ -212,7 +262,7 @@ export default function ProfileDetailsSection({
               }
 
               const updated = await onSave({
-                display_name: profileDraft.display_name,
+                display_name: profile.display_name,
                 phone: profileDraft.phone,
                 num_children: childrenAges.length,
                 children_ages: childrenAges,
@@ -239,13 +289,42 @@ export default function ProfileDetailsSection({
 }
 
 function draftFromProfile(profile: ParentProfile): ProfileDraft {
+  const childrenAges = normalizeChildrenAges(profile.children_ages);
   return {
-    display_name: profile.display_name,
     phone: profile.phone,
-    city: profile.city,
-    province: profile.province,
-    children_ages: profile.children_ages.length ? profile.children_ages.map((age) => String(age)) : ["0"],
+    city: formatLocationPart(profile.city),
+    province: formatLocationPart(profile.province),
+    children_ages: childrenAges.length ? childrenAges.map((age) => String(age)) : ["0"],
   };
+}
+
+function normalizeChildrenAges(childrenAges: ParentProfile["children_ages"]) {
+  return Array.isArray(childrenAges) ? childrenAges : [];
+}
+
+function isParentProfileComplete(profile: ParentProfile, userPhone: string) {
+  return Boolean(
+    profile.display_name.trim() &&
+      (profile.phone.trim() || userPhone.trim()) &&
+      profile.city.trim() &&
+      profile.province.trim() &&
+      normalizeChildrenAges(profile.children_ages).length > 0,
+  );
+}
+
+function provinceOptionsForValue(value: string) {
+  if (!value || PROVINCE_OPTIONS.includes(value)) {
+    return PROVINCE_OPTIONS;
+  }
+  return [value, ...PROVINCE_OPTIONS];
+}
+
+function cityOptionsForProvince(province: string, city: string) {
+  const options = CITIES_BY_PROVINCE[province] ?? [];
+  if (!city || options.includes(city)) {
+    return options;
+  }
+  return [city, ...options];
 }
 
 function initialsFromName(name: string) {

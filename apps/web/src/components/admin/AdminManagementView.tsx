@@ -104,7 +104,7 @@ export default function AdminManagementView() {
         title="Admin Management"
         subtitle="Invite admins and manage console access."
       />
-      <div style={{ padding: "24px 40px 40px", display: "grid", gridTemplateColumns: "1fr 1.35fr", gap: 18 }}>
+      <div className="grid grid-cols-1 gap-[18px] px-4 py-5 md:px-10 md:py-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
         <section style={card}>
           <h2 style={{ margin: 0, fontFamily: "var(--font-dm-serif), serif", fontSize: 24, fontWeight: 400, color: A.ink }}>
             Invite admin
@@ -176,7 +176,9 @@ export default function AdminManagementView() {
         </section>
 
         <section style={card}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+          <div
+            className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+          >
             <div>
               <h2 style={{ margin: 0, fontFamily: "var(--font-dm-serif), serif", fontSize: 24, fontWeight: 400, color: A.ink }}>
                 Admins
@@ -203,26 +205,23 @@ export default function AdminManagementView() {
 
               return (
                 <div
+                  className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                   key={admin.id}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 16,
                     border: `1px solid ${A.borderSoft}`,
                     borderRadius: 14,
                     padding: "14px 16px",
                     background: admin.is_active ? A.card : A.cardWarm,
                   }}
                 >
-                  <div>
+                  <div style={{ minWidth: 0 }}>
                     <div style={{ color: A.ink, fontWeight: 700 }}>{`${admin.firstname} ${admin.lastname}`.trim() || "Admin"}</div>
-                    <div style={{ color: A.inkSoft, fontSize: 12.5, marginTop: 3 }}>{admin.email}</div>
+                    <div style={{ color: A.inkSoft, fontSize: 12.5, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{admin.email}</div>
                     <div style={{ color: A.inkSoft, fontSize: 12, marginTop: 5 }}>
                       Joined {formatShortDateTime(admin.created_at)}
                     </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                     <AdminPill tone={admin.is_active ? "green" : "red"}>
                       {admin.is_active ? "Active" : "Disabled"}
                     </AdminPill>

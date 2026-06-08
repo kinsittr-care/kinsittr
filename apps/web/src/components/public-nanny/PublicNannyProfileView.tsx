@@ -8,7 +8,7 @@ import Tag from "@/src/components/guardian/dashboard/Tag";
 import type { PublicNannyProfile, Review } from "@/src/types/api/api";
 import { getPublicNannyProfile, publicNannyProfileQueryKey } from "@/src/utils/api/nanny";
 import { listPublicNannyReviews, publicNannyReviewsQueryKey } from "@/src/utils/api/reviews";
-import { formatCurrency } from "@/src/utils/format";
+import { formatCurrency, formatLocation } from "@/src/utils/format";
 
 interface PublicNannyProfileViewProps {
   nannyId: string;
@@ -65,7 +65,7 @@ function ProfileContent({ profile, reviews }: { profile: PublicNannyProfile; rev
                   {profile.display_name}
                 </h1>
                 <p className="mt-3 text-sm" style={{ color: "var(--muted)" }}>
-                  {profile.city}, {profile.province}
+                  {formatLocation(profile.city, profile.province)}
                 </p>
               </div>
               <div className="rounded-2xl px-5 py-4 text-left sm:text-right" style={{ background: "var(--teal-lt)" }}>
@@ -114,7 +114,7 @@ function SummaryCard({ profile }: { profile: PublicNannyProfile }) {
       <h2 className="text-lg font-semibold" style={{ color: "var(--brand-text)" }}>Profile summary</h2>
       <dl className="mt-5 space-y-4 text-sm">
         <SummaryRow label="Rating" value={`${profile.rating_avg.toFixed(1)} (${profile.rating_count})`} />
-        <SummaryRow label="Location" value={`${profile.city}, ${profile.province}`} />
+        <SummaryRow label="Location" value={formatLocation(profile.city, profile.province)} />
         <SummaryRow label="Status" value="Verified" />
       </dl>
     </div>

@@ -4,7 +4,8 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { A } from "./tokens";
-import AdminSidebar from "./AdminSidebar";
+import AdminSidebar, { useAdminSidebarBadges } from "./AdminSidebar";
+import AdminMobileHeader from "./AdminMobileHeader";
 import { AuthUser } from "@/src/types/api/api";
 import { getCurrentAdminSession } from "@/src/utils/api/admin/auth";
 import { clearAuthSession } from "@/src/utils/api/session";
@@ -13,6 +14,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
   const [adminUser, setAdminUser] = useState<AuthUser | null>(null);
+  const badgeValues = useAdminSidebarBadges(authorized);
 
   useEffect(() => {
     let active = true;
@@ -44,18 +46,14 @@ export default function AdminShell({ children }: { children: ReactNode }) {
   if (!authorized) return null;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        height: "100dvh",
-        background: A.bg,
-        overflow: "hidden",
-      }}
-    >
-      <AdminSidebar user={adminUser} />
-      <main style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
-        {children}
-      </main>
+    <div className="flex h-dvh overflow-hidden" style={{ background: A.bg }}>
+      <AdminSidebar user={adminUser} badgeValues={badgeValues} />
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <AdminMobileHeader user={adminUser} badgeValues={badgeValues} />
+        <main style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

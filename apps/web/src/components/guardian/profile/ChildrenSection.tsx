@@ -30,9 +30,10 @@ interface ChildrenSectionProps {
 }
 
 export default function ChildrenSection({ profile, isSaving, onSave }: ChildrenSectionProps) {
+  const childrenAges = normalizeChildrenAges(profile.children_ages);
   const [isEditing, setIsEditing] = useState(false);
   const [ageDrafts, setAgeDrafts] = useState<string[]>(() =>
-    profile.children_ages.map((age) => String(age)),
+    childrenAges.map((age) => String(age)),
   );
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +41,7 @@ export default function ChildrenSection({ profile, isSaving, onSave }: ChildrenS
     <SectionCard title="Children">
       {!isEditing ? (
         <div className="flex gap-[10px] flex-wrap" style={{ marginBottom: 14 }}>
-          {profile.children_ages.map((age, index) => (
+          {childrenAges.map((age, index) => (
             <div
               key={`${age}-${index}`}
               className="flex items-center gap-2"
@@ -61,7 +62,7 @@ export default function ChildrenSection({ profile, isSaving, onSave }: ChildrenS
             className="btn-outline"
             style={{ padding: "8px 16px", fontSize: 13, borderStyle: "dashed" }}
             onClick={() => {
-              setAgeDrafts(profile.children_ages.map((age) => String(age)));
+              setAgeDrafts(childrenAges.map((age) => String(age)));
               setIsEditing(true);
               setError(null);
             }}
@@ -125,7 +126,7 @@ export default function ChildrenSection({ profile, isSaving, onSave }: ChildrenS
               className="btn-outline"
               style={{ fontSize: 14, padding: "10px 18px" }}
               onClick={() => {
-                setAgeDrafts(profile.children_ages.map((age) => String(age)));
+                setAgeDrafts(childrenAges.map((age) => String(age)));
                 setIsEditing(false);
                 setError(null);
               }}
@@ -137,4 +138,8 @@ export default function ChildrenSection({ profile, isSaving, onSave }: ChildrenS
       )}
     </SectionCard>
   );
+}
+
+function normalizeChildrenAges(childrenAges: ParentProfile["children_ages"]) {
+  return Array.isArray(childrenAges) ? childrenAges : [];
 }

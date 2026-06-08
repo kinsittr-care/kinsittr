@@ -109,7 +109,7 @@ function profilePayload(
     display_name: profile.display_name,
     phone: profile.phone,
     num_children: profile.num_children,
-    children_ages: profile.children_ages,
+    children_ages: Array.isArray(profile.children_ages) ? profile.children_ages : [],
     city: profile.city,
     province: profile.province,
     ...overrides,

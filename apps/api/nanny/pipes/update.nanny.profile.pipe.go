@@ -56,7 +56,7 @@ func (p *NannyPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto 
 }
 
 func normalizeLocationField(value string) string {
-	return strings.Join(strings.Fields(value), " ")
+	return strings.ToLower(strings.Join(strings.Fields(value), " "))
 }
 
 func specialtiesCharacterCount(values []string) int {

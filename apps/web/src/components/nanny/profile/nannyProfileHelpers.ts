@@ -1,4 +1,5 @@
 import type { NannyProfile, UpdateNannyProfilePayload } from "@/src/types/api/api";
+import { formatLocationPart } from "@/src/utils/format";
 
 export const BIO_LIMIT = 450;
 export const SPECIALTIES_TOTAL_LIMIT = 25;
@@ -53,7 +54,7 @@ export function profileToPayload(profile: NannyProfile): UpdateNannyProfilePaylo
     bio: profile.bio,
     specialties: profile.specialties ?? [],
     rate_per_hour: profile.rate_per_hour,
-    city: profile.city,
-    province: profile.province,
+    city: formatLocationPart(profile.city),
+    province: formatLocationPart(profile.province),
   };
 }

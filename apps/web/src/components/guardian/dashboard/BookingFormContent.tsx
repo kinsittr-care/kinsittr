@@ -4,7 +4,7 @@ import { Nanny } from "./types";
 import Avatar from "./Avatar";
 import { ApiRequestError } from "@/src/utils/api/api";
 import { createBooking } from "@/src/utils/api/bookings";
-import { formatCurrency } from "@/src/utils/format";
+import { formatCurrency, formatLocationPart } from "@/src/utils/format";
 import {
   listPublicNannyReviews,
   publicNannyReviewsQueryKey,
@@ -79,7 +79,7 @@ export default function BookingFormContent({ nanny, onClose, onBooked }: FormPro
           <h2 className="font-display" style={{ fontWeight: 400, fontSize: 26, marginBottom: 10 }}>
             Request sent!
           </h2>
-          <p style={{ color: "var(--muted)", fontSize: 15, lineHeight: 1.7, maxWidth: 320, margin: "0 auto 28px" }}>
+          <p style={{ color: "var(--faint)", fontSize: 15, lineHeight: 1.7, maxWidth: 320, margin: "0 auto 28px" }}>
             Your booking request has been sent to <strong>{nanny.name}</strong>.
             Once they approve, messaging will be unlocked.
           </p>
@@ -163,7 +163,7 @@ export default function BookingFormContent({ nanny, onClose, onBooked }: FormPro
               {nanny.name}
             </h2>
             <div style={{ fontSize: 13, color: "var(--muted)" }}>
-              {nanny.city} · ${nanny.rate}/hr
+              {formatLocationPart(nanny.city)} · ${nanny.rate}/hr
             </div>
             <StarRating rating={nanny.rating} reviews={nanny.reviews} />
           </div>

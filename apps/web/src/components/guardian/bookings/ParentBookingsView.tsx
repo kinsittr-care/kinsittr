@@ -168,7 +168,7 @@ export default function ParentBookingsView({
           </p>
         ) : bookings.length === 0 ? (
           <div style={{ textAlign: compact ? "left" : "center", padding: compact ? "8px 0" : "28px 0" }}>
-            <p style={{ fontSize: 15, margin: 0, color: "var(--muted)" }}>No bookings match your filters.</p>
+            <p style={{ fontSize: 15, margin: 0, color: "var(--faint)" }}>No bookings match your filters.</p>
             {!compact && (
               <p style={{ fontSize: 13, marginTop: 8, color: "var(--faint)" }}>
                 Try adjusting the status or date range.

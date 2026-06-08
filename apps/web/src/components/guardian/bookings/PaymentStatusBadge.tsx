@@ -4,7 +4,7 @@ import { formatPaymentState, type PaymentStateTone } from "@/src/utils/format";
 const styles: Record<PaymentStateTone, React.CSSProperties> = {
   neutral: {
     background: "#f0ede8",
-    color: "var(--muted)",
+    color: "#000",
     border: "1px solid var(--border)",
   },
   warning: {

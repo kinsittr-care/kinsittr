@@ -10,7 +10,7 @@ import { btnGhost } from "./compositions/admin-styles";
 import { A } from "./tokens";
 import type { AdminAnalyticsBucket, AdminAnalyticsData, AdminAnalyticsParams } from "@/src/types/api/admin";
 import { adminAnalyticsQueryKey, getAdminAnalytics } from "@/src/utils/api/admin/analytics";
-import { formatCurrency, formatDateParam, formatNumber, formatShortDate } from "@/src/utils/format";
+import { formatCurrency, formatDateParam, formatLocation, formatNumber, formatShortDate } from "@/src/utils/format";
 
 type RangeKey = "30d" | "90d" | "year";
 
@@ -239,7 +239,7 @@ export default function AnalyticsView() {
                     <div>
                       <div style={{ color: A.ink, fontSize: 14.5, fontWeight: 600 }}>{nanny.display_name}</div>
                       <div style={{ color: A.inkSoft, fontSize: 12.5, marginTop: 3 }}>
-                        {[nanny.city, nanny.province].filter(Boolean).join(", ")} · {nanny.completed_count} bookings · {nanny.rating_avg.toFixed(1)} rating
+                        {formatLocation(nanny.city, nanny.province, "Location not set")} · {nanny.completed_count} bookings · {nanny.rating_avg.toFixed(1)} rating
                       </div>
                     </div>
                     <div style={{ color: A.clay, fontWeight: 700, fontSize: 14 }}>{formatCurrency(nanny.revenue)}</div>

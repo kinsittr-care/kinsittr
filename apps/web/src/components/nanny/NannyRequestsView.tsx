@@ -18,7 +18,7 @@ import {
   findNannyReviewedBookingIds,
   nannyReviewedBookingIdsQueryKey,
 } from "@/src/utils/api/reviews";
-import { formatCurrency, formatTimeRange, formatWeekdayDateOnly } from "@/src/utils/format";
+import { formatCurrency, formatLocation, formatTimeRange, formatWeekdayDateOnly } from "@/src/utils/format";
 import { cn } from "@/lib/utils";
 import BookingRequestCard from "./requests/BookingRequestCard";
 import type { BookingRequest } from "./requests/BookingRequestCard";
@@ -50,9 +50,7 @@ function toBookingRequest(booking: Booking): BookingRequest {
     status: booking.status === "cancelled" ? "neutral" : booking.status,
     paymentStatus: booking.payment_status,
     paymentFailure: booking.payment_failure_message,
-    children: booking.parent_city
-      ? `${booking.parent_city}${booking.parent_province ? `, ${booking.parent_province}` : ""}`
-      : "Family details",
+    children: formatLocation(booking.parent_city, booking.parent_province, "Family details"),
   };
 }
 

@@ -5,7 +5,7 @@ import AdminNannyDocumentsList from "./compositions/AdminNannyDocumentsList";
 import { btnApprove } from "./compositions/admin-styles";
 import { A } from "./tokens";
 import type { AdminAuditAction, AdminNannyDetailData, AdminVerificationStatus } from "@/src/types/api/admin";
-import { formatCurrency, formatDateOnlyShort } from "@/src/utils/format";
+import { formatCurrency, formatDateOnlyShort, formatLocation } from "@/src/utils/format";
 
 function statusTone(status: AdminVerificationStatus, active: boolean): PillTone {
   if (!active) return "red";
@@ -76,7 +76,7 @@ export default function AdminNannyDetailPanel({
 
       <div style={sectionStyle}>
         <h3 style={sectionTitle}>Profile</h3>
-        <Detail label="Location" value={`${nanny.city}, ${nanny.province}`} />
+        <Detail label="Location" value={formatLocation(nanny.city, nanny.province, "not set")} />
         <Detail label="Specialties" value={nanny.specialties.length ? nanny.specialties.join(", ") : "None listed"} />
         <Detail label="Stripe" value={nanny.stripe_onboarded ? "Onboarded" : "Not onboarded"} />
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>

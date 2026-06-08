@@ -12,6 +12,7 @@ import AdminReasonDialog, { type AdminReasonDialogState } from "./AdminReasonDia
 import { SearchIcon } from "./compositions/admin-icons";
 import { btnDanger, btnGhost } from "./compositions/admin-styles";
 import type { AdminParent, ListAdminAuditActionsParams, ListAdminParentsParams } from "@/src/types/api/admin";
+import { formatLocation } from "@/src/utils/format";
 import {
   adminParentActionsQueryKey,
   adminParentQueryKey,
@@ -213,7 +214,7 @@ export default function ParentsModerationView() {
                       <div style={{ fontSize: 12.5, color: A.inkSoft }}>{parent.user_email}</div>
                     </div>
                   </div>
-                  <div style={{ fontSize: 14, color: A.inkMid }}>{parent.city}, {parent.province}</div>
+                  <div style={{ fontSize: 14, color: A.inkMid }}>{formatLocation(parent.city, parent.province, "not set")}</div>
                   <div style={{ fontSize: 14, color: A.inkMid }}>{parent.num_children}</div>
                   <div style={{ fontSize: 14, color: A.inkMid }}>{parent.booking_count}</div>
                   <div>

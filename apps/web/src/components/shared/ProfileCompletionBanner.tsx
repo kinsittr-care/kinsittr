@@ -52,6 +52,7 @@ function isParentProfileComplete(profile: ParentProfile | undefined, phone: stri
       text(profile.city) &&
       text(profile.province) &&
       profile.num_children > 0 &&
+      Array.isArray(profile.children_ages) &&
       profile.children_ages.length > 0,
   );
 }

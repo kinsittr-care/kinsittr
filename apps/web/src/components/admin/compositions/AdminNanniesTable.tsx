@@ -4,6 +4,7 @@ import AdminStars from "./AdminStars";
 import AdminPill, { type PillTone } from "./AdminPill";
 import { A } from "../tokens";
 import type { AdminNanny, AdminVerificationStatus } from "@/src/types/api/admin";
+import { formatLocation } from "@/src/utils/format";
 
 const colTemplate = "2.1fr 1.35fr .85fr 1.1fr 1fr 1.45fr";
 
@@ -112,7 +113,7 @@ export default function AdminNanniesTable({
                   <div style={{ fontSize: 12.5, color: A.inkSoft }}>{nanny.user_email}</div>
                 </div>
               </div>
-              <div style={{ fontSize: 14, color: A.inkMid }}>{nanny.city}, {nanny.province}</div>
+              <div style={{ fontSize: 14, color: A.inkMid }}>{formatLocation(nanny.city, nanny.province, "not set")}</div>
               <div>
                 <span style={{ fontFamily: "var(--font-dm-serif), serif", fontSize: 18, color: A.ink }}>
                   ${nanny.rate_per_hour}

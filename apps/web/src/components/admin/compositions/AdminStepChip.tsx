@@ -34,7 +34,7 @@ export default function AdminStepChip({
         gap: 7,
         padding: "7px 13px",
         borderRadius: 999,
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: 500,
         background: done ? A.greenLight : "transparent",
         color: done ? A.green : A.inkSoft,

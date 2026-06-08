@@ -1,4 +1,5 @@
 import { A } from "../tokens";
+import { formatLocationPart } from "@/src/utils/format";
 
 function CityBar({ city, count, max }: { city: string; count: number; max: number }) {
   const pct = max > 0 ? Math.round((count / max) * 100) : 0;
@@ -12,7 +13,7 @@ function CityBar({ city, count, max }: { city: string; count: number; max: numbe
           marginBottom: 8,
         }}
       >
-        <span style={{ fontSize: 14.5, color: A.ink, fontWeight: 500 }}>{city}</span>
+        <span style={{ fontSize: 14.5, color: A.ink, fontWeight: 500 }}>{formatLocationPart(city) || "Unknown"}</span>
         <span style={{ fontSize: 13.5, color: A.inkSoft }}>{count} bookings</span>
       </div>
       <div
