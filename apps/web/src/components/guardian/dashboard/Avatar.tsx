@@ -7,21 +7,15 @@ interface AvatarProps {
 export default function Avatar({ initials, src, size = 44 }: AvatarProps) {
   return (
     <div
-      style={{
-        width: size, height: size, borderRadius: "50%",
-        background: "var(--teal)", color: "#fff",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        flexShrink: 0, fontWeight: 600, fontSize: size * 0.33,
-        letterSpacing: "0.04em",
-        boxShadow: "0 2px 8px rgba(58,90,90,.28)",
-      }}
+      className="rounded-full bg-teal text-white flex items-center justify-center shrink-0 font-semibold tracking-[0.04em] shadow-[0_2px_8px_rgba(58,90,90,.28)]"
+      style={{ width: size, height: size, fontSize: size * 0.33 }}
     >
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src}
           alt={`${initials} avatar`}
-          style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
+          className="w-full h-full rounded-full object-cover"
         />
       ) : (
         initials

@@ -1,23 +1,6 @@
-import type { CSSProperties } from "react";
 import AdminPill, { type PillTone } from "./AdminPill";
-import { A } from "../tokens";
 import type { AdminBooking } from "@/src/types/api/admin";
 import { formatCurrency, formatDateOnlyShort, formatPaymentState } from "@/src/utils/format";
-
-const colTemplate = ".95fr 1.45fr 1.25fr .95fr .6fr .8fr .95fr .95fr";
-
-const thStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: colTemplate,
-  padding: "14px 24px",
-  borderBottom: `1px solid ${A.divider}`,
-  background: A.cardWarm,
-  fontSize: 11.5,
-  fontWeight: 600,
-  letterSpacing: ".14em",
-  textTransform: "uppercase",
-  color: A.inkSoft,
-};
 
 export function bookingStatusTone(status: AdminBooking["status"]): PillTone {
   if (status === "approved") return "green";
@@ -39,64 +22,156 @@ export default function AdminBookingsTable({
   onSelect: (bookingId: string) => void;
 }) {
   return (
-    <div style={{ background: A.card, border: `1px solid ${A.border}`, borderRadius: 16, overflow: "hidden", boxShadow: A.shadow }}>
-      <div style={thStyle}>
-        <div>ID</div>
-        <div>Nanny</div>
-        <div>Parent</div>
-        <div>Date</div>
-        <div>Hours</div>
-        <div>Total</div>
-        <div>Status</div>
-        <div>Payment</div>
+    <div className="overflow-hidden rounded-2xl border border-admin-border bg-admin-card shadow-[var(--admin-shadow)]">
+      <div className="hidden overflow-x-auto xl:block">
+        <table className="w-full border-collapse text-left">
+          <thead className="border-b border-admin-divider bg-admin-card-warm text-[11.5px] font-semibold uppercase tracking-[.14em] text-admin-ink-soft">
+            <tr>
+              <th className="px-6 py-[14px]">ID</th>
+              <th className="px-6 py-[14px]">Nanny</th>
+              <th className="px-6 py-[14px]">Parent</th>
+              <th className="px-6 py-[14px]">Date</th>
+              <th className="px-6 py-[14px]">Hours</th>
+              <th className="px-6 py-[14px]">Total</th>
+              <th className="px-6 py-[14px]">Status</th>
+              <th className="px-6 py-[14px]">Payment</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              <tr><td className="p-6 text-admin-ink-soft" colSpan={8}>Loading bookings...</td></tr>
+            ) : bookings.length === 0 ? (
+              <tr><td className="p-6 text-admin-ink-soft" colSpan={8}>No bookings found.</td></tr>
+            ) : (
+              bookings.map((booking, index) => (
+                <BookingTableRow
+                  key={booking.id}
+                  booking={booking}
+                  selected={selectedBookingId === booking.id}
+                  showBorder={index < bookings.length - 1}
+                  onSelect={onSelect}
+                />
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
-      {isLoading ? (
-        <div style={{ padding: 24, color: A.inkSoft }}>Loading bookings...</div>
-      ) : bookings.length === 0 ? (
-        <div style={{ padding: 24, color: A.inkSoft }}>No bookings found.</div>
-      ) : (
-        bookings.map((booking, i) => (
-          <button
-            key={booking.id}
-            className="admin-table-row"
-            onClick={() => onSelect(booking.id)}
-            style={{
-              all: "unset",
-              display: "grid",
-              gridTemplateColumns: colTemplate,
-              alignItems: "center",
-              padding: "18px 24px",
-              gap: 12,
-              borderBottom: i < bookings.length - 1 ? `1px solid ${A.borderSoft}` : "none",
-              background: selectedBookingId === booking.id ? A.cardWarm : "transparent",
-              cursor: "pointer",
-              transition: "background .15s",
-            }}
-          >
-            <div style={{ fontFamily: "monospace", fontSize: 12, color: A.inkSoft, letterSpacing: ".02em" }}>
-              {booking.id.slice(0, 8)}
-            </div>
-            <div style={{ fontSize: 14.5, fontWeight: 600, color: A.ink }}>{booking.nanny_display_name}</div>
-            <div style={{ fontSize: 14, color: A.inkMid }}>{booking.parent_display_name}</div>
-            <div style={{ fontSize: 13.5, color: A.inkSoft }}>{formatDateOnlyShort(booking.date)}</div>
-            <div style={{ fontSize: 14.5, color: A.ink, fontWeight: 500 }}>{booking.duration}h</div>
-            <div style={{ fontFamily: "var(--font-dm-serif), serif", fontSize: 18, color: A.clay }}>
-              {formatCurrency(booking.total_amount)}
-            </div>
-            <div>
-              <AdminPill tone={bookingStatusTone(booking.status)}>{booking.status}</AdminPill>
-            </div>
-            <div>
-              {(() => {
-                const payment = formatPaymentState(booking.payment_status);
-                const tone = payment.tone === "danger" ? "red" : payment.tone === "success" ? "green" : payment.tone === "warning" ? "amber" : "neutral";
-                return <AdminPill tone={tone}>{payment.label}</AdminPill>;
-              })()}
-            </div>
-          </button>
-        ))
-      )}
+      <div className="xl:hidden">
+        {isLoading ? (
+          <div className="p-6 text-admin-ink-soft">Loading bookings...</div>
+        ) : bookings.length === 0 ? (
+          <div className="p-6 text-admin-ink-soft">No bookings found.</div>
+        ) : (
+          bookings.map((booking, index) => (
+            <BookingCard
+              key={booking.id}
+              booking={booking}
+              selected={selectedBookingId === booking.id}
+              showBorder={index < bookings.length - 1}
+              onSelect={onSelect}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PaymentPill({ booking }: { booking: AdminBooking }) {
+  const payment = formatPaymentState(booking.payment_status);
+  const tone =
+    payment.tone === "danger"
+      ? "red"
+      : payment.tone === "success"
+        ? "green"
+        : payment.tone === "warning"
+          ? "amber"
+          : "neutral";
+
+  return <AdminPill tone={tone}>{payment.label}</AdminPill>;
+}
+
+function BookingTableRow({
+  booking,
+  selected,
+  showBorder,
+  onSelect,
+}: {
+  booking: AdminBooking;
+  selected: boolean;
+  showBorder: boolean;
+  onSelect: (bookingId: string) => void;
+}) {
+  return (
+    <tr
+      className="admin-table-row cursor-pointer transition-colors duration-150"
+      style={{
+        background: selected ? "var(--admin-card-warm)" : "transparent",
+        borderBottom: showBorder ? "1px solid var(--admin-border-soft)" : "none",
+      }}
+      onClick={() => onSelect(booking.id)}
+    >
+      <td className="px-6 py-4 font-mono text-[12px] tracking-[.02em] text-admin-ink-soft">{booking.id.slice(0, 8)}</td>
+      <td className="px-6 py-4 text-[14.5px] font-semibold text-admin-ink">{booking.nanny_display_name}</td>
+      <td className="px-6 py-4 text-[14px] text-admin-ink-mid">{booking.parent_display_name}</td>
+      <td className="px-6 py-4 text-[13.5px] text-admin-ink-soft">{formatDateOnlyShort(booking.date)}</td>
+      <td className="px-6 py-4 text-[14.5px] font-medium text-admin-ink">{booking.duration}h</td>
+      <td className="px-6 py-4 font-display text-[18px] text-admin-clay">{formatCurrency(booking.total_amount)}</td>
+      <td className="px-6 py-4"><AdminPill tone={bookingStatusTone(booking.status)}>{booking.status}</AdminPill></td>
+      <td className="px-6 py-4"><PaymentPill booking={booking} /></td>
+    </tr>
+  );
+}
+
+function BookingCard({
+  booking,
+  selected,
+  showBorder,
+  onSelect,
+}: {
+  booking: AdminBooking;
+  selected: boolean;
+  showBorder: boolean;
+  onSelect: (bookingId: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="admin-table-row block w-full cursor-pointer px-4 py-4 text-left transition-colors duration-150 sm:px-6"
+      style={{
+        background: selected ? "var(--admin-card-warm)" : "transparent",
+        borderBottom: showBorder ? "1px solid var(--admin-border-soft)" : "none",
+      }}
+      onClick={() => onSelect(booking.id)}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="font-mono text-[12px] tracking-[.02em] text-admin-ink-soft">#{booking.id.slice(0, 8)}</div>
+          <div className="mt-1 truncate text-[15px] font-semibold text-admin-ink">{booking.nanny_display_name}</div>
+          <div className="truncate text-[12.5px] text-admin-ink-soft">Parent: {booking.parent_display_name}</div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <AdminPill tone={bookingStatusTone(booking.status)}>{booking.status}</AdminPill>
+          <PaymentPill booking={booking} />
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-2 text-[13.5px] text-admin-ink-mid sm:grid-cols-4">
+        <Meta label="Date" value={formatDateOnlyShort(booking.date)} />
+        <Meta label="Hours" value={`${booking.duration}h`} />
+        <Meta label="Total" value={formatCurrency(booking.total_amount)} />
+        <Meta label="Status" value={booking.status} />
+      </div>
+    </button>
+  );
+}
+
+function Meta({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[11px] font-semibold uppercase tracking-[.08em] text-admin-ink-soft">{label}</div>
+      <div className="mt-1 text-admin-ink-mid">{value}</div>
     </div>
   );
 }

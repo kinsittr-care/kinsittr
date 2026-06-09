@@ -2,8 +2,8 @@
 
 import type { ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { N } from "../tokens";
-import { btnPrimary } from "../nanny-styles";
+import { cn } from "@/lib/utils";
+import { btnPrimaryCls } from "../nanny-styles";
 import {
   createNannyStripeConnectLink,
   nannyStripeStatusQueryKey,
@@ -42,32 +42,17 @@ export default function StripeStatusCard({ status, isLoading, error, onRefresh }
         : "Parents pay through KinSittr. Stripe sends payouts to your bank after completed bookings.";
 
   return (
-    <div
-      className="flex flex-col gap-5 p-6 sm:p-7 lg:flex-row lg:items-center"
-      style={{ background: N.card, border: `1px solid ${N.border}`, borderRadius: 18, boxShadow: N.shadow }}
-    >
+    <div className="flex flex-col gap-5 p-6 sm:p-7 lg:flex-row lg:items-center bg-nanny-card border border-nanny-border rounded-[18px] shadow-[var(--nanny-shadow)]">
       <div className="flex flex-1 gap-4">
-        <div
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: 12,
-            background: N.greenLt,
-            border: `1px solid ${N.greenMid}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
+        <div className="w-12 h-12 rounded-xl bg-nanny-green-lt border border-nanny-green-mid flex items-center justify-center shrink-0">
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-            <rect x="2" y="5" width="18" height="12" rx="3" stroke={N.green} strokeWidth="1.6" />
-            <path d="M2 10h18" stroke={N.green} strokeWidth="1.6" />
+            <rect x="2" y="5" width="18" height="12" rx="3" stroke="var(--nanny-green)" strokeWidth="1.6" />
+            <path d="M2 10h18" stroke="var(--nanny-green)" strokeWidth="1.6" />
           </svg>
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 600, color: N.greenDk }}>Stripe Connect</div>
-          <div style={{ marginTop: 4, fontSize: 13.5, color: N.inkMute, lineHeight: 1.55 }}>
+        <div className="flex-1 min-w-0">
+          <div className="text-[15px] font-semibold text-nanny-green-dk">Stripe Connect</div>
+          <div className="mt-1 text-[13.5px] text-nanny-ink-faint leading-[1.55]">
             {statusCopy}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -76,13 +61,13 @@ export default function StripeStatusCard({ status, isLoading, error, onRefresh }
             {onboarded && <StatusPill tone="connected">Payouts enabled</StatusPill>}
           </div>
           {connected && !onboarded && (requirements.length > 0 || status?.disabled_reason) && (
-            <div style={{ marginTop: 10, fontSize: 12.5, lineHeight: 1.55, color: N.inkFaint }}>
+            <div className="mt-[10px] text-[12.5px] leading-[1.55] text-nanny-ink-faint">
               {status?.disabled_reason && <div>Stripe reason: {status.disabled_reason.replaceAll("_", " ")}</div>}
               {requirements.length > 0 && <div>Still needed: {requirements.slice(0, 3).map(formatRequirement).join(", ")}{requirements.length > 3 ? "..." : ""}</div>}
             </div>
           )}
           {(error || connectMutation.error) && (
-            <div style={{ marginTop: 8, fontSize: 12.5, color: "#b34b39" }}>
+            <div className="mt-2 text-[12.5px] text-[#b34b39]">
               {(error ?? connectMutation.error) instanceof Error
                 ? (error ?? connectMutation.error)?.message
                 : "Unable to load Stripe status."}
@@ -91,11 +76,11 @@ export default function StripeStatusCard({ status, isLoading, error, onRefresh }
         </div>
       </div>
 
-      <div className="rounded-2xl border p-4 lg:w-[300px]" style={{ borderColor: N.border, background: N.cardSoft }}>
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: N.inkFaint }}>
+      <div className="rounded-2xl border border-nanny-border bg-nanny-card-soft p-4 lg:w-[300px]">
+        <div className="text-[12px] font-bold tracking-[0.08em] uppercase text-nanny-ink-faint">
           Next step
         </div>
-        <p style={{ marginTop: 8, marginBottom: 14, fontSize: 13.5, lineHeight: 1.55, color: N.inkMute }}>
+        <p className="mt-2 mb-[14px] text-[13.5px] leading-[1.55] text-nanny-ink-faint">
           {onboarded
             ? "Use Stripe Express to update payout details or review account status."
             : connected
@@ -104,7 +89,7 @@ export default function StripeStatusCard({ status, isLoading, error, onRefresh }
         </p>
         <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
           <button
-            style={btnPrimary}
+            className={btnPrimaryCls}
             disabled={connectMutation.isPending}
             onClick={() => connectMutation.mutate()}
           >
@@ -112,22 +97,13 @@ export default function StripeStatusCard({ status, isLoading, error, onRefresh }
           </button>
           <button
             type="button"
-            style={{
-              padding: "10px 14px",
-              background: "transparent",
-              border: `1px solid ${N.border}`,
-              borderRadius: 10,
-              fontSize: 13.5,
-              color: N.greenDk,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
+            className="px-[14px] py-[10px] bg-transparent border border-nanny-border rounded-[10px] text-[13.5px] text-nanny-green-dk font-semibold cursor-pointer"
             onClick={onRefresh}
           >
             Refresh status
           </button>
         </div>
-        <p style={{ marginTop: 10, marginBottom: 0, fontSize: 12.5, lineHeight: 1.5, color: N.inkFaint }}>
+        <p className="mt-[10px] mb-0 text-[12.5px] leading-[1.5] text-nanny-ink-faint">
           KinSittr does not store your SIN, bank account, or tax identity details.
         </p>
       </div>
@@ -139,27 +115,16 @@ function formatRequirement(value: string) {
   return value.replaceAll("_", " ").replaceAll(".", " ");
 }
 
-function StatusPill({ tone, children }: { tone: "connected" | "needs_setup" | "not_connected" | "review"; children: ReactNode }) {
-  const styles = {
-    connected: { color: N.green, background: N.greenLt, borderColor: N.greenMid },
-    needs_setup: { color: N.amber, background: N.amberLt, borderColor: N.border },
-    not_connected: { color: N.inkMute, background: N.cardSoft, borderColor: N.border },
-    review: { color: N.greenDk, background: N.cardSoft, borderColor: N.border },
-  }[tone];
+const pillToneCls: Record<"connected" | "needs_setup" | "not_connected" | "review", string> = {
+  connected: "text-nanny-green bg-nanny-green-lt border-nanny-green-mid",
+  needs_setup: "text-nanny-amber bg-nanny-amber-lt border-nanny-border",
+  not_connected: "text-nanny-ink-faint bg-nanny-card-soft border-nanny-border",
+  review: "text-nanny-green-dk bg-nanny-card-soft border-nanny-border",
+};
 
+function StatusPill({ tone, children }: { tone: "connected" | "needs_setup" | "not_connected" | "review"; children: ReactNode }) {
   return (
-    <span
-      style={{
-        fontSize: 12.5,
-        fontWeight: 700,
-        color: styles.color,
-        background: styles.background,
-        border: `1px solid ${styles.borderColor}`,
-        padding: "5px 10px",
-        borderRadius: 999,
-        whiteSpace: "nowrap",
-      }}
-    >
+    <span className={cn("text-[12.5px] font-bold border px-[10px] py-[5px] rounded-full whitespace-nowrap", pillToneCls[tone])}>
       {children}
     </span>
   );

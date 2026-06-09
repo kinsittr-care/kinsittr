@@ -48,7 +48,7 @@ export default function HeroSection() {
         </RevealWrapper>
 
         <RevealWrapper delay={0.2}>
-          <p className="text-[17px] leading-[1.75] mb-9 max-w-[440px]" style={{ color: "var(--muted)" }}>
+          <p className="text-[17px] leading-[1.75] mb-9 max-w-[440px]" style={{ color: "var(--faint)" }}>
             KinSittr connects families and nannies in a space built on trust, warmth, and simplicity.
             Find someone who truly clicks with your children — or bring your caregiving gift to families who need you.
           </p>

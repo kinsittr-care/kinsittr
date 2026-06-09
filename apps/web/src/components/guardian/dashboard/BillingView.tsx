@@ -12,28 +12,6 @@ import {
   setDefaultParentPaymentMethod,
 } from "@/src/utils/api/payments";
 
-const labelStyle: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 500,
-  color: "var(--muted)",
-  display: "block",
-  marginBottom: 6,
-  textTransform: "uppercase",
-  letterSpacing: "0.06em",
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  border: "1.5px solid var(--border)",
-  borderRadius: 9,
-  padding: "11px 14px",
-  fontSize: 14,
-  outline: "none",
-  background: "var(--bg-warm)",
-  color: "var(--brand-text)",
-  fontFamily: "inherit",
-  marginBottom: 16,
-};
 
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
@@ -151,20 +129,12 @@ export default function BillingView() {
   };
 
   return (
-    <div
-      style={{
-        maxWidth: 620,
-        margin: "0 auto",
-        padding: "40px 36px 60px",
-        overflowY: "auto",
-        height: "100%",
-      }}
-    >
-      <div style={{ marginBottom: 36 }}>
-        <h1 className="font-display" style={{ fontWeight: 400, fontSize: 30, marginBottom: 4 }}>
+    <div className="max-w-[620px] mx-auto px-9 pt-10 pb-[60px] overflow-y-auto h-full">
+      <div className="mb-9">
+        <h1 className="font-display font-normal text-[30px] mb-1">
           Billing
         </h1>
-        <p style={{ color: "var(--muted)", fontSize: 14 }}>
+        <p className="text-[var(--faint)] text-[14px]">
           Manage your payment methods and billing preferences
         </p>
       </div>
@@ -172,60 +142,35 @@ export default function BillingView() {
       <SectionCard title="Payment Method">
         {!editPayment ? (
           <div>
-            <div
-              className="flex flex-col items-start md:flex-row md:items-center gap-4"
-              style={{
-                background: "var(--bg-warm)",
-                border: "1px solid var(--border)",
-                borderRadius: 12,
-                padding: "18px 20px",
-                marginBottom: 16,
-              }}
-            >
-              <div className="flex flex-col md:flex-row gap-4" style={{ flex: 1 }}>
-                <div
-                  style={{
-                    width: 52,
-                    height: 34,
-                    background: "linear-gradient(135deg, #1a3a6e, #2a5cb8)",
-                    borderRadius: 8,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#fff",
-                    fontSize: 11,
-                    fontWeight: 800,
-                    letterSpacing: "0.06em",
-                    flexShrink: 0,
-                  }}
-                >
+            <div className="flex flex-col items-start md:flex-row md:items-center gap-4 bg-[var(--bg-warm)] border border-brand-border rounded-xl px-5 py-[18px] mb-4">
+              <div className="flex flex-col md:flex-row gap-4 flex-1">
+                <div className="w-[52px] h-[34px] bg-[linear-gradient(135deg,#1a3a6e,#2a5cb8)] rounded-lg flex items-center justify-center text-white text-[11px] font-extrabold tracking-[0.06em] shrink-0">
                   VISA
                 </div>
-                <div style={{ flex: 1 }}>
+                <div className="flex-1">
                   {methodsQuery.isLoading ? (
-                    <div style={{ fontSize: 13, color: "var(--faint)" }}>Loading saved cards...</div>
+                    <div className="text-[13px] text-brand-faint">Loading saved cards...</div>
                   ) : hasSavedCard ? (
-                    <div style={{ display: "grid", gap: 10 }}>
+                    <div className="grid gap-[10px]">
                       {paymentMethods.map((method) => (
                         <div key={method.id} className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
                           <div>
-                            <div style={{ fontWeight: 600, fontSize: 15, letterSpacing: "0.04em" }}>
+                            <div className="font-semibold text-[15px] tracking-[0.04em]">
                               {method.brand.toUpperCase()} •••• {method.last4}
                             </div>
-                            <div style={{ fontSize: 13, color: "var(--faint)", marginTop: 2 }}>
+                            <div className="text-[13px] text-brand-faint mt-[2px]">
                               Expires {method.exp_month}/{method.exp_year}
                             </div>
                           </div>
                           {method.is_default ? (
-                            <span style={{ color: "var(--teal)", fontSize: 12.5, fontWeight: 600 }}>Default</span>
+                            <span className="text-teal text-[12.5px] font-semibold">Default</span>
                           ) : (
-                            <button className="btn-outline" style={{ fontSize: 12, padding: "6px 10px" }} onClick={() => setDefaultMutation.mutate(method.id)}>
+                            <button className="btn-outline text-[12px] px-[10px] py-[6px]" onClick={() => setDefaultMutation.mutate(method.id)}>
                               Set default
                             </button>
                           )}
                           <button
-                            className="btn-outline"
-                            style={{ fontSize: 12, padding: "6px 10px", color: "#c0392b" }}
+                            className="btn-outline text-[12px] px-[10px] py-[6px] text-[#c0392b]"
                             onClick={() => deleteMutation.mutate(method.id)}
                           >
                             Remove
@@ -235,8 +180,8 @@ export default function BillingView() {
                     </div>
                   ) : (
                     <>
-                      <div style={{ fontWeight: 600, fontSize: 15, letterSpacing: "0.06em" }}>No saved card yet</div>
-                      <div style={{ fontSize: 13, color: "var(--faint)", marginTop: 2 }}>
+                      <div className="font-semibold text-[15px] tracking-[0.06em]">No saved card yet</div>
+                      <div className="text-[13px] text-brand-faint mt-[2px]">
                         Add a card before requesting paid bookings.
                       </div>
                     </>
@@ -244,9 +189,9 @@ export default function BillingView() {
                 </div>
               </div>
             </div>
-            {cardSuccess && <p style={{ color: "var(--teal)", fontSize: 13, marginBottom: 14 }}>{cardSuccess}</p>}
+            {cardSuccess && <p className="text-teal text-[13px] mb-[14px]">{cardSuccess}</p>}
             {(methodsQuery.error || setDefaultMutation.error || deleteMutation.error) && (
-              <p style={{ color: "#c0392b", fontSize: 13, marginBottom: 14 }}>
+              <p className="text-[#c0392b] text-[13px] mb-[14px]">
                 {[methodsQuery.error, setDefaultMutation.error, deleteMutation.error].find(Boolean) instanceof Error
                   ? ([methodsQuery.error, setDefaultMutation.error, deleteMutation.error].find(Boolean) as Error).message
                   : "Unable to update payment methods."}
@@ -254,8 +199,7 @@ export default function BillingView() {
             )}
             <div className="flex flex-col md:flex-row gap-[10px]">
               <button
-                className="btn-outline"
-                style={{ fontSize: 13, padding: "8px 16px" }}
+                className="btn-outline text-[13px] px-4 py-2"
                 onClick={() => {
                   setEditPayment(true);
                 }}
@@ -265,30 +209,25 @@ export default function BillingView() {
             </div>
           </div>
         ) : (
-          <div
-            style={{
-              background: "var(--bg-warm)",
-              border: "1px solid var(--border)",
-              borderRadius: 12,
-              padding: "22px 20px",
-            }}
-          >
-            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 18 }}>
+          <div className="bg-[var(--bg-warm)] border border-brand-border rounded-xl px-5 py-[22px]">
+            <p className="text-[13px] text-[var(--faint)] mb-[18px]">
               Enter your card details below. Stripe stores the card securely; KinSittr never stores full card numbers.
             </p>
-            <label style={labelStyle}>Card details</label>
-            <div id="stripe-card-element" style={{ ...inputStyle, minHeight: 44, marginBottom: 0 }} />
-            {cardError && <p style={{ color: "#c0392b", fontSize: 13, margin: "12px 0 0" }}>{cardError}</p>}
-            <div className="flex gap-[10px]" style={{ marginTop: 18 }}>
+            <label className="text-[12px] font-medium text-[var(--faint)] block mb-[6px] uppercase tracking-[0.06em]">Card details</label>
+            <div
+              id="stripe-card-element"
+              className="w-full border-[1.5px] border-brand-border rounded-[9px] px-[14px] py-[11px] text-[14px] outline-none bg-[var(--bg-warm)] text-[var(--brand-text)] [font-family:inherit] min-h-[44px]"
+            />
+            {cardError && <p className="text-[#c0392b] text-[13px] mt-3">{cardError}</p>}
+            <div className="flex gap-[10px] mt-[18px]">
               <button
-                className="btn-cta"
-                style={{ fontSize: 14, padding: "10px 20px" }}
+                className="btn-cta text-[14px] px-5 py-[10px]"
                 disabled={setupMutation.isPending}
                 onClick={saveCard}
               >
                 {setupMutation.isPending ? "Saving..." : "Save card"}
               </button>
-              <button className="btn-outline" style={{ fontSize: 14, padding: "10px 20px" }} onClick={() => setEditPayment(false)}>
+              <button className="btn-outline text-[14px] px-5 py-[10px]" onClick={() => setEditPayment(false)}>
                 Cancel
               </button>
             </div>

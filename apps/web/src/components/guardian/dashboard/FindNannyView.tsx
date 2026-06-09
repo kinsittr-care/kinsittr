@@ -96,7 +96,7 @@ export default function FindNannyView() {
   );
 
   return (
-    <div className="flex h-full overflow-hidden" style={{ flex: 1 }}>
+    <div className="flex h-full overflow-hidden flex-1">
       {!isMobile && <DesktopFilterSidebar>{filterControls}</DesktopFilterSidebar>}
 
       <FindNannyResults

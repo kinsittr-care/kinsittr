@@ -21,7 +21,7 @@ export default function ResourceItem({ tag, tagStyle, title, description }: Reso
         <p className="font-semibold text-[15px] mb-[3px]" style={{ color: "var(--brand-text)" }}>
           {title}
         </p>
-        <p className="text-[13px] leading-[1.6]" style={{ color: "var(--muted)" }}>
+        <p className="text-[13px] leading-[1.6]" style={{ color: "var(--faint)" }}>
           {description}
         </p>
       </div>

@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { A } from "./tokens";
 import AdminSidebar, { useAdminSidebarBadges } from "./AdminSidebar";
 import AdminMobileHeader from "./AdminMobileHeader";
 import { AuthUser } from "@/src/types/api/api";
@@ -46,11 +45,11 @@ export default function AdminShell({ children }: { children: ReactNode }) {
   if (!authorized) return null;
 
   return (
-    <div className="flex h-dvh overflow-hidden" style={{ background: A.bg }}>
+    <div className="flex h-dvh overflow-hidden bg-admin-bg">
       <AdminSidebar user={adminUser} badgeValues={badgeValues} />
       <div className="flex flex-col flex-1 overflow-hidden">
         <AdminMobileHeader user={adminUser} badgeValues={badgeValues} />
-        <main style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
+        <main className="flex-1 overflow-auto flex flex-col">
           {children}
         </main>
       </div>

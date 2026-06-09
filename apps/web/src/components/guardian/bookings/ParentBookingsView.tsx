@@ -130,7 +130,7 @@ export default function ParentBookingsView({
   };
 
   return (
-    <div style={{ display: "grid", gap: 20 }}>
+    <div className="grid gap-5">
       {!compact && (
         <ParentBookingsFilters
           dateFrom={dateFrom}
@@ -148,12 +148,7 @@ export default function ParentBookingsView({
           compact && showViewAllLink ? (
             <Link
               href="/parent/bookings"
-              style={{
-                fontSize: 13,
-                color: "var(--brand-text)",
-                textDecoration: "underline",
-                whiteSpace: "nowrap",
-              }}
+              className="text-[13px] text-brand-text underline whitespace-nowrap"
             >
               View all
             </Link>
@@ -161,16 +156,16 @@ export default function ParentBookingsView({
         }
       >
         {isLoading ? (
-          <p style={{ color: "var(--muted)", fontSize: 14, margin: 0 }}>Loading bookings…</p>
+          <p className="text-brand-faint text-[14px] m-0">Loading bookings…</p>
         ) : error ? (
-          <p style={{ color: "#b24a3f", fontSize: 14, margin: 0 }}>
+          <p className="text-[#b24a3f] text-[14px] m-0">
             {error instanceof Error ? error.message : "Unable to load bookings."}
           </p>
         ) : bookings.length === 0 ? (
-          <div style={{ textAlign: compact ? "left" : "center", padding: compact ? "8px 0" : "28px 0" }}>
-            <p style={{ fontSize: 15, margin: 0, color: "var(--faint)" }}>No bookings match your filters.</p>
+          <div className={compact ? "text-left py-2" : "text-center py-7"}>
+            <p className="text-[15px] m-0 text-brand-faint">No bookings match your filters.</p>
             {!compact && (
-              <p style={{ fontSize: 13, marginTop: 8, color: "var(--faint)" }}>
+              <p className="text-[13px] mt-2 text-brand-faint">
                 Try adjusting the status or date range.
               </p>
             )}
@@ -178,10 +173,10 @@ export default function ParentBookingsView({
         ) : (
           <>
             {isFetching && (
-              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 0 }}>Updating bookings…</p>
+              <p className="text-[13px] text-brand-faint mt-0">Updating bookings…</p>
             )}
             {cancelError && (
-              <p style={{ fontSize: 13, color: "#b24a3f", marginTop: 0 }}>{cancelError}</p>
+              <p className="text-[13px] text-[#b24a3f] mt-0">{cancelError}</p>
             )}
             <ParentBookingsList
               bookings={bookings}

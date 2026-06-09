@@ -21,7 +21,7 @@ export default function ChecklistItem({ title, description }: ChecklistItemProps
         <p className="font-semibold text-[15px] mb-[5px]" style={{ color: "var(--brand-text)" }}>
           {title}
         </p>
-        <p className="text-[14px] leading-[1.65]" style={{ color: "var(--muted)" }}>
+        <p className="text-[14px] leading-[1.65]" style={{ color: "var(--faint)" }}>
           {description}
         </p>
       </div>

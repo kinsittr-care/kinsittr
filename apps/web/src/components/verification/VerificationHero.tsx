@@ -27,7 +27,7 @@ export default function VerificationHero() {
             Get verified.{" "}
             <em style={{ color: "var(--teal)" }}>Get discovered.</em>
           </h1>
-          <p className="text-[17px] leading-[1.75] mb-9 max-w-[460px]" style={{ color: "var(--muted)" }}>
+          <p className="text-[17px] leading-[1.75] mb-9 max-w-[460px]" style={{ color: "var(--faint)" }}>
             Becoming a KinSittr-verified nanny sets you apart. Families trust verified profiles — and verified nannies get booked.
           </p>
           <Link href="/contact" className="btn-gold">

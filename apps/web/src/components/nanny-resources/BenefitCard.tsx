@@ -20,7 +20,7 @@ export default function BenefitCard({ iconBg, icon, title, description }: Benefi
       <h3 className="font-semibold text-[16px] mb-2" style={{ color: "var(--brand-text)" }}>
         {title}
       </h3>
-      <p className="text-[14px] leading-[1.7]" style={{ color: "var(--muted)" }}>
+      <p className="text-[14px] leading-[1.7]" style={{ color: "var(--faint)" }}>
         {description}
       </p>
     </div>

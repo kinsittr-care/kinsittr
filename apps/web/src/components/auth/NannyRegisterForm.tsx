@@ -11,16 +11,11 @@ import AuthErrorDialog from "./AuthErrorDialog";
 
 const inputClass = `
   w-full border-[1.5px] rounded-[10px] px-[14px] py-3 text-[14px] outline-none transition-all
+  border-[var(--border)] bg-[var(--bg-warm)] text-[var(--brand-text)]
   focus:bg-white focus:shadow-[0_0_0_3px_rgba(58,90,90,.1)]
 `.trim();
 
-const inputStyle = {
-  borderColor: "var(--border)",
-  background: "var(--bg-warm)",
-  color: "var(--brand-text)",
-};
-
-const labelClass = "block text-[12px] font-semibold uppercase tracking-[0.07em] mb-[7px]";
+const labelClass = "mb-[7px] block text-[12px] font-semibold uppercase tracking-[0.07em] text-[var(--faint)]";
 
 interface NannyRegisterFormProps {
   onSuccess?: () => void;
@@ -71,28 +66,27 @@ export default function NannyRegisterForm({ onSuccess }: NannyRegisterFormProps)
     <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
       <div className="grid grid-cols-2 gap-[14px] max-sm:grid-cols-1">
         <div>
-          <label className={labelClass} style={{ color: "var(--faint)" }}>First name</label>
-          <input name="firstname" type="text" required placeholder="Jordan" className={inputClass} value={values.firstname} onChange={handleChange} style={inputStyle} />
+          <label className={labelClass}>First name</label>
+          <input name="firstname" type="text" required placeholder="Jordan" className={inputClass} value={values.firstname} onChange={handleChange} />
         </div>
         <div>
-          <label className={labelClass} style={{ color: "var(--faint)" }}>Last name</label>
-          <input name="lastname" type="text" required placeholder="Lee" className={inputClass} value={values.lastname} onChange={handleChange} style={inputStyle} />
+          <label className={labelClass}>Last name</label>
+          <input name="lastname" type="text" required placeholder="Lee" className={inputClass} value={values.lastname} onChange={handleChange} />
         </div>
       </div>
 
       <div>
-        <label className={labelClass} style={{ color: "var(--faint)" }}>Email</label>
-        <input name="email" type="email" required placeholder="you@example.com" className={inputClass} value={values.email} onChange={handleChange} style={inputStyle} />
+        <label className={labelClass}>Email</label>
+        <input name="email" type="email" required placeholder="you@example.com" className={inputClass} value={values.email} onChange={handleChange} />
       </div>
 
       <div>
-        <label className={labelClass} style={{ color: "var(--faint)" }}>Password</label>
+        <label className={labelClass}>Password</label>
         <PasswordField
           value={values.password}
           onChange={handleChange}
           placeholder="Min. 8 characters"
           inputClass={inputClass}
-          inputStyle={inputStyle}
         />
       </div>
 
@@ -100,8 +94,7 @@ export default function NannyRegisterForm({ onSuccess }: NannyRegisterFormProps)
 
       <button
         type="submit"
-        className="btn-cta justify-center"
-        style={{ width: "100%", fontSize: 15, padding: "14px", opacity: isSubmitting ? 0.8 : 1 }}
+        className="btn-cta w-full justify-center p-[14px] text-[15px] disabled:opacity-80"
         disabled={isSubmitting}
       >
         {isSubmitting ? "Creating account…" : "Create account"}

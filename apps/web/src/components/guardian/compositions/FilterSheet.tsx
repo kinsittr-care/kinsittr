@@ -31,8 +31,7 @@ export default function FilterSheet({ open, onClose, resultCount, children }: Fi
         <SheetFooter className="px-5 pt-0 pb-6">
           <button
             onClick={onClose}
-            className="btn-cta w-full justify-center"
-            style={{ padding: "13px", fontSize: 15 }}
+            className="btn-cta w-full justify-center p-[13px] text-[15px]"
           >
             Show {resultCount} {resultCount === 1 ? "nanny" : "nannies"}
           </button>

@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { NannyProfile, UpdateNannyProfilePayload } from "@/src/types/api/api";
 import { ownNannyProfileQueryKey, updateOwnNannyProfile } from "@/src/utils/api/nanny";
-import { btnGhost, btnPrimary, inputStyle, labelStyle } from "../nanny-styles";
-import { N } from "../tokens";
+import { btnGhostCls, btnPrimaryCls, inputCls, labelCls } from "../nanny-styles";
+import { cn } from "@/lib/utils";
 import {
   BIO_LIMIT,
   CITIES_BY_PROVINCE,
@@ -63,17 +63,16 @@ export default function NannyProfileForm({ profile }: { profile: NannyProfile })
       <RateField rate={form.rate_per_hour} updateField={updateField} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <button className="w-full sm:w-auto" style={btnPrimary} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate(form)}>
+        <button className={cn("w-full sm:w-auto", btnPrimaryCls)} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate(form)}>
           {updateMutation.isPending ? "Saving..." : "Save changes"}
         </button>
         {isPublicProfile ? (
-          <Link className="w-full sm:w-auto" href={`/nannies/${profile.id}`} style={{ ...btnGhost, textAlign: "center" }} target="_blank">
+          <Link className={cn("w-full sm:w-auto text-center", btnGhostCls)} href={`/nannies/${profile.id}`} target="_blank">
             Preview public profile
           </Link>
         ) : (
           <button
-            className="w-full sm:w-auto"
-            style={{ ...btnGhost, cursor: "not-allowed", opacity: 0.62 }}
+            className={cn("w-full sm:w-auto cursor-not-allowed opacity-[0.62]", btnGhostCls)}
             type="button"
             disabled
             title="Your public profile is available after KinSittr verifies your nanny account."
@@ -82,7 +81,7 @@ export default function NannyProfileForm({ profile }: { profile: NannyProfile })
           </button>
         )}
         {message && (
-          <span style={{ color: updateMutation.isError ? N.rose : N.green, fontSize: 13.5, fontWeight: 600 }}>
+          <span className={cn("text-[13.5px] font-semibold", updateMutation.isError ? "text-nanny-rose" : "text-nanny-green")}>
             {message}
           </span>
         )}
@@ -112,17 +111,14 @@ function BasicFields({
   };
 
   return (
-    <div
-      className="grid grid-cols-1 gap-5 p-5 sm:p-7 md:grid-cols-2 md:gap-x-6"
-      style={{ background: N.card, border: `1px solid ${N.border}`, borderRadius: 18, boxShadow: N.shadow, marginBottom: 18 }}
-    >
+    <div className="grid grid-cols-1 gap-5 p-5 sm:p-7 md:grid-cols-2 md:gap-x-6 bg-nanny-card border border-nanny-border rounded-[18px] shadow-[var(--nanny-shadow)] mb-[18px]">
       <div>
-        <label style={labelStyle}>Phone</label>
-        <input style={inputStyle} value={form.phone} onChange={(event) => updateField("phone", event.target.value)} />
+        <label className={labelCls}>Phone</label>
+        <input className={inputCls} value={form.phone} onChange={(event) => updateField("phone", event.target.value)} />
       </div>
       <div>
-        <label style={labelStyle}>Province</label>
-        <select style={inputStyle} value={form.province} onChange={(event) => handleProvinceChange(event.target.value)}>
+        <label className={labelCls}>Province</label>
+        <select className={inputCls} value={form.province} onChange={(event) => handleProvinceChange(event.target.value)}>
           <option value="">Select province</option>
           {provinceOptionsForValue(form.province).map((province) => (
             <option key={province} value={province}>
@@ -132,17 +128,17 @@ function BasicFields({
         </select>
       </div>
       <div>
-        <label style={labelStyle}>City</label>
+        <label className={labelCls}>City</label>
         {usesFreeTextCity ? (
           <input
-            style={inputStyle}
+            className={inputCls}
             value={form.city}
             placeholder="Enter city"
             onChange={(event) => updateField("city", event.target.value)}
           />
         ) : (
           <select
-            style={inputStyle}
+            className={inputCls}
             value={form.city}
             disabled={!form.province}
             onChange={(event) => updateField("city", event.target.value)}
@@ -157,9 +153,9 @@ function BasicFields({
         )}
       </div>
       <div>
-        <label style={labelStyle}>Specialties</label>
+        <label className={labelCls}>Specialties</label>
         <input
-          style={inputStyle}
+          className={inputCls}
           value={specialtyText}
           placeholder="Infant care, CPR certified"
           onChange={(event) => onSpecialtyTextChange(event.target.value)}
@@ -213,10 +209,10 @@ function BioField({
   updateField: <TKey extends keyof UpdateNannyProfilePayload>(key: TKey, value: UpdateNannyProfilePayload[TKey]) => void;
 }) {
   return (
-    <div className="p-5 sm:p-7" style={{ background: N.card, border: `1px solid ${N.border}`, borderRadius: 18, boxShadow: N.shadow, marginBottom: 18 }}>
-      <label style={labelStyle}>Bio</label>
-      <textarea style={{ ...inputStyle, height: 120, resize: "vertical" }} value={bio} onChange={(event) => updateField("bio", event.target.value.slice(0, BIO_LIMIT))} />
-      <div style={{ marginTop: 6, fontSize: 12.5, color: N.inkFaint, textAlign: "right" }}>
+    <div className="p-5 sm:p-7 bg-nanny-card border border-nanny-border rounded-[18px] shadow-[var(--nanny-shadow)] mb-[18px]">
+      <label className={labelCls}>Bio</label>
+      <textarea className={cn(inputCls, "h-[120px] resize-y")} value={bio} onChange={(event) => updateField("bio", event.target.value.slice(0, BIO_LIMIT))} />
+      <div className="mt-[6px] text-[12.5px] text-nanny-ink-faint text-right">
         {bio.length} / {BIO_LIMIT}
       </div>
     </div>
@@ -231,16 +227,16 @@ function RateField({
   updateField: <TKey extends keyof UpdateNannyProfilePayload>(key: TKey, value: UpdateNannyProfilePayload[TKey]) => void;
 }) {
   return (
-    <div className="p-5 sm:p-7" style={{ background: N.card, border: `1px solid ${N.border}`, borderRadius: 18, boxShadow: N.shadow, marginBottom: 28 }}>
-      <label style={labelStyle}>Hourly rate</label>
+    <div className="p-5 sm:p-7 bg-nanny-card border border-nanny-border rounded-[18px] shadow-[var(--nanny-shadow)] mb-7">
+      <label className={labelCls}>Hourly rate</label>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
-        <input type="range" min={15} max={75} value={rate} onChange={(event) => updateField("rate_per_hour", Number(event.target.value))} style={{ flex: 1, accentColor: N.green }} />
-        <div className="text-left sm:text-right" style={{ fontFamily: "DM Serif Display, var(--font-dm-serif), serif", fontSize: 36, color: N.green, minWidth: 90, lineHeight: 1 }}>
+        <input type="range" min={15} max={75} value={rate} onChange={(event) => updateField("rate_per_hour", Number(event.target.value))} className="flex-1 accent-nanny-green" />
+        <div className="text-left sm:text-right font-display text-[36px] text-nanny-green min-w-[90px] leading-none">
           ${rate}
-          <span style={{ fontFamily: "inherit", fontSize: 16, color: N.inkMute, fontWeight: 400 }}>/hr</span>
+          <span className="font-display text-[16px] text-nanny-ink-faint font-normal">/hr</span>
         </div>
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontSize: 12, color: N.inkFaint }}>
+      <div className="flex justify-between mt-1 text-[12px] text-nanny-ink-faint">
         <span>$15</span><span>$75</span>
       </div>
     </div>

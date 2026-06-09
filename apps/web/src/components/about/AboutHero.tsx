@@ -27,7 +27,7 @@ export default function AboutHero() {
             </h1>
           </RevealWrapper>
           <RevealWrapper delay={0.2}>
-            <p className="text-[17px] leading-[1.75] max-w-[460px]" style={{ color: "var(--muted)" }}>
+            <p className="text-[17px] leading-[1.75] max-w-[460px]" style={{ color: "var(--faint)" }}>
               KinSittr started from a simple frustration: finding trustworthy childcare was harder than it should be. So we built a platform that gets it right — for families and nannies alike.
             </p>
           </RevealWrapper>

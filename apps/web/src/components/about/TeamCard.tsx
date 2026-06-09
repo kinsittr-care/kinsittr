@@ -19,8 +19,8 @@ export default function TeamCard({
         {initials}
       </div>
       <h4 className="font-bold text-[16px] mb-[3px]">{name}</h4>
-      <div className="text-[13px] mb-[10px]" style={{ color: "var(--muted)" }}>{role}</div>
-      <p className="text-[13.5px] leading-[1.65]" style={{ color: "var(--muted)" }}>{bio}</p>
+      <div className="text-[13px] mb-[10px]" style={{ color: "var(--faint)" }}>{role}</div>
+      <p className="text-[13.5px] leading-[1.65]" style={{ color: "var(--faint)" }}>{bio}</p>
     </div>
   );
 }

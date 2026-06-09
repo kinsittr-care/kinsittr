@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { A } from "./tokens";
+import { cn } from "@/lib/utils";
 import AdminAvatar from "./compositions/AdminAvatar";
 import {
   GridIcon,
@@ -70,9 +70,9 @@ export const navItems = [
   },
 ];
 
-const badgeColors = {
-  red: { bg: A.red, fg: "#fff" },
-  amber: { bg: A.amber, fg: "#fff" },
+const badgeColorCls: Record<"red" | "amber", string> = {
+  red: "bg-admin-red text-white",
+  amber: "bg-admin-amber text-white",
 };
 
 const screeningBadgeParams = { page: 1, limit: 1, status: "pending" as const };
@@ -117,50 +117,27 @@ export function AdminNavLinks({
     href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
 
   return (
-    <nav style={{ display: "flex", flexDirection: "column", gap: 2, padding: "0 12px", flex: 1 }}>
+    <nav className="flex flex-col gap-0.5 px-3 flex-1">
       {navItems.map((item) => {
         const active = isActive(item.href);
-        const bc = item.badgeTone ? badgeColors[item.badgeTone] : null;
+        const badgeCls = item.badgeTone ? badgeColorCls[item.badgeTone] : null;
         const badge = item.badgeKey ? badgeValues[item.badgeKey] : null;
         return (
           <Link
             key={item.href}
             href={item.href}
             onClick={onNavigate}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "11px 14px",
-              borderRadius: 10,
-              fontSize: 14.5,
-              fontWeight: active ? 600 : 500,
-              color: active ? A.clay : A.inkMid,
-              background: active ? "#fff" : "transparent",
-              border: active ? `1px solid ${A.border}` : "1px solid transparent",
-              boxShadow: active ? "0 1px 2px rgba(80,40,20,.05)" : "none",
-              textDecoration: "none",
-              transition: "all .15s",
-            }}
+            className={cn(
+              "flex items-center gap-3 px-[14px] py-[11px] rounded-[10px] text-[14.5px] no-underline transition-all duration-150",
+              active
+                ? "font-semibold text-admin-clay bg-white border border-admin-border shadow-[0_1px_2px_rgba(80,40,20,.05)]"
+                : "font-medium text-admin-ink-mid bg-transparent border border-transparent",
+            )}
           >
-            <span style={{ display: "flex" }}>{item.icon}</span>
-            <span style={{ flex: 1 }}>{item.label}</span>
-            {badge && bc && (
-              <span
-                style={{
-                  minWidth: 20,
-                  height: 20,
-                  padding: "0 6px",
-                  borderRadius: 999,
-                  background: bc.bg,
-                  color: bc.fg,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+            <span className="flex">{item.icon}</span>
+            <span className="flex-1">{item.label}</span>
+            {badge && badgeCls && (
+              <span className={cn("min-w-5 h-5 px-[6px] rounded-full inline-flex items-center justify-center text-[11px] font-bold", badgeCls)}>
                 {badge}
               </span>
             )}
@@ -186,27 +163,16 @@ export default function AdminSidebar({
     : "AD";
 
   return (
-    <aside
-      className="hidden md:flex"
-      style={{
-        width: 264,
-        flexShrink: 0,
-        height: "100%",
-        background: A.sidebar,
-        borderRight: `1px solid ${A.border}`,
-        flexDirection: "column",
-        padding: "24px 0",
-      }}
-    >
+    <aside className="hidden md:flex w-[264px] shrink-0 h-full bg-admin-sidebar border-r border-admin-border flex-col py-6">
       {/* Logo */}
-      <div style={{ padding: "4px 22px 22px", borderBottom: `1px solid ${A.borderSoft}`, marginBottom: 18 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: A.clay, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: "var(--font-dm-serif), serif", fontSize: 16 }}>
+      <div className="px-[22px] pt-1 pb-[22px] border-b border-admin-border-soft mb-[18px]">
+        <div className="flex items-center gap-[10px]">
+          <div className="w-[30px] h-[30px] rounded-lg bg-admin-card border border-admin-border flex items-center justify-center text-admin-clay font-display text-[16px] shadow-[0_1px_3px_rgba(80,40,20,.08)]">
             k
           </div>
           <div>
-            <div style={{ fontFamily: "var(--font-dm-serif), serif", fontSize: 19, color: A.ink, lineHeight: 1 }}>KinSittr</div>
-            <div style={{ fontSize: 11, color: A.inkSoft, letterSpacing: ".12em", textTransform: "uppercase", marginTop: 3 }}>Admin Console</div>
+            <div className="font-display text-[19px] text-admin-ink leading-none">KinSittr</div>
+            <div className="text-[11px] text-admin-ink-soft tracking-[.12em] uppercase mt-[3px]">Admin Console</div>
           </div>
         </div>
       </div>
@@ -215,17 +181,17 @@ export default function AdminSidebar({
       <AdminNavLinks pathname={pathname} badgeValues={badgeValues} />
 
       {/* Admin user */}
-      <div style={{ padding: "18px 18px 14px", margin: "0 12px", borderTop: `1px solid ${A.borderSoft}`, display: "flex", alignItems: "center", gap: 12 }}>
+      <div className="px-[18px] pt-[18px] pb-[14px] mx-3 border-t border-admin-border-soft flex items-center gap-3">
         <AdminAvatar initials={initials} size={40} tone="clay" />
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: A.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</div>
-          <div style={{ fontSize: 12, color: A.inkSoft, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user?.email ?? ""}</div>
+        <div className="min-w-0">
+          <div className="text-[14px] font-semibold text-admin-ink overflow-hidden text-ellipsis whitespace-nowrap">{displayName}</div>
+          <div className="text-[12px] text-admin-ink-soft mt-px overflow-hidden text-ellipsis whitespace-nowrap">{user?.email ?? ""}</div>
         </div>
       </div>
       <button
         type="button"
         onClick={logout}
-        style={{ margin: "0 24px", padding: "10px 14px", borderRadius: 10, border: "1px solid transparent", background: "transparent", color: "#b42318", fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "left" }}
+        className="mx-6 px-[14px] py-[10px] rounded-[10px] border border-transparent bg-transparent text-[#b42318] text-[14px] font-bold cursor-pointer text-left"
       >
         Log out
       </button>

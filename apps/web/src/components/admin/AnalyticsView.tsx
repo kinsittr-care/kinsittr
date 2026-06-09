@@ -6,8 +6,8 @@ import AdminPageHeader from "./compositions/AdminPageHeader";
 import AnalyticsMetricTiles from "./analytics/AnalyticsMetricTiles";
 import AnalyticsCityBars from "./analytics/AnalyticsCityBars";
 import AnalyticsKeyMetrics from "./analytics/AnalyticsKeyMetrics";
-import { btnGhost } from "./compositions/admin-styles";
-import { A } from "./tokens";
+import { btnGhostCls } from "./compositions/admin-styles";
+import { cn } from "@/lib/utils";
 import type { AdminAnalyticsBucket, AdminAnalyticsData, AdminAnalyticsParams } from "@/src/types/api/admin";
 import { adminAnalyticsQueryKey, getAdminAnalytics } from "@/src/utils/api/admin/analytics";
 import { formatCurrency, formatDateParam, formatLocation, formatNumber, formatShortDate } from "@/src/utils/format";
@@ -105,16 +105,11 @@ export default function AnalyticsView() {
         title="Analytics"
         subtitle={`${formatShortDate(params.date_from ?? "")} - ${formatShortDate(params.date_to ?? "")} · Canada`}
         right={
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <div className="flex gap-[10px] flex-wrap justify-end">
             {(Object.keys(rangeConfig) as RangeKey[]).map((key) => (
               <button
                 key={key}
-                style={{
-                  ...btnGhost,
-                  background: range === key ? A.cardWarm : btnGhost.background,
-                  borderColor: range === key ? A.clay : btnGhost.borderColor,
-                  color: range === key ? A.clay : btnGhost.color,
-                }}
+                className={cn(btnGhostCls, range === key && "bg-admin-card-warm border-admin-clay text-admin-clay")}
                 onClick={() => {
                   setRange(key);
                   setDateFrom("");
@@ -129,20 +124,20 @@ export default function AnalyticsView() {
               type="date"
               value={dateFrom}
               onChange={(event) => setDateFrom(event.target.value)}
-              style={filterInputStyle}
+              className="px-3 py-[10px] bg-admin-card border border-admin-border rounded-[10px] text-admin-ink"
               aria-label="Analytics date from"
             />
             <input
               type="date"
               value={dateTo}
               onChange={(event) => setDateTo(event.target.value)}
-              style={filterInputStyle}
+              className="px-3 py-[10px] bg-admin-card border border-admin-border rounded-[10px] text-admin-ink"
               aria-label="Analytics date to"
             />
             <select
               value={bucket}
               onChange={(event) => setBucket(event.target.value as AdminAnalyticsBucket | "")}
-              style={filterInputStyle}
+              className="px-3 py-[10px] bg-admin-card border border-admin-border rounded-[10px] text-admin-ink"
               aria-label="Analytics bucket"
             >
               <option value="">Auto bucket</option>
@@ -150,64 +145,44 @@ export default function AnalyticsView() {
               <option value="week">Weekly</option>
               <option value="month">Monthly</option>
             </select>
-            <button style={btnGhost} onClick={() => analyticsQuery.refetch()}>
+            <button className={btnGhostCls} onClick={() => analyticsQuery.refetch()}>
               Refresh
             </button>
           </div>
         }
       />
-      <div
-        style={{
-          padding: "24px 40px 40px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 18,
-        }}
-      >
+      <div className="px-10 pt-6 pb-10 flex flex-col gap-[18px]">
         {analyticsQuery.isError && (
-          <div
-            style={{
-              background: "#fff4ea",
-              border: "1px solid #f0c8a8",
-              borderRadius: 14,
-              color: "#9a5528",
-              padding: "12px 14px",
-              fontSize: 13,
-            }}
-          >
+          <div className="bg-[#fff4ea] border border-[#f0c8a8] rounded-[14px] text-[#9a5528] px-[14px] py-3 text-[13px]">
             {analyticsQuery.error instanceof Error
               ? analyticsQuery.error.message
               : "Unable to load analytics."}
           </div>
         )}
         <AnalyticsMetricTiles metrics={analyticsMetrics(analytics)} isLoading={analyticsQuery.isLoading} />
-        <div style={{ display: "grid", gridTemplateColumns: "1.05fr 1fr", gap: 18 }}>
+        <div className="grid gap-[18px]" style={{ gridTemplateColumns: "1.05fr 1fr" }}>
           <AnalyticsCityBars cities={analytics?.bookings_by_city ?? []} isLoading={analyticsQuery.isLoading} />
           <AnalyticsKeyMetrics metrics={keyMetrics(analytics)} isLoading={analyticsQuery.isLoading} />
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
-          <div style={{ background: A.card, border: `1px solid ${A.border}`, borderRadius: 16, padding: "26px 28px", boxShadow: A.shadow }}>
-            <h2 style={{ fontFamily: "var(--font-dm-serif), serif", fontSize: 22, fontWeight: 400, color: A.ink, letterSpacing: "-.005em" }}>
+        <div className="grid grid-cols-2 gap-[18px]">
+          <div className="bg-admin-card border border-admin-border rounded-2xl px-7 py-[26px] shadow-[var(--admin-shadow)]">
+            <h2 className="font-display text-[22px] font-normal text-admin-ink tracking-[-0.005em]">
               Revenue trend
             </h2>
-            <div style={{ marginTop: 22, display: "flex", alignItems: "end", gap: 10, minHeight: 150 }}>
-              {analyticsQuery.isLoading && <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>Loading trend data...</p>}
+            <div className="mt-[22px] flex items-end gap-[10px] min-h-[150px]">
+              {analyticsQuery.isLoading && <p className="m-0 text-admin-ink-soft text-[14px]">Loading trend data...</p>}
               {!analyticsQuery.isLoading && latestSeries.length === 0 && (
-                <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>No revenue trend data yet.</p>
+                <p className="m-0 text-admin-ink-soft text-[14px]">No revenue trend data yet.</p>
               )}
               {!analyticsQuery.isLoading &&
                 latestSeries.map((item) => (
-                  <div key={item.period} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "end", gap: 8 }}>
+                  <div key={item.period} className="flex-1 flex flex-col justify-end gap-2">
                     <div
                       title={`${formatShortDate(item.period)} · ${formatCurrency(item.revenue)}`}
-                      style={{
-                        minHeight: 8,
-                        height: `${maxRevenue > 0 ? Math.max((item.revenue / maxRevenue) * 120, 8) : 8}px`,
-                        borderRadius: "10px 10px 4px 4px",
-                        background: A.green,
-                      }}
+                      className="min-h-2 rounded-[10px_10px_4px_4px] bg-admin-green"
+                      style={{ height: `${maxRevenue > 0 ? Math.max((item.revenue / maxRevenue) * 120, 8) : 8}px` }}
                     />
-                    <span style={{ color: A.inkSoft, fontSize: 11, textAlign: "center" }}>
+                    <span className="text-admin-ink-soft text-[11px] text-center">
                       {formatShortDate(item.period).split(",")[0]}
                     </span>
                   </div>
@@ -215,54 +190,48 @@ export default function AnalyticsView() {
             </div>
           </div>
 
-          <div style={{ background: A.card, border: `1px solid ${A.border}`, borderRadius: 16, padding: "26px 28px", boxShadow: A.shadow }}>
-            <h2 style={{ fontFamily: "var(--font-dm-serif), serif", fontSize: 22, fontWeight: 400, color: A.ink, letterSpacing: "-.005em" }}>
+          <div className="bg-admin-card border border-admin-border rounded-2xl px-7 py-[26px] shadow-[var(--admin-shadow)]">
+            <h2 className="font-display text-[22px] font-normal text-admin-ink tracking-[-0.005em]">
               Top nannies
             </h2>
-            <div style={{ marginTop: 14 }}>
-              {analyticsQuery.isLoading && <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>Loading top nannies...</p>}
+            <div className="mt-[14px]">
+              {analyticsQuery.isLoading && <p className="m-0 text-admin-ink-soft text-[14px]">Loading top nannies...</p>}
               {!analyticsQuery.isLoading && (analytics?.top_nannies ?? []).length === 0 && (
-                <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>No top nanny data yet.</p>
+                <p className="m-0 text-admin-ink-soft text-[14px]">No top nanny data yet.</p>
               )}
               {!analyticsQuery.isLoading &&
                 (analytics?.top_nannies ?? []).map((nanny) => (
                   <div
                     key={nanny.nanny_profile_id}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 16,
-                      padding: "14px 0",
-                      borderBottom: `1px solid ${A.borderSoft}`,
-                    }}
+                    className="flex justify-between gap-4 py-[14px] border-b border-admin-border-soft"
                   >
                     <div>
-                      <div style={{ color: A.ink, fontSize: 14.5, fontWeight: 600 }}>{nanny.display_name}</div>
-                      <div style={{ color: A.inkSoft, fontSize: 12.5, marginTop: 3 }}>
+                      <div className="text-admin-ink text-[14.5px] font-semibold">{nanny.display_name}</div>
+                      <div className="text-admin-ink-soft text-[12.5px] mt-[3px]">
                         {formatLocation(nanny.city, nanny.province, "Location not set")} · {nanny.completed_count} bookings · {nanny.rating_avg.toFixed(1)} rating
                       </div>
                     </div>
-                    <div style={{ color: A.clay, fontWeight: 700, fontSize: 14 }}>{formatCurrency(nanny.revenue)}</div>
+                    <div className="text-admin-clay font-bold text-[14px]">{formatCurrency(nanny.revenue)}</div>
                   </div>
                 ))}
             </div>
           </div>
         </div>
-        <div style={{ background: A.card, border: `1px solid ${A.border}`, borderRadius: 16, padding: "24px 28px", boxShadow: A.shadow }}>
-          <h2 style={{ fontFamily: "var(--font-dm-serif), serif", fontSize: 22, fontWeight: 400, color: A.ink, margin: 0 }}>
+        <div className="bg-admin-card border border-admin-border rounded-2xl px-7 py-6 shadow-[var(--admin-shadow)]">
+          <h2 className="font-display text-[22px] font-normal text-admin-ink m-0">
             Registration trends
           </h2>
-          <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
-            {analyticsQuery.isLoading && <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>Loading registration trends...</p>}
+          <div className="mt-4 grid gap-[10px]">
+            {analyticsQuery.isLoading && <p className="m-0 text-admin-ink-soft text-[14px]">Loading registration trends...</p>}
             {!analyticsQuery.isLoading && (analytics?.registration_trends ?? []).length === 0 && (
-              <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>No registration trend data yet.</p>
+              <p className="m-0 text-admin-ink-soft text-[14px]">No registration trend data yet.</p>
             )}
             {!analyticsQuery.isLoading &&
               (analytics?.registration_trends ?? []).slice(-8).map((item) => (
-                <div key={item.period} style={{ display: "grid", gridTemplateColumns: "120px 1fr 1fr", gap: 12, alignItems: "center" }}>
-                  <span style={{ color: A.inkSoft, fontSize: 12.5 }}>{formatShortDate(item.period)}</span>
-                  <TrendBar label="Parents" value={item.parent_count} color={A.clay} />
-                  <TrendBar label="Nannies" value={item.nanny_count} color={A.amber} />
+                <div key={item.period} className="grid grid-cols-[120px_1fr_1fr] gap-3 items-center">
+                  <span className="text-admin-ink-soft text-[12.5px]">{formatShortDate(item.period)}</span>
+                  <TrendBar label="Parents" value={item.parent_count} color="var(--admin-clay)" />
+                  <TrendBar label="Nannies" value={item.nanny_count} color="var(--admin-amber)" />
                 </div>
               ))}
           </div>
@@ -275,21 +244,13 @@ export default function AnalyticsView() {
 function TrendBar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", color: A.inkMid, fontSize: 12 }}>
+      <div className="flex justify-between text-admin-ink-mid text-[12px]">
         <span>{label}</span>
         <strong>{formatNumber(value)}</strong>
       </div>
-      <div style={{ marginTop: 5, height: 8, borderRadius: 999, background: A.cardWarm, overflow: "hidden" }}>
-        <div style={{ width: `${Math.min(value * 8, 100)}%`, height: "100%", background: color }} />
+      <div className="mt-[5px] h-2 rounded-full bg-admin-card-warm overflow-hidden">
+        <div className="h-full" style={{ width: `${Math.min(value * 8, 100)}%`, background: color }} />
       </div>
     </div>
   );
 }
-
-const filterInputStyle: React.CSSProperties = {
-  padding: "10px 12px",
-  background: A.card,
-  border: `1px solid ${A.border}`,
-  borderRadius: 10,
-  color: A.ink,
-};

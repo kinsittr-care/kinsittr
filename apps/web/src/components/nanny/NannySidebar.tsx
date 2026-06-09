@@ -170,7 +170,7 @@ export default function NannySidebar() {
         </div>
         <div>
           <div className="font-display text-[19px] text-nanny-green-dk leading-none">KinSittr</div>
-          <div className="text-[11px] text-nanny-ink-mute tracking-widest uppercase mt-0.5">Caregiver</div>
+          <div className="text-[11px] text-nanny-ink-faint tracking-widest uppercase mt-0.5">Caregiver</div>
         </div>
       </div>
 
@@ -186,7 +186,7 @@ export default function NannySidebar() {
         <NannyAvatar initials={initials} size={40} tone="cream" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-nanny-green-dk truncate">{displayName}</p>
-          <p className="text-xs text-nanny-ink-mute mt-0.5">
+          <p className="text-xs text-nanny-ink-faint mt-0.5">
             {isVerified ? "Verified caregiver" : "Caregiver"}
           </p>
         </div>

@@ -6,7 +6,8 @@ import AdminPageHeader from "./compositions/AdminPageHeader";
 import AdminPagination from "./AdminPagination";
 import AdminReasonDialog, { type AdminReasonDialogState } from "./AdminReasonDialog";
 import ScreeningCard, { type ScreeningApplicant, type Steps } from "./screening/ScreeningCard";
-import { btnGhost } from "./compositions/admin-styles";
+import { btnGhostCls } from "./compositions/admin-styles";
+import { cn } from "@/lib/utils";
 import type { AdminNanny, ListAdminScreeningNanniesParams } from "@/src/types/api/admin";
 import { formatLocation, formatShortDate } from "@/src/utils/format";
 import {
@@ -18,9 +19,9 @@ import {
 } from "@/src/utils/api/admin/screening";
 
 const statusFilters = [
-  { label: "Pending", value: "pending" },
-  { label: "Under review", value: "under_review" },
-  { label: "Rejected", value: "rejected" },
+  { label: "Pending", mobileLabel: "Pending", value: "pending" },
+  { label: "Under review", mobileLabel: "Review", value: "under_review" },
+  { label: "Rejected", mobileLabel: "Rejected", value: "rejected" },
 ] as const;
 
 const PAGE_SIZE = 20;
@@ -132,37 +133,32 @@ export default function ScreeningQueueView() {
       <AdminPageHeader
         title="Screening Queue"
         subtitle={`${total} nannies in ${status?.replace("_", " ")} · Target: 24–48hr turnaround`}
-        right={
-          <div style={{ display: "flex", gap: 10 }}>
-            {statusFilters.map((item) => (
-              <button
-                key={item.value}
-                onClick={() => {
-                  setPage(1);
-                  setStatus(item.value);
-                }}
-                style={{
-                  ...btnGhost,
-                  borderColor: status === item.value ? "var(--admin-clay)" : undefined,
-                  color: status === item.value ? "var(--admin-clay)" : undefined,
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        }
       />
-      <div className="flex flex-col gap-4 px-4 py-5 md:px-10 md:py-6">
+      <div className="relative z-10 flex w-full shrink-0 flex-wrap gap-2 border-b border-admin-divider bg-admin-bg px-4 py-3 md:px-10">
+        {statusFilters.map((item) => (
+          <button
+            key={item.value}
+            onClick={() => {
+              setPage(1);
+              setStatus(item.value);
+            }}
+            className={cn(btnGhostCls, "shrink-0", status === item.value && "border-admin-clay text-admin-clay")}
+          >
+            <span className="sm:hidden">{item.mobileLabel}</span>
+            <span className="hidden sm:inline">{item.label}</span>
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-col gap-4 px-4 py-5 md:px-10 md:py-6 max-w-[960px]">
         {actionError && (
-          <p style={{ color: "#b34b39", fontSize: 14, margin: 0 }}>
+          <p className="text-[#b34b39] text-[14px] m-0">
             {actionError instanceof Error ? actionError.message : "Unable to update screening queue."}
           </p>
         )}
         {screeningQuery.isLoading ? (
-          <p style={{ color: "var(--admin-ink-soft)", margin: 0 }}>Loading screening queue...</p>
+          <p className="text-admin-ink-soft m-0">Loading screening queue...</p>
         ) : nannies.length === 0 ? (
-          <p style={{ color: "var(--admin-ink-soft)", margin: 0 }}>No nannies found for this status.</p>
+          <p className="text-admin-ink-soft m-0">No nannies found for this status.</p>
         ) : (
           nannies.map((nanny) => (
             <ScreeningCard

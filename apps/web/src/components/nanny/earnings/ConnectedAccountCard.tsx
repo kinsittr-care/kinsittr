@@ -1,4 +1,4 @@
-import { N } from "../tokens";
+import { cn } from "@/lib/utils";
 import type { NannyPayoutSchedule, StripePayoutData, StripeStatusData } from "@/src/types/api/payments";
 import { formatShortDate } from "@/src/utils/format";
 
@@ -17,36 +17,26 @@ export default function ConnectedAccountCard({
   const statusLabel = onboarded ? "Active" : connected ? "Setup incomplete" : "Not connected";
 
   return (
-    <div
-      style={{
-        background: N.card,
-        border: `1px solid ${N.border}`,
-        borderRadius: 18,
-        padding: "24px 26px",
-        boxShadow: N.shadow,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18, gap: 12 }}>
-        <h2 style={{ fontFamily: "DM Serif Display, var(--font-dm-serif), serif", fontSize: 20, fontWeight: 400, color: N.greenDk }}>
+    <div className="bg-nanny-card border border-nanny-border rounded-[18px] px-[26px] py-6 shadow-[var(--nanny-shadow)]">
+      <div className="flex items-center justify-between mb-[18px] gap-3">
+        <h2 className="font-display text-[20px] font-normal text-nanny-green-dk">
           Connected account
         </h2>
         <span
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: onboarded ? N.green : connected ? N.amber : N.inkMute,
-            background: onboarded ? N.greenLt : connected ? N.amberLt : N.cardSoft,
-            border: `1px solid ${onboarded ? N.greenMid : N.border}`,
-            padding: "4px 10px",
-            borderRadius: 999,
-            whiteSpace: "nowrap",
-          }}
+          className={cn(
+            "text-[12px] font-semibold px-[10px] py-1 rounded-full whitespace-nowrap border",
+            onboarded
+              ? "text-nanny-green bg-nanny-green-lt border-nanny-green-mid"
+              : connected
+                ? "text-nanny-amber bg-nanny-amber-lt border-nanny-border"
+                : "text-nanny-ink-faint bg-nanny-card-soft border-nanny-border",
+          )}
         >
           {statusLabel}
         </span>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div className="flex flex-col gap-[14px]">
         <DetailRow label="Stripe" value={connected ? "Express account connected" : "Not connected"} />
         <Divider />
         <DetailRow label="Next payout" value={nextPayout?.arrival_date ? formatShortDate(nextPayout.arrival_date) : "Not scheduled"} highlight />
@@ -69,9 +59,9 @@ function DetailRow({
   capitalize?: boolean;
 }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-      <span style={{ fontSize: 13.5, color: N.inkMute }}>{label}</span>
-      <span style={{ fontSize: 14, fontWeight: 600, color: highlight ? N.green : N.greenDk, textTransform: capitalize ? "capitalize" : "none", textAlign: "right" }}>
+    <div className="flex justify-between items-center gap-3">
+      <span className="text-[13.5px] text-nanny-ink-faint">{label}</span>
+      <span className={cn("text-[14px] font-semibold text-right", highlight ? "text-nanny-green" : "text-nanny-green-dk", capitalize && "capitalize")}>
         {value}
       </span>
     </div>
@@ -79,5 +69,5 @@ function DetailRow({
 }
 
 function Divider() {
-  return <div style={{ height: 1, background: N.borderSoft }} />;
+  return <div className="h-px bg-nanny-border-soft" />;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import type { Conversation } from "@/src/types/api/api";
-import { N } from "../tokens";
+import { cn } from "@/lib/utils";
 import NannyAvatar from "../NannyAvatar";
 import { formatConversationStatus, getInitials } from "./message-helpers";
 
@@ -20,33 +20,13 @@ export default function NannyChatHeader({
 }: NannyChatHeaderProps) {
   return (
     <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 14,
-        padding: isMobile ? "14px 16px" : "18px 26px",
-        borderBottom: `1px solid ${N.border}`,
-        background: N.card,
-        boxShadow: "0 2px 12px rgba(45,90,61,.06)",
-        flexShrink: 0,
-      }}
+      className="flex items-center gap-[14px] border-b border-nanny-border bg-nanny-card shadow-[0_2px_12px_rgba(45,90,61,.06)] shrink-0"
+      style={{ padding: isMobile ? "14px 16px" : "18px 26px" }}
     >
       {isMobile && (
         <button
           onClick={onBack}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: N.green,
-            padding: "4px 8px 4px 0",
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            fontSize: 14,
-            fontFamily: "inherit",
-            fontWeight: 500,
-          }}
+          className="bg-transparent border-0 cursor-pointer text-nanny-green pt-1 pb-1 pr-2 pl-0 flex items-center gap-1 text-[14px] font-medium"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -62,38 +42,23 @@ export default function NannyChatHeader({
             tone="cream"
           />
           <div>
-            <div style={{ fontWeight: 600, fontSize: isMobile ? 15 : 16, color: N.greenDk }}>
+            <div className={cn("font-semibold text-nanny-green-dk", isMobile ? "text-[15px]" : "text-[16px]")}>
               {conversation.other_participant_name}
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, marginTop: 2 }}>
+            <div className="flex items-center gap-[5px] text-[13px] mt-0.5">
               <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background: conversation.booking_status === "approved" ? N.green : N.inkFaint,
-                  display: "inline-block",
-                }}
+                className={cn("w-2 h-2 rounded-full inline-block", conversation.booking_status === "approved" ? "bg-nanny-green" : "bg-nanny-ink-faint")}
               />
-              <span style={{ color: conversation.booking_status === "approved" ? N.green : N.inkFaint }}>
+              <span className={conversation.booking_status === "approved" ? "text-nanny-green" : "text-nanny-ink-faint"}>
                 {formatConversationStatus(conversation.booking_status)}
               </span>
             </div>
           </div>
           {!isMobile && (
-            <div style={{ marginLeft: "auto" }}>
+            <div className="ml-auto">
               <button
                 onClick={onViewBookingDetails}
-                style={{
-                  padding: "7px 14px",
-                  fontSize: 13,
-                  background: N.card,
-                  border: `1px solid ${N.border}`,
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  color: N.inkSoft,
-                  fontFamily: "inherit",
-                }}
+                className="py-[7px] px-[14px] text-[13px] bg-nanny-card border border-nanny-border rounded-lg cursor-pointer text-nanny-ink-faint"
               >
                 Booking details
               </button>
@@ -101,7 +66,7 @@ export default function NannyChatHeader({
           )}
         </>
       ) : (
-        <div style={{ fontWeight: 600, fontSize: isMobile ? 15 : 16, color: N.inkMute }}>
+        <div className={cn("font-semibold text-nanny-ink-faint", isMobile ? "text-[15px]" : "text-[16px]")}>
           Select a conversation
         </div>
       )}

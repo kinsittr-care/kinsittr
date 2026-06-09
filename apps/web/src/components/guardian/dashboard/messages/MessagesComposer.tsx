@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+
 interface MessagesComposerProps {
   input: string;
   sendError: string | null;
@@ -23,16 +25,11 @@ export default function MessagesComposer({
 }: MessagesComposerProps) {
   return (
     <div
-      style={{
-        padding: isMobile ? "14px 16px" : "18px 26px",
-        borderTop: "1px solid var(--border)",
-        background: "#fff",
-      }}
+      className="border-t border-brand-border bg-white"
+      style={{ padding: isMobile ? "14px 16px" : "18px 26px" }}
     >
       {sendError && (
-        <p style={{ color: "#c0392b", fontSize: 13, marginBottom: 10 }}>
-          {sendError}
-        </p>
+        <p className="text-[#c0392b] text-[13px] mb-[10px]">{sendError}</p>
       )}
       <div className="flex items-end gap-[12px]">
         <textarea
@@ -46,28 +43,12 @@ export default function MessagesComposer({
           }}
           placeholder="Type your message..."
           disabled={!isConversationSelected || isSending}
-          style={{
-            flex: 1,
-            minHeight: 52,
-            maxHeight: 120,
-            resize: "vertical",
-            borderRadius: 16,
-            border: "1px solid var(--border)",
-            padding: "14px 16px",
-            fontSize: 14,
-            fontFamily: "inherit",
-            outline: "none",
-          }}
+          className="flex-1 min-h-[52px] max-h-[120px] resize-y rounded-2xl border border-brand-border px-4 py-[14px] text-[14px] [font-family:inherit] outline-none"
         />
         <button
           onClick={onSend}
           disabled={!canSend}
-          className="btn-cta"
-          style={{
-            padding: "13px 20px",
-            fontSize: 14,
-            opacity: canSend ? 1 : 0.7,
-          }}
+          className={cn("btn-cta px-5 py-[13px] text-[14px]", !canSend && "opacity-70")}
         >
           {isSending ? "Sending..." : "Send"}
         </button>

@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 type TagVariant = "default" | "accent" | "green";
 
 interface TagProps {
@@ -5,22 +7,15 @@ interface TagProps {
   variant?: TagVariant;
 }
 
-const STYLES: Record<TagVariant, { bg: string; border: string; color: string }> = {
-  default: { bg: "#fff", border: "var(--border)", color: "#555" },
-  accent:  { bg: "var(--gold-lt)", border: "#e8d090", color: "#8a6e20" },
-  green:   { bg: "var(--teal-lt)", border: "var(--teal-mid)", color: "var(--teal)" },
+const variantCls: Record<TagVariant, string> = {
+  default: "bg-white border-brand-border text-[#555]",
+  accent:  "bg-gold-lt border-[#e8d090] text-[#8a6e20]",
+  green:   "bg-teal-lt border-teal-mid text-teal",
 };
 
 export default function Tag({ label, variant = "default" }: TagProps) {
-  const s = STYLES[variant];
   return (
-    <span
-      style={{
-        background: s.bg, border: `1px solid ${s.border}`, color: s.color,
-        borderRadius: 20, padding: "3px 11px", fontSize: 12, fontWeight: 500,
-        whiteSpace: "nowrap",
-      }}
-    >
+    <span className={cn("border rounded-[20px] px-[11px] py-[3px] text-[12px] font-medium whitespace-nowrap", variantCls[variant])}>
       {label}
     </span>
   );

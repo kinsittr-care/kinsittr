@@ -1,10 +1,10 @@
-import { N } from "../tokens";
 import type { PaymentStatus } from "@/src/types/api/api";
 import { formatPaymentState } from "@/src/utils/format";
+import { cn } from "@/lib/utils";
 import NannyAvatar from "../NannyAvatar";
 import NannyPill from "../NannyPill";
 import type { PillTone } from "../NannyPill";
-import { btnAccept, btnDecline, btnGhost } from "../nanny-styles";
+import { btnAcceptCls, btnDeclineCls, btnGhostCls } from "../nanny-styles";
 
 export type BookingRequest = {
   id: string;
@@ -49,82 +49,70 @@ export default function BookingRequestCard({
 
   return (
     <div
-      style={{
-        background: N.card,
-        border: isHighlighted ? `2px solid ${N.green}` : `1px solid ${N.border}`,
-        borderRadius: 18,
-        padding: "22px 24px",
-        boxShadow: isHighlighted ? "0 0 0 4px rgba(45,90,61,.08)" : N.shadow,
-      }}
+      className={cn(
+        "bg-nanny-card rounded-[18px] px-6 py-[22px]",
+        isHighlighted
+          ? "border-2 border-nanny-green shadow-[0_0_0_4px_rgba(45,90,61,.08)]"
+          : "border border-nanny-border shadow-[var(--nanny-shadow)]",
+      )}
     >
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+      <div className="flex items-start gap-4">
         <NannyAvatar initials={booking.initials} size={52} tone="cream" />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-            <span
-              style={{
-                fontFamily: "DM Serif Display, var(--font-dm-serif), serif",
-                fontSize: 20,
-                color: N.greenDk,
-              }}
-            >
-              {booking.parent}
-            </span>
-            <NannyPill tone={booking.status}>
-              {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-            </NannyPill>
-            <NannyPill tone={paymentState.tone === "danger" ? "declined" : paymentState.tone === "success" ? "paid" : paymentState.tone === "warning" ? "pending" : "neutral"}>
-              {paymentState.label}
-            </NannyPill>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2 flex-wrap min-w-0">
+              <span className="font-display text-[20px] text-nanny-green-dk truncate">
+                {booking.parent}
+              </span>
+              <NannyPill tone={booking.status}>
+                {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+              </NannyPill>
+              <NannyPill tone={paymentState.tone === "danger" ? "declined" : paymentState.tone === "success" ? "paid" : paymentState.tone === "warning" ? "pending" : "neutral"}>
+                {paymentState.label}
+              </NannyPill>
+            </div>
+            <div className="text-right shrink-0">
+              <div className="font-display text-[22px] text-nanny-green leading-none">
+                {booking.amount}
+              </div>
+              <div className="text-[12px] text-nanny-ink-faint mt-1">CAD</div>
+            </div>
           </div>
-          <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 18, fontSize: 13.5, color: N.inkMute }}>
+          <div className="mt-2 flex flex-wrap gap-x-[14px] gap-y-1 text-[13px] text-nanny-ink-faint">
             <span>📅 {booking.date}</span>
             <span>🕐 {booking.time}</span>
             <span>👶 {booking.children}</span>
             <span>{booking.hours}h</span>
           </div>
         </div>
-        <div style={{ textAlign: "right", flexShrink: 0 }}>
-          <div
-            style={{
-              fontFamily: "DM Serif Display, var(--font-dm-serif), serif",
-              fontSize: 24,
-              color: N.green,
-              lineHeight: 1,
-            }}
-          >
-            {booking.amount}
-          </div>
-          <div style={{ fontSize: 12.5, color: N.inkFaint, marginTop: 4 }}>CAD</div>
-        </div>
       </div>
       {booking.paymentFailure && (
-        <div style={{ marginTop: 12, color: N.rose, fontSize: 13.5 }}>
+        <div className="mt-3 text-nanny-rose text-[13.5px]">
           Payment issue: {booking.paymentFailure}
         </div>
       )}
 
       {isPending && (
-        <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
-          <button style={btnAccept} onClick={onApprove} disabled={isUpdating}>
+        <div className="flex gap-[10px] mt-[18px]">
+          <button className={btnAcceptCls} onClick={onApprove} disabled={isUpdating}>
             {isUpdating ? "Updating..." : "Accept"}
           </button>
-          <button style={btnDecline} onClick={onDecline} disabled={isUpdating}>
+          <button className={btnDeclineCls} onClick={onDecline} disabled={isUpdating}>
             Decline
           </button>
-          <button style={btnGhost}>Message parent</button>
+          <button className={btnGhostCls}>Message parent</button>
         </div>
       )}
       {!isPending && (
-        <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button style={btnGhost}>View details</button>
+        <div className="mt-4 flex gap-[10px] flex-wrap">
+          <button className={btnGhostCls}>View details</button>
           {isApproved && (
-            <button style={btnAccept} onClick={canRetryPayment ? onRetryPayment : onComplete} disabled={isUpdating}>
+            <button className={btnAcceptCls} onClick={canRetryPayment ? onRetryPayment : onComplete} disabled={isUpdating}>
               {isUpdating ? "Updating..." : canRetryPayment ? "Retry payment" : "Mark complete"}
             </button>
           )}
           {isCompleted && (
-            <button style={btnGhost} onClick={onReview} disabled={isReviewed}>
+            <button className={cn(btnGhostCls, isReviewed && "opacity-60 cursor-not-allowed")} onClick={onReview} disabled={isReviewed}>
               {isReviewed ? "Reviewed" : "Review parent"}
             </button>
           )}

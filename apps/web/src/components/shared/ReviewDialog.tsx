@@ -2,46 +2,8 @@
 
 import { useState } from "react";
 
-const overlayStyle: React.CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  zIndex: 80,
-  background: "rgba(24, 18, 12, 0.45)",
-  display: "grid",
-  placeItems: "center",
-  padding: 16,
-};
-
-const cardStyle: React.CSSProperties = {
-  width: "min(100%, 460px)",
-  borderRadius: 20,
-  background: "#fffdf8",
-  border: "1px solid rgba(64, 48, 32, 0.12)",
-  boxShadow: "0 24px 80px rgba(40,30,20,.22)",
-  padding: 22,
-};
-
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  marginBottom: 7,
-  fontSize: 12,
-  fontWeight: 700,
-  letterSpacing: "0.06em",
-  textTransform: "uppercase",
-  color: "var(--muted, #7b7168)",
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  borderRadius: 12,
-  border: "1.5px solid var(--border, #e7ddd2)",
-  background: "var(--bg-warm, #fbf6ee)",
-  color: "var(--brand-text, #33271f)",
-  padding: "12px 14px",
-  fontFamily: "inherit",
-  fontSize: 14,
-  outline: "none",
-};
+const labelClass = "mb-[7px] block text-[12px] font-bold uppercase tracking-[0.06em] text-[var(--faint)]";
+const inputClass = "w-full rounded-xl border-[1.5px] border-[var(--border)] bg-[var(--bg-warm)] px-[14px] py-3 text-[14px] text-[var(--brand-text)] outline-none";
 
 interface ReviewDialogProps {
   open: boolean;
@@ -88,24 +50,28 @@ export default function ReviewDialog({
   };
 
   return (
-    <div style={overlayStyle} role="dialog" aria-modal="true" aria-labelledby="review-dialog-title">
-      <div style={cardStyle}>
-        <div style={{ marginBottom: 18 }}>
+    <div
+      className="fixed inset-0 z-80 grid place-items-center bg-[rgba(24,18,12,0.45)] p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="review-dialog-title"
+    >
+      <div className="w-[min(100%,460px)] rounded-[20px] border border-[rgba(64,48,32,0.12)] bg-[#fffdf8] p-[22px] shadow-[0_24px_80px_rgba(40,30,20,.22)]">
+        <div className="mb-[18px]">
           <h2
             id="review-dialog-title"
-            className="font-display"
-            style={{ margin: 0, fontSize: 25, fontWeight: 400, color: "var(--brand-text, #33271f)" }}
+            className="m-0 font-display text-[25px] font-normal text-brand-text"
           >
             {title}
           </h2>
-          <p style={{ margin: "8px 0 0", color: "var(--muted, #7b7168)", fontSize: 14, lineHeight: 1.6 }}>
+          <p className="mt-2 mb-0 text-[14px] leading-[1.6] text-brand-faint">
             {description}
           </p>
         </div>
 
-        <div style={{ marginBottom: 14 }}>
-          <label style={labelStyle}>Rating</label>
-          <select value={rating} onChange={(event) => setRating(Number(event.target.value))} style={inputStyle}>
+        <div className="mb-[14px]">
+          <label className={labelClass}>Rating</label>
+          <select value={rating} onChange={(event) => setRating(Number(event.target.value))} className={inputClass}>
             {[5, 4, 3, 2, 1].map((value) => (
               <option key={value} value={value}>
                 {value} star{value === 1 ? "" : "s"}
@@ -114,68 +80,39 @@ export default function ReviewDialog({
           </select>
         </div>
 
-        <div style={{ marginBottom: 14 }}>
-          <label style={labelStyle}>Review</label>
+        <div className="mb-[14px]">
+          <label className={labelClass}>Review</label>
           <textarea
             value={comment}
             onChange={(event) => setComment(event.target.value)}
             maxLength={1000}
             rows={5}
             placeholder="Share a concise, respectful review."
-            style={{ ...inputStyle, resize: "vertical", lineHeight: 1.5 }}
+            className={`${inputClass} resize-y leading-normal`}
           />
-          <div style={{ textAlign: "right", marginTop: 5, fontSize: 12, color: "var(--faint, #9b9188)" }}>
+          <div className="mt-[5px] text-right text-[12px] text-brand-faint">
             {trimmedComment.length}/1000
           </div>
         </div>
 
-        <div
-          style={{
-            borderRadius: 12,
-            background: "#fff7de",
-            border: "1px solid #ead593",
-            color: "#725f16",
-            padding: "10px 12px",
-            fontSize: 13,
-            lineHeight: 1.5,
-            marginBottom: 14,
-          }}
-        >
+        <div className="mb-[14px] rounded-xl border border-[#ead593] bg-[#fff7de] px-3 py-[10px] text-[13px] leading-normal text-[#725f16]">
           This action is irreversible. You cannot edit or delete this review after it is sent.
         </div>
 
-        {error && <p style={{ color: "#b24a3f", fontSize: 13, margin: "0 0 12px" }}>{error}</p>}
+        {error && <p className="mt-0 mb-3 text-[13px] text-[#b24a3f]">{error}</p>}
 
-        <div style={{ display: "flex", gap: 10 }}>
+        <div className="flex gap-[10px]">
           <button
             onClick={handleSubmit}
             disabled={!canSubmit}
-            style={{
-              flex: 1,
-              border: "none",
-              borderRadius: 12,
-              padding: "12px 14px",
-              background: canSubmit ? "var(--teal, #3a6f6f)" : "var(--border, #e7ddd2)",
-              color: "#fff",
-              fontWeight: 700,
-              cursor: canSubmit ? "pointer" : "not-allowed",
-              fontFamily: "inherit",
-            }}
+            className="flex-1 rounded-xl border-0 bg-teal px-[14px] py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-(--border)"
           >
             {isSubmitting ? "Submitting..." : submitLabel}
           </button>
           <button
             onClick={handleClose}
             disabled={isSubmitting}
-            style={{
-              borderRadius: 12,
-              padding: "12px 14px",
-              background: "#fff",
-              border: "1.5px solid var(--border, #e7ddd2)",
-              color: "var(--brand-text, #33271f)",
-              cursor: isSubmitting ? "not-allowed" : "pointer",
-              fontFamily: "inherit",
-            }}
+            className="rounded-xl border-[1.5px] border-(--border) bg-white px-[14px] py-3 text-brand-text disabled:cursor-not-allowed"
           >
             Cancel
           </button>

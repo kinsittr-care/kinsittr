@@ -1,6 +1,7 @@
+import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { TinyCheckIcon } from "@/src/components/icons";
-import { CITIES, labelStyle, selectStyle, SPECIALTIES } from "./findNannyHelpers";
+import { CITIES, labelCls, selectArrowStyle, selectCls, SPECIALTIES } from "./findNannyHelpers";
 
 interface FindNannyFiltersProps {
   city: string;
@@ -23,18 +24,18 @@ export function FindNannyFilters({
 }: FindNannyFiltersProps) {
   return (
     <>
-      <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>City</label>
-        <select value={city} onChange={(e) => onCityChange(e.target.value)} style={selectStyle}>
+      <div className="mb-4">
+        <label className={labelCls}>City</label>
+        <select value={city} onChange={(e) => onCityChange(e.target.value)} className={selectCls} style={selectArrowStyle}>
           {CITIES.map((c) => <option key={c}>{c}</option>)}
         </select>
       </div>
 
-      <div style={{ marginBottom: 22 }}>
-        <label style={labelStyle}>Hourly Rate</label>
-        <div className="flex justify-between" style={{ fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>
+      <div className="mb-[22px]">
+        <label className={labelCls}>Hourly Rate</label>
+        <div className="flex justify-between text-[13px] text-[var(--faint)] mb-[10px]">
           <span>$20/hr</span>
-          <span style={{ fontWeight: 600, color: "var(--teal)" }}>${rate}/hr</span>
+          <span className="font-semibold text-teal">${rate}/hr</span>
         </div>
         <input
           type="range"
@@ -42,35 +43,29 @@ export function FindNannyFilters({
           max={60}
           value={rate}
           onChange={(e) => onRateChange(+e.target.value)}
-          className="dash-range"
-          style={{ width: "100%", "--val": pct } as React.CSSProperties}
+          className="dash-range w-full"
+          style={{ "--val": pct } as React.CSSProperties}
         />
       </div>
 
-      <div style={{ marginBottom: 28 }}>
-        <label style={labelStyle}>Specialties</label>
+      <div className="mb-7">
+        <label className={labelCls}>Specialties</label>
         {SPECIALTIES.map((s) => {
           const checked = specs.includes(s);
           return (
-            <label key={s} className="flex items-center gap-[10px]" style={{ marginBottom: 10, cursor: "pointer", userSelect: "none" }}>
+            <label key={s} className="flex items-center gap-[10px] mb-[10px] cursor-pointer select-none">
               <div
                 onClick={() => onSpecialtyToggle(s)}
-                style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: 5,
-                  flexShrink: 0,
-                  border: `1.5px solid ${checked ? "var(--teal)" : "var(--border)"}`,
-                  background: checked ? "var(--teal)" : "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "all .12s",
-                }}
+                className={cn(
+                  "w-[18px] h-[18px] rounded-[5px] shrink-0 flex items-center justify-center transition-all duration-[120ms]",
+                  checked
+                    ? "border-[1.5px] border-teal bg-teal"
+                    : "border-[1.5px] border-brand-border bg-white",
+                )}
               >
                 {checked && <TinyCheckIcon color="#fff" width={10} height={10} />}
               </div>
-              <span style={{ fontSize: 14 }}>{s}</span>
+              <span className="text-[14px]">{s}</span>
             </label>
           );
         })}
@@ -83,19 +78,8 @@ export function FindNannyFilters({
 
 export function DesktopFilterSidebar({ children }: { children: ReactNode }) {
   return (
-    <aside
-      style={{
-        width: 272,
-        flexShrink: 0,
-        borderRight: "1px solid var(--border)",
-        padding: "32px 22px",
-        overflowY: "auto",
-        background: "var(--bg)",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <h2 className="font-display" style={{ fontSize: 24, fontWeight: 400, marginBottom: 28 }}>
+    <aside className="w-[272px] shrink-0 border-r border-brand-border px-[22px] py-8 overflow-y-auto bg-[var(--bg)] flex flex-col">
+      <h2 className="font-display font-normal text-[24px] mb-7">
         Find a nanny
       </h2>
       {children}
@@ -105,14 +89,14 @@ export function DesktopFilterSidebar({ children }: { children: ReactNode }) {
 
 function VerifiedNanniesNote() {
   return (
-    <div style={{ background: "#f0ead8", border: "1px solid #ddd0a8", borderRadius: 12, padding: "14px 16px", marginTop: "auto" }}>
-      <div className="flex items-center gap-[7px]" style={{ marginBottom: 6 }}>
-        <div style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--teal)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div className="bg-[#f0ead8] border border-[#ddd0a8] rounded-xl px-4 py-[14px] mt-auto">
+      <div className="flex items-center gap-[7px] mb-[6px]">
+        <div className="w-5 h-5 rounded-full bg-teal flex items-center justify-center">
           <TinyCheckIcon color="#fff" width={10} height={10} />
         </div>
-        <span style={{ fontWeight: 600, color: "var(--teal)", fontSize: 13 }}>All nannies verified</span>
+        <span className="font-semibold text-teal text-[13px]">All nannies verified</span>
       </div>
-      <p style={{ fontSize: 12, color: "#776a50", lineHeight: 1.6 }}>
+      <p className="text-[12px] text-[#776a50] leading-[1.6]">
         Background checked, reference verified, and interview screened by our team.
       </p>
     </div>

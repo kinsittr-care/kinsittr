@@ -13,14 +13,9 @@ import AuthErrorDialog from "./AuthErrorDialog";
 
 const inputClass = `
   w-full border-[1.5px] rounded-[10px] px-[14px] py-3 text-[14px] outline-none transition-all
+  border-[var(--border)] bg-[var(--bg-warm)] text-[var(--brand-text)]
   focus:bg-white focus:shadow-[0_0_0_3px_rgba(58,90,90,.1)]
 `.trim();
-
-const inputStyle = {
-  borderColor: "var(--border)",
-  background: "var(--bg-warm)",
-  color: "var(--brand-text)",
-};
 
 interface LoginFormProps {
   establishSession?: (auth: AuthTokenPair) => Promise<AuthSession>;
@@ -74,8 +69,7 @@ export default function LoginForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
       <div>
         <label
-          className="block text-[12px] font-semibold uppercase tracking-[0.07em] mb-[7px]"
-          style={{ color: "var(--faint)" }}
+          className="mb-[7px] block text-[12px] font-semibold uppercase tracking-[0.07em] text-[var(--faint)]"
         >
           Email
         </label>
@@ -87,14 +81,12 @@ export default function LoginForm({
           className={inputClass}
           value={values.email}
           onChange={handleChange}
-          style={inputStyle}
         />
       </div>
 
       <div>
         <label
-          className="block text-[12px] font-semibold uppercase tracking-[0.07em] mb-[7px]"
-          style={{ color: "var(--faint)" }}
+          className="mb-[7px] block text-[12px] font-semibold uppercase tracking-[0.07em] text-[var(--faint)]"
         >
           Password
         </label>
@@ -103,12 +95,11 @@ export default function LoginForm({
           onChange={handleChange}
           placeholder="••••••••"
           inputClass={inputClass}
-          inputStyle={inputStyle}
         />
       </div>
 
       <div className="text-right -mt-2">
-        <Link href="/auth/forgot-password" className="text-[13px] font-semibold" style={{ color: "var(--teal)" }}>
+        <Link href="/auth/forgot-password" className="text-[13px] font-semibold text-[var(--teal)]">
           Forgot password?
         </Link>
       </div>
@@ -117,8 +108,7 @@ export default function LoginForm({
 
       <button
         type="submit"
-        className="btn-cta justify-center"
-        style={{ width: "100%", fontSize: 15, padding: "14px", opacity: isSubmitting ? 0.8 : 1 }}
+        className="btn-cta w-full justify-center p-[14px] text-[15px] disabled:opacity-80"
         disabled={isSubmitting}
       >
         {isSubmitting ? "Signing in…" : "Sign in"}

@@ -1,5 +1,4 @@
 import AdminPagination from "../AdminPagination";
-import { A } from "../tokens";
 import type { AdminAuditAction } from "@/src/types/api/admin";
 import { formatShortDateTime } from "@/src/utils/format";
 
@@ -29,27 +28,27 @@ export default function AdminAuditTimeline({
   onPageChange,
 }: AdminAuditTimelineProps) {
   return (
-    <div style={sectionStyle}>
-      <h3 style={sectionTitle}>Audit timeline</h3>
+    <div className="border-t border-admin-border-soft pt-4">
+      <h3 className="m-0 mb-3 text-admin-ink text-[15px]">Audit timeline</h3>
       {isLoading ? (
-        <p style={emptyStyle}>Loading audit actions...</p>
+        <p className="m-0 text-admin-ink-soft text-[13px]">Loading audit actions...</p>
       ) : actions.length === 0 ? (
-        <p style={emptyStyle}>No audit actions yet.</p>
+        <p className="m-0 text-admin-ink-soft text-[13px]">No audit actions yet.</p>
       ) : (
-        <div style={{ display: "grid", gap: 10 }}>
+        <div className="grid gap-[10px]">
           {actions.map((action) => {
             const status = describeStatus(action);
             return (
-              <div key={action.id} style={actionStyle}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                  <strong style={{ color: A.ink, fontSize: 13.5 }}>{action.action.replaceAll("_", " ")}</strong>
-                  <span style={{ color: A.inkSoft, fontSize: 12 }}>{formatShortDateTime(action.created_at)}</span>
+              <div key={action.id} className="border border-admin-border-soft rounded-xl bg-admin-card-warm p-3">
+                <div className="flex justify-between gap-[10px]">
+                  <strong className="text-admin-ink text-[13.5px]">{action.action.replaceAll("_", " ")}</strong>
+                  <span className="text-admin-ink-soft text-[12px]">{formatShortDateTime(action.created_at)}</span>
                 </div>
-                <div style={{ marginTop: 5, color: A.inkSoft, fontSize: 12.5 }}>
+                <div className="mt-[5px] text-admin-ink-soft text-[12.5px]">
                   {action.admin_email ?? "System"}{status ? ` · ${status}` : ""}
                 </div>
                 {action.reason && (
-                  <p style={{ margin: "7px 0 0", color: A.inkMid, fontSize: 13, lineHeight: 1.45 }}>
+                  <p className="mt-[7px] mb-0 text-admin-ink-mid text-[13px] leading-[1.45]">
                     {action.reason}
                   </p>
                 )}
@@ -64,27 +63,3 @@ export default function AdminAuditTimeline({
     </div>
   );
 }
-
-const sectionStyle: React.CSSProperties = {
-  borderTop: `1px solid ${A.borderSoft}`,
-  paddingTop: 16,
-};
-
-const sectionTitle: React.CSSProperties = {
-  margin: "0 0 12px",
-  color: A.ink,
-  fontSize: 15,
-};
-
-const emptyStyle: React.CSSProperties = {
-  margin: 0,
-  color: A.inkSoft,
-  fontSize: 13,
-};
-
-const actionStyle: React.CSSProperties = {
-  border: `1px solid ${A.borderSoft}`,
-  borderRadius: 12,
-  background: A.cardWarm,
-  padding: 12,
-};

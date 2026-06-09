@@ -1,7 +1,7 @@
 "use client";
 
 import type { Conversation } from "@/src/types/api/api";
-import { N } from "../tokens";
+import { cn } from "@/lib/utils";
 import NannyAvatar from "../NannyAvatar";
 import {
   formatThreadTimestamp,
@@ -35,56 +35,33 @@ export default function NannyThreadList({
 }: NannyThreadListProps) {
   return (
     <div
-      style={{
-        width: isMobile ? "100%" : 296,
-        flexShrink: 0,
-        borderRight: isMobile ? "none" : `1px solid ${N.border}`,
-        overflowY: "auto",
-        background: N.cardSoft,
-        display: "flex",
-        flexDirection: "column",
-      }}
+      className={cn(
+        "bg-nanny-card-soft flex flex-col overflow-y-auto shrink-0",
+        isMobile ? "w-full" : "w-[296px] border-r border-nanny-border",
+      )}
     >
-      <div
-        style={{
-          padding: isMobile ? "20px 16px 14px" : "28px 22px 18px",
-          borderBottom: `1px solid ${N.border}`,
-        }}
-      >
+      <div className={cn("border-b border-nanny-border", isMobile ? "px-4 pt-5 pb-[14px]" : "px-[22px] pt-7 pb-[18px]")}>
         <h2
-          style={{
-            fontFamily: "DM Serif Display, var(--font-dm-serif), serif",
-            fontWeight: 400,
-            fontSize: isMobile ? 22 : 24,
-            color: N.greenDk,
-          }}
+          className={cn("font-display font-normal text-nanny-green-dk", isMobile ? "text-[22px]" : "text-[24px]")}
         >
           Messages
         </h2>
       </div>
 
       {isLoading && (
-        <div style={{ padding: "18px 20px", color: N.inkFaint, fontSize: 14 }}>
+        <div className="px-5 py-[18px] text-nanny-ink-faint text-[14px]">
           Loading conversations...
         </div>
       )}
 
       {isError && (
-        <div style={{ padding: "18px 20px" }}>
-          <p style={{ color: N.rose, fontSize: 14, marginBottom: 10 }}>
+        <div className="px-5 py-[18px]">
+          <p className="text-nanny-rose text-[14px] mb-[10px]">
             {errorMessage || "Unable to load conversations right now."}
           </p>
           <button
             onClick={onRetry}
-            style={{
-              padding: "8px 14px",
-              fontSize: 13,
-              background: N.card,
-              border: `1px solid ${N.border}`,
-              borderRadius: 8,
-              cursor: "pointer",
-              color: N.inkSoft,
-            }}
+            className="px-[14px] py-2 text-[13px] bg-nanny-card border border-nanny-border rounded-lg cursor-pointer text-nanny-ink-soft"
           >
             Retry
           </button>
@@ -100,17 +77,12 @@ export default function NannyThreadList({
             <div
               key={conversation.id}
               onClick={() => onSelectConversation(conversation.id)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 13,
-                padding: "16px 20px",
-                borderBottom: `1px solid ${N.borderSoft}`,
-                cursor: "pointer",
-                background: isSelected && !isMobile ? N.greenLt : "transparent",
-                transition: "background .12s",
-                borderLeft: isSelected && !isMobile ? `3px solid ${N.green}` : "3px solid transparent",
-              }}
+              className={cn(
+                "flex items-center gap-[13px] px-5 py-4 border-b border-nanny-border-soft cursor-pointer transition-[background] duration-[120ms]",
+                isSelected && !isMobile
+                  ? "bg-nanny-green-lt border-l-[3px] border-l-nanny-green"
+                  : "bg-transparent border-l-[3px] border-l-transparent",
+              )}
               onMouseEnter={(e) => {
                 if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = "rgba(45,90,61,.05)";
               }}
@@ -123,72 +95,33 @@ export default function NannyThreadList({
                 size={46}
                 tone="cream"
               />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-	                  style={{
-	                    fontWeight: hasUnread ? 800 : 600,
-	                    fontSize: 14,
-	                    marginBottom: 2,
-                    color: isSelected ? N.greenDk : N.inkSoft,
-                  }}
-                >
+              <div className="flex-1 min-w-0">
+                <div className={cn("text-[14px] mb-0.5", hasUnread ? "font-extrabold" : "font-semibold", isSelected ? "text-nanny-green-dk" : "text-nanny-ink-soft")}>
                   {conversation.other_participant_name}
                 </div>
-                <div
-	                  style={{
-	                    fontSize: 12.5,
-	                    color: hasUnread ? N.inkSoft : N.inkFaint,
-	                    fontWeight: hasUnread ? 600 : 400,
-	                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
+                <div className={cn("text-[12.5px] overflow-hidden text-ellipsis whitespace-nowrap", hasUnread ? "text-nanny-ink-soft font-semibold" : "text-nanny-ink-faint font-normal")}>
                   {conversation.last_message_preview || "No messages yet"}
                 </div>
               </div>
-	              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
-	                <div style={{ fontSize: 11.5, color: hasUnread ? N.green : N.inkFaint, fontWeight: hasUnread ? 700 : 400 }}>
-	                  {formatThreadTimestamp(conversation.last_message_at)}
-	                </div>
-	                {hasUnread && (
-	                  <span
-	                    style={{
-	                      minWidth: 20,
-	                      height: 20,
-	                      borderRadius: 999,
-	                      background: N.green,
-	                      color: "#fff",
-	                      display: "inline-flex",
-	                      alignItems: "center",
-	                      justifyContent: "center",
-	                      fontSize: 11,
-	                      fontWeight: 800,
-	                      padding: "0 6px",
-	                    }}
-	                  >
-	                    {conversation.unread_count > 99 ? "99+" : conversation.unread_count}
-	                  </span>
-	                )}
-	              </div>
+              <div className="flex flex-col items-end gap-[6px] shrink-0">
+                <div className={cn("text-[11.5px]", hasUnread ? "text-nanny-green font-bold" : "text-nanny-ink-faint font-normal")}>
+                  {formatThreadTimestamp(conversation.last_message_at)}
+                </div>
+                {hasUnread && (
+                  <span className="min-w-5 h-5 rounded-full bg-nanny-green text-white inline-flex items-center justify-center text-[11px] font-extrabold px-[6px]">
+                    {conversation.unread_count > 99 ? "99+" : conversation.unread_count}
+                  </span>
+                )}
+              </div>
             </div>
           );
         })}
 
       {!isLoading && !isError && totalConversations > conversations.length && (
-        <div style={{ padding: "16px 20px" }}>
+        <div className="px-5 py-4">
           <button
             onClick={onLoadMore}
-            style={{
-              width: "100%",
-              padding: "10px 14px",
-              fontSize: 13,
-              background: N.card,
-              border: `1px solid ${N.border}`,
-              borderRadius: 8,
-              cursor: "pointer",
-              color: N.inkSoft,
-            }}
+            className="w-full px-[14px] py-[10px] text-[13px] bg-nanny-card border border-nanny-border rounded-lg cursor-pointer text-nanny-ink-soft"
           >
             Load more
           </button>

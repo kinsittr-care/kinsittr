@@ -16,21 +16,13 @@ export default function AuthTabs({ role }: AuthTabsProps) {
 
   return (
     <>
-      <div
-        className="flex rounded-[12px] p-[4px] mb-7"
-        style={{ background: "var(--bg-warm)", border: "1px solid var(--border)" }}
-      >
+      <div className="mb-7 flex rounded-xl border border-[var(--border)] bg-[var(--bg-warm)] p-1">
         {(["login", "register"] as Tab[]).map((tab) => (
           <button
             key={tab}
             type="button"
             onClick={() => setActiveTab(tab)}
-            className="flex-1 rounded-[9px] py-[9px] text-[13px] font-semibold transition-all"
-            style={{
-              background: activeTab === tab ? "#fff" : "transparent",
-              color: activeTab === tab ? "var(--brand-text)" : "var(--faint)",
-              boxShadow: activeTab === tab ? "0 1px 6px rgba(0,0,0,.08)" : "none",
-            }}
+            className={`flex-1 rounded-[9px] py-[9px] text-[13px] font-semibold transition-all ${activeTab === tab ? "bg-white text-[var(--brand-text)] shadow-[0_1px_6px_rgba(0,0,0,.08)]" : "bg-transparent text-[var(--faint)]"}`}
           >
             {tab === "login" ? "Sign in" : "Create account"}
           </button>

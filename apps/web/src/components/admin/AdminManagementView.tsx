@@ -5,8 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AdminPageHeader from "./compositions/AdminPageHeader";
 import AdminPill from "./compositions/AdminPill";
 import AdminReasonDialog, { type AdminReasonDialogState } from "./AdminReasonDialog";
-import { btnDanger, btnGhost, btnPrimary, card } from "./compositions/admin-styles";
-import { A } from "./tokens";
+import { btnDangerCls, btnGhostCls, btnPrimaryCls, cardCls } from "./compositions/admin-styles";
+import { cn } from "@/lib/utils";
 import type { AdminInviteData, InviteAdminPayload, ListAdminUsersParams } from "@/src/types/api/admin";
 import { getCurrentAdminSession } from "@/src/utils/api/admin/auth";
 import {
@@ -19,17 +19,6 @@ import {
 import { formatShortDateTime } from "@/src/utils/format";
 
 const PAGE_SIZE = 20;
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  border: `1.5px solid ${A.border}`,
-  borderRadius: 10,
-  padding: "11px 13px",
-  fontSize: 14,
-  outline: "none",
-  background: A.card,
-  color: A.ink,
-};
 
 function inviteLink(invite: AdminInviteData | null) {
   if (!invite?.token || typeof window === "undefined") return invite?.token ?? "";
@@ -105,69 +94,69 @@ export default function AdminManagementView() {
         subtitle="Invite admins and manage console access."
       />
       <div className="grid grid-cols-1 gap-[18px] px-4 py-5 md:px-10 md:py-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
-        <section style={card}>
-          <h2 style={{ margin: 0, fontFamily: "var(--font-dm-serif), serif", fontSize: 24, fontWeight: 400, color: A.ink }}>
+        <section className={cardCls}>
+          <h2 className="m-0 font-display text-[24px] font-normal text-admin-ink">
             Invite admin
           </h2>
-          <p style={{ margin: "8px 0 20px", color: A.inkSoft, fontSize: 13.5, lineHeight: 1.6 }}>
+          <p className="mt-2 mb-5 text-admin-ink-soft text-[13.5px] leading-[1.6]">
             Create an invite token and share the generated acceptance link with the new admin.
             After accepting the invite, they will be redirected to admin sign in because invite acceptance creates
             the admin account but does not issue auth tokens.
           </p>
 
-          <form onSubmit={submitInvite} style={{ display: "grid", gap: 14 }}>
-            <label style={{ display: "grid", gap: 6, color: A.inkMid, fontSize: 13 }}>
+          <form onSubmit={submitInvite} className="grid gap-[14px]">
+            <label className="grid gap-[6px] text-admin-ink-mid text-[13px]">
               First name
               <input
                 value={draft.firstname}
                 onChange={(event) => setDraft((current) => ({ ...current, firstname: event.target.value }))}
-                style={inputStyle}
+                className="w-full border-[1.5px] border-admin-border rounded-[10px] px-[13px] py-[11px] text-[14px] outline-none bg-admin-card text-admin-ink"
                 required
               />
             </label>
-            <label style={{ display: "grid", gap: 6, color: A.inkMid, fontSize: 13 }}>
+            <label className="grid gap-[6px] text-admin-ink-mid text-[13px]">
               Last name
               <input
                 value={draft.lastname}
                 onChange={(event) => setDraft((current) => ({ ...current, lastname: event.target.value }))}
-                style={inputStyle}
+                className="w-full border-[1.5px] border-admin-border rounded-[10px] px-[13px] py-[11px] text-[14px] outline-none bg-admin-card text-admin-ink"
                 required
               />
             </label>
-            <label style={{ display: "grid", gap: 6, color: A.inkMid, fontSize: 13 }}>
+            <label className="grid gap-[6px] text-admin-ink-mid text-[13px]">
               Email
               <input
                 type="email"
                 value={draft.email}
                 onChange={(event) => setDraft((current) => ({ ...current, email: event.target.value }))}
-                style={inputStyle}
+                className="w-full border-[1.5px] border-admin-border rounded-[10px] px-[13px] py-[11px] text-[14px] outline-none bg-admin-card text-admin-ink"
                 required
               />
             </label>
-            <button type="submit" style={btnPrimary} disabled={inviteMutation.isPending}>
+            <button type="submit" className={btnPrimaryCls} disabled={inviteMutation.isPending}>
               {inviteMutation.isPending ? "Creating invite..." : "Create invite"}
             </button>
           </form>
 
           {inviteMutation.isError && (
-            <p style={{ margin: "14px 0 0", color: A.red, fontSize: 13 }}>
+            <p className="mt-[14px] mb-0 text-admin-red text-[13px]">
               {inviteMutation.error instanceof Error ? inviteMutation.error.message : "Unable to create invite."}
             </p>
           )}
 
           {latestInvite && (
-            <div style={{ marginTop: 20, border: `1px solid ${A.border}`, borderRadius: 14, padding: 14, background: A.cardWarm }}>
-              <div style={{ color: A.ink, fontWeight: 700, fontSize: 14 }}>
+            <div className="mt-5 border border-admin-border rounded-[14px] p-[14px] bg-admin-card-warm">
+              <div className="text-admin-ink font-bold text-[14px]">
                 Invite created for {latestInvite.email}
               </div>
-              <div style={{ marginTop: 8, color: A.inkSoft, fontSize: 12.5 }}>
+              <div className="mt-2 text-admin-ink-soft text-[12.5px]">
                 Expires {formatShortDateTime(latestInvite.expires_at)}
               </div>
-              <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
-                <code style={{ wordBreak: "break-all", color: A.ink, background: A.card, border: `1px solid ${A.border}`, borderRadius: 10, padding: 10, fontSize: 12 }}>
+              <div className="mt-3 grid gap-2">
+                <code className="break-all text-admin-ink bg-admin-card border border-admin-border rounded-[10px] p-[10px] text-[12px]">
                   {inviteLink(latestInvite)}
                 </code>
-                <button type="button" style={btnGhost} onClick={copyInvite}>
+                <button type="button" className={btnGhostCls} onClick={copyInvite}>
                   {copied ? "Copied" : "Copy invite link"}
                 </button>
               </div>
@@ -175,49 +164,44 @@ export default function AdminManagementView() {
           )}
         </section>
 
-        <section style={card}>
-          <div
-            className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-          >
+        <section className={cardCls}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 style={{ margin: 0, fontFamily: "var(--font-dm-serif), serif", fontSize: 24, fontWeight: 400, color: A.ink }}>
+              <h2 className="m-0 font-display text-[24px] font-normal text-admin-ink">
                 Admins
               </h2>
-              <p style={{ margin: "6px 0 0", color: A.inkSoft, fontSize: 13.5 }}>{total} total admin accounts</p>
+              <p className="mt-[6px] mb-0 text-admin-ink-soft text-[13.5px]">{total} total admin accounts</p>
             </div>
-            <button type="button" style={btnGhost} onClick={() => adminsQuery.refetch()}>
+            <button type="button" className={btnGhostCls} onClick={() => adminsQuery.refetch()}>
               Refresh
             </button>
           </div>
 
-          <div style={{ marginTop: 18, display: "grid", gap: 10 }}>
-            {adminsQuery.isLoading && <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>Loading admins...</p>}
+          <div className="mt-[18px] grid gap-[10px]">
+            {adminsQuery.isLoading && <p className="m-0 text-admin-ink-soft text-[14px]">Loading admins...</p>}
             {adminsQuery.isError && (
-              <p style={{ margin: 0, color: A.red, fontSize: 14 }}>
+              <p className="m-0 text-admin-red text-[14px]">
                 {adminsQuery.error instanceof Error ? adminsQuery.error.message : "Unable to load admins."}
               </p>
             )}
             {!adminsQuery.isLoading && !adminsQuery.isError && admins.length === 0 && (
-              <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>No admins found.</p>
+              <p className="m-0 text-admin-ink-soft text-[14px]">No admins found.</p>
             )}
             {admins.map((admin) => {
               const isCurrentAdmin = admin.id === currentAdminId;
 
               return (
                 <div
-                  className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                  className={cn(
+                    "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border border-admin-border-soft rounded-[14px] px-4 py-[14px]",
+                    admin.is_active ? "bg-admin-card" : "bg-admin-card-warm",
+                  )}
                   key={admin.id}
-                  style={{
-                    border: `1px solid ${A.borderSoft}`,
-                    borderRadius: 14,
-                    padding: "14px 16px",
-                    background: admin.is_active ? A.card : A.cardWarm,
-                  }}
                 >
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ color: A.ink, fontWeight: 700 }}>{`${admin.firstname} ${admin.lastname}`.trim() || "Admin"}</div>
-                    <div style={{ color: A.inkSoft, fontSize: 12.5, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{admin.email}</div>
-                    <div style={{ color: A.inkSoft, fontSize: 12, marginTop: 5 }}>
+                  <div className="min-w-0">
+                    <div className="text-admin-ink font-bold">{`${admin.firstname} ${admin.lastname}`.trim() || "Admin"}</div>
+                    <div className="text-admin-ink-soft text-[12.5px] mt-[3px] overflow-hidden text-ellipsis whitespace-nowrap">{admin.email}</div>
+                    <div className="text-admin-ink-soft text-[12px] mt-[5px]">
                       Joined {formatShortDateTime(admin.created_at)}
                     </div>
                   </div>
@@ -228,7 +212,7 @@ export default function AdminManagementView() {
                     {isCurrentAdmin && <AdminPill tone="clay">You</AdminPill>}
                     <button
                       type="button"
-                      style={btnDanger}
+                      className={btnDangerCls}
                       disabled={isCurrentAdmin || !admin.is_active || disableMutation.isPending}
                       onClick={() => {
                         if (window.confirm(`Disable ${admin.email}? This will revoke their admin access.`)) {
@@ -240,7 +224,7 @@ export default function AdminManagementView() {
                     </button>
                     <button
                       type="button"
-                      style={btnPrimary}
+                      className={btnPrimaryCls}
                       disabled={admin.is_active || reactivateMutation.isPending}
                       onClick={() => {
                         setReasonAction({
@@ -264,24 +248,24 @@ export default function AdminManagementView() {
           </div>
 
           {disableMutation.isError && (
-            <p style={{ margin: "14px 0 0", color: A.red, fontSize: 13 }}>
+            <p className="mt-[14px] mb-0 text-admin-red text-[13px]">
               {disableMutation.error instanceof Error ? disableMutation.error.message : "Unable to disable admin."}
             </p>
           )}
           {reactivateMutation.isError && (
-            <p style={{ margin: "14px 0 0", color: A.red, fontSize: 13 }}>
+            <p className="mt-[14px] mb-0 text-admin-red text-[13px]">
               {reactivateMutation.error instanceof Error ? reactivateMutation.error.message : "Unable to reactivate admin."}
             </p>
           )}
 
-          <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <button type="button" style={btnGhost} disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
+          <div className="mt-[18px] flex justify-between items-center">
+            <button type="button" className={btnGhostCls} disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
               Previous
             </button>
-            <span style={{ color: A.inkSoft, fontSize: 13 }}>
+            <span className="text-admin-ink-soft text-[13px]">
               Page {page} of {totalPages}
             </span>
-            <button type="button" style={btnGhost} disabled={page >= totalPages} onClick={() => setPage((value) => value + 1)}>
+            <button type="button" className={btnGhostCls} disabled={page >= totalPages} onClick={() => setPage((value) => value + 1)}>
               Next
             </button>
           </div>

@@ -8,6 +8,7 @@ import { ChangeEvent, useState } from "react";
 
 const inputClass = `
   w-full border-[1.5px] rounded-[10px] px-[14px] py-3 text-[14px] outline-none transition-all
+  border-[var(--border)] bg-[var(--bg-warm)] text-[var(--brand-text)]
   focus:bg-white focus:shadow-[0_0_0_3px_rgba(58,90,90,.1)]
 `.trim();
 
@@ -53,13 +54,12 @@ export default function ContactForm() {
 
   return (
     <div
-      className="bg-white rounded-[22px] p-[36px_32px]"
-      style={{ border: "1px solid var(--border)", boxShadow: "0 4px 24px rgba(40,30,20,.07)" }}
+      className="rounded-[22px] border border-[var(--border)] bg-white p-[36px_32px] shadow-[0_4px_24px_rgba(40,30,20,.07)]"
     >
       {!submitted ? (
         <>
           <h3 className="font-display text-[22px] mb-[6px]">Send us a message</h3>
-          <p className="text-[14px] mb-6" style={{ color: "var(--muted)" }}>
+          <p className="mb-6 text-[14px] text-[var(--faint)]">
             We usually respond within one business day.
           </p>
 
@@ -67,7 +67,7 @@ export default function ContactForm() {
             <div className="grid grid-cols-2 gap-[14px] max-md:grid-cols-1">
               {["First name", "Last name"].map((label) => (
                 <div key={label}>
-                  <label className="block text-[12px] font-semibold uppercase tracking-[0.07em] mb-[7px]" style={{ color: "var(--muted)" }}>
+                  <label className="mb-[7px] block text-[12px] font-semibold uppercase tracking-[0.07em] text-[var(--faint)]">
                     {label}
                   </label>
                   <input
@@ -78,14 +78,13 @@ export default function ContactForm() {
                     className={inputClass}
                     value={label === "First name" ? formValues.firstName : formValues.lastName}
                     onChange={handleChange}
-                    style={{ borderColor: "var(--border)", background: "var(--bg-warm)", color: "var(--brand-text)" }}
                   />
                 </div>
               ))}
             </div>
 
             <div>
-              <label className="block text-[12px] font-semibold uppercase tracking-[0.07em] mb-[7px]" style={{ color: "var(--muted)" }}>
+              <label className="mb-[7px] block text-[12px] font-semibold uppercase tracking-[0.07em] text-[var(--faint)]">
                 Email
               </label>
               <input
@@ -96,12 +95,11 @@ export default function ContactForm() {
                 className={inputClass}
                 value={formValues.email}
                 onChange={handleChange}
-                style={{ borderColor: "var(--border)", background: "var(--bg-warm)", color: "var(--brand-text)" }}
               />
             </div>
 
             <div>
-              <label className="block text-[12px] font-semibold uppercase tracking-[0.07em] mb-[7px]" style={{ color: "var(--muted)" }}>
+              <label className="mb-[7px] block text-[12px] font-semibold uppercase tracking-[0.07em] text-[var(--faint)]">
                 I am a…
               </label>
               <select
@@ -109,7 +107,6 @@ export default function ContactForm() {
                 className={inputClass}
                 value={formValues.role}
                 onChange={handleChange}
-                style={{ borderColor: "var(--border)", background: "var(--bg-warm)", color: "var(--brand-text)" }}
               >
                 <option>Parent / guardian</option>
                 <option>Nanny / caregiver</option>
@@ -119,7 +116,7 @@ export default function ContactForm() {
             </div>
 
             <div>
-              <label className="block text-[12px] font-semibold uppercase tracking-[0.07em] mb-[7px]" style={{ color: "var(--muted)" }}>
+              <label className="mb-[7px] block text-[12px] font-semibold uppercase tracking-[0.07em] text-[var(--faint)]">
                 Subject
               </label>
               <select
@@ -127,7 +124,6 @@ export default function ContactForm() {
                 className={inputClass}
                 value={formValues.subject}
                 onChange={handleChange}
-                style={{ borderColor: "var(--border)", background: "var(--bg-warm)", color: "var(--brand-text)" }}
               >
                 <option>General enquiry</option>
                 <option>Safety concern</option>
@@ -138,7 +134,7 @@ export default function ContactForm() {
             </div>
 
             <div>
-              <label className="block text-[12px] font-semibold uppercase tracking-[0.07em] mb-[7px]" style={{ color: "var(--muted)" }}>
+              <label className="mb-[7px] block text-[12px] font-semibold uppercase tracking-[0.07em] text-[var(--faint)]">
                 Message
               </label>
               <textarea
@@ -146,23 +142,21 @@ export default function ContactForm() {
                 required
                 placeholder="Tell us what's on your mind…"
                 rows={5}
-                className={inputClass}
+                className={`${inputClass} resize-y`}
                 value={formValues.message}
                 onChange={handleChange}
-                style={{ borderColor: "var(--border)", background: "var(--bg-warm)", color: "var(--brand-text)", resize: "vertical" }}
               />
             </div>
 
             {errorMessage ? (
-              <p className="text-[13px]" style={{ color: "#b34b39" }}>
+              <p className="text-[13px] text-[#b34b39]">
                 {errorMessage}
               </p>
             ) : null}
 
             <button
               type="submit"
-              className="btn-cta justify-center"
-              style={{ width: "100%", fontSize: 15, padding: "14px", opacity: isSubmitting ? 0.8 : 1 }}
+              className="btn-cta w-full justify-center p-[14px] text-[15px] disabled:opacity-80"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Sending..." : "Send message"}
@@ -174,7 +168,7 @@ export default function ContactForm() {
         <div className="text-center py-5">
           <div className="text-[48px] mb-3">✉️</div>
           <h3 className="font-display text-[24px] mb-2">Message sent!</h3>
-          <p className="text-[15px]" style={{ color: "var(--muted)" }}>
+          <p className="text-[15px] text-[var(--faint)]">
             Thanks for reaching out. We&apos;ll get back to you within one business day.
           </p>
         </div>

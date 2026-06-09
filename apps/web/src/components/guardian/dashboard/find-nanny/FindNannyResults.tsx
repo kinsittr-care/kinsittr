@@ -1,5 +1,6 @@
+import { cn } from "@/lib/utils";
 import NannyCard from "../NannyCard";
-import { SORT_OPTIONS } from "./findNannyHelpers";
+import { selectCls, SORT_OPTIONS } from "./findNannyHelpers";
 import type { Nanny } from "../types";
 
 interface FindNannyResultsProps {
@@ -42,40 +43,30 @@ export function FindNannyResults({
   const hasError = Boolean(error);
 
   return (
-    <main style={{ flex: 1, overflowY: "auto", padding: isMobile ? "20px 16px 32px" : "36px 36px 40px" }}>
-      <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
+    <main
+      className="flex-1 overflow-y-auto"
+      style={{ padding: isMobile ? "20px 16px 32px" : "36px 36px 40px" }}
+    >
+      <div className="flex items-center justify-between mb-[6px]">
         {!isMobile && (
-          <h1 className="font-display" style={{ fontWeight: 400, fontSize: 34 }}>
+          <h1 className="font-display font-normal text-[34px]">
             Available nannies
           </h1>
         )}
-        <div className="flex items-center gap-[8px]" style={{ marginLeft: isMobile ? 0 : "auto" }}>
+        <div className={cn("flex items-center gap-2", !isMobile && "ml-auto")}>
           {isMobile && <MobileFilterButton activeFilterCount={activeFilterCount} onFilterOpen={onFilterOpen} />}
-          <span style={{ fontSize: 13, color: "var(--muted)" }}>Sort:</span>
+          <span className="text-[13px] text-[var(--faint)]">Sort:</span>
           <select
             value={sort}
             onChange={(e) => onSortChange(e.target.value)}
-            style={{
-              border: "1.5px solid var(--border)",
-              borderRadius: 9,
-              padding: "7px 28px 7px 10px",
-              fontSize: 13,
-              cursor: "pointer",
-              background: "#fff",
-              color: "var(--brand-text)",
-              outline: "none",
-              appearance: "none",
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "right 8px center",
-            }}
+            className={cn(selectCls, "w-auto bg-white py-[7px] pl-[10px] text-[13px]")}
           >
             {SORT_OPTIONS.map((o) => <option key={o}>{o}</option>)}
           </select>
         </div>
       </div>
 
-      <p style={{ color: "var(--faint)", fontSize: 14, marginBottom: isMobile ? 16 : 28 }}>
+      <p className={cn("text-brand-faint text-[14px]", isMobile ? "mb-4" : "mb-7")}>
         {isLoading ? "Loading verified nannies..." : `${total} verified ${total === 1 ? "nanny" : "nannies"} in your area`}
       </p>
 
@@ -83,32 +74,32 @@ export function FindNannyResults({
         {isLoading && <ResultMessage>Loading nannies...</ResultMessage>}
         {!isLoading && hasError && (
           <ResultMessage>
-            <p style={{ fontSize: 16, color: "#b24a3f" }}>{errorMessage}</p>
-            <button className="btn-outline" style={{ marginTop: 12, padding: "10px 18px", fontSize: 13 }} onClick={onRetry}>
+            <p className="text-[16px] text-[#b24a3f]">{errorMessage}</p>
+            <button className="btn-outline mt-3 px-[18px] py-[10px] text-[13px]" onClick={onRetry}>
               Retry
             </button>
           </ResultMessage>
         )}
-        {!isLoading && !hasError && isFetching && <p style={{ fontSize: 13, color: "var(--muted)" }}>Updating results...</p>}
+        {!isLoading && !hasError && isFetching && <p className="text-[13px] text-brand-faint">Updating results...</p>}
         {!isLoading && !hasError && nannies.map((n, i) => <NannyCard key={n.id} nanny={n} onBook={onBook} delay={i * 40} />)}
         {!isLoading && !hasError && nannies.length === 0 && (
           <ResultMessage>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>No results</div>
-            <p style={{ fontSize: 16 }}>No nannies match your filters</p>
-            <p style={{ fontSize: 13, marginTop: 6 }}>Try adjusting your rate or specialties</p>
+            <div className="text-[40px] mb-3">No results</div>
+            <p className="text-[16px]">No nannies match your filters</p>
+            <p className="text-[13px] mt-[6px]">Try adjusting your rate or specialties</p>
           </ResultMessage>
         )}
       </div>
 
       {!isLoading && !hasError && totalPages > 1 && (
-        <div className="flex items-center justify-between" style={{ marginTop: 24, gap: 12 }}>
-          <button className="btn-outline" style={{ padding: "10px 16px", fontSize: 13 }} onClick={() => onPageChange((current) => Math.max(1, current - 1))} disabled={page === 1}>
+        <div className="flex items-center justify-between mt-6 gap-3">
+          <button className="btn-outline px-4 py-[10px] text-[13px]" onClick={() => onPageChange((current) => Math.max(1, current - 1))} disabled={page === 1}>
             Previous
           </button>
-          <span style={{ fontSize: 13, color: "var(--muted)" }}>
+          <span className="text-[13px] text-(--faint">
             Page {page} of {totalPages}
           </span>
-          <button className="btn-outline" style={{ padding: "10px 16px", fontSize: 13 }} onClick={() => onPageChange((current) => Math.min(totalPages, current + 1))} disabled={page >= totalPages}>
+          <button className="btn-outline px-4 py-[10px] text-[13px]" onClick={() => onPageChange((current) => Math.min(totalPages, current + 1))} disabled={page >= totalPages}>
             Next
           </button>
         </div>
@@ -127,27 +118,17 @@ function MobileFilterButton({
   return (
     <button
       onClick={onFilterOpen}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "8px 14px",
-        borderRadius: 9,
-        border: "1.5px solid var(--border)",
-        background: activeFilterCount > 0 ? "var(--teal-lt)" : "#fff",
-        color: activeFilterCount > 0 ? "var(--teal)" : "var(--muted)",
-        fontSize: 13,
-        fontWeight: 500,
-        cursor: "pointer",
-        fontFamily: "inherit",
-      }}
+      className={cn(
+        "flex items-center gap-[6px] px-[14px] py-2 rounded-[9px] border-[1.5px] border-brand-border text-[13px] font-medium cursor-pointer font-[inherit]",
+        activeFilterCount > 0 ? "bg-teal-lt text-teal" : "bg-white text-brand-faint",
+      )}
     >
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
         <path d="M1 3h12M3 7h8M5 11h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
       Filters
       {activeFilterCount > 0 && (
-        <span style={{ background: "var(--teal)", color: "#fff", borderRadius: "50%", width: 18, height: 18, fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span className="bg-teal text-white rounded-full w-[18px] h-[18px] text-[11px] font-bold flex items-center justify-center">
           {activeFilterCount}
         </span>
       )}
@@ -157,7 +138,7 @@ function MobileFilterButton({
 
 function ResultMessage({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--faint)" }}>
+    <div className="text-center px-5 py-[60px] text-brand-faint">
       {children}
     </div>
   );

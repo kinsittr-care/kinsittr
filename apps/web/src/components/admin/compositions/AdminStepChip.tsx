@@ -1,4 +1,4 @@
-import { A } from "../tokens";
+import { cn } from "@/lib/utils";
 
 function Check({ on }: { on: boolean }) {
   return on ? (
@@ -6,7 +6,7 @@ function Check({ on }: { on: boolean }) {
       <path
         d="M2 7l3.5 3.5L12 3.5"
         fill="none"
-        stroke={A.green}
+        stroke="var(--admin-green)"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -14,7 +14,7 @@ function Check({ on }: { on: boolean }) {
     </svg>
   ) : (
     <svg width="14" height="14" viewBox="0 0 14 14">
-      <circle cx="7" cy="7" r="5.5" fill="none" stroke={A.inkFaint} strokeWidth="1.5" />
+      <circle cx="7" cy="7" r="5.5" fill="none" stroke="var(--admin-ink-faint)" strokeWidth="1.5" />
     </svg>
   );
 }
@@ -28,22 +28,12 @@ export default function AdminStepChip({
 }) {
   return (
     <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 7,
-        padding: "7px 13px",
-        borderRadius: 999,
-        fontSize: 12,
-        fontWeight: 500,
-        background: done ? A.greenLight : "transparent",
-        color: done ? A.green : A.inkSoft,
-        border: `1px solid ${
-          done
-            ? "color-mix(in srgb, var(--admin-green) 55%, transparent)"
-            : A.border
-        }`,
-      }}
+      className={cn(
+        "inline-flex items-center gap-[7px] px-[13px] py-[7px] rounded-full text-[12px] font-medium border",
+        done
+          ? "bg-admin-green-light text-admin-green border-[color-mix(in_srgb,var(--admin-green)_55%,transparent)]"
+          : "bg-transparent text-admin-ink-soft border-admin-border",
+      )}
     >
       <Check on={done} />
       {label}

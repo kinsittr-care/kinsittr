@@ -21,7 +21,7 @@ export default function ValueCard({
         {icon}
       </div>
       <h3 className="font-bold text-[16px] mb-[7px]">{title}</h3>
-      <p className="text-[14px] leading-[1.65]" style={{ color: "var(--muted)" }}>
+      <p className="text-[14px] leading-[1.65]" style={{ color: "var(--faint)" }}>
         {description}
       </p>
     </div>

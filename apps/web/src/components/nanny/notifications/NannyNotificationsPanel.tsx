@@ -97,7 +97,7 @@ export default function NannyNotificationsPanel() {
           variant="ghost"
           size="icon-sm"
           aria-label="Notifications"
-          className="relative text-nanny-ink-mute hover:text-nanny-green hover:bg-nanny-green-lt"
+          className="relative text-nanny-ink-faint hover:text-nanny-green hover:bg-nanny-green-lt"
         >
           <Bell className="size-4" />
           {unreadCount > 0 && (
@@ -176,7 +176,7 @@ export default function NannyNotificationsPanel() {
                   <p className={cn("text-[13px] text-nanny-green-dk mb-0.5", isUnread ? "font-semibold" : "font-medium")}>
                     {notif.title}
                   </p>
-                  <p className="text-xs text-nanny-ink-mute truncate">{notif.body}</p>
+                  <p className="text-xs text-nanny-ink-faint truncate">{notif.body}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
                   <span className="text-[11px] text-nanny-ink-faint whitespace-nowrap">{relativeTime(notif.created_at)}</span>

@@ -33,7 +33,7 @@ export default function TeamSection() {
           </h2>
         </RevealWrapper>
         <RevealWrapper delay={0.2}>
-          <p className="text-[16.5px] leading-[1.75] max-w-[460px] mb-12" style={{ color: "var(--muted)" }}>
+          <p className="text-[16.5px] leading-[1.75] max-w-[460px] mb-12" style={{ color: "var(--faint)" }}>
             Built by childcare professionals, and people who believe trust is the foundation of everything.
           </p>
         </RevealWrapper>

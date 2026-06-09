@@ -29,7 +29,7 @@ export default function NannyMobileHeader() {
           size="icon-sm"
           onClick={() => setOpen(true)}
           aria-label="Open navigation"
-          className="text-nanny-ink-mute hover:text-nanny-green hover:bg-nanny-green-lt"
+          className="text-nanny-ink-faint hover:text-nanny-green hover:bg-nanny-green-lt"
         >
           <Menu className="size-5" />
         </Button>
@@ -56,7 +56,7 @@ export default function NannyMobileHeader() {
               </div>
               <div>
                 <div className="font-display text-[19px] text-nanny-green-dk leading-none">KinSittr</div>
-                <div className="text-[11px] text-nanny-ink-mute tracking-widest uppercase mt-0.5">Caregiver</div>
+                <div className="text-[11px] text-nanny-ink-faint tracking-widest uppercase mt-0.5">Caregiver</div>
               </div>
             </div>
             <SheetClose asChild>
@@ -64,7 +64,7 @@ export default function NannyMobileHeader() {
                 variant="ghost"
                 size="icon-sm"
                 aria-label="Close navigation"
-                className="text-nanny-ink-mute hover:text-nanny-green hover:bg-nanny-green-lt"
+                className="text-nanny-ink-faint hover:text-nanny-green hover:bg-nanny-green-lt"
               >
                 <X className="size-4" />
               </Button>
@@ -86,7 +86,7 @@ export default function NannyMobileHeader() {
             <NannyAvatar initials={initials} size={38} tone="cream" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-nanny-green-dk truncate">{displayName}</p>
-              <p className="text-xs text-nanny-ink-mute mt-0.5">
+              <p className="text-xs text-nanny-ink-faint mt-0.5">
                 {isVerified ? "Verified caregiver" : "Caregiver"}
               </p>
             </div>

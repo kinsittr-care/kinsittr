@@ -23,14 +23,14 @@ function StatCard({
   tone?: Tone;
 }) {
   return (
-    <div className="w-[min(220px,72vw)] shrink-0 md:w-auto md:shrink-0 bg-nanny-card border border-nanny-border rounded-[18px] p-5 min-h-[130px] flex flex-col shadow-[var(--nanny-shadow)]">
-      <p className="text-[11px] font-semibold tracking-widest uppercase text-nanny-ink-mute">
+    <div className="w-[min(220px,72vw)] shrink-0 xl:w-auto xl:shrink-0 bg-nanny-card border border-nanny-border rounded-[18px] p-5 min-h-[130px] flex flex-col shadow-[var(--nanny-shadow)]">
+      <p className="text-[11px] font-semibold tracking-widest uppercase text-nanny-ink-faint">
         {label}
       </p>
       <p className={cn("mt-auto pt-3 font-display text-[42px] leading-none tracking-tight", toneClass[tone])}>
         {value}
       </p>
-      <p className="mt-2.5 text-[13px] text-nanny-ink-mute">{sub}</p>
+      <p className="mt-2.5 text-[13px] text-nanny-ink-faint">{sub}</p>
     </div>
   );
 }
@@ -50,7 +50,7 @@ export default function DashboardStatCards({
 
   return (
     /* Mobile: horizontal scroll strip. Desktop: 4-col grid */
-    <div className="flex gap-3 overflow-x-auto pb-0.5 [scrollbar-width:none] [-ms-overflow-style:none] md:grid md:grid-cols-4 md:overflow-visible md:gap-4">
+    <div className="flex gap-3 overflow-x-auto pb-0.5 [scrollbar-width:none] [-ms-overflow-style:none] xl:grid xl:grid-cols-4 xl:overflow-visible xl:gap-4">
       <StatCard
         label="Approved value"
         value={isLoading ? "..." : formatCurrency(estimatedEarnings)}

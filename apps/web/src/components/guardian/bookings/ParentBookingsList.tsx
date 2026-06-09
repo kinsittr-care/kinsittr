@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import type { Booking } from "@/src/types/api/api";
 import Avatar from "../dashboard/Avatar";
 import BookingStatusBadge from "./BookingStatusBadge";
@@ -32,82 +33,79 @@ export default function ParentBookingsList({
 }: ParentBookingsListProps) {
   return (
     <>
-      {bookings.map((booking, index) => (
-        <div
-          key={booking.id}
-          className="flex flex-col md:flex-row md:items-center gap-4"
-          style={{ padding: "14px 0", borderBottom: index === bookings.length - 1 ? "none" : "1px solid var(--border)" }}
-        >
-          <div className="flex items-center gap-[14px]" style={{ flex: 1, cursor: !compact ? "pointer" : "default" }} onClick={!compact ? () => onSelect(booking.id) : undefined}>
-            <Avatar initials={getBookingInitials(booking.nanny_display_name)} size={40} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: 14 }}>{booking.nanny_display_name ?? "Selected nanny"}</div>
-              <div style={{ fontSize: 12.5, color: "var(--faint)", marginTop: 1 }}>{describeBookingTime(booking)}</div>
-            </div>
-          </div>
-          <div className="flex flex-col md:flex-row md:items-center gap-3" style={{ marginLeft: compact ? 0 : "auto" }}>
-            <div style={{ textAlign: compact ? "left" : "right" }}>
-              <div style={{ fontWeight: 700, fontSize: 15 }}>{formatCurrency(booking.total_amount)}</div>
-              <div className="flex flex-wrap justify-start md:justify-end gap-1.5" style={{ marginTop: 4 }}>
-                <BookingStatusBadge status={booking.status} />
-                <PaymentStatusBadge status={booking.payment_status} />
-              </div>
-            </div>
-            {!compact && (
-              <div className="flex gap-2">
-                <button className="btn-outline" style={{ padding: "8px 14px", fontSize: 13 }} onClick={() => onSelect(booking.id)}>
-                  View details
-                </button>
-                {booking.status === "pending" && (
-                  <button
-                    style={{
-                      padding: "8px 14px",
-                      fontSize: 13,
-                      borderRadius: 10,
-                      background: "#fff",
-                      color: "#c0392b",
-                      border: "1.5px solid #f0d0d0",
-                      cursor: cancelIsPending ? "not-allowed" : "pointer",
-                      fontFamily: "inherit",
-                    }}
-                    disabled={cancelIsPending}
-                    onClick={() => onCancel(booking.id)}
-                  >
-                    {cancelIsPending ? "Cancelling..." : "Cancel"}
-                  </button>
-                )}
-                {booking.status === "completed" && (
-                  <button
-                    style={{
-                      padding: "8px 14px",
-                      fontSize: 13,
-                      borderRadius: 10,
-                      background: reviewedBookingIds.has(booking.id) ? "var(--bg-warm)" : "var(--teal)",
-                      color: reviewedBookingIds.has(booking.id) ? "var(--muted)" : "#fff",
-                      border: reviewedBookingIds.has(booking.id) ? "1.5px solid var(--border)" : "none",
-                      cursor: reviewedBookingIds.has(booking.id) ? "default" : "pointer",
-                      fontFamily: "inherit",
-                      fontWeight: 600,
-                    }}
-                    disabled={reviewedBookingIds.has(booking.id)}
-                    onClick={() => onReview(booking.id)}
-                  >
-                    {reviewedBookingIds.has(booking.id) ? "Reviewed" : "Leave review"}
-                  </button>
-                )}
-              </div>
+      {bookings.map((booking, index) => {
+        const isReviewed = reviewedBookingIds.has(booking.id);
+        return (
+          <div
+            key={booking.id}
+            className={cn(
+              "flex flex-col md:flex-row md:items-center gap-4 py-[14px]",
+              index !== bookings.length - 1 && "border-b border-brand-border",
             )}
+          >
+            <div
+              className={cn("flex items-center gap-[14px] flex-1", !compact ? "cursor-pointer" : "cursor-default")}
+              onClick={!compact ? () => onSelect(booking.id) : undefined}
+            >
+              <Avatar initials={getBookingInitials(booking.nanny_display_name)} size={40} />
+              <div className="flex-1">
+                <div className="font-semibold text-[14px]">{booking.nanny_display_name ?? "Selected nanny"}</div>
+                <div className="text-[12.5px] text-brand-faint mt-[1px]">{describeBookingTime(booking)}</div>
+              </div>
+            </div>
+            <div className={cn("flex flex-col md:flex-row md:items-center gap-3", !compact && "md:ml-auto")}>
+              <div className={compact ? "text-left" : "text-right"}>
+                <div className="font-bold text-[15px]">{formatCurrency(booking.total_amount)}</div>
+                <div className="flex flex-wrap justify-start md:justify-end gap-1.5 mt-1">
+                  <BookingStatusBadge status={booking.status} />
+                  <PaymentStatusBadge status={booking.payment_status} />
+                </div>
+              </div>
+              {!compact && (
+                <div className="flex gap-2">
+                  <button className="btn-outline px-[14px] py-2 text-[13px]" onClick={() => onSelect(booking.id)}>
+                    View details
+                  </button>
+                  {booking.status === "pending" && (
+                    <button
+                      className={cn(
+                        "px-[14px] py-2 text-[13px] rounded-[10px] bg-white text-[#c0392b] border-[1.5px] border-[#f0d0d0] [font-family:inherit]",
+                        cancelIsPending ? "cursor-not-allowed" : "cursor-pointer",
+                      )}
+                      disabled={cancelIsPending}
+                      onClick={() => onCancel(booking.id)}
+                    >
+                      {cancelIsPending ? "Cancelling..." : "Cancel"}
+                    </button>
+                  )}
+                  {booking.status === "completed" && (
+                    <button
+                      className={cn(
+                        "px-[14px] py-2 text-[13px] rounded-[10px] [font-family:inherit] font-semibold",
+                        isReviewed
+                          ? "bg-[var(--bg-warm)] text-[var(--faint)] border-[1.5px] border-brand-border cursor-default"
+                          : "bg-teal text-white border-0 cursor-pointer",
+                      )}
+                      disabled={isReviewed}
+                      onClick={() => onReview(booking.id)}
+                    >
+                      {isReviewed ? "Reviewed" : "Leave review"}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {!compact && totalPages > 1 ? (
-        <div className="flex items-center justify-between" style={{ marginTop: 18, gap: 12 }}>
-          <button className="btn-outline" style={{ padding: "10px 16px", fontSize: 13 }} onClick={() => onPageChange((current) => Math.max(1, current - 1))} disabled={currentPage === 1}>
+        <div className="flex items-center justify-between mt-[18px] gap-3">
+          <button className="btn-outline px-4 py-[10px] text-[13px]" onClick={() => onPageChange((current) => Math.max(1, current - 1))} disabled={currentPage === 1}>
             Previous
           </button>
-          <span style={{ fontSize: 13, color: "var(--muted)" }}>Page {currentPage} of {totalPages}</span>
-          <button className="btn-outline" style={{ padding: "10px 16px", fontSize: 13 }} onClick={() => onPageChange((current) => Math.min(totalPages, current + 1))} disabled={currentPage >= totalPages}>
+          <span className="text-[13px] text-[var(--faint)]">Page {currentPage} of {totalPages}</span>
+          <button className="btn-outline px-4 py-[10px] text-[13px]" onClick={() => onPageChange((current) => Math.min(totalPages, current + 1))} disabled={currentPage >= totalPages}>
             Next
           </button>
         </div>

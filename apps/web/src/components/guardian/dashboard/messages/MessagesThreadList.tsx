@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import type { Conversation } from "@/src/types/api/api";
 import Avatar from "../Avatar";
 import {
@@ -34,45 +35,38 @@ export default function MessagesThreadList({
 }: MessagesThreadListProps) {
   return (
     <div
+      className="shrink-0 overflow-y-auto bg-[var(--bg)] flex flex-col"
       style={{
         width: isMobile ? "100%" : 296,
-        flexShrink: 0,
         borderRight: isMobile ? "none" : "1px solid var(--border)",
-        overflowY: "auto",
-        background: "var(--bg)",
-        display: "flex",
-        flexDirection: "column",
       }}
     >
       <div
-        style={{
-          padding: isMobile ? "20px 16px 14px" : "28px 22px 18px",
-          borderBottom: "1px solid var(--border)",
-        }}
+        className="border-b border-brand-border"
+        style={{ padding: isMobile ? "20px 16px 14px" : "28px 22px 18px" }}
       >
         <h2
-          className="font-display"
-          style={{ fontWeight: 400, fontSize: isMobile ? 22 : 24 }}
+          className="font-display font-normal"
+          style={{ fontSize: isMobile ? 22 : 24 }}
         >
           Messages
         </h2>
       </div>
 
       {isLoading && (
-        <div style={{ padding: "18px 20px", color: "var(--faint)", fontSize: 14 }}>
+        <div className="px-5 py-[18px] text-brand-faint text-[14px]">
           Loading conversations...
         </div>
       )}
 
       {isError && (
-        <div style={{ padding: "18px 20px" }}>
-          <p style={{ color: "#c0392b", fontSize: 14, marginBottom: 10 }}>
+        <div className="px-5 py-[18px]">
+          <p className="text-[#c0392b] text-[14px] mb-[10px]">
             {errorMessage || "Unable to load conversations right now."}
           </p>
           <button
             onClick={onRetry}
-            className="btn-outline"
-            style={{ padding: "8px 14px", fontSize: 13 }}
+            className="btn-outline px-[14px] py-2 text-[13px]"
           >
             Retry
           </button>
@@ -89,47 +83,39 @@ export default function MessagesThreadList({
             <div
               key={conversation.id}
               onClick={() => onSelectConversation(conversation.id)}
-              className="flex items-center gap-[13px]"
-              style={{
-                padding: "16px 20px",
-                borderBottom: "1px solid var(--border)",
-                cursor: "pointer",
-                background: isSelected && !isMobile ? "var(--teal-lt)" : "transparent",
-                transition: "background .12s",
-              }}
+              className={cn(
+                "flex items-center gap-[13px] px-5 py-4 border-b border-brand-border cursor-pointer transition-colors duration-[120ms]",
+                isSelected && !isMobile ? "bg-teal-lt" : "bg-transparent",
+              )}
             >
               <Avatar
                 initials={getInitials(conversation.other_participant_name)}
                 size={46}
               />
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="flex-1 min-w-0">
                 <div
+                  className="text-[14px] mb-[2px]"
                   style={{
                     fontWeight: hasUnread ? 800 : 600,
-                    fontSize: 14,
-                    marginBottom: 2,
                     color: isSelected ? "var(--teal-dk)" : "var(--brand-text)",
                   }}
                 >
                   {conversation.other_participant_name}
                 </div>
                 <div
+                  className="text-[12.5px] overflow-hidden text-ellipsis whitespace-nowrap"
                   style={{
-                    fontSize: 12.5,
                     color: hasUnread ? "var(--brand-text)" : "var(--faint)",
                     fontWeight: hasUnread ? 600 : 400,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
                   }}
                 >
                   {conversation.last_message_preview || "No messages yet"}
                 </div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
+              <div className="flex flex-col items-end gap-[6px] shrink-0">
                 <div
+                  className="text-[11.5px]"
                   style={{
-                    fontSize: 11.5,
                     color: hasUnread ? "var(--teal)" : "var(--faint)",
                     fontWeight: hasUnread ? 700 : 400,
                   }}
@@ -137,21 +123,7 @@ export default function MessagesThreadList({
                   {formatThreadTimestamp(conversation.last_message_at)}
                 </div>
                 {hasUnread && (
-                  <span
-                    style={{
-                      minWidth: 20,
-                      height: 20,
-                      borderRadius: 999,
-                      background: "var(--teal)",
-                      color: "#fff",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 11,
-                      fontWeight: 800,
-                      padding: "0 6px",
-                    }}
-                  >
+                  <span className="min-w-5 h-5 rounded-full bg-teal text-white inline-flex items-center justify-center text-[11px] font-extrabold px-[6px]">
                     {conversation.unread_count > 99 ? "99+" : conversation.unread_count}
                   </span>
                 )}
@@ -163,11 +135,10 @@ export default function MessagesThreadList({
       {!isLoading &&
         !isError &&
         totalConversations > conversations.length && (
-          <div style={{ padding: "16px 20px" }}>
+          <div className="px-5 py-4">
             <button
               onClick={onLoadMore}
-              className="btn-outline"
-              style={{ width: "100%", padding: "10px 14px", fontSize: 13 }}
+              className="btn-outline w-full px-[14px] py-[10px] text-[13px]"
             >
               Load more conversations
             </button>

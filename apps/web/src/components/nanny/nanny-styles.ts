@@ -8,6 +8,14 @@ export const card: CSSProperties = {
   boxShadow: N.shadow,
 };
 
+export const cardCls = "bg-nanny-card border border-nanny-border rounded-[18px] shadow-[var(--nanny-shadow)]";
+export const btnPrimaryCls = "inline-flex items-center gap-2 px-6 py-3 bg-nanny-green text-white rounded-xl text-[14px] font-semibold cursor-pointer border-none transition-transform duration-150";
+export const btnGhostCls = "inline-flex items-center gap-2 px-5 py-[11px] bg-nanny-card text-nanny-ink-soft border border-nanny-border rounded-xl text-[14px] font-medium cursor-pointer";
+export const btnAcceptCls = "px-[18px] py-[9px] bg-nanny-green-lt text-nanny-green border border-nanny-green-mid rounded-[10px] text-[13.5px] font-semibold cursor-pointer";
+export const btnDeclineCls = "px-[18px] py-[9px] bg-nanny-rose-lt text-nanny-rose border border-[color-mix(in_srgb,var(--nanny-rose)_35%,transparent)] rounded-[10px] text-[13.5px] font-semibold cursor-pointer";
+export const inputCls = "w-full px-[14px] py-[11px] bg-nanny-card-soft border border-nanny-border rounded-[10px] text-[14px] text-nanny-ink-soft font-[inherit] outline-none box-border";
+export const labelCls = "block text-[11px] font-semibold tracking-[.1em] uppercase text-nanny-ink-faint mb-[7px]";
+
 export const btnPrimary: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",

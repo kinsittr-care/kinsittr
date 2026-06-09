@@ -24,30 +24,13 @@ export default function MessagesChatHeader({
 }: MessagesChatHeaderProps) {
   return (
     <div
-      className="flex items-center gap-[14px]"
-      style={{
-        padding: isMobile ? "14px 16px" : "18px 26px",
-        borderBottom: "1px solid var(--border)",
-        background: "#fdfaf5",
-        boxShadow: "0 2px 12px rgba(40,30,20,.07)",
-      }}
+      className="flex items-center gap-[14px] border-b border-brand-border bg-[#fdfaf5] shadow-[0_2px_12px_rgba(40,30,20,.07)]"
+      style={{ padding: isMobile ? "14px 16px" : "18px 26px" }}
     >
       {isMobile && (
         <button
           onClick={onBack}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "var(--teal)",
-            padding: "4px 8px 4px 0",
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            fontSize: 14,
-            fontFamily: "inherit",
-            fontWeight: 500,
-          }}
+          className="bg-transparent border-0 cursor-pointer text-teal pr-2 py-1 flex items-center gap-1 text-[14px] font-medium [font-family:inherit]"
         >
           <svg
             width="16"
@@ -74,21 +57,18 @@ export default function MessagesChatHeader({
             size={isMobile ? 36 : 44}
           />
           <div>
-            <div style={{ fontWeight: 600, fontSize: isMobile ? 15 : 16 }}>
+            <div
+              className="font-semibold"
+              style={{ fontSize: isMobile ? 15 : 16 }}
+            >
               {conversation.other_participant_name}
             </div>
-            <div
-              className="flex items-center gap-[5px]"
-              style={{ fontSize: 13, marginTop: 2 }}
-            >
+            <div className="flex items-center gap-[5px] text-[13px] mt-[2px]">
               <span
+                className="w-2 h-2 rounded-full inline-block"
                 style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
                   background:
                     conversation.booking_status === "approved" ? "#4caf7d" : "#ccc",
-                  display: "inline-block",
                 }}
               />
               <span
@@ -104,17 +84,15 @@ export default function MessagesChatHeader({
             </div>
           </div>
           {!isMobile && (
-            <div className="flex gap-2" style={{ marginLeft: "auto" }}>
+            <div className="flex gap-2 ml-auto">
               <button
-                className="btn-outline"
-                style={{ padding: "7px 14px", fontSize: 13 }}
+                className="btn-outline px-[14px] py-[7px] text-[13px]"
                 onClick={onViewProfile}
               >
                 View profile
               </button>
               <button
-                className="btn-outline"
-                style={{ padding: "7px 14px", fontSize: 13 }}
+                className="btn-outline px-[14px] py-[7px] text-[13px]"
                 onClick={onViewBookingDetails}
               >
                 Booking details
@@ -123,7 +101,7 @@ export default function MessagesChatHeader({
           )}
         </>
       ) : (
-        <div style={{ fontWeight: 600, fontSize: isMobile ? 15 : 16 }}>
+        <div className="font-semibold" style={{ fontSize: isMobile ? 15 : 16 }}>
           Select a conversation
         </div>
       )}

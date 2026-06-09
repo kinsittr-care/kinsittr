@@ -1,9 +1,9 @@
-import { A } from "../tokens";
 import AdminAvatar from "../compositions/AdminAvatar";
 import AdminNannyDocumentsList from "../compositions/AdminNannyDocumentsList";
 import AdminStepChip from "../compositions/AdminStepChip";
 import { TimerIcon, PinIcon, ArrowSmIcon } from "../compositions/admin-icons";
-import { btnGhostSm, btnPrimary } from "../compositions/admin-styles";
+import { btnGhostSmCls, btnPrimaryCls, cardCls } from "../compositions/admin-styles";
+import { cn } from "@/lib/utils";
 import type { AdminNannyDocument, AdminVerificationStatus } from "@/src/types/api/admin";
 
 export type Steps = { docs: boolean; refs: boolean; interview: boolean };
@@ -39,82 +39,61 @@ export default function ScreeningCard({
   const canReset = applicant.status === "rejected";
 
   return (
-    <div
-      style={{
-        background: A.card,
-        border: `1px solid ${A.border}`,
-        borderRadius: 16,
-        padding: "22px 24px",
-        boxShadow: A.shadow,
-      }}
-    >
-      <div className="flex flex-col gap-4 sm:grid sm:grid-cols-[56px_minmax(0,1fr)_minmax(160px,auto)] sm:items-start sm:gap-x-[18px]">
-        <div className="flex items-start gap-4 sm:contents">
+    <div className={cardCls}>
+      <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[56px_minmax(0,1fr)_minmax(160px,auto)] xl:items-start xl:gap-x-[18px]">
+        <div className="flex items-start gap-4 xl:contents">
           <AdminAvatar initials={applicant.initials} size={56} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div
-              style={{
-                fontFamily: "var(--font-dm-serif), serif",
-                fontSize: 22,
-                color: A.ink,
-                lineHeight: 1.1,
-              }}
-            >
+          <div className="flex-1 min-w-0">
+            <div className="font-display text-[22px] text-admin-ink leading-[1.1]">
               {applicant.name}
             </div>
-            <div className="mt-[7px] flex flex-wrap items-center gap-2 text-[13.5px]" style={{ color: A.inkSoft }}>
-              <span style={{ color: A.clay, display: "flex" }}>
+            <div className="mt-[7px] flex flex-wrap items-center gap-2 text-[13.5px] text-admin-ink-soft">
+              <span className="flex text-admin-clay">
                 <PinIcon />
               </span>
               <span>{applicant.city}</span>
-              <span style={{ opacity: 0.5 }}>·</span>
+              <span className="opacity-50">·</span>
               <span>Submitted {applicant.submitted}</span>
             </div>
           </div>
         </div>
 
-        <div className="flex w-full flex-col gap-3 sm:col-start-3 sm:row-start-1 sm:w-auto sm:items-end sm:gap-[14px]">
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: 13.5,
-              fontWeight: 600,
-              color: urgent ? A.red : A.amber,
-            }}
-          >
-            <span style={{ display: "flex" }}>
+        <div className="flex w-full flex-nowrap items-center justify-between gap-3 xl:col-start-3 xl:row-start-1 xl:w-auto xl:flex-col xl:items-end xl:justify-start xl:gap-[14px]">
+          <div className={cn("inline-flex min-w-0 items-center gap-[6px] text-[13px] font-semibold xl:text-[13.5px]", urgent ? "text-admin-red" : "text-admin-amber")}>
+            <span className="flex">
               <TimerIcon />
             </span>
-            Waiting {applicant.waiting} day{applicant.waiting > 1 ? "s" : ""}
+            <span className="truncate">Waiting {applicant.waiting} day{applicant.waiting > 1 ? "s" : ""}</span>
           </div>
           {applicant.status === "pending" ? (
-            <button className="w-full sm:w-auto" disabled={isBusy} onClick={onStart} style={{ ...btnPrimary, opacity: isBusy ? 0.65 : 1 }}>
+            <button className={cn("inline-flex shrink-0 items-center gap-1.5 rounded-[9px] border border-black bg-admin-clay px-3 py-2 text-[13px] font-semibold text-black xl:gap-2 xl:rounded-[10px] xl:px-[22px] xl:py-[11px] xl:text-[14px]", isBusy && "opacity-65")} disabled={isBusy} onClick={onStart}>
               Start review <ArrowSmIcon />
             </button>
           ) : canReset ? (
-            <button className="w-full sm:w-auto" disabled={isBusy} onClick={onReset} style={{ ...btnGhostSm, opacity: isBusy ? 0.65 : 1 }}>
+            <button className={cn("shrink-0", btnGhostSmCls, isBusy && "opacity-65")} disabled={isBusy} onClick={onReset}>
               Reset
             </button>
           ) : (
-            <button className="w-full sm:w-auto" disabled style={{ ...btnPrimary, opacity: 0.65, cursor: "not-allowed" }}>
+            <button
+              className="inline-flex shrink-0 cursor-not-allowed items-center gap-1.5 rounded-[9px] border border-admin-red bg-admin-card px-3 py-2 text-[13px] font-semibold text-admin-red opacity-65 xl:gap-2 xl:rounded-[10px] xl:px-[22px] xl:py-[11px] xl:text-[14px]"
+              disabled
+            >
               In review <ArrowSmIcon />
             </button>
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2 sm:col-start-2 sm:mt-[2px] sm:gap-[10px]">
+        <div className="flex flex-wrap gap-2 xl:col-start-2 xl:mt-[2px] xl:gap-[10px]">
           {(["docs", "refs", "interview"] as const).map((key) => (
             <button
               key={key}
               disabled={!canUpdateSteps || isBusy}
               onClick={() => onToggle(key)}
-              style={{
-                all: "unset",
-                cursor: canUpdateSteps && !isBusy ? "pointer" : "not-allowed",
-                opacity: canUpdateSteps ? 1 : 0.6,
-              }}
+              className={cn(
+                "[all:unset]",
+                canUpdateSteps && !isBusy ? "cursor-pointer" : "cursor-not-allowed",
+                !canUpdateSteps && "opacity-60",
+              )}
             >
               <AdminStepChip
                 label={key === "docs" ? "Docs reviewed" : key === "refs" ? "References checked" : "Interview done"}
@@ -124,11 +103,11 @@ export default function ScreeningCard({
           ))}
         </div>
 
-        <div className="min-w-0 sm:col-start-2 sm:col-span-2">
-          <div style={{ color: A.ink, fontSize: 13, fontWeight: 700 }}>
+        <div className="min-w-0 xl:col-start-2 xl:col-span-2">
+          <div className="text-admin-ink text-[13px] font-bold">
             Uploaded documents ({applicant.documents.length})
           </div>
-          <div className="max-h-[180px] overflow-y-auto pr-1 sm:max-h-none sm:overflow-visible sm:pr-0">
+          <div className="max-h-[180px] overflow-y-auto pr-1 xl:max-h-none xl:overflow-visible xl:pr-0">
             <AdminNannyDocumentsList documents={applicant.documents} compact />
           </div>
         </div>

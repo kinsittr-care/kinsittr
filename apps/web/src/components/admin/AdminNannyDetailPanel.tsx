@@ -2,8 +2,7 @@ import AdminPill, { type PillTone } from "./compositions/AdminPill";
 import AdminStars from "./compositions/AdminStars";
 import AdminAuditTimeline from "./compositions/AdminAuditTimeline";
 import AdminNannyDocumentsList from "./compositions/AdminNannyDocumentsList";
-import { btnApprove } from "./compositions/admin-styles";
-import { A } from "./tokens";
+import { btnApproveCls } from "./compositions/admin-styles";
 import type { AdminAuditAction, AdminNannyDetailData, AdminVerificationStatus } from "@/src/types/api/admin";
 import { formatCurrency, formatDateOnlyShort, formatLocation } from "@/src/utils/format";
 
@@ -34,74 +33,76 @@ export default function AdminNannyDetailPanel({
   onActionPageChange: (page: number) => void;
   onReactivate: () => void;
 }) {
+  const panelCls = "bg-admin-card border border-admin-border rounded-2xl shadow-[var(--admin-shadow)] p-[22px] self-start flex flex-col gap-[18px] text-admin-ink-soft";
+
   if (isLoading) {
-    return <aside style={panelStyle}>Loading nanny details...</aside>;
+    return <aside className={panelCls}>Loading nanny details...</aside>;
   }
 
   if (!detail) {
-    return <aside style={panelStyle}>Select a nanny to view details.</aside>;
+    return <aside className={panelCls}>Select a nanny to view details.</aside>;
   }
 
   const { nanny, bookings, earnings } = detail;
 
   return (
-    <aside style={panelStyle}>
+    <aside className={panelCls}>
       <div>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+        <div className="flex justify-between gap-3">
           <div>
-            <h2 style={{ margin: 0, color: A.ink, fontSize: 20 }}>{nanny.display_name}</h2>
-            <p style={{ margin: "5px 0 0", color: A.inkSoft, fontSize: 13 }}>{nanny.user_email}</p>
+            <h2 className="m-0 text-admin-ink text-[20px]">{nanny.display_name}</h2>
+            <p className="mt-[5px] mb-0 text-admin-ink-soft text-[13px]">{nanny.user_email}</p>
           </div>
           <AdminPill tone={statusTone(nanny.verification_status, nanny.user_is_active)}>
             {nanny.user_is_active ? nanny.verification_status.replace("_", " ") : "suspended"}
           </AdminPill>
         </div>
-        <p style={{ margin: "14px 0 0", color: A.inkMid, fontSize: 13.5, lineHeight: 1.55 }}>
+        <p className="mt-[14px] mb-0 text-admin-ink-mid text-[13.5px] leading-[1.55]">
           {nanny.bio || "No bio provided."}
         </p>
       </div>
 
       {!nanny.user_is_active && (
-        <button type="button" style={btnApprove} onClick={onReactivate}>
+        <button type="button" className={btnApproveCls} onClick={onReactivate}>
           Reactivate nanny
         </button>
       )}
 
-      <div style={metricGrid}>
+      <div className="grid grid-cols-2 gap-[10px]">
         <Metric label="Earnings" value={formatCurrency(earnings.total_earnings)} />
         <Metric label="Completed" value={String(earnings.completed_bookings)} />
         <Metric label="Bookings" value={String(bookings.total)} />
         <Metric label="Rate" value={`${formatCurrency(nanny.rate_per_hour)}/hr`} />
       </div>
 
-      <div style={sectionStyle}>
-        <h3 style={sectionTitle}>Profile</h3>
+      <div className="border-t border-admin-border-soft pt-4">
+        <h3 className="m-0 text-admin-ink text-[15px]">Profile</h3>
         <Detail label="Location" value={formatLocation(nanny.city, nanny.province, "not set")} />
         <Detail label="Specialties" value={nanny.specialties.length ? nanny.specialties.join(", ") : "None listed"} />
         <Detail label="Stripe" value={nanny.stripe_onboarded ? "Onboarded" : "Not onboarded"} />
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
+        <div className="flex items-center gap-2 mt-[10px]">
           <AdminStars value={Math.round(nanny.rating_avg)} />
-          <span style={{ color: A.inkMid, fontSize: 13 }}>
+          <span className="text-admin-ink-mid text-[13px]">
             {nanny.rating_avg.toFixed(1)} ({nanny.rating_count})
           </span>
         </div>
       </div>
 
-      <div style={sectionStyle}>
-        <h3 style={sectionTitle}>Screening documents ({nanny.documents.length})</h3>
+      <div className="border-t border-admin-border-soft pt-4">
+        <h3 className="m-0 text-admin-ink text-[15px]">Screening documents ({nanny.documents.length})</h3>
         <AdminNannyDocumentsList documents={nanny.documents} />
       </div>
 
-      <div style={sectionStyle}>
-        <h3 style={sectionTitle}>Recent bookings</h3>
+      <div className="border-t border-admin-border-soft pt-4">
+        <h3 className="m-0 text-admin-ink text-[15px]">Recent bookings</h3>
         {bookings.items.length === 0 ? (
-          <p style={{ margin: 0, color: A.inkSoft, fontSize: 13 }}>No booking history yet.</p>
+          <p className="m-0 text-admin-ink-soft text-[13px]">No booking history yet.</p>
         ) : (
           bookings.items.slice(0, 5).map((booking) => (
-            <div key={booking.id} style={bookingRowStyle}>
+            <div key={booking.id} className="flex justify-between gap-3 border-t border-admin-border-soft py-3">
               <div>
-                <div style={{ color: A.ink, fontSize: 13.5, fontWeight: 600 }}>{booking.parent_display_name}</div>
-                <div style={{ color: A.inkSoft, fontSize: 12.5 }}>
+                <div className="text-admin-ink text-[13.5px] font-semibold">{booking.parent_display_name}</div>
+                <div className="text-admin-ink-soft text-[12.5px]">
                   {formatDateOnlyShort(booking.date)} · {booking.start_time} · {booking.duration}h
                 </div>
               </div>
@@ -129,55 +130,17 @@ const ACTION_PAGE_SIZE = 10;
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ background: A.cardWarm, border: `1px solid ${A.borderSoft}`, borderRadius: 12, padding: 12 }}>
-      <div style={{ color: A.inkSoft, fontSize: 11, textTransform: "uppercase", letterSpacing: ".08em" }}>{label}</div>
-      <div style={{ marginTop: 6, color: A.clay, fontWeight: 700, fontSize: 15 }}>{value}</div>
+    <div className="bg-admin-card-warm border border-admin-border-soft rounded-xl p-3">
+      <div className="text-admin-ink-soft text-[11px] uppercase tracking-[.08em]">{label}</div>
+      <div className="mt-[6px] text-admin-clay font-bold text-[15px]">{value}</div>
     </div>
   );
 }
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ marginTop: 10, color: A.inkMid, fontSize: 13 }}>
-      <strong style={{ color: A.ink }}>{label}:</strong> {value}
+    <div className="mt-[10px] text-admin-ink-mid text-[13px]">
+      <strong className="text-admin-ink">{label}:</strong> {value}
     </div>
   );
 }
-
-const panelStyle: React.CSSProperties = {
-  background: A.card,
-  border: `1px solid ${A.border}`,
-  borderRadius: 16,
-  boxShadow: A.shadow,
-  padding: 22,
-  alignSelf: "start",
-  display: "flex",
-  flexDirection: "column",
-  gap: 18,
-  color: A.inkSoft,
-};
-
-const metricGrid: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: 10,
-};
-
-const sectionStyle: React.CSSProperties = {
-  borderTop: `1px solid ${A.borderSoft}`,
-  paddingTop: 16,
-};
-
-const sectionTitle: React.CSSProperties = {
-  margin: 0,
-  color: A.ink,
-  fontSize: 15,
-};
-
-const bookingRowStyle: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 12,
-  borderTop: `1px solid ${A.borderSoft}`,
-  padding: "12px 0",
-};

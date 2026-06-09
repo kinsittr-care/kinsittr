@@ -17,10 +17,10 @@ function ShellInner({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
 
   return (
-    <div style={{ height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+    <div className="h-dvh flex flex-col overflow-hidden">
       <AppNav />
       <ProfileCompletionBanner role="parent" />
-      <div style={{ flex: 1, overflow: "hidden", display: "flex" }}>
+      <div className="flex-1 overflow-hidden flex">
         {children}
       </div>
       <BookingSheet

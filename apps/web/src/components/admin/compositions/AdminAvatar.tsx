@@ -1,11 +1,9 @@
-import { A } from "../tokens";
-
 type AvatarTone = "clay" | "muted" | "plum";
 
 const palette: Record<AvatarTone, { bg: string; fg: string }> = {
-  clay:  { bg: A.clay,     fg: "#fff" },
-  muted: { bg: A.inkFaint, fg: "#fff" },
-  plum:  { bg: A.plum,     fg: "#fff" },
+  clay:  { bg: "var(--admin-clay)",      fg: "#fff" },
+  muted: { bg: "var(--admin-ink-faint)", fg: "#fff" },
+  plum:  { bg: "var(--admin-plum)",      fg: "#fff" },
 };
 
 export default function AdminAvatar({
@@ -20,20 +18,8 @@ export default function AdminAvatar({
   const { bg, fg } = palette[tone];
   return (
     <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        background: bg,
-        color: fg,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-        fontFamily: "var(--font-dm-serif), serif",
-        fontSize: size * 0.36,
-        letterSpacing: ".01em",
-      }}
+      className="rounded-full flex items-center justify-center shrink-0 font-display tracking-[.01em]"
+      style={{ width: size, height: size, background: bg, color: fg, fontSize: size * 0.36 }}
     >
       {initials}
     </div>

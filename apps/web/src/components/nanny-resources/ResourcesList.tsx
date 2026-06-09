@@ -48,7 +48,7 @@ export default function ResourcesList() {
           <h2 className="font-display leading-[1.1] tracking-[-0.02em] mb-4" style={{ fontSize: "clamp(28px,3.5vw,42px)" }}>
             Guides to help you <em style={{ color: "var(--teal)" }}>thrive</em>
           </h2>
-          <p className="text-[16px] leading-[1.75] mb-10 max-w-[540px]" style={{ color: "var(--muted)" }}>
+          <p className="text-[16px] leading-[1.75] mb-10 max-w-[540px]" style={{ color: "var(--faint)" }}>
             Practical resources from our team and childcare professionals — free for all KinSittr nannies.
           </p>
         </RevealWrapper>

@@ -15,29 +15,24 @@ export default function SettingsView() {
 
   return (
     <div
-      style={{
-        maxWidth: 620,
-        margin: "0 auto",
-        padding: isMobile ? "20px 16px 40px" : "40px 36px 60px",
-        overflowY: "auto",
-        height: "100%",
-      }}
+      className="max-w-[620px] mx-auto overflow-y-auto h-full"
+      style={{ padding: isMobile ? "20px 16px 40px" : "40px 36px 60px" }}
     >
-      <div style={{ marginBottom: 36 }}>
-        <h1 className="font-display" style={{ fontWeight: 400, fontSize: 30, marginBottom: 4 }}>
+      <div className="mb-9">
+        <h1 className="font-display font-normal text-[30px] mb-1">
           Settings
         </h1>
-        <p style={{ color: "var(--muted)", fontSize: 14 }}>
+        <p className="text-[var(--faint)] text-[14px]">
           Manage your preferences and account settings
         </p>
       </div>
 
       {settingsQuery.isLoading && (
-        <div style={{ color: "var(--faint)", fontSize: 14 }}>Loading settings...</div>
+        <div className="text-brand-faint text-[14px]">Loading settings...</div>
       )}
 
       {settingsQuery.isError && (
-        <div style={{ color: "#c0392b", fontSize: 14 }}>
+        <div className="text-[#c0392b] text-[14px]">
           {settingsQuery.error instanceof Error ? settingsQuery.error.message : "Unable to load settings."}
         </div>
       )}

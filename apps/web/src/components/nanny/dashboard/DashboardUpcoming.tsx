@@ -4,15 +4,6 @@ import { N } from "../tokens";
 import NannyAvatar from "../NannyAvatar";
 import NannyPill from "../NannyPill";
 
-const sectionTitle = {
-  fontFamily: "DM Serif Display, var(--font-dm-serif), serif",
-  fontSize: 22,
-  fontWeight: 400,
-  color: N.greenDk,
-  letterSpacing: "-.005em",
-  marginBottom: 16,
-};
-
 function getInitials(name?: string) {
   return (name || "Parent")
     .split(" ")
@@ -34,31 +25,25 @@ export default function DashboardUpcoming({
   errorMessage: string;
 }) {
   return (
-    <div
-      style={{
-        background: N.card,
-        border: `1px solid ${N.border}`,
-        borderRadius: 18,
-        padding: "24px 26px",
-        boxShadow: N.shadow,
-      }}
-    >
-      <h2 style={sectionTitle}>Upcoming bookings</h2>
-      <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+    <div className="bg-nanny-card border border-nanny-border rounded-[18px] px-[26px] py-6 shadow-[var(--nanny-shadow)]">
+      <h2 className="font-display text-[22px] font-normal text-nanny-green-dk tracking-[-0.005em] mb-4">
+        Upcoming bookings
+      </h2>
+      <div className="flex flex-col">
         {isLoading && (
-          <div style={{ padding: "20px 0", color: N.inkFaint, fontSize: 14 }}>
+          <div className="py-5 text-nanny-ink-faint text-sm">
             Loading bookings...
           </div>
         )}
 
         {isError && (
-          <div style={{ padding: "20px 0", color: N.rose, fontSize: 14 }}>
+          <div className="py-5 text-nanny-rose text-sm">
             {errorMessage}
           </div>
         )}
 
         {!isLoading && !isError && bookings.length === 0 && (
-          <div style={{ padding: "20px 0", color: N.inkFaint, fontSize: 14 }}>
+          <div className="py-5 text-nanny-ink-faint text-sm">
             No upcoming bookings yet.
           </div>
         )}
@@ -66,32 +51,21 @@ export default function DashboardUpcoming({
         {bookings.map((b, i) => (
           <div
             key={b.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 14,
-              padding: "14px 0",
-              borderBottom: i < bookings.length - 1 ? `1px solid ${N.borderSoft}` : "none",
-            }}
+            className="flex items-center gap-3.5 py-3.5"
+            style={{ borderBottom: i < bookings.length - 1 ? `1px solid ${N.borderSoft}` : "none" }}
           >
             <NannyAvatar initials={getInitials(b.parent_display_name)} size={40} tone="cream" />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14.5, fontWeight: 600, color: N.greenDk }}>{b.parent_display_name || "Parent"}</div>
-              <div style={{ fontSize: 13, color: N.inkMute, marginTop: 3 }}>
+            <div className="flex-1 min-w-0">
+              <div className="text-[14.5px] font-semibold text-nanny-green-dk">{b.parent_display_name || "Parent"}</div>
+              <div className="text-[13px] text-nanny-ink-faint mt-[3px]">
                 {formatWeekdayDateOnly(b.date)} · {formatTimeRange(b.start_time, b.duration)}
               </div>
             </div>
-            <div style={{ textAlign: "right" }}>
-              <div
-                style={{
-                  fontFamily: "DM Serif Display, var(--font-dm-serif), serif",
-                  fontSize: 18,
-                  color: N.green,
-                }}
-              >
+            <div className="text-right">
+              <div className="font-display text-lg text-nanny-green">
                 {formatCurrency(b.total_amount)}
               </div>
-              <div style={{ marginTop: 5 }}>
+              <div className="mt-[5px]">
                 <NannyPill tone={b.status === "cancelled" ? "neutral" : b.status}>{b.status.charAt(0).toUpperCase() + b.status.slice(1)}</NannyPill>
               </div>
             </div>

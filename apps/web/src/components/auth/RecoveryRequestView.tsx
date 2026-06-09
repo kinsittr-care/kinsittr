@@ -7,14 +7,9 @@ import { requestPasswordRecovery } from "@/src/utils/api/auth";
 
 const inputClass = `
   w-full border-[1.5px] rounded-[10px] px-[14px] py-3 text-[14px] outline-none transition-all
+  border-[var(--border)] bg-[var(--bg-warm)] text-[var(--brand-text)]
   focus:bg-white focus:shadow-[0_0_0_3px_rgba(58,90,90,.1)]
 `.trim();
-
-const inputStyle = {
-  borderColor: "var(--border)",
-  background: "var(--bg-warm)",
-  color: "var(--brand-text)",
-};
 
 export default function RecoveryRequestView() {
   const [email, setEmail] = useState("");
@@ -49,11 +44,11 @@ export default function RecoveryRequestView() {
       <div className="flex flex-col gap-5 text-center">
         <div>
           <h2 className="font-display text-[24px] leading-tight">Check your email</h2>
-          <p className="mt-3 text-[14px] leading-6" style={{ color: "var(--faint)" }}>
+          <p className="mt-3 text-[14px] leading-6 text-[var(--faint)]">
             If an account exists for that email, we sent a password reset link. The link expires soon.
           </p>
         </div>
-        <Link href="/auth/parent" className="btn-cta justify-center" style={{ width: "100%", fontSize: 15, padding: "14px" }}>
+        <Link href="/auth/parent" className="btn-cta w-full justify-center p-[14px] text-[15px]">
           Back to sign in
         </Link>
       </div>
@@ -64,13 +59,13 @@ export default function RecoveryRequestView() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
       <div>
         <h2 className="font-display text-[24px] leading-tight">Reset your password</h2>
-        <p className="mt-3 text-[14px] leading-6" style={{ color: "var(--faint)" }}>
+        <p className="mt-3 text-[14px] leading-6 text-[var(--faint)]">
           Enter your account email and we will send reset instructions if the account exists.
         </p>
       </div>
 
       <div>
-        <label className="block text-[12px] font-semibold uppercase tracking-[0.07em] mb-[7px]" style={{ color: "var(--faint)" }}>
+        <label className="mb-[7px] block text-[12px] font-semibold uppercase tracking-[0.07em] text-[var(--faint)]">
           Email
         </label>
         <input
@@ -81,22 +76,20 @@ export default function RecoveryRequestView() {
           className={inputClass}
           value={email}
           onChange={handleChange}
-          style={inputStyle}
         />
       </div>
 
-      {error && <p className="text-[13px]" style={{ color: "#b34b39" }}>{error}</p>}
+      {error && <p className="text-[13px] text-[#b34b39]">{error}</p>}
 
       <button
         type="submit"
-        className="btn-cta justify-center"
-        style={{ width: "100%", fontSize: 15, padding: "14px", opacity: isSubmitting ? 0.8 : 1 }}
+        className="btn-cta w-full justify-center p-[14px] text-[15px] disabled:opacity-80"
         disabled={isSubmitting}
       >
         {isSubmitting ? "Sending…" : "Send reset link"}
       </button>
 
-      <Link href="/auth/parent" className="text-center text-[13px] font-semibold" style={{ color: "var(--teal)" }}>
+      <Link href="/auth/parent" className="text-center text-[13px] font-semibold text-[var(--teal)]">
         Back to sign in
       </Link>
     </form>

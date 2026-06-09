@@ -8,7 +8,6 @@ interface PasswordFieldProps {
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
   inputClass: string;
-  inputStyle: React.CSSProperties;
 }
 
 export default function PasswordField({
@@ -17,7 +16,6 @@ export default function PasswordField({
   onChange,
   placeholder = "Password",
   inputClass,
-  inputStyle,
 }: PasswordFieldProps) {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -31,14 +29,12 @@ export default function PasswordField({
         className={`${inputClass} pr-20`}
         value={value}
         onChange={onChange}
-        style={inputStyle}
       />
       <button
         type="button"
         aria-label={isVisible ? "Hide password" : "Show password"}
         aria-pressed={isVisible}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-semibold"
-        style={{ color: "var(--teal)" }}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-semibold text-[var(--teal)]"
         onClick={() => setIsVisible((current) => !current)}
       >
         {isVisible ? "Hide" : "Show"}

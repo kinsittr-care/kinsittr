@@ -1,6 +1,5 @@
 import AdminPagination from "../AdminPagination";
 import AdminPill from "./AdminPill";
-import { A } from "../tokens";
 import type { AdminConversation } from "@/src/types/api/admin";
 import { formatOptionalShortDateTime } from "@/src/utils/format";
 
@@ -30,12 +29,12 @@ export default function AdminConversationList({
   onSelect,
 }: AdminConversationListProps) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ background: A.card, border: `1px solid ${A.border}`, borderRadius: 16, boxShadow: A.shadow, overflow: "hidden" }}>
+    <div className="flex flex-col gap-3">
+      <div className="bg-admin-card border border-admin-border rounded-2xl shadow-[var(--admin-shadow)] overflow-hidden">
         {isLoading ? (
-          <p style={{ padding: 20, margin: 0, color: A.inkSoft }}>Loading conversations...</p>
+          <p className="p-5 m-0 text-admin-ink-soft">Loading conversations...</p>
         ) : conversations.length === 0 ? (
-          <p style={{ padding: 20, margin: 0, color: A.inkSoft }}>No conversations found.</p>
+          <p className="p-5 m-0 text-admin-ink-soft">No conversations found.</p>
         ) : (
           conversations.map((conversation, index) => (
             <button
@@ -48,22 +47,22 @@ export default function AdminConversationList({
                 boxSizing: "border-box",
                 padding: 18,
                 cursor: "pointer",
-                background: selectedConversationId === conversation.id ? A.cardWarm : A.card,
-                borderBottom: index < conversations.length - 1 ? `1px solid ${A.borderSoft}` : "none",
+                background: selectedConversationId === conversation.id ? "var(--admin-card-warm)" : "var(--admin-card)",
+                borderBottom: index < conversations.length - 1 ? "1px solid var(--admin-border-soft)" : "none",
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
-                <div style={{ color: A.ink, fontWeight: 700, fontSize: 14 }}>
+              <div className="flex justify-between gap-[10px] items-center">
+                <div className="text-admin-ink font-bold text-[14px]">
                   {conversation.parent.display_name} / {conversation.nanny.display_name}
                 </div>
                 <AdminPill tone={isConversationLocked(conversation) ? "red" : "green"}>
                   {isConversationLocked(conversation) ? "Locked" : "Open"}
                 </AdminPill>
               </div>
-              <p style={{ margin: "8px 0 0", color: A.inkMid, fontSize: 13.5, lineHeight: 1.4 }}>
+              <p className="mt-2 mb-0 text-admin-ink-mid text-[13.5px] leading-[1.4]">
                 {conversation.last_message_preview || "No messages yet"}
               </p>
-              <div style={{ marginTop: 8, color: A.inkSoft, fontSize: 12.5 }}>
+              <div className="mt-2 text-admin-ink-soft text-[12.5px]">
                 {conversation.message_count} messages · {formatOptionalShortDateTime(conversation.last_message_at, "No messages yet")}
               </div>
             </button>

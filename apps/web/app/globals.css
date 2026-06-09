@@ -269,11 +269,11 @@ body {
 .btn-nav-ghost:hover { color: var(--teal); border-color: var(--teal); }
 
 /* ── Hover links ── */
-.link-muted {
-  text-decoration: none; color: var(--muted);
+.link-faint {
+  text-decoration: none; color: var(--faint);
   font-size: 14px; font-weight: 500; transition: color .15s;
 }
-.link-muted:hover { color: var(--brand-text); }
+.link-faint:hover { color: var(--brand-text); }
 
 .link-white {
   display: block; text-decoration: none; font-size: 14px;

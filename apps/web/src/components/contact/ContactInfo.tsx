@@ -4,7 +4,7 @@ import EnvelopeIllustration from "./EnvelopeIllustration";
 
 const channels = [
   {
-    iconBg: "var(--teal-lt)",
+    iconBgClass: "bg-[var(--teal-lt)]",
     icon: <MailIcon />,
     label: "Email",
     value: "kinsittr@gmail.com",
@@ -20,7 +20,7 @@ const channels = [
   //   value: "1-800-000-0000",
   // },
   {
-    iconBg: "var(--coral-lt)",
+    iconBgClass: "bg-[var(--coral-lt)]",
     icon: <MapPinIcon />,
     label: "Headquarters",
     value: "Calgary, Alberta, Canada",
@@ -31,31 +31,29 @@ export default function ContactInfo() {
   return (
     <RevealWrapper>
       <div
-        className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-widest rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
-        style={{ color: "var(--teal)", background: "var(--teal-lt)", borderColor: "var(--teal-mid)" }}
+        className="mb-[18px] inline-flex items-center gap-[7px] rounded-[30px] border border-[var(--teal-mid)] bg-[var(--teal-lt)] px-[13px] py-[5px] text-[12px] font-bold uppercase tracking-widest text-[var(--teal)]"
       >
         Contact us
       </div>
-      <h1 className="font-display leading-[1.1] tracking-[-0.02em] mb-4" style={{ fontSize: "clamp(34px,4.5vw,52px)" }}>
-        We&apos;d love to <br /><em style={{ color: "var(--teal)" }}>hear from you.</em>
+      <h1 className="font-display mb-4 text-[clamp(34px,4.5vw,52px)] leading-[1.1] tracking-[-0.02em]">
+        We&apos;d love to <br /><em className="text-[var(--teal)]">hear from you.</em>
       </h1>
-      <p className="text-[16px] leading-[1.75] mb-9 max-w-[380px]" style={{ color: "var(--muted)" }}>
+      <p className="mb-9 max-w-[380px] text-[16px] leading-[1.75] text-[var(--faint)]">
         Have a question about KinSittr, a safety concern, or want to explore working with us? We&apos;re a small team and we read every message.
       </p>
 
-      {channels.map(({ iconBg, icon, label, value }) => (
+      {channels.map(({ iconBgClass, icon, label, value }) => (
         <div key={label} className="flex items-center gap-[14px] mb-5">
           <div
-            className="w-[46px] h-[46px] rounded-[12px] flex items-center justify-center shrink-0"
-            style={{ background: iconBg }}
+            className={`flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl ${iconBgClass}`}
           >
             {icon}
           </div>
           <div>
-            <div className="text-[12px] font-semibold uppercase tracking-[0.08em] mb-[2px]" style={{ color: "var(--faint)" }}>
+            <div className="mb-[2px] text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--faint)]">
               {label}
             </div>
-            <div className="text-[15px] font-semibold" style={{ color: "var(--brand-text)" }}>
+            <div className="text-[15px] font-semibold text-[var(--brand-text)]">
               {value}
             </div>
           </div>
