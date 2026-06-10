@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { NannyProfile, UpdateNannyProfilePayload } from "@/src/types/api/api";
+import { MAX_NANNY_SPECIALTIES, SPECIALTY_OPTIONS } from "@/src/constants/specialties";
 import { ownNannyProfileQueryKey, updateOwnNannyProfile } from "@/src/utils/api/nanny";
 import { btnGhostCls, btnPrimaryCls, inputCls, labelCls } from "../nanny-styles";
 import { cn } from "@/lib/utils";
@@ -11,8 +12,6 @@ import {
   BIO_LIMIT,
   CITIES_BY_PROVINCE,
   PROVINCE_OPTIONS,
-  SPECIALTIES_TOTAL_LIMIT,
-  SPECIALTY_MAX_COUNT,
   TESTING_PROVINCE,
   profileToPayload,
 } from "./nannyProfileHelpers";
@@ -22,7 +21,6 @@ import { NannyProfileHeaderCard } from "./NannyProfileHeaderCard";
 export default function NannyProfileForm({ profile }: { profile: NannyProfile }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<UpdateNannyProfilePayload>(() => profileToPayload(profile));
-  const [specialtyText, setSpecialtyText] = useState(() => profile.specialties.join(", "));
   const [message, setMessage] = useState<string | null>(null);
   const isPublicProfile = profile.verification_status === "verified";
 
@@ -51,13 +49,7 @@ export default function NannyProfileForm({ profile }: { profile: NannyProfile })
       <NannyProfileHeaderCard profile={profile} />
       <BasicFields
         form={form}
-        specialtyText={specialtyText}
         updateField={updateField}
-        onSpecialtyTextChange={(value) => {
-          const nextText = limitSpecialtyText(value, specialtyText);
-          setSpecialtyText(nextText);
-          updateField("specialties", parseSpecialties(nextText));
-        }}
       />
       <BioField bio={form.bio} updateField={updateField} />
       <RateField rate={form.rate_per_hour} updateField={updateField} />
@@ -94,20 +86,25 @@ export default function NannyProfileForm({ profile }: { profile: NannyProfile })
 
 function BasicFields({
   form,
-  specialtyText,
   updateField,
-  onSpecialtyTextChange,
 }: {
   form: UpdateNannyProfilePayload;
-  specialtyText: string;
   updateField: <TKey extends keyof UpdateNannyProfilePayload>(key: TKey, value: UpdateNannyProfilePayload[TKey]) => void;
-  onSpecialtyTextChange: (value: string) => void;
 }) {
   const cityOptions = cityOptionsForProvince(form.province, form.city);
   const usesFreeTextCity = form.province === TESTING_PROVINCE;
   const handleProvinceChange = (province: string) => {
     updateField("province", province);
     updateField("city", "");
+  };
+  const handleSpecialtySelect = (value: string) => {
+    if (!value || form.specialties.includes(value) || form.specialties.length >= MAX_NANNY_SPECIALTIES) {
+      return;
+    }
+    updateField("specialties", [...form.specialties, value]);
+  };
+  const removeSpecialty = (value: string) => {
+    updateField("specialties", form.specialties.filter((specialty) => specialty !== value));
   };
 
   return (
@@ -154,12 +151,43 @@ function BasicFields({
       </div>
       <div>
         <label className={labelCls}>Specialties</label>
-        <input
+        <select
           className={inputCls}
-          value={specialtyText}
-          placeholder="Infant care, CPR certified"
-          onChange={(event) => onSpecialtyTextChange(event.target.value)}
-        />
+          value=""
+          onChange={(event) => handleSpecialtySelect(event.target.value)}
+          disabled={form.specialties.length >= MAX_NANNY_SPECIALTIES}
+        >
+          <option value="">
+            {form.specialties.length >= MAX_NANNY_SPECIALTIES
+              ? "Maximum 3 selected"
+              : "Select a specialty"}
+          </option>
+          {SPECIALTY_OPTIONS.map((specialty) => (
+            <option
+              key={specialty.value}
+              value={specialty.value}
+              disabled={form.specialties.includes(specialty.value)}
+            >
+              {specialty.label}
+            </option>
+          ))}
+        </select>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {form.specialties.length === 0 ? (
+            <span className="text-[12.5px] text-nanny-ink-faint">Select up to 3 specialties.</span>
+          ) : (
+            form.specialties.map((specialty) => (
+              <button
+                key={specialty}
+                type="button"
+                onClick={() => removeSpecialty(specialty)}
+                className="rounded-full border border-nanny-border bg-nanny-warm px-3 py-1 text-[12.5px] font-semibold text-nanny-ink transition hover:border-nanny-green"
+              >
+                {specialty} ×
+              </button>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
@@ -178,27 +206,6 @@ function cityOptionsForProvince(province: string, city: string) {
     return options;
   }
   return [city, ...options];
-}
-
-function limitSpecialtyText(value: string, previousValue: string) {
-  const nextText = value.split(",").slice(0, SPECIALTY_MAX_COUNT).join(",");
-  const isDeleting = nextText.length < previousValue.length;
-  if (isDeleting || getSpecialtyCharacterCount(parseSpecialties(nextText)) <= SPECIALTIES_TOTAL_LIMIT) {
-    return nextText;
-  }
-  return previousValue;
-}
-
-function parseSpecialties(value: string) {
-  return value
-    .split(",")
-    .map((segment) => segment.trim())
-    .filter(Boolean)
-    .slice(0, SPECIALTY_MAX_COUNT);
-}
-
-function getSpecialtyCharacterCount(specialties: string[]) {
-  return specialties.reduce((total, specialty) => total + specialty.length, 0);
 }
 
 function BioField({

@@ -1,8 +1,9 @@
 import type { PublicNannyCard } from "@/src/types/api/api";
+import { SPECIALTY_OPTIONS } from "@/src/constants/specialties";
 import type { Nanny } from "../types";
 
 export const CITIES = ["All cities", "Toronto, ON", "Vancouver, BC", "Calgary, AB", "Ottawa, ON", "Montreal, QC"];
-export const SPECIALTIES = ["Infant care", "Special needs", "Montessori", "CPR certified", "Bilingual"];
+export const SPECIALTIES = SPECIALTY_OPTIONS.map((option) => option.value);
 export const SORT_OPTIONS = ["Top rated", "Price: low to high", "Price: high to low", "Most reviewed"];
 export const PAGE_SIZE = 12;
 

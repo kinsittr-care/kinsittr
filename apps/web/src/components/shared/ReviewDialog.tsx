@@ -55,6 +55,7 @@ export default function ReviewDialog({
       role="dialog"
       aria-modal="true"
       aria-labelledby="review-dialog-title"
+      aria-describedby="review-dialog-description"
     >
       <div className="w-[min(100%,460px)] rounded-[20px] border border-[rgba(64,48,32,0.12)] bg-[#fffdf8] p-[22px] shadow-[0_24px_80px_rgba(40,30,20,.22)]">
         <div className="mb-[18px]">
@@ -64,7 +65,7 @@ export default function ReviewDialog({
           >
             {title}
           </h2>
-          <p className="mt-2 mb-0 text-[14px] leading-[1.6] text-brand-faint">
+          <p id="review-dialog-description" className="mt-2 mb-0 text-[14px] leading-[1.6] text-brand-faint">
             {description}
           </p>
         </div>

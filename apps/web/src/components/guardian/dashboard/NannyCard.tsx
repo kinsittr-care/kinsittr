@@ -8,6 +8,10 @@ import Tag from "./Tag";
 import { formatLocationPart } from "@/src/utils/format";
 
 function StarRating({ rating, reviews }: { rating: number; reviews: number }) {
+  if (reviews === 0) {
+    return null;
+  }
+
   const full = Math.floor(rating);
   const half = rating % 1 >= 0.5;
   return (
@@ -15,7 +19,7 @@ function StarRating({ rating, reviews }: { rating: number; reviews: number }) {
       <span className="text-gold text-[13px] tracking-[-1px]">
         {"★".repeat(full)}{half ? "½" : ""}
       </span>
-      <span className="text-[13px] font-semibold">{rating}</span>
+      <span className="text-[13px] font-semibold">{rating.toFixed(1)}</span>
       <span className="text-[12px] text-brand-faint">({reviews})</span>
     </span>
   );

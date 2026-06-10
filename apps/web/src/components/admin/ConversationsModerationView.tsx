@@ -129,6 +129,13 @@ export default function ConversationsModerationView() {
     selectedConversation &&
     ((lockMutation.isPending && lockMutation.variables?.id === selectedConversation.id) ||
       (unlockMutation.isPending && unlockMutation.variables?.id === selectedConversation.id));
+  const updateStatus = (nextStatus: BookingStatus | "") => {
+    setPage(1);
+    setMessagePage(1);
+    setActionPage(1);
+    setStatus(nextStatus);
+    setSelectedConversationId(null);
+  };
 
   return (
     <>
@@ -145,31 +152,37 @@ export default function ConversationsModerationView() {
               setSubmittedSearch(search.trim());
               setSelectedConversationId(null);
             }}
-            className="flex gap-2 items-center flex-wrap justify-end"
+            className="flex w-full max-w-[760px] flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end"
           >
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search conversations..."
-              className="px-[14px] py-[10px] bg-admin-card border border-admin-border rounded-[10px] text-admin-ink min-w-[240px]"
+              className="min-w-0 rounded-[10px] border border-admin-border bg-admin-card px-[14px] py-[10px] text-admin-ink sm:min-w-[240px]"
             />
             <button type="submit" className={btnGhostCls}>Search</button>
-            {statusFilters.map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                onClick={() => {
-                  setPage(1);
-                  setMessagePage(1);
-                  setActionPage(1);
-                  setStatus(item.value);
-                  setSelectedConversationId(null);
-                }}
-                className={cn(btnGhostCls, status === item.value && "border-admin-clay text-admin-clay")}
-              >
-                {item.label}
-              </button>
-            ))}
+            <select
+              value={status}
+              onChange={(event) => updateStatus(event.target.value as BookingStatus | "")}
+              className="rounded-[10px] border border-admin-border bg-admin-card px-[14px] py-[10px] text-admin-ink lg:hidden"
+              aria-label="Conversation booking status"
+            >
+              {statusFilters.map((item) => (
+                <option key={item.label} value={item.value}>{item.label}</option>
+              ))}
+            </select>
+            <div className="hidden flex-wrap justify-end gap-2 lg:flex">
+              {statusFilters.map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => updateStatus(item.value)}
+                  className={cn(btnGhostCls, status === item.value && "border-admin-clay text-admin-clay")}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </form>
         }
       />

@@ -8,6 +8,8 @@ import {
   Sheet,
   SheetContent,
   SheetClose,
+  SheetDescription,
+  SheetTitle,
 } from "@/components/ui/sheet";
 import { NannyNavLinks, useNannySidebarData } from "./NannySidebar";
 import NannyAvatar from "./NannyAvatar";
@@ -47,7 +49,15 @@ export default function NannyMobileHeader() {
 
       {/* Mobile nav */}
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" showCloseButton={false} className="bg-nanny-bg border-nanny-border flex flex-col pt-0">
+        <SheetContent
+          side="left"
+          showCloseButton={false}
+          className="bg-nanny-bg border-nanny-border flex flex-col pt-0"
+        >
+          <SheetTitle className="sr-only">Caregiver navigation</SheetTitle>
+          <SheetDescription className="sr-only">
+            Navigate between caregiver dashboard sections.
+          </SheetDescription>
           {/* Sheet header */}
           <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-nanny-border-soft">
             <div className="flex items-center gap-2.5">

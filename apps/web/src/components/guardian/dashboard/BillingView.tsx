@@ -44,6 +44,10 @@ export default function BillingView() {
   });
   const paymentMethods = methodsQuery.data?.data?.items ?? [];
   const hasSavedCard = paymentMethods.length > 0;
+  const paymentMethodError = [methodsQuery.error, setDefaultMutation.error, deleteMutation.error].find(Boolean);
+  const shouldShowPaymentMethodError =
+    paymentMethodError instanceof Error &&
+    !paymentMethodError.message.toLowerCase().includes("stripe_not_configured");
 
   useEffect(() => {
     let active = true;
@@ -190,11 +194,9 @@ export default function BillingView() {
               </div>
             </div>
             {cardSuccess && <p className="text-teal text-[13px] mb-[14px]">{cardSuccess}</p>}
-            {(methodsQuery.error || setDefaultMutation.error || deleteMutation.error) && (
+            {shouldShowPaymentMethodError && (
               <p className="text-[#c0392b] text-[13px] mb-[14px]">
-                {[methodsQuery.error, setDefaultMutation.error, deleteMutation.error].find(Boolean) instanceof Error
-                  ? ([methodsQuery.error, setDefaultMutation.error, deleteMutation.error].find(Boolean) as Error).message
-                  : "Unable to update payment methods."}
+                {paymentMethodError.message}
               </p>
             )}
             <div className="flex flex-col md:flex-row gap-[10px]">

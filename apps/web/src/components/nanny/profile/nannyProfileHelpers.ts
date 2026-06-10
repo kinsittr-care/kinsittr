@@ -2,8 +2,6 @@ import type { NannyProfile, UpdateNannyProfilePayload } from "@/src/types/api/ap
 import { formatLocationPart } from "@/src/utils/format";
 
 export const BIO_LIMIT = 450;
-export const SPECIALTIES_TOTAL_LIMIT = 25;
-export const SPECIALTY_MAX_COUNT = 10;
 export const TESTING_PROVINCE = "Other / testing";
 
 export const PROVINCE_OPTIONS = [

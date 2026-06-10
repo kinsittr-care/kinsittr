@@ -81,10 +81,16 @@ export default function AdminNannyDetailPanel({
         <Detail label="Specialties" value={nanny.specialties.length ? nanny.specialties.join(", ") : "None listed"} />
         <Detail label="Stripe" value={nanny.stripe_onboarded ? "Onboarded" : "Not onboarded"} />
         <div className="flex items-center gap-2 mt-[10px]">
-          <AdminStars value={Math.round(nanny.rating_avg)} />
-          <span className="text-admin-ink-mid text-[13px]">
-            {nanny.rating_avg.toFixed(1)} ({nanny.rating_count})
-          </span>
+          {nanny.rating_count > 0 ? (
+            <>
+              <AdminStars value={Math.round(nanny.rating_avg)} />
+              <span className="text-admin-ink-mid text-[13px]">
+                {nanny.rating_avg.toFixed(1)} ({nanny.rating_count})
+              </span>
+            </>
+          ) : (
+            <span className="text-admin-ink-mid text-[13px]">New · no reviews yet</span>
+          )}
         </div>
       </div>
 

@@ -57,7 +57,11 @@ export default function AdminMobileHeader({
 
       {/* Mobile nav */}
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" showCloseButton={false} className="flex flex-col pt-0 bg-admin-sidebar border-admin-border">
+        <SheetContent
+          side="left"
+          showCloseButton={false}
+          className="flex flex-col pt-0 bg-admin-sidebar border-admin-border"
+        >
           <SheetTitle className="sr-only">Admin navigation</SheetTitle>
           <SheetDescription className="sr-only">
             Navigate between admin console sections.

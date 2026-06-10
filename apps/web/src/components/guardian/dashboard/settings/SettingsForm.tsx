@@ -83,9 +83,8 @@ export default function SettingsForm({ settings }: { settings: ParentSettings })
         </div>
         <div>
           <label className={labelCls}>Currency</label>
-          <select value={draft.currency} onChange={(event) => setDraftValue("currency", event.target.value)} className={cn(selectCls, "mb-4")} style={selectArrowStyle}>
+          <select value="CAD" onChange={(event) => setDraftValue("currency", event.target.value)} className={cn(selectCls, "mb-4")} style={selectArrowStyle}>
             <option value="CAD">CAD</option>
-            <option value="USD">USD</option>
           </select>
         </div>
         <div>
@@ -164,7 +163,7 @@ function settingsToPayload(settings: ParentSettings): UpdateParentSettingsPayloa
     share_reviews: settings.share_reviews,
     analytics: settings.analytics,
     language: settings.language,
-    currency: settings.currency,
+    currency: "CAD",
     timezone: settings.timezone,
   };
 }

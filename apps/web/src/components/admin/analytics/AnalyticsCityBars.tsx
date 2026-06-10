@@ -25,7 +25,7 @@ export default function AnalyticsCityBars({
   const max = cities[0]?.count ?? 0;
 
   return (
-    <div className="bg-admin-card border border-admin-border rounded-2xl px-7 py-[26px] shadow-[var(--admin-shadow)]">
+    <div className="bg-admin-card border border-admin-border rounded-2xl px-5 py-5 shadow-[var(--admin-shadow)] sm:px-7 sm:py-[26px]">
       <h2 className="font-display text-[22px] font-normal text-admin-ink tracking-[-0.005em]">Bookings by city</h2>
       <div className="mt-[22px] flex flex-col gap-[18px]">
         {isLoading && <p className="m-0 text-admin-ink-soft text-[14px]">Loading city data...</p>}

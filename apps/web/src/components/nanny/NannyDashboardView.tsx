@@ -39,7 +39,11 @@ export default function NannyDashboardView() {
         <p className="mt-2 text-sm md:text-[14.5px] text-nanny-ink-faint">{today}</p>
       </div>
 
-      <DashboardStatCards bookings={bookings} isLoading={bookingsQuery.isLoading} />
+      <DashboardStatCards
+        bookings={bookings}
+        isLoading={bookingsQuery.isLoading || sessionQuery.isLoading}
+        profile={session?.nanny_profile}
+      />
 
       {/* Two-panel section: single col on mobile, side-by-side on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-4 mt-5">

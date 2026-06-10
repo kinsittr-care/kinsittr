@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/kinsittr/kinsittr-api/bookings/dtos"
-	nannyDtos "github.com/kinsittr/kinsittr-api/nanny/dtos"
+	nanny_dtos "github.com/kinsittr/kinsittr-api/nanny/dtos"
 )
 
 // ── ValidateAPIData ───────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ func TestValidateAPIData(t *testing.T) {
 }
 
 func TestValidateNannyProfileDTO(t *testing.T) {
-	validDTO := nannyDtos.UpdateNannyProfileDTO{
+	validDTO := nanny_dtos.UpdateNannyProfileDTO{
 		Phone:       "+14165550100",
 		Bio:         "Experienced caregiver with 5 years of childcare.",
 		RatePerHour: 28.0,
@@ -165,10 +165,10 @@ func TestValidateNannyProfileDTO(t *testing.T) {
 
 	t.Run("too many specialties fail", func(t *testing.T) {
 		dto := validDTO
-		dto.Specialties = []string{"one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven"}
+		dto.Specialties = []string{"one", "two", "three", "four"}
 		ok, _ := ValidateAPIData(dto)
 		if ok {
-			t.Error("expected failure for more than 10 specialties")
+			t.Error("expected failure for more than 3 specialties")
 		}
 	})
 

@@ -464,13 +464,13 @@ func TestUpdateOwnProfile(t *testing.T) {
 		}
 	})
 
-	t.Run("specialties over total character limit fail", func(t *testing.T) {
+	t.Run("more than three specialties fail", func(t *testing.T) {
 		updated := models.NannyProfile{ID: uuid.New(), DisplayName: "Jane Doe"}
 		pr := &mockProfileRepo{updatedNanny: updated}
 		p := NewNannyPipe(&mockNannyRepo{}, pr)
 
 		dto := validDTO
-		dto.Specialties = []string{"Infant care", "Special needs", "Montessori"}
+		dto.Specialties = []string{"Infant care", "Special needs", "Montessori", "CPR certified"}
 		res := p.UpdateOwnProfile(ctx, userID, dto)
 		if res.Success || string(res.Message) != messages.Invalid_Nanny_Profile {
 			t.Fatalf("expected %s, got success=%v msg=%s", messages.Invalid_Nanny_Profile, res.Success, res.Message)

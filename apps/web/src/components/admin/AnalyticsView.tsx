@@ -105,39 +105,58 @@ export default function AnalyticsView() {
         title="Analytics"
         subtitle={`${formatShortDate(params.date_from ?? "")} - ${formatShortDate(params.date_to ?? "")} · Canada`}
         right={
-          <div className="flex gap-[10px] flex-wrap justify-end">
-            {(Object.keys(rangeConfig) as RangeKey[]).map((key) => (
-              <button
-                key={key}
-                className={cn(btnGhostCls, range === key && "bg-admin-card-warm border-admin-clay text-admin-clay")}
-                onClick={() => {
-                  setRange(key);
-                  setDateFrom("");
-                  setDateTo("");
-                  setBucket("");
-                }}
-              >
-                {rangeConfig[key].label}
-              </button>
-            ))}
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(event) => setDateFrom(event.target.value)}
-              className="px-3 py-[10px] bg-admin-card border border-admin-border rounded-[10px] text-admin-ink"
-              aria-label="Analytics date from"
-            />
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(event) => setDateTo(event.target.value)}
-              className="px-3 py-[10px] bg-admin-card border border-admin-border rounded-[10px] text-admin-ink"
-              aria-label="Analytics date to"
-            />
+          <div className="flex w-full flex-col gap-[10px] lg:w-auto lg:max-w-[840px] lg:flex-row lg:flex-wrap lg:justify-end">
+            <select
+              value={range}
+              onChange={(event) => {
+                setRange(event.target.value as RangeKey);
+                setDateFrom("");
+                setDateTo("");
+                setBucket("");
+              }}
+              className="rounded-[10px] border border-admin-border bg-admin-card px-3 py-[10px] text-admin-ink md:hidden"
+              aria-label="Analytics date range"
+            >
+              {(Object.keys(rangeConfig) as RangeKey[]).map((key) => (
+                <option key={key} value={key}>{rangeConfig[key].label}</option>
+              ))}
+            </select>
+            <div className="hidden flex-wrap justify-end gap-[10px] md:flex">
+              {(Object.keys(rangeConfig) as RangeKey[]).map((key) => (
+                <button
+                  key={key}
+                  className={cn(btnGhostCls, range === key && "bg-admin-card-warm border-admin-clay text-admin-clay")}
+                  onClick={() => {
+                    setRange(key);
+                    setDateFrom("");
+                    setDateTo("");
+                    setBucket("");
+                  }}
+                >
+                  {rangeConfig[key].label}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-[10px] sm:flex sm:flex-wrap sm:justify-end">
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(event) => setDateFrom(event.target.value)}
+                className="min-w-0 rounded-[10px] border border-admin-border bg-admin-card px-3 py-[10px] text-admin-ink sm:min-w-[150px]"
+                aria-label="Analytics date from"
+              />
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(event) => setDateTo(event.target.value)}
+                className="min-w-0 rounded-[10px] border border-admin-border bg-admin-card px-3 py-[10px] text-admin-ink sm:min-w-[150px]"
+                aria-label="Analytics date to"
+              />
+            </div>
             <select
               value={bucket}
               onChange={(event) => setBucket(event.target.value as AdminAnalyticsBucket | "")}
-              className="px-3 py-[10px] bg-admin-card border border-admin-border rounded-[10px] text-admin-ink"
+              className="rounded-[10px] border border-admin-border bg-admin-card px-3 py-[10px] text-admin-ink"
               aria-label="Analytics bucket"
             >
               <option value="">Auto bucket</option>
@@ -151,7 +170,7 @@ export default function AnalyticsView() {
           </div>
         }
       />
-      <div className="px-10 pt-6 pb-10 flex flex-col gap-[18px]">
+      <div className="flex flex-col gap-[18px] px-4 py-5 md:px-10 md:py-6">
         {analyticsQuery.isError && (
           <div className="bg-[#fff4ea] border border-[#f0c8a8] rounded-[14px] text-[#9a5528] px-[14px] py-3 text-[13px]">
             {analyticsQuery.error instanceof Error
@@ -160,16 +179,17 @@ export default function AnalyticsView() {
           </div>
         )}
         <AnalyticsMetricTiles metrics={analyticsMetrics(analytics)} isLoading={analyticsQuery.isLoading} />
-        <div className="grid gap-[18px]" style={{ gridTemplateColumns: "1.05fr 1fr" }}>
+        <div className="grid gap-[18px] xl:grid-cols-[1.05fr_1fr]">
           <AnalyticsCityBars cities={analytics?.bookings_by_city ?? []} isLoading={analyticsQuery.isLoading} />
           <AnalyticsKeyMetrics metrics={keyMetrics(analytics)} isLoading={analyticsQuery.isLoading} />
         </div>
-        <div className="grid grid-cols-2 gap-[18px]">
-          <div className="bg-admin-card border border-admin-border rounded-2xl px-7 py-[26px] shadow-[var(--admin-shadow)]">
+        <div className="grid gap-[18px] xl:grid-cols-2">
+          <div className="overflow-hidden bg-admin-card border border-admin-border rounded-2xl px-5 py-5 shadow-[var(--admin-shadow)] sm:px-7 sm:py-[26px]">
             <h2 className="font-display text-[22px] font-normal text-admin-ink tracking-[-0.005em]">
               Revenue trend
             </h2>
-            <div className="mt-[22px] flex items-end gap-[10px] min-h-[150px]">
+            <div className="mt-[22px] min-h-[170px] overflow-x-auto pb-2">
+              <div className="flex min-w-[420px] items-end gap-[10px] min-h-[150px]">
               {analyticsQuery.isLoading && <p className="m-0 text-admin-ink-soft text-[14px]">Loading trend data...</p>}
               {!analyticsQuery.isLoading && latestSeries.length === 0 && (
                 <p className="m-0 text-admin-ink-soft text-[14px]">No revenue trend data yet.</p>
@@ -187,10 +207,11 @@ export default function AnalyticsView() {
                     </span>
                   </div>
                 ))}
+              </div>
             </div>
           </div>
 
-          <div className="bg-admin-card border border-admin-border rounded-2xl px-7 py-[26px] shadow-[var(--admin-shadow)]">
+          <div className="bg-admin-card border border-admin-border rounded-2xl px-5 py-5 shadow-[var(--admin-shadow)] sm:px-7 sm:py-[26px]">
             <h2 className="font-display text-[22px] font-normal text-admin-ink tracking-[-0.005em]">
               Top nannies
             </h2>
@@ -203,12 +224,15 @@ export default function AnalyticsView() {
                 (analytics?.top_nannies ?? []).map((nanny) => (
                   <div
                     key={nanny.nanny_profile_id}
-                    className="flex justify-between gap-4 py-[14px] border-b border-admin-border-soft"
+                    className="flex flex-col gap-2 py-[14px] border-b border-admin-border-soft sm:flex-row sm:justify-between sm:gap-4"
                   >
-                    <div>
+                    <div className="min-w-0">
                       <div className="text-admin-ink text-[14.5px] font-semibold">{nanny.display_name}</div>
                       <div className="text-admin-ink-soft text-[12.5px] mt-[3px]">
-                        {formatLocation(nanny.city, nanny.province, "Location not set")} · {nanny.completed_count} bookings · {nanny.rating_avg.toFixed(1)} rating
+                        {formatLocation(nanny.city, nanny.province, "Location not set")}
+                      </div>
+                      <div className="text-admin-ink-soft text-[12.5px]">
+                        {nanny.completed_count} bookings · {nanny.rating_avg.toFixed(1)} rating
                       </div>
                     </div>
                     <div className="text-admin-clay font-bold text-[14px]">{formatCurrency(nanny.revenue)}</div>
@@ -217,7 +241,7 @@ export default function AnalyticsView() {
             </div>
           </div>
         </div>
-        <div className="bg-admin-card border border-admin-border rounded-2xl px-7 py-6 shadow-[var(--admin-shadow)]">
+        <div className="bg-admin-card border border-admin-border rounded-2xl px-5 py-5 shadow-[var(--admin-shadow)] sm:px-7 sm:py-6">
           <h2 className="font-display text-[22px] font-normal text-admin-ink m-0">
             Registration trends
           </h2>
@@ -228,7 +252,7 @@ export default function AnalyticsView() {
             )}
             {!analyticsQuery.isLoading &&
               (analytics?.registration_trends ?? []).slice(-8).map((item) => (
-                <div key={item.period} className="grid grid-cols-[120px_1fr_1fr] gap-3 items-center">
+                <div key={item.period} className="grid gap-2 border-b border-admin-border-soft py-3 sm:grid-cols-[120px_1fr_1fr] sm:items-center sm:border-b-0 sm:py-0">
                   <span className="text-admin-ink-soft text-[12.5px]">{formatShortDate(item.period)}</span>
                   <TrendBar label="Parents" value={item.parent_count} color="var(--admin-clay)" />
                   <TrendBar label="Nannies" value={item.nanny_count} color="var(--admin-amber)" />

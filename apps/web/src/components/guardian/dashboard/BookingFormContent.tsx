@@ -16,12 +16,16 @@ const inputCls = "w-full border-[1.5px] border-brand-border rounded-[9px] px-[14
 const labelCls = "text-[12px] font-medium text-[var(--faint)] block mb-[6px] uppercase tracking-[0.06em]";
 
 function StarRating({ rating, reviews }: { rating: number; reviews: number }) {
+  if (reviews === 0) {
+    return null;
+  }
+
   return (
     <span className="flex items-center gap-1">
       <span className="text-gold text-[13px]">
         {"★".repeat(Math.floor(rating))}
       </span>
-      <span className="text-[13px] font-semibold">{rating}</span>
+      <span className="text-[13px] font-semibold">{rating.toFixed(1)}</span>
       <span className="text-[12px] text-brand-faint">({reviews})</span>
     </span>
   );

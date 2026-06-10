@@ -93,16 +93,7 @@ function ProfileContent({ profile, reviews }: { profile: PublicNannyProfile; rev
 
       <aside className="space-y-6">
         <SummaryCard profile={profile} />
-        <ReviewCard reviews={reviews} ratingCount={profile.rating_count} />
-        <div className="rounded-[24px] border border-(--border) bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-brand-text">Interested in booking?</h2>
-          <p className="mt-2 text-sm leading-6 text-brand-faint">
-            Sign in as a parent to message this nanny and request a booking.
-          </p>
-          <Link href="/auth/parent" className="btn-nav mt-5 inline-flex">
-            Find a nanny
-          </Link>
-        </div>
+        {profile.rating_count > 0 && <ReviewCard reviews={reviews} />}
       </aside>
     </div>
   );
@@ -113,7 +104,9 @@ function SummaryCard({ profile }: { profile: PublicNannyProfile }) {
     <div className="rounded-[24px] border border-(--border) bg-white p-6 shadow-sm">
       <h2 className="text-lg font-semibold text-brand-text">Profile summary</h2>
       <dl className="mt-5 space-y-4 text-sm">
-        <SummaryRow label="Rating" value={`${profile.rating_avg.toFixed(1)} (${profile.rating_count})`} />
+        {profile.rating_count > 0 && (
+          <SummaryRow label="Rating" value={`${profile.rating_avg.toFixed(1)} (${profile.rating_count})`} />
+        )}
         <SummaryRow label="Location" value={formatLocation(profile.city, profile.province)} />
         <SummaryRow label="Status" value="Verified" />
       </dl>
@@ -121,22 +114,18 @@ function SummaryCard({ profile }: { profile: PublicNannyProfile }) {
   );
 }
 
-function ReviewCard({ reviews, ratingCount }: { reviews: Review[]; ratingCount: number }) {
+function ReviewCard({ reviews }: { reviews: Review[] }) {
   return (
     <div className="rounded-[24px] border border-(--border) bg-white p-6 shadow-sm">
       <h2 className="text-lg font-semibold text-brand-text">Parent reviews</h2>
-      {ratingCount === 0 ? (
-        <p className="mt-3 text-sm text-brand-faint">No public reviews yet.</p>
-      ) : (
-        <div className="mt-4 space-y-4">
-          {reviews.map((review) => (
-            <article key={review.id} className="border-t border-(--border) pt-4 first:border-t-0 first:pt-0">
-              <p className="text-sm font-semibold text-brand-text">{review.rating}/5 stars</p>
-              <p className="mt-1 line-clamp-3 text-sm leading-6 text-brand-faint">{review.comment}</p>
-            </article>
-          ))}
-        </div>
-      )}
+      <div className="mt-4 space-y-4">
+        {reviews.map((review) => (
+          <article key={review.id} className="border-t border-(--border) pt-4 first:border-t-0 first:pt-0">
+            <p className="text-sm font-semibold text-brand-text">{review.rating}/5 stars</p>
+            <p className="mt-1 line-clamp-3 text-sm leading-6 text-brand-faint">{review.comment}</p>
+          </article>
+        ))}
+      </div>
     </div>
   );
 }

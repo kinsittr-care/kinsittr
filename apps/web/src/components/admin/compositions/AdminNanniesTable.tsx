@@ -57,7 +57,7 @@ export default function AdminNanniesTable({
   onVerify,
 }: AdminNanniesTableProps) {
   return (
-    <div className="bg-admin-card border border-admin-border rounded-2xl overflow-hidden shadow-[var(--admin-shadow)]">
+    <div className="bg-admin-card border border-admin-border rounded-2xl overflow-hidden shadow-(--admin-shadow)">
       <div
         className="hidden px-6 py-[14px] border-b border-admin-divider bg-admin-card-warm text-[11.5px] font-semibold tracking-[.14em] uppercase text-admin-ink-soft xl:grid"
         style={{ gridTemplateColumns: colTemplate }}
@@ -107,8 +107,14 @@ export default function AdminNanniesTable({
                   <span className="text-[13px] text-admin-ink-soft font-normal">/hr</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <AdminStars value={Math.round(nanny.rating_avg)} />
-                  <span className="text-[13.5px] text-admin-ink-mid font-medium">{nanny.rating_avg.toFixed(1)}</span>
+                  {nanny.rating_count > 0 ? (
+                    <>
+                      <AdminStars value={Math.round(nanny.rating_avg)} />
+                      <span className="text-[13.5px] text-admin-ink-mid font-medium">{nanny.rating_avg.toFixed(1)}</span>
+                    </>
+                  ) : (
+                    <span className="text-[13.5px] text-admin-ink-mid font-medium">New</span>
+                  )}
                 </div>
                 <div>
                   <AdminPill tone={statusTone(nanny)}>
@@ -134,8 +140,14 @@ export default function AdminNanniesTable({
                       <span className="text-admin-ink-soft">/hr</span>
                     </span>
                     <span className="inline-flex items-center gap-1.5">
-                      <AdminStars value={Math.round(nanny.rating_avg)} />
-                      <span>{nanny.rating_avg.toFixed(1)}</span>
+                      {nanny.rating_count > 0 ? (
+                        <>
+                          <AdminStars value={Math.round(nanny.rating_avg)} />
+                          <span>{nanny.rating_avg.toFixed(1)}</span>
+                        </>
+                      ) : (
+                        <span>New</span>
+                      )}
                     </span>
                   </div>
                 </div>

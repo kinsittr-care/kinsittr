@@ -50,25 +50,40 @@ export function FindNannyFilters({
 
       <div className="mb-7">
         <label className={labelCls}>Specialties</label>
-        {SPECIALTIES.map((s) => {
-          const checked = specs.includes(s);
-          return (
-            <label key={s} className="flex items-center gap-[10px] mb-[10px] cursor-pointer select-none">
-              <div
-                onClick={() => onSpecialtyToggle(s)}
+        <select
+          value=""
+          onChange={(event) => {
+            if (event.target.value) onSpecialtyToggle(event.target.value);
+          }}
+          className={selectCls}
+          style={selectArrowStyle}
+        >
+          <option value="">Select specialty</option>
+          {SPECIALTIES.map((specialty) => (
+            <option key={specialty} value={specialty} disabled={specs.includes(specialty)}>
+              {specialty}
+            </option>
+          ))}
+        </select>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {specs.length === 0 ? (
+            <span className="text-[12.5px] text-[var(--faint)]">No specialties selected.</span>
+          ) : (
+            specs.map((specialty) => (
+              <button
+                key={specialty}
+                type="button"
+                onClick={() => onSpecialtyToggle(specialty)}
                 className={cn(
-                  "w-[18px] h-[18px] rounded-[5px] shrink-0 flex items-center justify-center transition-all duration-[120ms]",
-                  checked
-                    ? "border-[1.5px] border-teal bg-teal"
-                    : "border-[1.5px] border-brand-border bg-white",
+                  "rounded-full border border-brand-border bg-white px-3 py-1 text-[12.5px] font-semibold text-[var(--brand-text)] transition",
+                  "hover:border-teal hover:text-teal",
                 )}
               >
-                {checked && <TinyCheckIcon color="#fff" width={10} height={10} />}
-              </div>
-              <span className="text-[14px]">{s}</span>
-            </label>
-          );
-        })}
+                {specialty} ×
+              </button>
+            ))
+          )}
+        </div>
       </div>
 
       <VerifiedNanniesNote />

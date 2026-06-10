@@ -2,7 +2,7 @@ import AdminAvatar from "../compositions/AdminAvatar";
 import AdminNannyDocumentsList from "../compositions/AdminNannyDocumentsList";
 import AdminStepChip from "../compositions/AdminStepChip";
 import { TimerIcon, PinIcon, ArrowSmIcon } from "../compositions/admin-icons";
-import { btnGhostSmCls, btnPrimaryCls, cardCls } from "../compositions/admin-styles";
+import { btnGhostSmCls, cardCls } from "../compositions/admin-styles";
 import { cn } from "@/lib/utils";
 import type { AdminNannyDocument, AdminVerificationStatus } from "@/src/types/api/admin";
 

@@ -25,7 +25,7 @@ function KeyMetric({
   tone?: KeyTone;
 }) {
   return (
-    <div className="flex justify-between items-center py-[14px] border-b border-admin-border-soft">
+    <div className="flex flex-col gap-1 py-[14px] border-b border-admin-border-soft sm:flex-row sm:items-center sm:justify-between">
       <span className="text-[14px] text-admin-ink-mid">{label}</span>
       <span className={cn("text-[15px] font-semibold", keyToneCls[tone])}>{value}</span>
     </div>
@@ -40,7 +40,7 @@ export default function AnalyticsKeyMetrics({
   isLoading: boolean;
 }) {
   return (
-    <div className="bg-admin-card border border-admin-border rounded-2xl px-7 py-[26px] shadow-[var(--admin-shadow)]">
+    <div className="bg-admin-card border border-admin-border rounded-2xl px-5 py-5 shadow-[var(--admin-shadow)] sm:px-7 sm:py-[26px]">
       <h2 className="font-display text-[22px] font-normal text-admin-ink tracking-[-0.005em]">Key metrics</h2>
       <div className="mt-[14px]">
         {metrics.map((metric) => (
