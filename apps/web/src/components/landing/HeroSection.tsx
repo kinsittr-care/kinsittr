@@ -1,10 +1,5 @@
-import {
-  ArrowRightIcon,
-  LockIcon,
-  PlusIcon,
-  SparkleIcon,
-  VerifiedCircleIcon,
-} from "@/src/components/icons";
+import { ArrowRightIcon, SparkleIcon } from "@/src/components/icons";
+import Link from "next/link";
 import HeroIllustration from "./HeroIllustration";
 import RevealWrapper from "./RevealWrapper";
 
@@ -50,41 +45,16 @@ export default function HeroSection() {
         <RevealWrapper delay={0.2}>
           <p className="text-[17px] leading-[1.75] mb-9 max-w-[440px]" style={{ color: "var(--faint)" }}>
             KinSittr connects families and nannies in a space built on trust, warmth, and simplicity.
-            Find someone who truly clicks with your children — or bring your caregiving gift to families who need you.
           </p>
         </RevealWrapper>
 
         <RevealWrapper delay={0.3}>
           <div className="flex gap-3 flex-wrap">
-            <a href="" className="btn-cta">
+            <Link href="/auth/parent" className="btn-cta">
               I need a nanny
               <ArrowRightIcon color="#fff" />
-            </a>
-            <a href="#" className="btn-outline">I&apos;m a nanny →</a>
-          </div>
-        </RevealWrapper>
-
-        <RevealWrapper delay={0.4}>
-          <div className="mt-7 text-[13px] flex items-center gap-[18px]" style={{ color: "var(--faint)" }}>
-            {[
-              {
-                label: "All nannies verified",
-                icon: <VerifiedCircleIcon color="var(--faint)" />,
-              },
-              {
-                label: "Free to browse",
-                icon: <LockIcon color="var(--faint)" />,
-              },
-              {
-                label: "No subscription",
-                icon: <PlusIcon color="var(--faint)" />,
-              },
-            ].map(({ icon, label }) => (
-              <span key={label} className="flex items-center gap-[5px]">
-                {icon}
-                {label}
-              </span>
-            ))}
+            </Link>
+            <Link href="/auth/nanny" className="btn-outline">I&apos;m a nanny →</Link>
           </div>
         </RevealWrapper>
       </div>

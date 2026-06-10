@@ -30,7 +30,7 @@ const values = [
     iconBg: "#f0f4ee",
     icon: <SimpleClockIcon />,
     title: "Simple by design",
-    description: "Childcare is already complicated enough. KinSittr removes friction — from search to payment — so you can focus on what matters.",
+    description: "Childcare is already complicated enough. We remove friction from search to payment so you can focus on what matters.",
   },
 ];
 
