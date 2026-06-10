@@ -1,0 +1,273 @@
+package pipes
+
+import (
+	"context"
+	"errors"
+	"math"
+
+	"github.com/google/uuid"
+	booking_messages "github.com/kinsittr/kinsittr-api/bookings/messages"
+	"github.com/kinsittr/kinsittr-api/models"
+	payment_repo "github.com/kinsittr/kinsittr-api/repositories/payments"
+	stripe_api "github.com/kinsittr/kinsittr-api/shared/stripe"
+)
+
+func (p *PaymentsPipe) EnsureBookingPaymentReady(ctx context.Context, nannyProfileID, bookingID uuid.UUID) error {
+	if p.stripe == nil || !p.stripe.Configured() {
+		logPaymentEvent("readiness", bookingID, uuid.Nil, nannyProfileID, "stripe_not_configured", nil)
+		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
+	}
+	paymentCtx, err := p.repo.GetNannyPaymentContext(ctx, nannyProfileID, bookingID)
+	if err != nil || paymentCtx.BookingID == uuid.Nil {
+		logPaymentEvent("readiness", bookingID, uuid.Nil, nannyProfileID, "context_lookup_failed", err)
+		return err
+	}
+	if paymentCtx.StripeCustomerID == "" || paymentCtx.StripeAccountID == "" || !paymentCtx.StripeOnboarded {
+		logPaymentEvent("readiness", paymentCtx.BookingID, paymentCtx.ParentProfileID, paymentCtx.NannyProfileID, "setup_missing", nil)
+		p.notifyPaymentSetupMissing(ctx, paymentCtx)
+		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
+	}
+	_, err = p.resolvePaymentMethod(ctx, paymentCtx)
+	if err != nil {
+		logPaymentEvent("readiness", paymentCtx.BookingID, paymentCtx.ParentProfileID, paymentCtx.NannyProfileID, "payment_method_missing", err)
+		p.notifyPaymentSetupMissing(ctx, paymentCtx)
+		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
+	}
+	logPaymentEvent("readiness", paymentCtx.BookingID, paymentCtx.ParentProfileID, paymentCtx.NannyProfileID, "ready", nil)
+	return nil
+}
+
+func (p *PaymentsPipe) ChargeCompletedBooking(ctx context.Context, nannyProfileID, bookingID uuid.UUID) error {
+	if p.stripe == nil || !p.stripe.Configured() {
+		logPaymentEvent("charge", bookingID, uuid.Nil, nannyProfileID, "stripe_not_configured", nil)
+		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
+	}
+	paymentCtx, err := p.repo.GetNannyPaymentContext(ctx, nannyProfileID, bookingID)
+	if err != nil || paymentCtx.BookingID == uuid.Nil {
+		logPaymentEvent("charge", bookingID, uuid.Nil, nannyProfileID, "context_lookup_failed", err)
+		return err
+	}
+	if paymentCtx.StripeCustomerID == "" || paymentCtx.StripeAccountID == "" || !paymentCtx.StripeOnboarded {
+		_, _ = p.repo.UpsertBookingPayment(ctx, failedPayment(paymentCtx, "missing_stripe_setup", p.platformFeeRate))
+		logPaymentEvent("charge", paymentCtx.BookingID, paymentCtx.ParentProfileID, paymentCtx.NannyProfileID, "setup_missing", nil)
+		p.notifyPaymentSetupMissing(ctx, paymentCtx)
+		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
+	}
+	method, err := p.resolvePaymentMethod(ctx, paymentCtx)
+	if err != nil {
+		_, _ = p.repo.UpsertBookingPayment(ctx, failedPayment(paymentCtx, "missing_payment_method", p.platformFeeRate))
+		logPaymentEvent("charge", paymentCtx.BookingID, paymentCtx.ParentProfileID, paymentCtx.NannyProfileID, "payment_method_missing", err)
+		p.notifyPaymentSetupMissing(ctx, paymentCtx)
+		return errors.New(booking_messages.Booking_Payment_Setup_Missing)
+	}
+	existing, err := p.repo.GetPaymentByBookingID(ctx, paymentCtx.BookingID)
+	if err != nil {
+		logPaymentEvent("charge", paymentCtx.BookingID, paymentCtx.ParentProfileID, paymentCtx.NannyProfileID, "lookup_failed", err)
+		return err
+	}
+	if existing.ID != uuid.Nil {
+		switch existing.Status {
+		case models.PaymentSucceeded:
+			logPaymentEvent("charge", paymentCtx.BookingID, paymentCtx.ParentProfileID, paymentCtx.NannyProfileID, "already_charged", nil)
+			return nil
+		case models.PaymentProcessing:
+			logPaymentEvent("charge", paymentCtx.BookingID, paymentCtx.ParentProfileID, paymentCtx.NannyProfileID, "still_processing", nil)
+			return errors.New(booking_messages.Booking_Payment_Failed)
+		}
+	}
+	idempotencyKey := "booking-charge-" + paymentCtx.BookingID.String()
+	if existing.ID != uuid.Nil && existing.Status == models.PaymentFailed {
+		idempotencyKey = "booking-charge-retry-" + paymentCtx.BookingID.String() + "-" + uuid.NewString()
+	}
+	intent, feeCents, status, failure := p.createBookingPaymentIntent(ctx, paymentCtx, method, idempotencyKey)
+	if _, err := p.recordBookingPaymentIntent(ctx, paymentCtx, intent, feeCents, status, failure); err != nil {
+		logPaymentEvent("charge", paymentCtx.BookingID, paymentCtx.ParentProfileID, paymentCtx.NannyProfileID, "record_failed", err)
+		return err
+	}
+	if status != models.PaymentSucceeded {
+		logPaymentEvent("charge", paymentCtx.BookingID, paymentCtx.ParentProfileID, paymentCtx.NannyProfileID, string(status), nil)
+		p.notifyPaymentFailed(ctx, paymentCtx, failure)
+		return errors.New(booking_messages.Booking_Payment_Failed)
+	}
+	p.notifyPaymentSucceeded(ctx, paymentCtx)
+	logPaymentEvent("charge", paymentCtx.BookingID, paymentCtx.ParentProfileID, paymentCtx.NannyProfileID, string(status), nil)
+	return nil
+}
+
+func (p *PaymentsPipe) RefundBooking(ctx context.Context, bookingID uuid.UUID) error {
+	if p.stripe == nil || !p.stripe.Configured() {
+		logPaymentEvent("refund", bookingID, uuid.Nil, uuid.Nil, "stripe_not_configured", nil)
+		return nil
+	}
+	payment, err := p.repo.GetPaymentByBookingID(ctx, bookingID)
+	if err != nil {
+		logPaymentEvent("refund", bookingID, uuid.Nil, uuid.Nil, "payment_not_found_or_uncharged", err)
+		return err
+	}
+	if payment.ID == uuid.Nil {
+		logPaymentEvent("refund", bookingID, uuid.Nil, uuid.Nil, "payment_not_found", nil)
+		return nil
+	}
+	if payment.StripeChargeID == "" {
+		logPaymentEvent("refund", bookingID, payment.ParentProfileID, payment.NannyProfileID, "payment_uncharged", nil)
+		return nil
+	}
+	if payment.Status != models.PaymentSucceeded && payment.Status != models.PaymentProcessing {
+		logPaymentEvent("refund", bookingID, payment.ParentProfileID, payment.NannyProfileID, "ignored_status_"+string(payment.Status), nil)
+		return nil
+	}
+	refund, err := p.stripe.CreateRefund(ctx, payment.StripeChargeID, "booking-refund-"+bookingID.String())
+	if err != nil {
+		logPaymentEvent("refund", bookingID, payment.ParentProfileID, payment.NannyProfileID, "stripe_refund_failed", err)
+		p.notifyRefundFailed(ctx, payment)
+		return err
+	}
+	if err := p.repo.UpdatePaymentRefundedByChargeID(ctx, payment.StripeChargeID, refund.ID); err != nil {
+		logPaymentEvent("refund", bookingID, payment.ParentProfileID, payment.NannyProfileID, "record_failed", err)
+		return err
+	}
+	p.notifyRefundSucceeded(ctx, payment)
+	logPaymentEvent("refund", bookingID, payment.ParentProfileID, payment.NannyProfileID, "success", nil)
+	return nil
+}
+
+func (p *PaymentsPipe) createBookingPaymentIntent(ctx context.Context, paymentCtx payment_repo.PaymentContext, method stripe_api.PaymentMethod, idempotencyKey string) (stripe_api.PaymentIntent, int64, models.PaymentStatus, string) {
+	amountCents := cents(paymentCtx.Amount)
+	feeCents := int64(math.Round(float64(amountCents) * p.platformFeeRate))
+	intent, err := p.stripe.CreateDestinationPaymentIntent(ctx, stripe_api.PaymentIntentParams{
+		AmountCents:          amountCents,
+		ApplicationFeeCents:  feeCents,
+		Currency:             string(paymentCtx.Currency),
+		CustomerID:           paymentCtx.StripeCustomerID,
+		PaymentMethodID:      method.ID,
+		DestinationAccountID: paymentCtx.StripeAccountID,
+		BookingID:            paymentCtx.BookingID.String(),
+		IdempotencyKey:       idempotencyKey,
+	})
+	status := models.PaymentStatus(intent.Status)
+	failure := ""
+	if err != nil {
+		status = models.PaymentFailed
+		failure = err.Error()
+		logPaymentEvent("payment_intent", paymentCtx.BookingID, paymentCtx.ParentProfileID, paymentCtx.NannyProfileID, "stripe_intent_failed", err)
+	} else if intent.LastError != nil {
+		failure = intent.LastError.Message
+	}
+	return intent, feeCents, normalizePaymentStatus(status), failure
+}
+
+func (p *PaymentsPipe) recordBookingPaymentIntent(ctx context.Context, paymentCtx payment_repo.PaymentContext, intent stripe_api.PaymentIntent, feeCents int64, status models.PaymentStatus, failure string) (models.BookingPayment, error) {
+	return p.repo.UpsertBookingPayment(ctx, payment_repo.CreatePaymentParams{
+		BookingID:             paymentCtx.BookingID,
+		ParentProfileID:       paymentCtx.ParentProfileID,
+		NannyProfileID:        paymentCtx.NannyProfileID,
+		StripePaymentIntentID: intent.ID,
+		StripeChargeID:        intent.LatestCharge,
+		Amount:                paymentCtx.Amount,
+		PlatformFee:           float64(feeCents) / 100,
+		Currency:              paymentCtx.Currency,
+		Status:                status,
+		FailureMessage:        failure,
+	})
+}
+
+func (p *PaymentsPipe) resolvePaymentMethod(ctx context.Context, paymentCtx payment_repo.PaymentContext) (stripe_api.PaymentMethod, error) {
+	if paymentCtx.StripeDefaultPaymentMethodID != "" {
+		method, err := p.stripe.GetPaymentMethod(ctx, paymentCtx.StripeDefaultPaymentMethodID)
+		if err == nil && (method.Customer == "" || method.Customer == paymentCtx.StripeCustomerID) {
+			return method, nil
+		}
+		logPaymentEvent("payment_method", paymentCtx.BookingID, paymentCtx.ParentProfileID, paymentCtx.NannyProfileID, "stored_default_stale", err)
+		_ = p.repo.UpdateParentDefaultPaymentMethod(ctx, paymentCtx.ParentProfileID, "")
+	}
+	customer, err := p.stripe.GetCustomer(ctx, paymentCtx.StripeCustomerID)
+	if err == nil && customer.InvoiceSettings.DefaultPaymentMethod != "" {
+		method, err := p.stripe.GetPaymentMethod(ctx, customer.InvoiceSettings.DefaultPaymentMethod)
+		if err == nil && (method.Customer == "" || method.Customer == paymentCtx.StripeCustomerID) {
+			_ = p.repo.UpdateParentDefaultPaymentMethod(ctx, paymentCtx.ParentProfileID, method.ID)
+			return method, nil
+		}
+		logPaymentEvent("payment_method", paymentCtx.BookingID, paymentCtx.ParentProfileID, paymentCtx.NannyProfileID, "stripe_default_stale", err)
+	}
+	method, err := p.stripe.FirstCardPaymentMethod(ctx, paymentCtx.StripeCustomerID)
+	if err == nil {
+		_ = p.repo.UpdateParentDefaultPaymentMethod(ctx, paymentCtx.ParentProfileID, method.ID)
+	}
+	return method, err
+}
+
+func (p *PaymentsPipe) notifyPaymentSetupMissing(ctx context.Context, paymentCtx payment_repo.PaymentContext) {
+	data := paymentNotificationData(map[string]string{"booking_id": paymentCtx.BookingID.String()})
+	p.notifyParentProfile(ctx, paymentCtx.ParentProfileID, models.Notification{
+		Type:  models.PaymentSetupMissingNotificationType,
+		Title: "Payment setup needed",
+		Body:  "Add or update your saved card so this booking can move forward.",
+		Data:  data,
+	})
+	p.notifyNannyProfile(ctx, paymentCtx.NannyProfileID, models.Notification{
+		Type:  models.PaymentSetupMissingNotificationType,
+		Title: "Payment setup missing",
+		Body:  "This booking is blocked until the parent's payment setup is ready.",
+		Data:  data,
+	})
+}
+
+func (p *PaymentsPipe) notifyPaymentSucceeded(ctx context.Context, paymentCtx payment_repo.PaymentContext) {
+	data := paymentNotificationData(map[string]string{"booking_id": paymentCtx.BookingID.String()})
+	p.notifyParentProfile(ctx, paymentCtx.ParentProfileID, models.Notification{
+		Type:  models.PaymentSucceededNotificationType,
+		Title: "Payment successful",
+		Body:  "Your booking payment was processed successfully.",
+		Data:  data,
+	})
+	p.notifyNannyProfile(ctx, paymentCtx.NannyProfileID, models.Notification{
+		Type:  models.PaymentSucceededNotificationType,
+		Title: "Booking payment received",
+		Body:  "Payment for this completed booking was processed successfully.",
+		Data:  data,
+	})
+}
+
+func (p *PaymentsPipe) notifyPaymentFailed(ctx context.Context, paymentCtx payment_repo.PaymentContext, reason string) {
+	if reason == "" {
+		reason = "The saved payment method could not be charged."
+	}
+	data := paymentNotificationData(map[string]string{"booking_id": paymentCtx.BookingID.String()})
+	p.notifyParentProfile(ctx, paymentCtx.ParentProfileID, models.Notification{
+		Type:  models.PaymentFailedNotificationType,
+		Title: "Payment failed",
+		Body:  reason,
+		Data:  data,
+	})
+	p.notifyNannyProfile(ctx, paymentCtx.NannyProfileID, models.Notification{
+		Type:  models.PaymentFailedNotificationType,
+		Title: "Booking payment failed",
+		Body:  "The parent needs to update their payment method before this booking can be completed.",
+		Data:  data,
+	})
+}
+
+func (p *PaymentsPipe) notifyRefundSucceeded(ctx context.Context, payment models.BookingPayment) {
+	p.notifyParentProfile(ctx, payment.ParentProfileID, models.Notification{
+		Type:  models.PaymentRefundedNotificationType,
+		Title: "Payment refunded",
+		Body:  "A refund was issued for your cancelled booking.",
+		Data:  paymentNotificationData(map[string]string{"booking_id": payment.BookingID.String()}),
+	})
+}
+
+func (p *PaymentsPipe) notifyRefundFailed(ctx context.Context, payment models.BookingPayment) {
+	data := paymentNotificationData(map[string]string{"booking_id": payment.BookingID.String()})
+	p.notifyParentProfile(ctx, payment.ParentProfileID, models.Notification{
+		Type:  models.PaymentRefundFailedNotificationType,
+		Title: "Refund issue",
+		Body:  "A refund for your cancelled booking needs manual review.",
+		Data:  data,
+	})
+	p.notifyNannyProfile(ctx, payment.NannyProfileID, models.Notification{
+		Type:  models.PaymentRefundFailedNotificationType,
+		Title: "Refund issue",
+		Body:  "A refund for this cancelled booking needs manual review.",
+		Data:  data,
+	})
+}

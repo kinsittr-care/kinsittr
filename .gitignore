@@ -1,3 +1,4 @@
+.env*
 .env
 .env.local
 .env.*.local
@@ -5,6 +6,9 @@
 # Go
 apps/api/bin/
 apps/api/tmp/
+apps/api/logs/
+logs/
+*.log
 
 # Node
 apps/web/node_modules/
@@ -14,3 +18,12 @@ apps/web/out/
 # OS
 .DS_Store
 Thumbs.db
+
+LANDING.md
+LANDINGPAGES.md
+KINSITTR_ARCHITECTURE.md
+NANNY_APP_DESIGN.md
+NANNY_VIEW_DESIGN.md
+ADMIN_DESIGN.md
+
+todos
