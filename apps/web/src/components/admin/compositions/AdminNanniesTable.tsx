@@ -1,9 +1,10 @@
 import AdminAvatar from "./AdminAvatar";
-import { btnApprove, btnDanger, btnGhostSm } from "./admin-styles";
+import { btnApproveCls, btnDangerCls, btnGhostSmCls } from "./admin-styles";
 import AdminStars from "./AdminStars";
 import AdminPill, { type PillTone } from "./AdminPill";
-import { A } from "../tokens";
+import { cn } from "@/lib/utils";
 import type { AdminNanny, AdminVerificationStatus } from "@/src/types/api/admin";
+import { formatLocation } from "@/src/utils/format";
 
 const colTemplate = "2.1fr 1.35fr .85fr 1.1fr 1fr 1.45fr";
 
@@ -56,33 +57,23 @@ export default function AdminNanniesTable({
   onVerify,
 }: AdminNanniesTableProps) {
   return (
-    <div style={{ background: A.card, border: `1px solid ${A.border}`, borderRadius: 16, overflow: "hidden", boxShadow: A.shadow }}>
+    <div className="bg-admin-card border border-admin-border rounded-2xl overflow-hidden shadow-(--admin-shadow)">
       <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: colTemplate,
-          padding: "14px 24px",
-          borderBottom: `1px solid ${A.divider}`,
-          background: A.cardWarm,
-          fontSize: 11.5,
-          fontWeight: 600,
-          letterSpacing: ".14em",
-          textTransform: "uppercase",
-          color: A.inkSoft,
-        }}
+        className="hidden px-6 py-[14px] border-b border-admin-divider bg-admin-card-warm text-[11.5px] font-semibold tracking-[.14em] uppercase text-admin-ink-soft xl:grid"
+        style={{ gridTemplateColumns: colTemplate }}
       >
         <div>Nanny</div>
         <div>City</div>
         <div>Rate</div>
         <div>Rating</div>
         <div>Status</div>
-        <div style={{ textAlign: "right" }}>Actions</div>
+        <div className="text-right">Actions</div>
       </div>
 
       {isLoading ? (
-        <div style={{ padding: 24, color: A.inkSoft }}>Loading nannies...</div>
+        <div className="p-6 text-admin-ink-soft">Loading nannies...</div>
       ) : nannies.length === 0 ? (
-        <div style={{ padding: 24, color: A.inkSoft }}>No nannies found.</div>
+        <div className="p-6 text-admin-ink-soft">No nannies found.</div>
       ) : (
         nannies.map((nanny, index) => {
           const isBusy = busyIds.has(nanny.id);
@@ -91,51 +82,85 @@ export default function AdminNanniesTable({
           return (
             <div
               key={nanny.id}
-              className="admin-table-row"
+              className="admin-table-row grid grid-cols-1 cursor-pointer gap-3 px-4 py-4 transition-colors duration-150 sm:px-6 xl:grid-cols-[2.1fr_1.35fr_.85fr_1.1fr_1fr_1.45fr] xl:items-center"
               onClick={() => onSelect(nanny.id)}
               style={{
-                display: "grid",
-                gridTemplateColumns: colTemplate,
-                alignItems: "center",
-                padding: "16px 24px",
-                gap: 12,
-                borderBottom: index < nannies.length - 1 ? `1px solid ${A.borderSoft}` : "none",
-                background: selectedNannyId === nanny.id ? A.cardWarm : "transparent",
-                cursor: "pointer",
-                transition: "background .15s",
+                borderBottom: index < nannies.length - 1 ? "1px solid var(--admin-border-soft)" : "none",
+                background: selectedNannyId === nanny.id ? "var(--admin-card-warm)" : "transparent",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <AdminAvatar initials={initialsFor(nanny)} size={40} tone={nanny.user_is_active ? "clay" : "muted"} />
+              <div
+                className="hidden xl:contents"
+              >
+                <div className="flex items-center gap-[14px]">
+                  <AdminAvatar initials={initialsFor(nanny)} size={40} tone={nanny.user_is_active ? "clay" : "muted"} />
+                  <div>
+                    <div className="text-[15px] font-semibold text-admin-ink">{nanny.display_name}</div>
+                    <div className="text-[12.5px] text-admin-ink-soft">{nanny.user_email}</div>
+                  </div>
+                </div>
+                <div className="text-[14px] text-admin-ink-mid">{formatLocation(nanny.city, nanny.province, "not set")}</div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: A.ink }}>{nanny.display_name}</div>
-                  <div style={{ fontSize: 12.5, color: A.inkSoft }}>{nanny.user_email}</div>
+                  <span className="font-display text-[18px] text-admin-ink">
+                    ${nanny.rate_per_hour}
+                  </span>
+                  <span className="text-[13px] text-admin-ink-soft font-normal">/hr</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {nanny.rating_count > 0 ? (
+                    <>
+                      <AdminStars value={Math.round(nanny.rating_avg)} />
+                      <span className="text-[13.5px] text-admin-ink-mid font-medium">{nanny.rating_avg.toFixed(1)}</span>
+                    </>
+                  ) : (
+                    <span className="text-[13.5px] text-admin-ink-mid font-medium">New</span>
+                  )}
+                </div>
+                <div>
+                  <AdminPill tone={statusTone(nanny)}>
+                    {nanny.user_is_active ? statusLabel(nanny.verification_status) : "suspended"}
+                  </AdminPill>
                 </div>
               </div>
-              <div style={{ fontSize: 14, color: A.inkMid }}>{nanny.city}, {nanny.province}</div>
-              <div>
-                <span style={{ fontFamily: "var(--font-dm-serif), serif", fontSize: 18, color: A.ink }}>
-                  ${nanny.rate_per_hour}
-                </span>
-                <span style={{ fontSize: 13, color: A.inkSoft, fontWeight: 400 }}>/hr</span>
+
+              <div className="flex items-start gap-[14px] xl:hidden">
+                <AdminAvatar initials={initialsFor(nanny)} size={40} tone={nanny.user_is_active ? "clay" : "muted"} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-[15px] font-semibold text-admin-ink">{nanny.display_name}</div>
+                    <AdminPill tone={statusTone(nanny)}>
+                      {nanny.user_is_active ? statusLabel(nanny.verification_status) : "suspended"}
+                    </AdminPill>
+                  </div>
+                  <div className="truncate text-[12.5px] text-admin-ink-soft">{nanny.user_email}</div>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-admin-ink-mid">
+                    <span>{formatLocation(nanny.city, nanny.province, "not set")}</span>
+                    <span>
+                      <span className="font-display text-[17px] text-admin-ink">${nanny.rate_per_hour}</span>
+                      <span className="text-admin-ink-soft">/hr</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      {nanny.rating_count > 0 ? (
+                        <>
+                          <AdminStars value={Math.round(nanny.rating_avg)} />
+                          <span>{nanny.rating_avg.toFixed(1)}</span>
+                        </>
+                      ) : (
+                        <span>New</span>
+                      )}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <AdminStars value={Math.round(nanny.rating_avg)} />
-                <span style={{ fontSize: 13.5, color: A.inkMid, fontWeight: 500 }}>{nanny.rating_avg.toFixed(1)}</span>
-              </div>
-              <div>
-                <AdminPill tone={statusTone(nanny)}>
-                  {nanny.user_is_active ? statusLabel(nanny.verification_status) : "suspended"}
-                </AdminPill>
-              </div>
-              <div onClick={(event) => event.stopPropagation()} style={{ display: "flex", justifyContent: "flex-end", gap: 8, flexWrap: "wrap" }}>
-                <button disabled={!canVerify || isBusy} onClick={() => onVerify(nanny.id)} style={{ ...btnApprove, opacity: canVerify && !isBusy ? 1 : 0.55 }}>
+
+              <div onClick={(event) => event.stopPropagation()} className="flex flex-wrap gap-2 border-t border-admin-border-soft pt-3 xl:border-t-0 xl:pt-0 xl:justify-end">
+                <button disabled={!canVerify || isBusy} onClick={() => onVerify(nanny.id)} className={cn(btnApproveCls, (!canVerify || isBusy) && "opacity-55")}>
                   Verify
                 </button>
-                <button disabled={!nanny.user_is_active || isBusy} onClick={() => onReject(nanny)} style={{ ...btnGhostSm, opacity: nanny.user_is_active && !isBusy ? 1 : 0.55 }}>
+                <button disabled={!nanny.user_is_active || isBusy} onClick={() => onReject(nanny)} className={cn(btnGhostSmCls, (!nanny.user_is_active || isBusy) && "opacity-55")}>
                   Reject
                 </button>
-                <button disabled={!nanny.user_is_active || isBusy} onClick={() => onSuspend(nanny)} style={{ ...btnDanger, opacity: nanny.user_is_active && !isBusy ? 1 : 0.55 }}>
+                <button disabled={!nanny.user_is_active || isBusy} onClick={() => onSuspend(nanny)} className={cn(btnDangerCls, (!nanny.user_is_active || isBusy) && "opacity-55")}>
                   Suspend
                 </button>
               </div>

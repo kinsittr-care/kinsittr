@@ -36,29 +36,24 @@ export default function ProfileView() {
 
   return (
     <div
-      style={{
-        maxWidth: 660,
-        margin: "0 auto",
-        padding: isMobile ? "20px 16px 40px" : "40px 36px 60px",
-        overflowY: "auto",
-        height: "100%",
-      }}
+      className="max-w-[660px] mx-auto overflow-y-auto h-full"
+      style={{ padding: isMobile ? "20px 16px 40px" : "40px 36px 60px" }}
     >
-      <div style={{ marginBottom: 36 }}>
-        <h1 className="font-display" style={{ fontWeight: 400, fontSize: 30, marginBottom: 4 }}>
+      <div className="mb-9">
+        <h1 className="font-display font-normal text-[30px] mb-1">
           My Profile
         </h1>
-        <p style={{ color: "var(--muted)", fontSize: 14 }}>
+        <p className="text-[var(--faint)] text-[14px]">
           Manage your profile, family details, and booking history
         </p>
       </div>
 
       {profileQuery.isLoading && (
-        <div style={{ color: "var(--faint)", fontSize: 14 }}>Loading profile...</div>
+        <div className="text-brand-faint text-[14px]">Loading profile...</div>
       )}
 
       {profileQuery.isError && (
-        <div style={{ color: "#c0392b", fontSize: 14 }}>
+        <div className="text-[#c0392b] text-[14px]">
           {profileQuery.error instanceof Error ? profileQuery.error.message : "Unable to load profile."}
         </div>
       )}
@@ -109,7 +104,7 @@ function profilePayload(
     display_name: profile.display_name,
     phone: profile.phone,
     num_children: profile.num_children,
-    children_ages: profile.children_ages,
+    children_ages: Array.isArray(profile.children_ages) ? profile.children_ages : [],
     city: profile.city,
     province: profile.province,
     ...overrides,

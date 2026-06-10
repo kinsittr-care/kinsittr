@@ -183,7 +183,7 @@ func buildVerifiedNanniesOrder(sort string) string {
 	case "rate_desc":
 		return "rate_per_hour DESC, created_at DESC"
 	case "rating_desc":
-		return "rating_avg DESC, rating_count DESC, created_at DESC"
+		return "CASE WHEN rating_count > 0 THEN 0 ELSE 1 END ASC, rating_avg DESC, rating_count DESC, verified_at DESC NULLS LAST, created_at DESC"
 	default:
 		return "verified_at DESC NULLS LAST, created_at DESC"
 	}

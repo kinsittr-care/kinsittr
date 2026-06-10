@@ -8,47 +8,22 @@ export default function MessagesEmptyState({
   onFindNanny,
 }: MessagesEmptyStateProps) {
   return (
-    <div
-      className="flex-1 flex flex-col items-center justify-center gap-4"
-      style={{ padding: 40 }}
-    >
-      <div
-        style={{
-          width: 80,
-          height: 80,
-          borderRadius: "50%",
-          background: "var(--teal-lt)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 36,
-        }}
-      >
+    <div className="flex-1 flex flex-col items-center justify-center gap-4 p-10">
+      <div className="w-20 h-20 rounded-full bg-teal-lt flex items-center justify-center text-[36px]">
         💬
       </div>
-      <div style={{ textAlign: "center" }}>
-        <h2
-          className="font-display"
-          style={{ fontWeight: 400, fontSize: 26, marginBottom: 10 }}
-        >
+      <div className="text-center">
+        <h2 className="font-display font-normal text-[26px] mb-[10px]">
           No messages yet
         </h2>
-        <p
-          style={{
-            color: "var(--muted)",
-            fontSize: 15,
-            lineHeight: 1.7,
-            maxWidth: 360,
-          }}
-        >
+        <p className="text-[var(--faint)] text-[15px] leading-[1.7] max-w-[360px]">
           Once a nanny accepts your booking request, messaging will unlock.
           Find a nanny to get started.
         </p>
       </div>
       <button
         onClick={onFindNanny}
-        className="btn-cta"
-        style={{ marginTop: 8, padding: "12px 28px", fontSize: 15 }}
+        className="btn-cta mt-2 px-7 py-3 text-[15px]"
       >
         Find a nanny
       </button>

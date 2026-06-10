@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import type { Message, Conversation } from "@/src/types/api/api";
 import type { RefObject } from "react";
 import {
@@ -32,37 +33,20 @@ export default function MessagesMessageList({
   onLoadOlder,
 }: MessagesMessageListProps) {
   return (
-    <div
-      className="flex flex-col gap-3"
-      style={{
-        flex: 1,
-        overflowY: "auto",
-        padding: "24px 28px",
-        background: "#f8f4ee",
-      }}
-    >
+    <div className="flex flex-col gap-3 flex-1 overflow-y-auto py-6 px-7 bg-[#f8f4ee]">
       {conversation && (
-        <div style={{ textAlign: "center", marginBottom: 8 }}>
-          <span
-            style={{
-              fontSize: 12,
-              color: "var(--faint)",
-              background: "var(--border)",
-              borderRadius: 10,
-              padding: "4px 12px",
-            }}
-          >
+        <div className="text-center mb-2">
+          <span className="text-[12px] text-brand-faint bg-brand-border rounded-[10px] px-3 py-1">
             {formatConversationStatus(conversation.booking_status)}
           </span>
         </div>
       )}
 
       {!isLoading && !isError && totalMessages > messages.length && (
-        <div style={{ textAlign: "center", marginBottom: 8 }}>
+        <div className="text-center mb-2">
           <button
             onClick={onLoadOlder}
-            className="btn-outline"
-            style={{ padding: "8px 14px", fontSize: 13 }}
+            className="btn-outline px-[14px] py-2 text-[13px]"
           >
             Load older messages
           </button>
@@ -70,20 +54,19 @@ export default function MessagesMessageList({
       )}
 
       {isLoading && (
-        <div style={{ textAlign: "center", color: "var(--faint)", fontSize: 14 }}>
+        <div className="text-center text-brand-faint text-[14px]">
           Loading messages...
         </div>
       )}
 
       {isError && (
-        <div style={{ textAlign: "center" }}>
-          <p style={{ color: "#c0392b", fontSize: 14, marginBottom: 10 }}>
+        <div className="text-center">
+          <p className="text-[#c0392b] text-[14px] mb-[10px]">
             {errorMessage || "Unable to load messages right now."}
           </p>
           <button
             onClick={onRetry}
-            className="btn-outline"
-            style={{ padding: "8px 14px", fontSize: 13 }}
+            className="btn-outline px-[14px] py-2 text-[13px]"
           >
             Retry
           </button>
@@ -98,30 +81,23 @@ export default function MessagesMessageList({
           return (
             <div
               key={message.id}
-              style={{
-                display: "flex",
-                justifyContent: sender === "user" ? "flex-end" : "flex-start",
-              }}
+              className={cn("flex", sender === "user" ? "justify-end" : "justify-start")}
             >
               <div
+                className="max-w-[60%] px-[17px] py-[13px] shadow-[0_4px_14px_rgba(40,30,20,.07)]"
                 style={{
-                  maxWidth: "60%",
-                  padding: "13px 17px",
                   borderRadius:
                     sender === "user" ? "20px 20px 5px 20px" : "20px 20px 20px 5px",
                   background: sender === "user" ? "var(--teal)" : "#fff",
                   color: sender === "user" ? "#fff" : "var(--brand-text)",
-                  boxShadow: "0 4px 14px rgba(40,30,20,.07)",
                 }}
               >
-                <div style={{ fontSize: 14, lineHeight: 1.65 }}>{message.body}</div>
+                <div className="text-[14px] leading-[1.65]">{message.body}</div>
                 <div
-                  style={{
-                    marginTop: 6,
-                    fontSize: 11,
-                    opacity: 0.8,
-                    textAlign: sender === "user" ? "right" : "left",
-                  }}
+                  className={cn(
+                    "mt-[6px] text-[11px] opacity-80",
+                    sender === "user" ? "text-right" : "text-left",
+                  )}
                 >
                   {formatMessageTimestamp(message.created_at)}
                 </div>
@@ -131,7 +107,7 @@ export default function MessagesMessageList({
         })}
 
       {!isLoading && !isError && conversation && messages.length === 0 && (
-        <div style={{ textAlign: "center", color: "var(--faint)", fontSize: 14 }}>
+        <div className="text-center text-brand-faint text-[14px]">
           No messages in this conversation yet.
         </div>
       )}

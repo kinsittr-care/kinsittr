@@ -43,7 +43,7 @@ export default function Navbar() {
 
         <div className="flex gap-7 max-md:hidden">
           {navLinks.map(({ label, href }) => (
-            <Link key={label} href={href} className="link-muted">{label}</Link>
+            <Link key={label} href={href} className="link-faint">{label}</Link>
           ))}
         </div>
 

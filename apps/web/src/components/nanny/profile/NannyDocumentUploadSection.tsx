@@ -9,8 +9,8 @@ import {
   nannyDocumentsQueryKey,
   uploadNannyDocument,
 } from "@/src/utils/api/nanny";
-import { btnGhost, labelStyle } from "../nanny-styles";
-import { N } from "../tokens";
+import { btnGhostCls, labelCls } from "../nanny-styles";
+import { cn } from "@/lib/utils";
 
 const ACCEPTED_DOCUMENT_TYPES = ".pdf,.jpg,.jpeg,.png";
 const MAX_DOCUMENTS = 5;
@@ -83,24 +83,20 @@ export function NannyDocumentUploadSection() {
   };
 
   return (
-    <section
-      className="mt-7 p-5 sm:p-7"
-      style={{ background: N.card, border: `1px solid ${N.border}`, borderRadius: 18, boxShadow: N.shadow }}
-    >
+    <section className="mt-7 p-5 sm:p-7 bg-nanny-card border border-nanny-border rounded-[18px] shadow-[var(--nanny-shadow)]">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p style={labelStyle}>Screening documents</p>
-          <h2 style={{ color: N.greenDk, fontSize: 22, fontWeight: 700, margin: 0 }}>
+          <p className={labelCls}>Screening documents</p>
+          <h2 className="text-nanny-green-dk text-[22px] font-bold m-0">
             Document upload
           </h2>
-          <p style={{ color: N.inkMute, fontSize: 13.5, lineHeight: 1.7, marginTop: 8, maxWidth: 620 }}>
+          <p className="text-nanny-ink-faint text-[13.5px] leading-[1.7] mt-2 max-w-[620px]">
             Add identity, background check, CPR, or childcare certification documents for KinSittr review.
           </p>
         </div>
 
         <button
-          className="w-full sm:w-auto"
-          style={{ ...btnGhost, justifyContent: "center" }}
+          className={cn(btnGhostCls, "w-full sm:w-auto justify-center")}
           type="button"
           onClick={() => fileInputRef.current?.click()}
         >
@@ -110,7 +106,7 @@ export function NannyDocumentUploadSection() {
           ref={fileInputRef}
           type="file"
           accept={ACCEPTED_DOCUMENT_TYPES}
-          style={{ display: "none" }}
+          className="hidden"
           tabIndex={-1}
           onChange={(event) => {
             handleFilesSelected(event.target.files);
@@ -120,15 +116,12 @@ export function NannyDocumentUploadSection() {
       </div>
 
       {selectedFile && (
-        <div
-          className="mt-5 flex flex-col gap-3 rounded-[14px] border p-4 sm:flex-row sm:items-center sm:justify-between"
-          style={{ borderColor: N.border, background: N.cardSoft }}
-        >
+        <div className="mt-5 flex flex-col gap-3 rounded-[14px] border border-nanny-border bg-nanny-card-soft p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex-1">
-            <p className="truncate" style={{ color: N.inkSoft, fontSize: 14, fontWeight: 700, margin: 0 }}>
+            <p className="truncate text-nanny-ink-soft text-[14px] font-bold m-0">
               {selectedFile.name}
             </p>
-            <p style={{ color: N.inkFaint, fontSize: 12.5, marginTop: 4 }}>
+            <p className="text-nanny-ink-faint text-[12.5px] mt-1">
               {formatFileSize(selectedFile.size)} selected
             </p>
           </div>
@@ -136,32 +129,22 @@ export function NannyDocumentUploadSection() {
             type="button"
             onClick={uploadSelectedFile}
             disabled={uploadPending}
-            style={{
-              ...btnGhost,
-              background: N.green,
-              borderColor: N.green,
-              color: "#fff",
-              justifyContent: "center",
-              opacity: uploadPending ? 0.7 : 1,
-            }}
+            className={cn(btnGhostCls, "bg-nanny-green border-nanny-green text-white justify-center", uploadPending && "opacity-70")}
           >
             {uploadPending ? "Uploading..." : "Upload document"}
           </button>
         </div>
       )}
 
-      <div
-        className="mt-5 rounded-[14px] border border-dashed p-4"
-        style={{ borderColor: N.border, background: N.cardSoft }}
-      >
+      <div className="mt-5 rounded-[14px] border border-dashed border-nanny-border bg-nanny-card-soft p-4">
         {documentsQuery.isLoading ? (
-          <p style={{ color: N.inkFaint, fontSize: 13.5, margin: 0 }}>Loading documents...</p>
+          <p className="text-nanny-ink-faint text-[13.5px] m-0">Loading documents...</p>
         ) : documentsQuery.isError ? (
-          <p style={{ color: N.rose, fontSize: 13.5, margin: 0 }}>
+          <p className="text-nanny-rose text-[13.5px] m-0">
             {documentsQuery.error instanceof Error ? documentsQuery.error.message : "Unable to load documents."}
           </p>
         ) : documents.length === 0 ? (
-          <p style={{ color: N.inkFaint, fontSize: 13.5, margin: 0 }}>
+          <p className="text-nanny-ink-faint text-[13.5px] m-0">
             No documents selected yet. Accepted formats: PDF, JPG, PNG. Max {MAX_FILE_SIZE_MB}MB each.
           </p>
         ) : (
@@ -171,8 +154,8 @@ export function NannyDocumentUploadSection() {
         )}
       </div>
 
-      {error && <p style={{ color: N.rose, fontSize: 13, fontWeight: 600, marginTop: 12 }}>{error}</p>}
-      <p style={{ color: N.inkFaint, fontSize: 12.5, lineHeight: 1.6, marginTop: 12 }}>
+      {error && <p className="text-nanny-rose text-[13px] font-semibold mt-3 m-0">{error}</p>}
+      <p className="text-nanny-ink-faint text-[12.5px] leading-[1.6] mt-3 mb-0">
         Uploaded documents are stored privately for KinSittr screening review.
       </p>
     </section>
@@ -189,21 +172,17 @@ function DocumentRow({
   onDelete: (documentId: string) => void;
 }) {
   return (
-    <div
-      className="flex flex-col gap-3 rounded-[12px] border p-3 sm:flex-row sm:items-center sm:justify-between"
-      style={{ borderColor: N.border, background: N.card }}
-    >
+    <div className="flex flex-col gap-3 rounded-[12px] border border-nanny-border bg-nanny-card p-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0 flex-1">
         <a
-          className="block truncate"
+          className="block truncate text-nanny-ink-soft text-[14px] font-bold m-0"
           href={document.file_url}
           rel="noreferrer"
           target="_blank"
-          style={{ color: N.inkSoft, fontSize: 14, fontWeight: 700, margin: 0 }}
         >
           {document.file_name}
         </a>
-        <p style={{ color: N.inkFaint, fontSize: 12.5, marginTop: 4 }}>
+        <p className="text-nanny-ink-faint text-[12.5px] mt-1 mb-0">
           {formatFileSize(document.size_bytes)}
         </p>
       </div>
@@ -211,7 +190,7 @@ function DocumentRow({
         type="button"
         onClick={() => onDelete(document.id)}
         disabled={isDeleting}
-        style={{ ...btnGhost, color: N.rose, justifyContent: "center", opacity: isDeleting ? 0.7 : 1 }}
+        className={cn(btnGhostCls, "text-nanny-rose justify-center", isDeleting && "opacity-70")}
       >
         Remove
       </button>

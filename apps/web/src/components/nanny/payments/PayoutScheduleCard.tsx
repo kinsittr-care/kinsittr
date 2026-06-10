@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { N } from "../tokens";
-import { labelStyle } from "../nanny-styles";
+import { cn } from "@/lib/utils";
+import { labelCls } from "../nanny-styles";
 import type { NannyPayoutSettingsData, NannyPayoutSchedule } from "@/src/types/api/payments";
 import { nannyPayoutSettingsQueryKey, updateNannyPayoutSettings } from "@/src/utils/api/payments";
 
@@ -32,81 +32,54 @@ export default function PayoutScheduleCard({
   }
 
   return (
-    <div
-      className="p-5 sm:p-7"
-      style={{ background: N.card, border: `1px solid ${N.border}`, borderRadius: 18, boxShadow: N.shadow }}
-    >
-      <h2
-        style={{
-          fontFamily: "DM Serif Display, var(--font-dm-serif), serif",
-          fontSize: 20,
-          fontWeight: 400,
-          color: N.greenDk,
-          marginBottom: 18,
-        }}
-      >
+    <div className="p-5 sm:p-7 bg-nanny-card border border-nanny-border rounded-[18px] shadow-[var(--nanny-shadow)]">
+      <h2 className="font-display text-[20px] font-normal text-nanny-green-dk mb-[18px]">
         Payout schedule
       </h2>
 
-      <label style={labelStyle}>Bank account</label>
+      <label className={labelCls}>Bank account</label>
       <div
-        className="flex flex-wrap items-center justify-between gap-2"
-        style={{
-          padding: "12px 16px",
-          background: N.cardSoft,
-          border: `1px solid ${N.border}`,
-          borderRadius: 10,
-          marginBottom: 20,
-          opacity: disabled ? 0.7 : 1,
-        }}
+        className={cn(
+          "flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-nanny-card-soft border border-nanny-border rounded-[10px] mb-5",
+          disabled && "opacity-70",
+        )}
       >
-        <span style={{ fontSize: 14, color: N.greenDk, fontWeight: 500 }}>
+        <span className="text-[14px] text-nanny-green-dk font-medium">
           {disabled ? "Managed securely in Stripe" : "Connected through Stripe"}
         </span>
         <button
           disabled={disabled}
-          style={{
-            fontSize: 13,
-            color: disabled ? N.inkFaint : N.green,
-            background: "transparent",
-            border: "none",
-            cursor: disabled ? "not-allowed" : "pointer",
-            fontWeight: 600,
-          }}
+          className={cn(
+            "text-[13px] bg-transparent border-none font-semibold",
+            disabled ? "text-nanny-ink-faint cursor-not-allowed" : "text-nanny-green cursor-pointer",
+          )}
         >
           Manage
         </button>
       </div>
 
-      <label style={labelStyle}>Schedule</label>
-      <div style={{ display: "flex", gap: 10 }}>
+      <label className={labelCls}>Schedule</label>
+      <div className="flex gap-[10px]">
         {(["daily", "weekly"] as NannyPayoutSchedule[]).map((s) => (
           <button
             key={s}
             disabled={disabled || updateMutation.isPending}
             onClick={() => chooseSchedule(s)}
-            style={{
-              flex: 1,
-              padding: "11px 0",
-              borderRadius: 10,
-              fontSize: 13.5,
-              fontWeight: schedule === s ? 600 : 500,
-              color: schedule === s ? N.green : N.inkMute,
-              background: schedule === s ? N.greenLt : N.cardSoft,
-              border: `1px solid ${schedule === s ? N.greenMid : N.border}`,
-              cursor: disabled || updateMutation.isPending ? "not-allowed" : "pointer",
-              opacity: disabled || updateMutation.isPending ? 0.55 : 1,
-              transition: "all .15s",
-              textTransform: "capitalize",
-            }}
+            className={cn(
+              "flex-1 py-[11px] rounded-[10px] text-[13.5px] capitalize transition-all duration-150",
+              schedule === s
+                ? "font-semibold text-nanny-green bg-nanny-green-lt border border-nanny-green-mid"
+                : "font-medium text-nanny-ink-faint bg-nanny-card-soft border border-nanny-border",
+              (disabled || updateMutation.isPending) ? "cursor-not-allowed opacity-55" : "cursor-pointer",
+            )}
           >
             {s}
           </button>
         ))}
       </div>
-      {disabled && <p style={{ margin: "12px 0 0", fontSize: 12.5, lineHeight: 1.5, color: N.inkFaint }}>{disabledCopy}</p>}
+      {disabled && <p className="mt-3 mb-0 text-[12.5px] leading-[1.5] text-nanny-ink-faint">{disabledCopy}</p>}
       {updateMutation.isError && (
-        <p style={{ margin: "12px 0 0", fontSize: 12.5, lineHeight: 1.5, color: "#b34b39" }}>
+        <p className="mt-3 mb-0 text-[12.5px] leading-[1.5] text-[#b34b39]">
           {updateMutation.error instanceof Error ? updateMutation.error.message : "Unable to update payout schedule."}
         </p>
       )}

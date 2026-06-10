@@ -200,7 +200,7 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
     !isMobile || (mobileView === "chat" && resolvedSelectedConversationId !== null);
 
   return (
-    <div className="flex h-full overflow-hidden" style={{ flex: 1 }}>
+    <div className="flex h-full overflow-hidden flex-1">
       {showThreadList && (
         <MessagesThreadList
           conversations={conversations}
@@ -229,7 +229,7 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
       )}
 
       {showChat && (
-        <div className="flex flex-col overflow-hidden" style={{ flex: 1 }}>
+        <div className="flex flex-col overflow-hidden flex-1">
           <MessagesChatHeader
             conversation={selectedConversation}
             isMobile={isMobile}

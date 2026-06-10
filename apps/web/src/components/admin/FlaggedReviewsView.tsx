@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { A } from "./tokens";
 import AdminPageHeader from "./compositions/AdminPageHeader";
 import AdminReasonDialog, { type AdminReasonDialogState } from "./AdminReasonDialog";
 import FlaggedReviewDetailPanel from "./compositions/FlaggedReviewDetailPanel";
@@ -182,16 +181,12 @@ export default function FlaggedReviewsView() {
         }
       />
       <div
-        style={{
-          padding: "24px 40px 40px",
-          display: "grid",
-          gridTemplateColumns: currentReview ? "1fr 360px" : "1fr",
-          gap: 18,
-        }}
+        className="px-10 pt-6 pb-10 grid gap-[18px]"
+        style={{ gridTemplateColumns: currentReview ? "1fr 360px" : "1fr" }}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        <div className="flex flex-col gap-[18px]">
           {actionError && (
-            <p style={{ color: A.red, fontSize: 14, margin: 0 }}>
+            <p className="text-admin-red text-[14px] m-0">
               {actionError instanceof Error ? actionError.message : "Unable to update review moderation."}
             </p>
           )}

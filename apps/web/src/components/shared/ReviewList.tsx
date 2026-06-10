@@ -9,51 +9,36 @@ export default function ReviewList({
   emptyText: string;
 }) {
   if (reviews.length === 0) {
-    return <p style={{ margin: 0, color: "var(--muted)", fontSize: 14 }}>{emptyText}</p>;
+    return <p className="m-0 text-[14px] text-brand-faint">{emptyText}</p>;
   }
 
   return (
-    <div style={{ display: "grid", gap: 12 }}>
+    <div className="grid gap-3">
       {reviews.map((review) => (
         <article
           key={review.id}
-          style={{
-            border: "1px solid var(--border, #e7ddd2)",
-            borderRadius: 16,
-            background: "#fffdf8",
-            padding: 16,
-          }}
+          className="rounded-2xl border border-(--border) bg-[#fffdf8] p-4"
         >
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div className="flex flex-wrap justify-between gap-3">
             <div>
-              <div style={{ fontWeight: 700, color: "var(--brand-text, #33271f)" }}>
+              <div className="font-bold text-brand-text">
                 {review.target === "nanny"
                   ? review.nanny_display_name || "Nanny"
                   : review.parent_display_name || "Parent"}
               </div>
-              <div style={{ fontSize: 12.5, color: "var(--faint, #9b9188)", marginTop: 2 }}>
+              <div className="mt-0.5 text-[12.5px] text-brand-faint">
                 {formatReviewDate(review.created_at)} · Booking {review.booking_date}
               </div>
             </div>
-            <div style={{ color: "var(--gold, #c8992f)", fontSize: 13 }}>
+            <div className="text-[13px] text-gold">
               {"★".repeat(review.rating)}
             </div>
           </div>
-          <p style={{ margin: "12px 0 0", lineHeight: 1.65, color: "var(--brand-text, #33271f)", fontSize: 14 }}>
+          <p className="mt-3 mb-0 text-[14px] leading-[1.65] text-brand-text">
             {review.comment}
           </p>
           {!review.is_visible && (
-            <div
-              style={{
-                marginTop: 12,
-                borderRadius: 10,
-                background: "#fff4ea",
-                border: "1px solid #f0c8a8",
-                color: "#9a5528",
-                padding: "8px 10px",
-                fontSize: 12.5,
-              }}
-            >
+            <div className="mt-3 rounded-[10px] border border-[#f0c8a8] bg-[#fff4ea] px-[10px] py-2 text-[12.5px] text-[#9a5528]">
               Hidden by moderation{review.flag_reason ? `: ${review.flag_reason}` : "."}
             </div>
           )}

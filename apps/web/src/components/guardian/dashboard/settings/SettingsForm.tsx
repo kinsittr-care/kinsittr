@@ -8,7 +8,8 @@ import type { ParentSettings, UpdateParentSettingsPayload } from "@/src/types/ap
 import { parentSettingsQueryKey, updateParentSettings } from "@/src/utils/api/parent";
 import { changePassword, deactivateAccount } from "@/src/utils/api/auth";
 import { clearAuthSession } from "@/src/utils/api/session";
-import { inputStyle, labelStyle, SectionCard, selectStyle, ToggleRow } from "./SettingsControls";
+import { cn } from "@/lib/utils";
+import { inputCls, labelCls, SectionCard, selectArrowStyle, selectCls, ToggleRow } from "./SettingsControls";
 
 export default function SettingsForm({ settings }: { settings: ParentSettings }) {
   const router = useRouter();
@@ -72,8 +73,8 @@ export default function SettingsForm({ settings }: { settings: ParentSettings })
 
       <SectionCard title="App Preferences">
         <div>
-          <label style={labelStyle}>Language</label>
-          <select value={draft.language} onChange={(event) => setDraftValue("language", event.target.value)} style={selectStyle}>
+          <label className={labelCls}>Language</label>
+          <select value={draft.language} onChange={(event) => setDraftValue("language", event.target.value)} className={cn(selectCls, "mb-4")} style={selectArrowStyle}>
             <option>English (Canada)</option>
             <option>French (Canada)</option>
             <option>Spanish</option>
@@ -81,25 +82,24 @@ export default function SettingsForm({ settings }: { settings: ParentSettings })
           </select>
         </div>
         <div>
-          <label style={labelStyle}>Currency</label>
-          <select value={draft.currency} onChange={(event) => setDraftValue("currency", event.target.value)} style={selectStyle}>
+          <label className={labelCls}>Currency</label>
+          <select value="CAD" onChange={(event) => setDraftValue("currency", event.target.value)} className={cn(selectCls, "mb-4")} style={selectArrowStyle}>
             <option value="CAD">CAD</option>
-            <option value="USD">USD</option>
           </select>
         </div>
         <div>
-          <label style={labelStyle}>Timezone</label>
-          <select value={draft.timezone} onChange={(event) => setDraftValue("timezone", event.target.value)} style={{ ...selectStyle, marginBottom: 4 }}>
+          <label className={labelCls}>Timezone</label>
+          <select value={draft.timezone} onChange={(event) => setDraftValue("timezone", event.target.value)} className={cn(selectCls, "mb-1")} style={selectArrowStyle}>
             <option>Eastern Time (ET)</option>
             <option>Pacific Time (PT)</option>
             <option>Mountain Time (MT)</option>
           </select>
         </div>
-        <button className="btn-cta" style={{ marginTop: 16, fontSize: 14, padding: "10px 20px" }} disabled={settingsMutation.isPending} onClick={() => settingsMutation.mutate(draft)}>
+        <button className="btn-cta mt-4 text-[14px] px-5 py-[10px]" disabled={settingsMutation.isPending} onClick={() => settingsMutation.mutate(draft)}>
           {settingsMutation.isPending ? "Saving..." : "Save settings"}
         </button>
         {(statusMessage || settingsMutation.error) && (
-          <div style={{ marginTop: 10, fontSize: 13, color: settingsMutation.error ? "#c0392b" : "var(--teal)", fontWeight: 600 }}>
+          <div className={cn("mt-[10px] text-[13px] font-semibold", settingsMutation.error ? "text-[#c0392b]" : "text-teal")}>
             {settingsMutation.error instanceof Error ? settingsMutation.error.message : statusMessage}
           </div>
         )}
@@ -107,41 +107,28 @@ export default function SettingsForm({ settings }: { settings: ParentSettings })
 
       <SectionCard title="Security">
         <div className="flex flex-col gap-[10px]">
-          <button className="btn-outline" style={{ justifyContent: "flex-start", gap: 10, fontSize: 14 }} onClick={() => setPasswordFormOpen((open) => !open)}>
+          <button className="btn-outline justify-start gap-[10px] text-[14px]" onClick={() => setPasswordFormOpen((open) => !open)}>
             <Lock className="text-gray-300" size={16} />
             Change password
           </button>
           {passwordFormOpen && (
-            <div style={{ padding: 14, border: "1px solid var(--border)", borderRadius: 12 }}>
-              <label style={labelStyle}>Current password</label>
-              <input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} style={inputStyle} />
-              <label style={labelStyle}>New password</label>
-              <input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} style={inputStyle} />
-              <button className="btn-cta" style={{ fontSize: 14, padding: "9px 18px" }} disabled={passwordMutation.isPending} onClick={() => passwordMutation.mutate({ current_password: currentPassword, new_password: newPassword })}>
+            <div className="p-[14px] border border-brand-border rounded-xl">
+              <label className={labelCls}>Current password</label>
+              <input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} className={inputCls} />
+              <label className={labelCls}>New password</label>
+              <input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} className={inputCls} />
+              <button className="btn-cta text-[14px] px-[18px] py-[9px]" disabled={passwordMutation.isPending} onClick={() => passwordMutation.mutate({ current_password: currentPassword, new_password: newPassword })}>
                 {passwordMutation.isPending ? "Updating..." : "Update password"}
               </button>
-              {passwordMutation.error instanceof Error && <div style={{ color: "#c0392b", fontSize: 13, marginTop: 8 }}>{passwordMutation.error.message}</div>}
+              {passwordMutation.error instanceof Error && <div className="text-[#c0392b] text-[13px] mt-2">{passwordMutation.error.message}</div>}
             </div>
           )}
-          <button className="btn-outline" style={{ justifyContent: "flex-start", gap: 10, fontSize: 14, opacity: 0.55, cursor: "not-allowed" }} disabled title="Data export API is not implemented yet.">
+          <button className="btn-outline justify-start gap-[10px] text-[14px] opacity-55 cursor-not-allowed" disabled title="Data export API is not implemented yet.">
             <ArrowDownToLine className="text-gray-300" size={16} />
             Download my data
           </button>
           <button
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-start",
-              gap: 10,
-              padding: "10px 20px",
-              fontSize: 14,
-              borderRadius: 12,
-              background: "#fff",
-              color: "#c0392b",
-              border: "1.5px solid #f0d0d0",
-              cursor: "pointer",
-              fontFamily: "inherit",
-            }}
+            className="flex items-center justify-start gap-[10px] px-5 py-[10px] text-[14px] rounded-xl bg-white text-[#c0392b] border-[1.5px] border-[#f0d0d0] cursor-pointer [font-family:inherit]"
             onClick={() => setDeleteFormOpen((open) => !open)}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -150,14 +137,14 @@ export default function SettingsForm({ settings }: { settings: ParentSettings })
             Delete account
           </button>
           {deleteFormOpen && (
-            <div style={{ padding: 14, border: "1px solid #f0d0d0", borderRadius: 12 }}>
-              <p style={{ color: "#c0392b", fontSize: 13, marginBottom: 12 }}>This will deactivate your account and sign you out.</p>
-              <label style={labelStyle}>Confirm password</label>
-              <input type="password" value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} style={inputStyle} />
-              <button style={{ padding: "9px 18px", fontSize: 14, borderRadius: 12, border: "1.5px solid #c0392b", background: "#c0392b", color: "#fff", fontFamily: "inherit", cursor: "pointer" }} disabled={deactivateMutation.isPending} onClick={() => deactivateMutation.mutate({ password: deletePassword })}>
+            <div className="p-[14px] border border-[#f0d0d0] rounded-xl">
+              <p className="text-[#c0392b] text-[13px] mb-3">This will deactivate your account and sign you out.</p>
+              <label className={labelCls}>Confirm password</label>
+              <input type="password" value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} className={inputCls} />
+              <button className="px-[18px] py-[9px] text-[14px] rounded-xl border-[1.5px] border-[#c0392b] bg-[#c0392b] text-white [font-family:inherit] cursor-pointer" disabled={deactivateMutation.isPending} onClick={() => deactivateMutation.mutate({ password: deletePassword })}>
                 {deactivateMutation.isPending ? "Deactivating..." : "Deactivate account"}
               </button>
-              {deactivateMutation.error instanceof Error && <div style={{ color: "#c0392b", fontSize: 13, marginTop: 8 }}>{deactivateMutation.error.message}</div>}
+              {deactivateMutation.error instanceof Error && <div className="text-[#c0392b] text-[13px] mt-2">{deactivateMutation.error.message}</div>}
             </div>
           )}
         </div>
@@ -176,7 +163,7 @@ function settingsToPayload(settings: ParentSettings): UpdateParentSettingsPayloa
     share_reviews: settings.share_reviews,
     analytics: settings.analytics,
     language: settings.language,
-    currency: settings.currency,
+    currency: "CAD",
     timezone: settings.timezone,
   };
 }

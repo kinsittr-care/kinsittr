@@ -26,39 +26,37 @@ export default function FaqSection() {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <section style={{ padding: "90px 0" }}>
+    <section className="py-[90px]">
       <div className="mx-auto px-[52px] max-w-[700px] max-md:px-6">
         <RevealWrapper>
           <div
-            className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-[0.1em] rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
-            style={{ color: "var(--teal)", background: "var(--teal-lt)", borderColor: "var(--teal-mid)" }}
+            className="mb-[18px] inline-flex items-center gap-[7px] rounded-[30px] border border-teal-mid bg-teal-lt px-[13px] py-[5px] text-[12px] font-bold uppercase tracking-widest text-teal"
           >
             FAQ
           </div>
-          <h2 className="font-display leading-[1.1] tracking-[-0.02em] mb-10" style={{ fontSize: "clamp(26px,3vw,38px)" }}>
+          <h2 className="font-display mb-10 text-[clamp(26px,3vw,38px)] leading-[1.1] tracking-[-0.02em]">
             Common questions
           </h2>
         </RevealWrapper>
 
         <div>
           {faqs.map((f, i) => (
-            <div key={f.q} style={{ borderBottom: "1px solid var(--border)" }}>
+            <div key={f.q} className="border-b border-(--border)">
               <button
-                className="w-full flex items-center justify-between gap-4 py-5 text-left"
+                className="flex w-full items-center justify-between gap-4 py-5 text-left"
                 onClick={() => setOpen(open === i ? null : i)}
               >
-                <span className="font-semibold text-[16px]" style={{ color: "var(--brand-text)" }}>
+                <span className="text-[16px] font-semibold text-brand-text">
                   {f.q}
                 </span>
                 <span
-                  className="text-[22px] flex-shrink-0 transition-transform"
-                  style={{ color: "var(--teal)", transform: open === i ? "rotate(45deg)" : "none" }}
+                  className={`shrink-0 text-[22px] text-teal transition-transform ${open === i ? "rotate-45" : ""}`}
                 >
                   +
                 </span>
               </button>
               {open === i && (
-                <p className="pb-5 text-[14.5px] leading-[1.75]" style={{ color: "var(--muted)" }}>
+                <p className="pb-5 text-[14.5px] leading-[1.75] text-brand-faint">
                   {f.a}
                 </p>
               )}

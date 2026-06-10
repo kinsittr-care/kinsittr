@@ -64,6 +64,10 @@ func normalizeString(value string) string {
 	return strings.TrimSpace(value)
 }
 
+func normalizeLocationString(value string) string {
+	return strings.ToLower(strings.Join(strings.Fields(value), " "))
+}
+
 func parentProfileData(profile models.ParentProfile) ParentProfileData {
 	return ParentProfileData{
 		ID:           profile.ID.String(),

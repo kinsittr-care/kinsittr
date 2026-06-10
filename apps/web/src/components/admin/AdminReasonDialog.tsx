@@ -33,8 +33,6 @@ export default function AdminReasonDialog({
 
   if (!action) return null;
 
-  const titleID = "admin-reason-dialog-title";
-  const descriptionID = "admin-reason-dialog-description";
   const trimmedReason = reason.trim();
   const canSubmit = trimmedReason.length > 0 && !isSubmitting;
   const close = () => {
@@ -50,16 +48,14 @@ export default function AdminReasonDialog({
   return (
     <Dialog open={Boolean(action)} onOpenChange={(open) => !open && close()}>
       <DialogContent
-        aria-describedby={descriptionID}
-        aria-labelledby={titleID}
         className="max-w-[460px] border-[#e7ddd2] bg-[#fffdf8] p-0 text-[#33271f] shadow-[0_24px_80px_rgba(40,30,20,.22)]"
       >
         <div className="p-[22px]">
           <DialogHeader>
-            <DialogTitle id={titleID} className="font-display text-[26px] font-normal text-[#33271f]">
+            <DialogTitle className="font-display text-[26px] font-normal text-[#33271f]">
               {action.title}
             </DialogTitle>
-            <DialogDescription id={descriptionID} className="text-sm leading-relaxed text-[#7b7168]">
+            <DialogDescription className="text-sm leading-relaxed text-[#7b7168]">
               {action.description}
             </DialogDescription>
           </DialogHeader>

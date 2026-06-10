@@ -104,6 +104,9 @@ func TestUpdateOwnProfile(t *testing.T) {
 		if repo.lastParentUpdate.Phone != "+14165550100" {
 			t.Fatalf("expected normalized phone, got %q", repo.lastParentUpdate.Phone)
 		}
+		if repo.lastParentUpdate.City != "toronto" || repo.lastParentUpdate.Province != "on" {
+			t.Fatalf("expected lowercase location, got city=%q province=%q", repo.lastParentUpdate.City, repo.lastParentUpdate.Province)
+		}
 	})
 }
 

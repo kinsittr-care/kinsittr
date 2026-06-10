@@ -1,6 +1,6 @@
+import { cn } from "@/lib/utils";
 import type { AdminNannyDocument } from "@/src/types/api/admin";
 import { formatShortDate } from "@/src/utils/format";
-import { A } from "../tokens";
 
 export default function AdminNannyDocumentsList({
   documents,
@@ -11,52 +11,34 @@ export default function AdminNannyDocumentsList({
 }) {
   if (documents.length === 0) {
     return (
-      <p style={{ margin: compact ? "10px 0 0" : 0, color: A.inkSoft, fontSize: 13 }}>
+      <p className={cn("text-admin-ink-soft text-[13px]", compact ? "mt-[10px] mb-0" : "m-0")}>
         No documents uploaded yet.
       </p>
     );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: compact ? 8 : 10, marginTop: compact ? 12 : 0 }}>
+    <div className={cn("flex flex-col", compact ? "gap-2 mt-3" : "gap-[10px]")}>
       {documents.map((document) => (
         <a
           key={document.id}
           href={document.file_url}
           rel="noreferrer"
           target="_blank"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            padding: compact ? "8px 10px" : "10px 12px",
-            border: `1px solid ${A.borderSoft}`,
-            borderRadius: 10,
-            background: A.cardWarm,
-            color: A.ink,
-            textDecoration: "none",
-            minWidth: 0,
-          }}
+          className={cn(
+            "flex items-center justify-between gap-3 border border-admin-border-soft rounded-[10px] bg-admin-card-warm text-admin-ink no-underline min-w-0",
+            compact ? "px-[10px] py-2" : "px-3 py-[10px]",
+          )}
         >
-          <span style={{ minWidth: 0 }}>
-            <span
-              style={{
-                display: "block",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                fontSize: compact ? 12.5 : 13.5,
-                fontWeight: 700,
-              }}
-            >
+          <span className="min-w-0">
+            <span className={cn("block overflow-hidden text-ellipsis whitespace-nowrap font-bold", compact ? "text-[12.5px]" : "text-[13.5px]")}>
               {document.file_name}
             </span>
-            <span style={{ display: "block", marginTop: 3, color: A.inkSoft, fontSize: 11.5 }}>
+            <span className="block mt-[3px] text-admin-ink-soft text-[11.5px]">
               {formatFileSize(document.size_bytes)} · {formatShortDate(document.created_at)}
             </span>
           </span>
-          <span style={{ color: A.clay, fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>
+          <span className="text-admin-clay text-[12px] font-bold whitespace-nowrap">
             Open
           </span>
         </a>

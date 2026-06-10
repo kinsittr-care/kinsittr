@@ -21,14 +21,14 @@ export default function NannyReviewsView() {
         <h1 className="font-display text-[28px] md:text-[36px] font-normal text-nanny-green-dk leading-tight">
           Reviews
         </h1>
-        <p className="mt-2 text-sm md:text-[14.5px] text-nanny-ink-mute">
+        <p className="mt-2 text-sm md:text-[14.5px] text-nanny-ink-faint">
           Reviews you have submitted for completed parent bookings.
         </p>
       </div>
 
       <section className="bg-nanny-card border border-nanny-border rounded-[18px] p-5 md:p-6 shadow-[var(--nanny-shadow)]">
         {reviewsQuery.isLoading ? (
-          <p className="text-nanny-ink-mute text-sm m-0">Loading reviews...</p>
+          <p className="text-nanny-ink-faint text-sm m-0">Loading reviews...</p>
         ) : reviewsQuery.isError ? (
           <p className="text-nanny-rose text-sm m-0">
             {reviewsQuery.error instanceof Error ? reviewsQuery.error.message : "Unable to load reviews."}

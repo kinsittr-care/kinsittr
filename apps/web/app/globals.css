@@ -121,6 +121,32 @@
   --color-brand-faint:  var(--faint);
   --color-brand-border: var(--border);
 
+  /* Admin palette */
+  --color-admin-bg:          var(--admin-bg);
+  --color-admin-bg-soft:     var(--admin-bg-soft);
+  --color-admin-sidebar:     var(--admin-sidebar);
+  --color-admin-card:        var(--admin-card);
+  --color-admin-card-warm:   var(--admin-card-warm);
+  --color-admin-border:      var(--admin-border);
+  --color-admin-border-soft: var(--admin-border-soft);
+  --color-admin-divider:     var(--admin-divider);
+  --color-admin-ink:         var(--admin-ink);
+  --color-admin-ink-mid:     var(--admin-ink-mid);
+  --color-admin-ink-soft:    var(--admin-ink-soft);
+  --color-admin-ink-faint:   var(--admin-ink-faint);
+  --color-admin-clay:        var(--admin-clay);
+  --color-admin-clay-dark:   var(--admin-clay-dark);
+  --color-admin-clay-light:  var(--admin-clay-light);
+  --color-admin-clay-soft:   var(--admin-clay-soft);
+  --color-admin-amber:       var(--admin-amber);
+  --color-admin-amber-light: var(--admin-amber-light);
+  --color-admin-green:       var(--admin-green);
+  --color-admin-green-light: var(--admin-green-light);
+  --color-admin-red:         var(--admin-red);
+  --color-admin-red-light:   var(--admin-red-light);
+  --color-admin-plum:        var(--admin-plum);
+  --color-admin-plum-light:  var(--admin-plum-light);
+
   /* Nanny palette */
   --color-nanny-green:       var(--nanny-green);
   --color-nanny-green-dk:    var(--nanny-green-dk);
@@ -269,11 +295,11 @@ body {
 .btn-nav-ghost:hover { color: var(--teal); border-color: var(--teal); }
 
 /* ── Hover links ── */
-.link-muted {
-  text-decoration: none; color: var(--muted);
+.link-faint {
+  text-decoration: none; color: var(--faint);
   font-size: 14px; font-weight: 500; transition: color .15s;
 }
-.link-muted:hover { color: var(--brand-text); }
+.link-faint:hover { color: var(--brand-text); }
 
 .link-white {
   display: block; text-decoration: none; font-size: 14px;

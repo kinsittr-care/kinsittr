@@ -1,4 +1,4 @@
-import { A } from "../tokens";
+import { cn } from "@/lib/utils";
 
 type KeyTone = "clay" | "green" | "ink" | "amber";
 
@@ -8,11 +8,11 @@ export interface AnalyticsKeyMetric {
   tone?: KeyTone;
 }
 
-const keyColors: Record<KeyTone, string> = {
-  clay:  A.clay,
-  green: A.green,
-  ink:   A.ink,
-  amber: A.amber,
+const keyToneCls: Record<KeyTone, string> = {
+  clay:  "text-admin-clay",
+  green: "text-admin-green",
+  ink:   "text-admin-ink",
+  amber: "text-admin-amber",
 };
 
 function KeyMetric({
@@ -25,28 +25,12 @@ function KeyMetric({
   tone?: KeyTone;
 }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "14px 0",
-        borderBottom: `1px solid ${A.borderSoft}`,
-      }}
-    >
-      <span style={{ fontSize: 14, color: A.inkMid }}>{label}</span>
-      <span style={{ fontSize: 15, fontWeight: 600, color: keyColors[tone] }}>{value}</span>
+    <div className="flex flex-col gap-1 py-[14px] border-b border-admin-border-soft sm:flex-row sm:items-center sm:justify-between">
+      <span className="text-[14px] text-admin-ink-mid">{label}</span>
+      <span className={cn("text-[15px] font-semibold", keyToneCls[tone])}>{value}</span>
     </div>
   );
 }
-
-const titleSerif = {
-  fontFamily: "var(--font-dm-serif), serif",
-  fontSize: 22,
-  fontWeight: 400,
-  color: "var(--admin-ink)",
-  letterSpacing: "-.005em",
-};
 
 export default function AnalyticsKeyMetrics({
   metrics,
@@ -56,17 +40,9 @@ export default function AnalyticsKeyMetrics({
   isLoading: boolean;
 }) {
   return (
-    <div
-      style={{
-        background: A.card,
-        border: `1px solid ${A.border}`,
-        borderRadius: 16,
-        padding: "26px 28px",
-        boxShadow: A.shadow,
-      }}
-    >
-      <h2 style={titleSerif}>Key metrics</h2>
-      <div style={{ marginTop: 14 }}>
+    <div className="bg-admin-card border border-admin-border rounded-2xl px-5 py-5 shadow-[var(--admin-shadow)] sm:px-7 sm:py-[26px]">
+      <h2 className="font-display text-[22px] font-normal text-admin-ink tracking-[-0.005em]">Key metrics</h2>
+      <div className="mt-[14px]">
         {metrics.map((metric) => (
           <KeyMetric
             key={metric.label}

@@ -1,9 +1,8 @@
 import AdminPill from "./compositions/AdminPill";
 import AdminAuditTimeline from "./compositions/AdminAuditTimeline";
-import { btnApprove } from "./compositions/admin-styles";
-import { A } from "./tokens";
+import { btnApproveCls } from "./compositions/admin-styles";
 import type { AdminAuditAction, AdminParentDetailData } from "@/src/types/api/admin";
-import { formatCurrency, formatDateOnlyShort } from "@/src/utils/format";
+import { formatCurrency, formatDateOnlyShort, formatLocation } from "@/src/utils/format";
 
 export default function AdminParentDetailPanel({
   actions,
@@ -24,23 +23,26 @@ export default function AdminParentDetailPanel({
   onActionPageChange: (page: number) => void;
   onReactivate: () => void;
 }) {
+  const panelCls = "bg-admin-card border border-admin-border rounded-2xl shadow-[var(--admin-shadow)] p-[22px] self-start flex flex-col gap-[18px] text-admin-ink-soft";
+
   if (isLoading) {
-    return <aside style={panelStyle}>Loading parent details...</aside>;
+    return <aside className={panelCls}>Loading parent details...</aside>;
   }
 
   if (!detail) {
-    return <aside style={panelStyle}>Select a parent to view details.</aside>;
+    return <aside className={panelCls}>Select a parent to view details.</aside>;
   }
 
   const { parent, bookings } = detail;
+  const childrenAges = Array.isArray(parent.children_ages) ? parent.children_ages : [];
 
   return (
-    <aside style={panelStyle}>
+    <aside className={panelCls}>
       <div>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+        <div className="flex justify-between gap-3">
           <div>
-            <h2 style={{ margin: 0, color: A.ink, fontSize: 20 }}>{parent.display_name}</h2>
-            <p style={{ margin: "5px 0 0", color: A.inkSoft, fontSize: 13 }}>{parent.user_email}</p>
+            <h2 className="m-0 text-admin-ink text-[20px]">{parent.display_name}</h2>
+            <p className="mt-[5px] mb-0 text-admin-ink-soft text-[13px]">{parent.user_email}</p>
           </div>
           <AdminPill tone={parent.user_is_active ? "green" : "red"}>
             {parent.user_is_active ? "active" : "suspended"}
@@ -49,36 +51,36 @@ export default function AdminParentDetailPanel({
       </div>
 
       {!parent.user_is_active && (
-        <button type="button" style={btnApprove} onClick={onReactivate}>
+        <button type="button" className={btnApproveCls} onClick={onReactivate}>
           Reactivate parent
         </button>
       )}
 
-      <div style={metricGrid}>
+      <div className="grid grid-cols-2 gap-[10px]">
         <Metric label="Spend" value={formatCurrency(parent.total_spend)} />
         <Metric label="Bookings" value={String(parent.booking_count)} />
         <Metric label="Children" value={String(parent.num_children)} />
         <Metric label="History" value={String(bookings.total)} />
       </div>
 
-      <div style={sectionStyle}>
-        <h3 style={sectionTitle}>Profile</h3>
+      <div className="border-t border-admin-border-soft pt-4">
+        <h3 className="m-0 text-admin-ink text-[15px]">Profile</h3>
         <Detail label="Name" value={`${parent.user_firstname} ${parent.user_lastname}`.trim()} />
-        <Detail label="Location" value={`${parent.city}, ${parent.province}`} />
-        <Detail label="Children ages" value={parent.children_ages.length ? parent.children_ages.join(", ") : "None listed"} />
+        <Detail label="Location" value={formatLocation(parent.city, parent.province, "not set")} />
+        <Detail label="Children ages" value={childrenAges.length ? childrenAges.join(", ") : "None listed"} />
         <Detail label="Stripe customer" value={parent.stripe_customer_id || "Not created"} />
       </div>
 
-      <div style={sectionStyle}>
-        <h3 style={sectionTitle}>Recent bookings</h3>
+      <div className="border-t border-admin-border-soft pt-4">
+        <h3 className="m-0 text-admin-ink text-[15px]">Recent bookings</h3>
         {bookings.items.length === 0 ? (
-          <p style={{ margin: 0, color: A.inkSoft, fontSize: 13 }}>No booking history yet.</p>
+          <p className="m-0 text-admin-ink-soft text-[13px]">No booking history yet.</p>
         ) : (
           bookings.items.slice(0, 5).map((booking) => (
-            <div key={booking.id} style={bookingRowStyle}>
+            <div key={booking.id} className="flex justify-between gap-3 border-t border-admin-border-soft py-3">
               <div>
-                <div style={{ color: A.ink, fontSize: 13.5, fontWeight: 600 }}>{booking.nanny_display_name}</div>
-                <div style={{ color: A.inkSoft, fontSize: 12.5 }}>
+                <div className="text-admin-ink text-[13.5px] font-semibold">{booking.nanny_display_name}</div>
+                <div className="text-admin-ink-soft text-[12.5px]">
                   {formatDateOnlyShort(booking.date)} · {booking.start_time} · {booking.duration}h
                 </div>
               </div>
@@ -106,55 +108,17 @@ const ACTION_PAGE_SIZE = 10;
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ background: A.cardWarm, border: `1px solid ${A.borderSoft}`, borderRadius: 12, padding: 12 }}>
-      <div style={{ color: A.inkSoft, fontSize: 11, textTransform: "uppercase", letterSpacing: ".08em" }}>{label}</div>
-      <div style={{ marginTop: 6, color: A.clay, fontWeight: 700, fontSize: 15 }}>{value}</div>
+    <div className="bg-admin-card-warm border border-admin-border-soft rounded-xl p-3">
+      <div className="text-admin-ink-soft text-[11px] uppercase tracking-[.08em]">{label}</div>
+      <div className="mt-[6px] text-admin-clay font-bold text-[15px]">{value}</div>
     </div>
   );
 }
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ marginTop: 10, color: A.inkMid, fontSize: 13 }}>
-      <strong style={{ color: A.ink }}>{label}:</strong> {value || "not set"}
+    <div className="mt-[10px] text-admin-ink-mid text-[13px]">
+      <strong className="text-admin-ink">{label}:</strong> {value || "not set"}
     </div>
   );
 }
-
-const panelStyle: React.CSSProperties = {
-  background: A.card,
-  border: `1px solid ${A.border}`,
-  borderRadius: 16,
-  boxShadow: A.shadow,
-  padding: 22,
-  alignSelf: "start",
-  display: "flex",
-  flexDirection: "column",
-  gap: 18,
-  color: A.inkSoft,
-};
-
-const metricGrid: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: 10,
-};
-
-const sectionStyle: React.CSSProperties = {
-  borderTop: `1px solid ${A.borderSoft}`,
-  paddingTop: 16,
-};
-
-const sectionTitle: React.CSSProperties = {
-  margin: 0,
-  color: A.ink,
-  fontSize: 15,
-};
-
-const bookingRowStyle: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 12,
-  borderTop: `1px solid ${A.borderSoft}`,
-  padding: "12px 0",
-};

@@ -11,11 +11,11 @@ export default function ParentBookingsPage() {
           <h1 className="font-display" style={{ fontWeight: 400, fontSize: 30, marginBottom: 4 }}>
             Bookings
           </h1>
-          <p style={{ color: "var(--muted)", fontSize: 14 }}>
+          <p style={{ color: "var(--faint)", fontSize: 14 }}>
             Review your booking requests, track status updates, and manage pending requests.
           </p>
         </div>
-        <Suspense fallback={<p style={{ color: "var(--muted)", fontSize: 14 }}>Loading bookings…</p>}>
+        <Suspense fallback={<p style={{ color: "var(--faint)", fontSize: 14 }}>Loading bookings…</p>}>
           <ParentBookingsView />
         </Suspense>
       </div>

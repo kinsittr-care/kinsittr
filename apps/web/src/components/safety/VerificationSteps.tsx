@@ -20,45 +20,36 @@ const steps = [
 
 export default function VerificationSteps() {
   return (
-    <section style={{ background: "var(--bg)", padding: "90px 0" }}>
+    <section className="bg-brand-bg py-[90px]">
       <div className="mx-auto px-[52px] max-w-[1080px] max-md:px-6">
         <RevealWrapper>
           <div
-            className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-widest rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
-            style={{ color: "var(--teal)", background: "var(--teal-lt)", borderColor: "var(--teal-mid)" }}
+            className="mb-[18px] inline-flex items-center gap-[7px] rounded-[30px] border border-teal-mid bg-teal-lt px-[13px] py-[5px] text-[12px] font-bold uppercase tracking-widest text-teal"
           >
             Our process
           </div>
-          <h2 className="font-display leading-[1.1] tracking-[-0.02em] mb-4" style={{ fontSize: "clamp(28px,3.5vw,42px)" }}>
-            Three layers of <em style={{ color: "var(--teal)" }}>verification</em>
+          <h2 className="font-display mb-4 text-[clamp(28px,3.5vw,42px)] leading-[1.1] tracking-[-0.02em]">
+            Three layers of <em className="text-teal">verification</em>
           </h2>
-          <p className="text-[16px] leading-[1.75] mb-10 max-w-[540px]" style={{ color: "var(--muted)" }}>
+          <p className="mb-10 max-w-[540px] text-[16px] leading-[1.75] text-brand-faint">
             No shortcuts. Every nanny goes through all three steps — in order — before joining the platform.
           </p>
         </RevealWrapper>
 
-        <div className="flex flex-col" style={{ gap: 2 }}>
+        <div className="flex flex-col gap-0.5">
           {steps.map((s, i) => (
             <RevealWrapper key={s.num} delay={i * 0.1}>
               <div
-                className="flex gap-6 items-start bg-white p-[28px]"
-                style={{
-                  borderRadius: i === 0 ? "14px 14px 0 0" : i === steps.length - 1 ? "0 0 14px 14px" : 0,
-                  border: "1px solid var(--border)",
-                  borderBottom: i === steps.length - 1 ? "1px solid var(--border)" : "none",
-                }}
+                className={`flex items-start gap-6 border border-(--border) bg-white p-[28px] ${i === 0 ? "rounded-t-[14px]" : ""} ${i === steps.length - 1 ? "rounded-b-[14px]" : "border-b-0"}`}
               >
-                <div
-                  className="w-[44px] h-[44px] rounded-full flex items-center justify-center shrink-0 font-bold text-[16px]"
-                  style={{ background: "var(--teal-lt)", color: "var(--teal)" }}
-                >
+                <div className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full bg-teal-lt text-[16px] font-bold text-teal">
                   {s.num}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-[17px] mb-2" style={{ color: "var(--brand-text)" }}>
+                  <h3 className="mb-2 text-[17px] font-semibold text-brand-text">
                     {s.title}
                   </h3>
-                  <p className="text-[14.5px] leading-[1.75]" style={{ color: "var(--muted)" }}>
+                  <p className="text-[14.5px] leading-[1.75] text-brand-faint">
                     {s.description}
                   </p>
                 </div>

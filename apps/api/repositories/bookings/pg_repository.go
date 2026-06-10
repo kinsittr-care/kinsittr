@@ -56,8 +56,8 @@ func (r *pgRepository) HasParentActiveBookingWithNanny(ctx context.Context, pare
 			WHERE parent_profile_id = $1
 			  AND nanny_profile_id = $2
 			  AND status IN ('pending', 'approved')
-			  AND start_time < ($3 + ($4 * INTERVAL '1 hour'))
-			  AND (start_time + (duration * INTERVAL '1 hour')) > $3
+			  AND start_time < ($3::timestamp + ($4::int * INTERVAL '1 hour'))
+			  AND (start_time + (duration * INTERVAL '1 hour')) > $3::timestamp
 		)
 	`, parentProfileID, nannyProfileID, startTime, duration).Scan(&exists)
 	return exists, err
@@ -71,8 +71,8 @@ func (r *pgRepository) HasNannyApprovedBookingConflict(ctx context.Context, nann
 			FROM bookings
 			WHERE nanny_profile_id = $1
 			  AND status = 'approved'
-			  AND start_time < ($2 + ($3 * INTERVAL '1 hour'))
-			  AND (start_time + (duration * INTERVAL '1 hour')) > $2
+			  AND start_time < ($2::timestamp + ($3::int * INTERVAL '1 hour'))
+			  AND (start_time + (duration * INTERVAL '1 hour')) > $2::timestamp
 		)
 	`, nannyProfileID, startTime, duration).Scan(&exists)
 	return exists, err
@@ -87,8 +87,8 @@ func (r *pgRepository) HasNannyApprovedBookingConflictExcluding(ctx context.Cont
 			WHERE nanny_profile_id = $1
 			  AND id <> $4
 			  AND status = 'approved'
-			  AND start_time < ($2 + ($3 * INTERVAL '1 hour'))
-			  AND (start_time + (duration * INTERVAL '1 hour')) > $2
+			  AND start_time < ($2::timestamp + ($3::int * INTERVAL '1 hour'))
+			  AND (start_time + (duration * INTERVAL '1 hour')) > $2::timestamp
 		)
 	`, nannyProfileID, startTime, duration, excludeBookingID).Scan(&exists)
 	return exists, err

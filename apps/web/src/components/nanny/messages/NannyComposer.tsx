@@ -1,6 +1,5 @@
 "use client";
 
-import { N } from "../tokens";
 
 interface NannyComposerProps {
   input: string;
@@ -25,17 +24,13 @@ export default function NannyComposer({
 }: NannyComposerProps) {
   return (
     <div
-      style={{
-        padding: isMobile ? "14px 16px" : "18px 26px",
-        borderTop: `1px solid ${N.border}`,
-        background: N.card,
-        flexShrink: 0,
-      }}
+      className="border-t border-nanny-border bg-nanny-card shrink-0"
+      style={{ padding: isMobile ? "14px 16px" : "18px 26px" }}
     >
       {sendError && (
-        <p style={{ color: N.rose, fontSize: 13, marginBottom: 10 }}>{sendError}</p>
+        <p className="text-nanny-rose text-[13px] mb-2.5">{sendError}</p>
       )}
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
+      <div className="flex items-end gap-3">
         <textarea
           value={input}
           onChange={(e) => onInputChange(e.target.value)}
@@ -47,37 +42,12 @@ export default function NannyComposer({
           }}
           placeholder="Type your message..."
           disabled={!isConversationSelected || isSending}
-          style={{
-            flex: 1,
-            minHeight: 52,
-            maxHeight: 120,
-            resize: "vertical",
-            borderRadius: 16,
-            border: `1px solid ${N.border}`,
-            padding: "14px 16px",
-            fontSize: 14,
-            fontFamily: "inherit",
-            outline: "none",
-            background: N.cardSoft,
-            color: N.inkSoft,
-          }}
+          className="flex-1 min-h-[52px] max-h-[120px] resize-y rounded-2xl border border-nanny-border px-4 py-[14px] text-[14px] outline-none bg-nanny-card-soft text-nanny-ink-faint"
         />
         <button
           onClick={onSend}
           disabled={!canSend}
-          style={{
-            padding: "13px 20px",
-            fontSize: 14,
-            fontWeight: 600,
-            background: N.green,
-            color: "#f6efd9",
-            border: "none",
-            borderRadius: 12,
-            cursor: canSend ? "pointer" : "default",
-            opacity: canSend ? 1 : 0.6,
-            fontFamily: "inherit",
-            transition: "opacity .15s",
-          }}
+          className={`py-[13px] px-5 text-[14px] font-semibold bg-nanny-green text-[#f6efd9] border-0 rounded-xl transition-opacity duration-150 ${canSend ? "cursor-pointer opacity-100" : "cursor-default opacity-60"}`}
         >
           {isSending ? "Sending..." : "Send"}
         </button>

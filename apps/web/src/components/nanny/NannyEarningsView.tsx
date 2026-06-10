@@ -20,10 +20,10 @@ import {
 
 function EarningsStat({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className="w-[min(200px,72vw)] shrink-0 md:w-auto md:shrink-0 bg-nanny-card border border-nanny-border rounded-[18px] p-5 min-h-[130px] flex flex-col shadow-(--nanny-shadow)">
-      <p className="text-[11px] font-semibold tracking-widest uppercase text-nanny-ink-mute">{label}</p>
+    <div className="w-[min(220px,72vw)] shrink-0 xl:w-auto xl:shrink-0 bg-nanny-card border border-nanny-border rounded-[18px] p-5 min-h-[130px] flex flex-col shadow-(--nanny-shadow)">
+      <p className="text-[11px] font-semibold tracking-widest uppercase text-nanny-ink-faint">{label}</p>
       <p className="mt-auto pt-3 font-display text-[40px] leading-none tracking-tight text-nanny-green">{value}</p>
-      <p className="mt-2.5 text-[13px] text-nanny-ink-mute">{sub}</p>
+      <p className="mt-2.5 text-[13px] text-nanny-ink-faint">{sub}</p>
     </div>
   );
 }
@@ -61,12 +61,13 @@ export default function NannyEarningsView() {
   const error = summaryQuery.error || earningsQuery.error || statusQuery.error || payoutsQuery.error || settingsQuery.error;
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 pt-6 pb-16 md:px-12 md:pt-10 md:pb-20">
+    <div className="flex-1 overflow-y-auto">
+      <div className="max-w-[980px] mx-auto px-4 pt-6 pb-16 md:px-12 md:pt-10 md:pb-20">
       <div className="mb-7 md:mb-8">
         <h1 className="font-display text-[28px] md:text-[36px] font-normal text-nanny-green-dk leading-tight">
           Earnings
         </h1>
-        <p className="mt-2 text-sm md:text-[14.5px] text-nanny-ink-mute">
+        <p className="mt-2 text-sm md:text-[14.5px] text-nanny-ink-faint">
           Completed paid bookings
         </p>
       </div>
@@ -77,7 +78,7 @@ export default function NannyEarningsView() {
         </p>
       )}
 
-      <div className="flex gap-3 overflow-x-auto pb-0.5 [scrollbar-width:none] [-ms-overflow-style:none] md:grid md:grid-cols-3 md:overflow-visible md:gap-4 mb-5">
+      <div className="flex gap-3 overflow-x-auto pb-0.5 [scrollbar-width:none] [-ms-overflow-style:none] xl:grid xl:grid-cols-3 xl:overflow-visible xl:gap-4 mb-5">
         <EarningsStat
           label="This month"
           value={summaryQuery.isLoading ? "..." : formatCurrency(summary?.this_month_earnings ?? 0)}
@@ -95,7 +96,7 @@ export default function NannyEarningsView() {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr] gap-4">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.6fr_1fr]">
         <PayoutHistoryTable
           earnings={earnings?.items ?? []}
           isLoading={earningsQuery.isLoading}
@@ -108,6 +109,7 @@ export default function NannyEarningsView() {
           payouts={payoutsQuery.data?.data?.items ?? []}
           schedule={settingsQuery.data?.data?.schedule}
         />
+      </div>
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-import { N } from "../tokens";
 import type { StripeBalanceData, StripePayoutData } from "@/src/types/api/payments";
 import { formatCurrency } from "@/src/utils/format";
 
@@ -20,70 +19,42 @@ export default function BalanceSummaryCard({
   const pending = balance?.pending[0];
   const nextPayout = payouts[0];
   const rows = [
-    { label: "Available balance", value: available ? formatCurrency(available.amount, available.currency) : "$0", color: N.green },
-    { label: "Pending", value: pending ? formatCurrency(pending.amount, pending.currency) : "$0", color: N.amber },
-    { label: "Next payout", value: nextPayout?.arrival_date ? formatShortDate(nextPayout.arrival_date) : "Not scheduled", color: N.greenDk },
+    { label: "Available balance", value: available ? formatCurrency(available.amount, available.currency) : "$0", color: "var(--nanny-green)" },
+    { label: "Pending", value: pending ? formatCurrency(pending.amount, pending.currency) : "$0", color: "var(--nanny-amber)" },
+    { label: "Next payout", value: nextPayout?.arrival_date ? formatShortDate(nextPayout.arrival_date) : "Not scheduled", color: "var(--nanny-green-dk)" },
   ];
 
   return (
-    <div
-      style={{
-        background: N.greenLt,
-        border: `1px solid ${N.greenMid}`,
-        borderRadius: 18,
-        padding: "24px 28px",
-        boxShadow: N.shadow,
-      }}
-    >
-      <h2
-        style={{
-          fontFamily: "DM Serif Display, var(--font-dm-serif), serif",
-          fontSize: 20,
-          fontWeight: 400,
-          color: N.greenDk,
-          marginBottom: 18,
-        }}
-      >
+    <div className="bg-nanny-green-lt border border-nanny-green-mid rounded-[18px] px-7 py-6 shadow-[var(--nanny-shadow)]">
+      <h2 className="font-display text-[20px] font-normal text-nanny-green-dk mb-[18px]">
         Balance summary
       </h2>
 
       {showBalances ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        <div className="flex flex-col">
           {isLoading ? (
-            <p style={{ margin: 0, padding: "12px 0", fontSize: 14, color: N.inkSoft }}>Loading payout balance...</p>
+            <p className="m-0 py-3 text-[14px] text-nanny-ink-soft">Loading payout balance...</p>
           ) : rows.map((r, i) => (
             <div
               key={r.label}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "13px 0",
-                borderBottom: i < rows.length - 1 ? `1px solid ${N.greenMid}` : "none",
-              }}
+              className="flex justify-between items-center py-[13px]"
+              style={{ borderBottom: i < rows.length - 1 ? "1px solid var(--nanny-green-mid)" : "none" }}
             >
-              <span style={{ fontSize: 13.5, color: N.inkSoft }}>{r.label}</span>
-              <span
-                style={{
-                  fontFamily: "DM Serif Display, var(--font-dm-serif), serif",
-                  fontSize: 22,
-                  color: r.color,
-                  lineHeight: 1,
-                }}
-              >
+              <span className="text-[13.5px] text-nanny-ink-soft">{r.label}</span>
+              <span className="font-display text-[22px] leading-none" style={{ color: r.color }}>
                 {r.value}
               </span>
             </div>
           ))}
         </div>
       ) : (
-        <div style={{ padding: "10px 0 2px" }}>
-          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: N.inkSoft }}>
+        <div className="pt-[10px] pb-[2px]">
+          <p className="m-0 text-[14px] leading-[1.6] text-nanny-ink-soft">
             {hasStripeAccount
               ? "Your balance will appear after Stripe finishes onboarding and bookings are completed."
               : "Connect Stripe to unlock payout balances."}
           </p>
-          <div style={{ marginTop: 16, fontFamily: "DM Serif Display, var(--font-dm-serif), serif", fontSize: 34, color: N.green, lineHeight: 1 }}>
+          <div className="mt-4 font-display text-[34px] text-nanny-green leading-none">
             $0
           </div>
         </div>

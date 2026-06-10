@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { NannyProfile } from "@/src/types/api/api";
 import { deleteNannyAvatar, ownNannyProfileQueryKey, uploadNannyAvatar } from "@/src/utils/api/nanny";
+import { cn } from "@/lib/utils";
 import NannyAvatar from "../NannyAvatar";
 import { N } from "../tokens";
 import { getInitials } from "./nannyProfileHelpers";
@@ -63,34 +64,11 @@ export function NannyProfileHeaderCard({ profile }: NannyProfileHeaderCardProps)
   }
 
   return (
-    <div
-      className="flex flex-col items-center gap-5 p-5 text-center sm:flex-row sm:gap-6 sm:p-7 sm:text-left"
-      style={{
-        background: N.card,
-        border: `1px solid ${N.border}`,
-        borderRadius: 18,
-        boxShadow: N.shadow,
-        marginBottom: 18,
-      }}
-    >
-      <div style={{ position: "relative" }}>
+    <div className="flex flex-col items-center gap-5 p-5 text-center sm:flex-row sm:gap-6 sm:p-7 sm:text-left bg-nanny-card border border-nanny-border rounded-[18px] shadow-[var(--nanny-shadow)] mb-[18px]">
+      <div className="relative">
         <NannyAvatar initials={getInitials(profile.display_name)} src={profile.avatar_url || undefined} size={80} tone="green" />
         {profile.verification_status === "verified" && (
-          <div
-            style={{
-              position: "absolute",
-              bottom: -2,
-              right: -2,
-              background: N.green,
-              borderRadius: "50%",
-              width: 22,
-              height: 22,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              border: `2px solid ${N.card}`,
-            }}
-          >
+          <div className="absolute -bottom-0.5 -right-0.5 bg-nanny-green rounded-full w-[22px] h-[22px] flex items-center justify-center border-2 border-nanny-card">
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
               <path d="M2 5.5l2.5 2.5L9 2.5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -98,7 +76,7 @@ export function NannyProfileHeaderCard({ profile }: NannyProfileHeaderCardProps)
         )}
       </div>
       <div className="min-w-0">
-        <div style={{ fontFamily: "DM Serif Display, var(--font-dm-serif), serif", fontSize: 22, color: N.greenDk }}>
+        <div className="font-display text-[22px] text-nanny-green-dk">
           {profile.display_name}
         </div>
         <div
@@ -125,7 +103,7 @@ export function NannyProfileHeaderCard({ profile }: NannyProfileHeaderCardProps)
           ref={fileInputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp"
-          style={{ display: "none" }}
+          className="hidden"
           onChange={(e) => {
             handleAvatarChange(e.target.files?.[0]);
             e.target.value = "";
@@ -134,16 +112,10 @@ export function NannyProfileHeaderCard({ profile }: NannyProfileHeaderCardProps)
         />
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
           <button
-            className="w-full sm:w-auto"
-            style={{
-              padding: "9px 16px",
-              background: N.cardSoft,
-              border: `1px solid ${N.border}`,
-              borderRadius: 10,
-              fontSize: 13.5,
-              color: avatarActionPending ? N.inkMute : N.greenDk,
-              cursor: avatarActionPending ? "not-allowed" : "pointer",
-            }}
+            className={cn(
+              "w-full sm:w-auto px-4 py-[9px] bg-nanny-card-soft border border-nanny-border rounded-[10px] text-[13.5px]",
+              avatarActionPending ? "text-nanny-ink-faint cursor-not-allowed" : "text-nanny-green-dk cursor-pointer",
+            )}
             disabled={avatarActionPending}
             onClick={() => fileInputRef.current?.click()}
           >
@@ -151,16 +123,10 @@ export function NannyProfileHeaderCard({ profile }: NannyProfileHeaderCardProps)
           </button>
           {profile.avatar_url && (
             <button
-              className="w-full sm:w-auto"
-              style={{
-                padding: "9px 16px",
-                background: "transparent",
-                border: `1px solid ${N.border}`,
-                borderRadius: 10,
-                fontSize: 13.5,
-                color: avatarActionPending ? N.inkMute : "#b42318",
-                cursor: avatarActionPending ? "not-allowed" : "pointer",
-              }}
+              className={cn(
+                "w-full sm:w-auto px-4 py-[9px] bg-transparent border border-nanny-border rounded-[10px] text-[13.5px]",
+                avatarActionPending ? "text-nanny-ink-faint cursor-not-allowed" : "text-[#b42318] cursor-pointer",
+              )}
               disabled={avatarActionPending}
               onClick={() => deleteMutation.mutate()}
             >
@@ -169,17 +135,7 @@ export function NannyProfileHeaderCard({ profile }: NannyProfileHeaderCardProps)
           )}
         </div>
         {uploadError && (
-          <div
-            role="alert"
-            className="mx-auto sm:mx-0"
-            style={{
-              marginTop: 8,
-              maxWidth: 220,
-              fontSize: 12,
-              lineHeight: 1.4,
-              color: "#b42318",
-            }}
-          >
+          <div role="alert" className="mx-auto sm:mx-0 mt-2 max-w-[220px] text-xs leading-[1.4] text-[#b42318]">
             {uploadError}
           </div>
         )}

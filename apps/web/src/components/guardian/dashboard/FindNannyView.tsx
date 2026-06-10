@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useDashboard } from "./DashboardContext";
 import { useIsMobile } from "./useIsMobile";
-import FilterDrawer from "../compositions/FilterDrawer";
+import FilterSheet from "../compositions/FilterSheet";
 import { listPublicNannies, publicNanniesQueryKey } from "@/src/utils/api/nanny";
 import { DesktopFilterSidebar, FindNannyFilters } from "./find-nanny/FindNannyFilters";
 import { FindNannyResults } from "./find-nanny/FindNannyResults";
@@ -96,7 +96,7 @@ export default function FindNannyView() {
   );
 
   return (
-    <div className="flex h-full overflow-hidden" style={{ flex: 1 }}>
+    <div className="flex h-full overflow-hidden flex-1">
       {!isMobile && <DesktopFilterSidebar>{filterControls}</DesktopFilterSidebar>}
 
       <FindNannyResults
@@ -118,9 +118,9 @@ export default function FindNannyView() {
         onSortChange={handleSortChange}
       />
 
-      <FilterDrawer open={filterOpen} onClose={() => setFilterOpen(false)} resultCount={isLoading ? 0 : total}>
+      <FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)} resultCount={isLoading ? 0 : total}>
         {filterControls}
-      </FilterDrawer>
+      </FilterSheet>
     </div>
   );
 }

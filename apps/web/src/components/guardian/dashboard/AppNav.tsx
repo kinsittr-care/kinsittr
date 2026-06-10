@@ -12,6 +12,7 @@ import {
 import ParentNotificationsPanel from "@/src/components/guardian/notifications/ParentNotificationsPanel";
 import { cn } from "@/lib/utils";
 import { useLogout } from "@/src/components/auth/useLogout";
+import { getCurrentSession } from "@/src/utils/api/auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +30,13 @@ export default function AppNav() {
   const pathname = usePathname();
   const router = useRouter();
   const logout = useLogout("parent");
+  const sessionQuery = useQuery({ queryKey: ["auth-me"], queryFn: getCurrentSession });
+  const session = sessionQuery.data?.data;
+  const user = session?.user;
+  const parentProfile = session?.parent_profile;
+  const displayName = parentProfile?.display_name || [user?.firstname, user?.lastname].filter(Boolean).join(" ") || "Parent";
+  const displayEmail = user?.email || "";
+  const initials = getInitials(displayName);
 
   const { data: conversationsData } = useQuery({
     queryKey: conversationsQueryKey({ page: 1, limit: 1 }),
@@ -91,7 +99,7 @@ export default function AppNav() {
                 className="size-[38px] rounded-full bg-teal text-white border-none cursor-pointer font-semibold text-sm tracking-wide shadow-[0_2px_8px_rgba(58,90,90,.32)] transition-transform hover:scale-105 font-sans"
                 aria-label="Open user menu"
               >
-                JL
+                {initials}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -100,10 +108,10 @@ export default function AppNav() {
               className="w-52 overflow-hidden rounded-[14px] border-border bg-white p-0 shadow-[0_12px_48px_rgba(40,30,20,.14)]"
             >
               <div className="flex items-center gap-2.5 px-4 py-3.5">
-                <Avatar initials="JL" size={34} />
-                <div>
-                  <div className="font-semibold text-sm text-brand-text">Jordan Lee</div>
-                  <div className="text-xs text-brand-faint">jordan.lee@email.com</div>
+                <Avatar initials={initials} size={34} />
+                <div className="min-w-0">
+                  <div className="truncate font-semibold text-sm text-brand-text">{displayName}</div>
+                  <div className="truncate text-xs text-brand-faint">{displayEmail || "Email not set"}</div>
                 </div>
               </div>
               <DropdownMenuSeparator className="m-0 bg-border" />
@@ -140,4 +148,9 @@ export default function AppNav() {
       </nav>
     </>
   );
+}
+
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return `${parts[0]?.[0] ?? "P"}${parts[1]?.[0] ?? ""}`.toUpperCase();
 }

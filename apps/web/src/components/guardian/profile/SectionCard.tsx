@@ -10,30 +10,9 @@ export default function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <div
-      style={{
-        background: "#fdfaf5",
-        border: "1px solid var(--border)",
-        borderRadius: 16,
-        padding: 24,
-        marginBottom: 20,
-        boxShadow: "0 2px 12px rgba(40,30,20,.07)",
-      }}
-    >
-      <div
-        className="flex items-center justify-between gap-3"
-        style={{ marginBottom: 18 }}
-      >
-        <h3
-          style={{
-            fontSize: 11.5,
-            fontWeight: 600,
-            color: "var(--faint)",
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            margin: 0,
-          }}
-        >
+    <div className="bg-[#fdfaf5] border border-brand-border rounded-2xl p-6 mb-5 shadow-[0_2px_12px_rgba(40,30,20,.07)]">
+      <div className="flex items-center justify-between gap-3 mb-[18px]">
+        <h3 className="text-[11.5px] font-semibold text-brand-faint uppercase tracking-[0.1em] m-0">
           {title}
         </h3>
         {titleAction}

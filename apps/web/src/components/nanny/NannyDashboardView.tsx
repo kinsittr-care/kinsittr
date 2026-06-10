@@ -30,19 +30,23 @@ export default function NannyDashboardView() {
     bookingsQuery.error instanceof Error ? bookingsQuery.error.message : "Unable to load bookings.";
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 pt-6 pb-16 md:px-12 md:pt-10 md:pb-20">
+    <div className="flex-1 overflow-y-auto px-4 pt-6 pb-16 md:px-6 md:pt-8 lg:px-10 lg:pt-10 lg:pb-20 xl:px-12">
       {/* Greeting */}
       <div className="mb-7 md:mb-8">
         <h1 className="font-display text-[28px] md:text-[36px] font-normal text-nanny-green-dk leading-tight tracking-tight">
           Good morning, {displayName}
         </h1>
-        <p className="mt-2 text-sm md:text-[14.5px] text-nanny-ink-mute">{today}</p>
+        <p className="mt-2 text-sm md:text-[14.5px] text-nanny-ink-faint">{today}</p>
       </div>
 
-      <DashboardStatCards bookings={bookings} isLoading={bookingsQuery.isLoading} />
+      <DashboardStatCards
+        bookings={bookings}
+        isLoading={bookingsQuery.isLoading || sessionQuery.isLoading}
+        profile={session?.nanny_profile}
+      />
 
       {/* Two-panel section: single col on mobile, side-by-side on desktop */}
-      <div className="grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-4 mt-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-4 mt-5">
         <DashboardUpcoming
           bookings={bookings.slice(0, 3)}
           isLoading={bookingsQuery.isLoading}

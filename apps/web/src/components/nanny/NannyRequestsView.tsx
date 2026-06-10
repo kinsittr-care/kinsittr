@@ -18,7 +18,7 @@ import {
   findNannyReviewedBookingIds,
   nannyReviewedBookingIdsQueryKey,
 } from "@/src/utils/api/reviews";
-import { formatCurrency, formatTimeRange, formatWeekdayDateOnly } from "@/src/utils/format";
+import { formatCurrency, formatLocation, formatTimeRange, formatWeekdayDateOnly } from "@/src/utils/format";
 import { cn } from "@/lib/utils";
 import BookingRequestCard from "./requests/BookingRequestCard";
 import type { BookingRequest } from "./requests/BookingRequestCard";
@@ -50,9 +50,7 @@ function toBookingRequest(booking: Booking): BookingRequest {
     status: booking.status === "cancelled" ? "neutral" : booking.status,
     paymentStatus: booking.payment_status,
     paymentFailure: booking.payment_failure_message,
-    children: booking.parent_city
-      ? `${booking.parent_city}${booking.parent_province ? `, ${booking.parent_province}` : ""}`
-      : "Family details",
+    children: formatLocation(booking.parent_city, booking.parent_province, "Family details"),
   };
 }
 
@@ -124,24 +122,25 @@ export default function NannyRequestsView() {
   const changeFilter = (f: Filter) => { setFilter(f); setPage(1); };
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 pt-6 pb-16 md:px-12 md:pt-10 md:pb-20">
+    <div className="flex-1 overflow-y-auto">
+      <div className="max-w-[900px] mx-auto px-4 pt-6 pb-16 md:px-12 md:pt-10 md:pb-20">
       {/* Header */}
       <div className="mb-6 md:mb-7">
         <h1 className="font-display text-[28px] md:text-[36px] font-normal text-nanny-green-dk leading-tight">
           Booking Requests
         </h1>
-        <p className="mt-2 text-sm md:text-[14.5px] text-nanny-ink-mute">
+        <p className="mt-2 text-sm md:text-[14.5px] text-nanny-ink-faint">
           {pendingCount !== undefined ? `${pendingCount} pending` : `${total} total`}
         </p>
       </div>
 
       {/* Filter — select on mobile, pill tabs on desktop */}
       <div className="mb-6">
-        {/* Mobile select */}
+        {/* Mobile/intermediate select */}
         <select
           value={filter}
           onChange={(e) => changeFilter(e.target.value as Filter)}
-          className="md:hidden w-full bg-nanny-card-soft border border-nanny-border rounded-xl px-3 py-2.5 text-sm text-nanny-ink-mute font-medium capitalize focus:outline-none focus:ring-2 focus:ring-nanny-green/30"
+          className="lg:hidden w-full bg-nanny-card-soft border border-nanny-border rounded-xl px-3 py-2.5 text-sm text-nanny-ink-faint font-medium capitalize focus:outline-none focus:ring-2 focus:ring-nanny-green/30"
         >
           {FILTERS.map((f) => (
             <option key={f} value={f} className="capitalize">{f}</option>
@@ -149,7 +148,7 @@ export default function NannyRequestsView() {
         </select>
 
         {/* Desktop pill tabs */}
-        <div className="hidden md:flex gap-1.5 bg-nanny-card-soft border border-nanny-border rounded-xl p-1 w-fit">
+        <div className="hidden lg:flex gap-1.5 bg-nanny-card-soft border border-nanny-border rounded-xl p-1 w-fit">
           {FILTERS.map((f) => (
             <button
               key={f}
@@ -158,7 +157,7 @@ export default function NannyRequestsView() {
                 "px-4 py-2 rounded-[9px] text-[13.5px] capitalize transition-all cursor-pointer",
                 filter === f
                   ? "bg-nanny-card border border-nanny-border text-nanny-green font-semibold shadow-[var(--nanny-shadow)]"
-                  : "text-nanny-ink-mute font-medium hover:text-nanny-ink border border-transparent"
+                  : "text-nanny-ink-faint font-medium hover:text-nanny-ink border border-transparent"
               )}
             >
               {f}
@@ -208,14 +207,14 @@ export default function NannyRequestsView() {
           <button
             disabled={page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="px-4 py-2 bg-nanny-card border border-nanny-border rounded-[10px] text-[13.5px] font-semibold text-nanny-ink-mute disabled:opacity-40 cursor-pointer hover:bg-nanny-card-soft transition-colors"
+            className="px-4 py-2 bg-nanny-card border border-nanny-border rounded-[10px] text-[13.5px] font-semibold text-nanny-ink-faint disabled:opacity-40 cursor-pointer hover:bg-nanny-card-soft transition-colors"
           >
             Previous
           </button>
           <button
             disabled={page * data.limit >= data.total}
             onClick={() => setPage((p) => p + 1)}
-            className="px-4 py-2 bg-nanny-card border border-nanny-border rounded-[10px] text-[13.5px] font-semibold text-nanny-ink-mute disabled:opacity-40 cursor-pointer hover:bg-nanny-card-soft transition-colors"
+            className="px-4 py-2 bg-nanny-card border border-nanny-border rounded-[10px] text-[13.5px] font-semibold text-nanny-ink-faint disabled:opacity-40 cursor-pointer hover:bg-nanny-card-soft transition-colors"
           >
             Next
           </button>
@@ -237,6 +236,7 @@ export default function NannyRequestsView() {
           reviewMutation.mutate({ bookingId: reviewBooking.id, ...payload });
         }}
       />
+      </div>
     </div>
   );
 }

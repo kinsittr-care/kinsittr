@@ -1,38 +1,21 @@
-import type { CSSProperties } from "react";
 import type { PublicNannyCard } from "@/src/types/api/api";
+import { SPECIALTY_OPTIONS } from "@/src/constants/specialties";
 import type { Nanny } from "../types";
 
 export const CITIES = ["All cities", "Toronto, ON", "Vancouver, BC", "Calgary, AB", "Ottawa, ON", "Montreal, QC"];
-export const SPECIALTIES = ["Infant care", "Special needs", "Montessori", "CPR certified", "Bilingual"];
+export const SPECIALTIES = SPECIALTY_OPTIONS.map((option) => option.value);
 export const SORT_OPTIONS = ["Top rated", "Price: low to high", "Price: high to low", "Most reviewed"];
 export const PAGE_SIZE = 12;
 
-export const labelStyle: CSSProperties = {
-  fontSize: 12,
-  fontWeight: 500,
-  color: "var(--muted)",
-  display: "block",
-  marginBottom: 6,
-  textTransform: "uppercase",
-  letterSpacing: "0.06em",
-};
+export const labelCls = "text-[12px] font-medium text-[var(--faint)] block mb-[6px] uppercase tracking-[0.06em]";
 
-export const selectStyle: CSSProperties = {
-  width: "100%",
-  border: "1.5px solid var(--border)",
-  borderRadius: 9,
-  padding: "11px 14px",
-  fontSize: 14,
-  background: "var(--bg-warm)",
-  color: "var(--brand-text)",
-  cursor: "pointer",
-  outline: "none",
-  appearance: "none",
+export const selectCls = "w-full border-[1.5px] border-brand-border rounded-[9px] px-[14px] py-[11px] pr-8 text-[14px] bg-[var(--bg-warm)] text-[var(--brand-text)] cursor-pointer outline-none appearance-none";
+
+export const selectArrowStyle = {
   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
   backgroundRepeat: "no-repeat",
   backgroundPosition: "right 12px center",
-  paddingRight: 32,
-};
+} as const;
 
 export function parseLocationFilter(value: string) {
   if (value === "All cities") {

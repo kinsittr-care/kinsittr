@@ -4,7 +4,6 @@ import (
 	"context"
 	"slices"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/kinsittr/kinsittr-api/models"
@@ -13,7 +12,7 @@ import (
 	shared "github.com/kinsittr/kinsittr-api/shared"
 )
 
-const specialtiesTotalCharacterLimit = 25
+const maxNannySpecialties = 3
 
 func (p *NannyPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto dtos.UpdateNannyProfileDTO) *shared.PipeRes[OwnNannyProfile] {
 	specialties := make([]string, 0, len(dto.Specialties))
@@ -24,7 +23,7 @@ func (p *NannyPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto 
 		}
 		specialties = append(specialties, normalized)
 	}
-	if specialtiesCharacterCount(specialties) > specialtiesTotalCharacterLimit {
+	if len(specialties) > maxNannySpecialties {
 		return &shared.PipeRes[OwnNannyProfile]{
 			Success: false,
 			Message: shared.CreatePipeMessage(messages.Invalid_Nanny_Profile),
@@ -56,13 +55,5 @@ func (p *NannyPipe) UpdateOwnProfile(ctx context.Context, userID uuid.UUID, dto 
 }
 
 func normalizeLocationField(value string) string {
-	return strings.Join(strings.Fields(value), " ")
-}
-
-func specialtiesCharacterCount(values []string) int {
-	total := 0
-	for _, value := range values {
-		total += utf8.RuneCountInString(strings.TrimSpace(value))
-	}
-	return total
+	return strings.ToLower(strings.Join(strings.Fields(value), " "))
 }

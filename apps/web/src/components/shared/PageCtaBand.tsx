@@ -20,24 +20,18 @@ export default function PageCtaBand({
 
   return (
     <div
-      className="relative text-center px-[52px] py-[72px] overflow-hidden max-md:px-7 max-md:py-14"
-      style={{ background: isDark ? "var(--teal-dk)" : "var(--teal)" }}
+      className={`relative overflow-hidden px-[52px] py-[72px] text-center max-md:px-7 max-md:py-14 ${isDark ? "bg-[var(--teal-dk)]" : "bg-[var(--teal)]"}`}
     >
       {/* subtle radial overlay */}
       <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: "radial-gradient(ellipse at 50% -20%, rgba(194,216,216,.07), transparent 65%)" }}
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_-20%,rgba(194,216,216,.07),transparent_65%)]"
       />
 
-      <h2
-        className="font-display text-white mb-3 relative"
-        style={{ fontSize: "clamp(28px, 4vw, 44px)" }}
-      >
+      <h2 className="font-display relative mb-3 text-[clamp(28px,4vw,44px)] text-white">
         {heading}
       </h2>
       <p
-        className="text-[16px] leading-[1.7] max-w-[380px] mx-auto mb-7 relative"
-        style={{ color: isDark ? "rgba(255,255,255,.7)" : "rgba(255,255,255,.78)" }}
+        className={`relative mx-auto mb-7 max-w-[380px] text-[16px] leading-[1.7] ${isDark ? "text-white/70" : "text-white/80"}`}
       >
         {body}
       </p>

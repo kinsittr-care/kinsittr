@@ -1,27 +1,10 @@
-import type { CSSProperties, ReactNode } from "react";
+import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 
 export function SectionCard({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div
-      style={{
-        background: "#fdfaf5",
-        border: "1px solid var(--border)",
-        borderRadius: 16,
-        padding: 24,
-        marginBottom: 20,
-        boxShadow: "0 2px 12px rgba(40,30,20,.07)",
-      }}
-    >
-      <h3
-        style={{
-          fontSize: 11.5,
-          fontWeight: 600,
-          color: "var(--faint)",
-          textTransform: "uppercase",
-          letterSpacing: "0.1em",
-          marginBottom: 18,
-        }}
-      >
+    <div className="bg-[#fdfaf5] border border-brand-border rounded-2xl p-6 mb-5 shadow-[0_2px_12px_rgba(40,30,20,.07)]">
+      <h3 className="text-[11.5px] font-semibold text-brand-faint uppercase tracking-[0.1em] mb-[18px]">
         {title}
       </h3>
       {children}
@@ -44,88 +27,40 @@ export function ToggleRow({
 }) {
   return (
     <div
-      className="flex items-center justify-between gap-1"
-      style={{
-        padding: "13px 0",
-        borderBottom: last ? "none" : "1px solid var(--border)",
-      }}
+      className={cn(
+        "flex items-center justify-between gap-1 py-[13px]",
+        !last && "border-b border-brand-border",
+      )}
     >
       <div>
-        <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 2 }}>{label}</div>
-        <div style={{ fontSize: 12.5, color: "var(--faint)" }}>{sub}</div>
+        <div className="text-[14px] font-medium mb-[2px]">{label}</div>
+        <div className="text-[12.5px] text-brand-faint">{sub}</div>
       </div>
       <button
         type="button"
         onClick={onToggle}
-        style={{
-          width: 46,
-          height: 26,
-          borderRadius: 13,
-          background: on ? "var(--teal)" : "#ddd8d0",
-          cursor: "pointer",
-          position: "relative",
-          transition: "background .2s",
-          flexShrink: 0,
-          boxShadow: on ? "0 2px 8px rgba(58,90,90,.28)" : "none",
-          border: "none",
-        }}
+        className={cn(
+          "w-[46px] h-[26px] rounded-[13px] cursor-pointer relative transition-colors duration-200 shrink-0 border-0",
+          on ? "bg-teal shadow-[0_2px_8px_rgba(58,90,90,.28)]" : "bg-[#ddd8d0]",
+        )}
         role="switch"
         aria-checked={on}
       >
         <span
-          style={{
-            width: 20,
-            height: 20,
-            borderRadius: "50%",
-            background: "#fff",
-            position: "absolute",
-            top: 3,
-            left: on ? 23 : 3,
-            transition: "left .2s",
-            boxShadow: "0 1px 4px rgba(0,0,0,.2)",
-          }}
+          className="w-5 h-5 rounded-full bg-white absolute top-[3px] transition-[left] duration-200 shadow-[0_1px_4px_rgba(0,0,0,.2)]"
+          style={{ left: on ? 23 : 3 }}
         />
       </button>
     </div>
   );
 }
 
-export const selectStyle: CSSProperties = {
-  width: "100%",
-  border: "1.5px solid var(--border)",
-  borderRadius: 9,
-  padding: "11px 14px",
-  fontSize: 14,
-  background: "var(--bg-warm)",
-  color: "var(--brand-text)",
-  cursor: "pointer",
-  outline: "none",
-  appearance: "none",
-  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
-  backgroundRepeat: "no-repeat",
-  backgroundPosition: "right 12px center",
-  paddingRight: 32,
-  marginBottom: 16,
-};
+const selectArrow = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`;
 
-export const inputStyle: CSSProperties = {
-  width: "100%",
-  border: "1.5px solid var(--border)",
-  borderRadius: 9,
-  padding: "11px 14px",
-  fontSize: 14,
-  background: "var(--bg-warm)",
-  color: "var(--brand-text)",
-  outline: "none",
-  marginBottom: 12,
-};
+export const selectArrowStyle = { backgroundImage: selectArrow, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" } as const;
 
-export const labelStyle: CSSProperties = {
-  fontSize: 12,
-  fontWeight: 500,
-  color: "var(--muted)",
-  display: "block",
-  marginBottom: 6,
-  textTransform: "uppercase",
-  letterSpacing: "0.06em",
-};
+export const selectCls = "w-full border-[1.5px] border-brand-border rounded-[9px] px-[14px] py-[11px] pr-8 text-[14px] bg-[var(--bg-warm)] text-[var(--brand-text)] cursor-pointer outline-none appearance-none";
+
+export const inputCls = "w-full border-[1.5px] border-brand-border rounded-[9px] px-[14px] py-[11px] text-[14px] bg-[var(--bg-warm)] text-[var(--brand-text)] outline-none mb-3";
+
+export const labelCls = "text-[12px] font-medium text-[var(--faint)] block mb-[6px] uppercase tracking-[0.06em]";

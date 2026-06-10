@@ -1,6 +1,6 @@
 import AdminPill from "./AdminPill";
-import { btnApprove, btnDanger } from "./admin-styles";
-import { A } from "../tokens";
+import { btnApproveCls, btnDangerCls } from "./admin-styles";
+import { cn } from "@/lib/utils";
 import type { AdminBooking, AdminBookingAction } from "@/src/types/api/admin";
 import { formatCurrency, formatDateOnlyShort, formatPaymentState, formatShortDateTime } from "@/src/utils/format";
 import { bookingStatusTone } from "./AdminBookingsTable";
@@ -26,56 +26,56 @@ export default function AdminBookingDetailPanel({
   const paymentTone = paymentState.tone === "danger" ? "red" : paymentState.tone === "success" ? "green" : paymentState.tone === "warning" ? "amber" : "neutral";
 
   return (
-    <aside style={{ background: A.card, border: `1px solid ${A.border}`, borderRadius: 16, boxShadow: A.shadow, padding: 22, alignSelf: "start", display: "flex", flexDirection: "column", gap: 18 }}>
+    <aside className="bg-admin-card border border-admin-border rounded-2xl shadow-[var(--admin-shadow)] p-[22px] self-start flex flex-col gap-[18px]">
       <div>
-        <div style={{ fontSize: 12, color: A.inkSoft, fontFamily: "monospace" }}>{booking.id}</div>
-        <h2 style={{ margin: "8px 0 0", fontFamily: "var(--font-dm-serif), serif", fontSize: 24, color: A.ink }}>Booking details</h2>
-        <div style={{ marginTop: 10 }}>
+        <div className="text-[12px] text-admin-ink-soft font-mono">{booking.id}</div>
+        <h2 className="mt-2 mb-0 font-display text-[24px] text-admin-ink">Booking details</h2>
+        <div className="mt-[10px] flex gap-2">
           <AdminPill tone={bookingStatusTone(booking.status)}>{booking.status}</AdminPill>
-          <AdminPill tone={paymentTone} style={{ marginLeft: 8 }}>{paymentState.label}</AdminPill>
+          <AdminPill tone={paymentTone}>{paymentState.label}</AdminPill>
         </div>
       </div>
 
-      <div style={{ display: "grid", gap: 10, fontSize: 14, color: A.inkMid }}>
-        <div><strong style={{ color: A.ink }}>Parent:</strong> {booking.parent_display_name}</div>
-        <div><strong style={{ color: A.ink }}>Nanny:</strong> {booking.nanny_display_name}</div>
-        <div><strong style={{ color: A.ink }}>Date:</strong> {formatDateOnlyShort(booking.date)} at {booking.start_time}</div>
-        <div><strong style={{ color: A.ink }}>Duration:</strong> {booking.duration} hours</div>
-        <div><strong style={{ color: A.ink }}>Total:</strong> {formatCurrency(booking.total_amount)}</div>
-        <div><strong style={{ color: A.ink }}>Payment:</strong> {paymentState.label}</div>
-        {booking.payment_amount ? <div><strong style={{ color: A.ink }}>Payment amount:</strong> {formatCurrency(booking.payment_amount)}</div> : null}
-        {booking.platform_fee ? <div><strong style={{ color: A.ink }}>Platform fee:</strong> {formatCurrency(booking.platform_fee)}</div> : null}
+      <div className="grid gap-[10px] text-[14px] text-admin-ink-mid">
+        <div><strong className="text-admin-ink">Parent:</strong> {booking.parent_display_name}</div>
+        <div><strong className="text-admin-ink">Nanny:</strong> {booking.nanny_display_name}</div>
+        <div><strong className="text-admin-ink">Date:</strong> {formatDateOnlyShort(booking.date)} at {booking.start_time}</div>
+        <div><strong className="text-admin-ink">Duration:</strong> {booking.duration} hours</div>
+        <div><strong className="text-admin-ink">Total:</strong> {formatCurrency(booking.total_amount)}</div>
+        <div><strong className="text-admin-ink">Payment:</strong> {paymentState.label}</div>
+        {booking.payment_amount ? <div><strong className="text-admin-ink">Payment amount:</strong> {formatCurrency(booking.payment_amount)}</div> : null}
+        {booking.platform_fee ? <div><strong className="text-admin-ink">Platform fee:</strong> {formatCurrency(booking.platform_fee)}</div> : null}
         {booking.payment_failure_message && (
-          <div style={{ color: A.red }}><strong>Payment issue:</strong> {booking.payment_failure_message}</div>
+          <div className="text-admin-red"><strong>Payment issue:</strong> {booking.payment_failure_message}</div>
         )}
-        {booking.stripe_payment_intent_id && <div><strong style={{ color: A.ink }}>Intent:</strong> {booking.stripe_payment_intent_id}</div>}
-        {booking.stripe_charge_id && <div><strong style={{ color: A.ink }}>Charge:</strong> {booking.stripe_charge_id}</div>}
-        {booking.stripe_refund_id && <div><strong style={{ color: A.ink }}>Refund:</strong> {booking.stripe_refund_id}</div>}
-        {booking.payment_created_at && <div><strong style={{ color: A.ink }}>Payment created:</strong> {formatShortDateTime(booking.payment_created_at)}</div>}
-        {booking.payment_updated_at && <div><strong style={{ color: A.ink }}>Payment updated:</strong> {formatShortDateTime(booking.payment_updated_at)}</div>}
+        {booking.stripe_payment_intent_id && <div><strong className="text-admin-ink">Intent:</strong> {booking.stripe_payment_intent_id}</div>}
+        {booking.stripe_charge_id && <div><strong className="text-admin-ink">Charge:</strong> {booking.stripe_charge_id}</div>}
+        {booking.stripe_refund_id && <div><strong className="text-admin-ink">Refund:</strong> {booking.stripe_refund_id}</div>}
+        {booking.payment_created_at && <div><strong className="text-admin-ink">Payment created:</strong> {formatShortDateTime(booking.payment_created_at)}</div>}
+        {booking.payment_updated_at && <div><strong className="text-admin-ink">Payment updated:</strong> {formatShortDateTime(booking.payment_updated_at)}</div>}
       </div>
 
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <button disabled={!canCancel || isBusy} onClick={onCancel} style={{ ...btnDanger, opacity: canCancel && !isBusy ? 1 : 0.55 }}>Cancel</button>
-        <button disabled={!canComplete || isBusy} onClick={onComplete} style={{ ...btnApprove, opacity: canComplete && !isBusy ? 1 : 0.55 }}>Mark complete</button>
+      <div className="flex gap-[10px] flex-wrap">
+        <button disabled={!canCancel || isBusy} onClick={onCancel} className={cn(btnDangerCls, (!canCancel || isBusy) && "opacity-55")}>Cancel</button>
+        <button disabled={!canComplete || isBusy} onClick={onComplete} className={cn(btnApproveCls, (!canComplete || isBusy) && "opacity-55")}>Mark complete</button>
       </div>
 
       <div>
-        <h3 style={{ margin: "0 0 10px", fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", color: A.inkSoft }}>Action history</h3>
+        <h3 className="mb-[10px] mt-0 text-[13px] tracking-[.12em] uppercase text-admin-ink-soft">Action history</h3>
         {isLoadingActions ? (
-          <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>Loading actions...</p>
+          <p className="m-0 text-admin-ink-soft text-[14px]">Loading actions...</p>
         ) : actions.length === 0 ? (
-          <p style={{ margin: 0, color: A.inkSoft, fontSize: 14 }}>No admin actions yet.</p>
+          <p className="m-0 text-admin-ink-soft text-[14px]">No admin actions yet.</p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="flex flex-col gap-[10px]">
             {actions.map((action) => (
-              <div key={action.id} style={{ borderTop: `1px solid ${A.borderSoft}`, paddingTop: 10 }}>
-                <div style={{ fontSize: 13.5, color: A.ink, fontWeight: 600 }}>{action.action}</div>
-                <div style={{ fontSize: 12.5, color: A.inkSoft, marginTop: 3 }}>
+              <div key={action.id} className="border-t border-admin-border-soft pt-[10px]">
+                <div className="text-[13.5px] text-admin-ink font-semibold">{action.action}</div>
+                <div className="text-[12.5px] text-admin-ink-soft mt-[3px]">
                   {action.previous_status} {"->"} {action.new_status} · {formatShortDateTime(action.created_at)}
                 </div>
-                <div style={{ fontSize: 13, color: A.inkMid, marginTop: 5 }}>{action.reason}</div>
-                {action.admin_email && <div style={{ fontSize: 12, color: A.inkSoft, marginTop: 4 }}>{action.admin_email}</div>}
+                <div className="text-[13px] text-admin-ink-mid mt-[5px]">{action.reason}</div>
+                {action.admin_email && <div className="text-[12px] text-admin-ink-soft mt-[4px]">{action.admin_email}</div>}
               </div>
             ))}
           </div>

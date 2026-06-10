@@ -1,5 +1,4 @@
-import { btnGhost } from "./compositions/admin-styles";
-import { A } from "./tokens";
+import { btnGhostCls } from "./compositions/admin-styles";
 
 export default function AdminPagination({
   page,
@@ -15,29 +14,21 @@ export default function AdminPagination({
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: 12,
-        paddingTop: 4,
-      }}
-    >
+    <div className="flex justify-between items-center gap-3 pt-1">
       <button
         type="button"
-        style={btnGhost}
+        className={btnGhostCls}
         disabled={page <= 1}
         onClick={() => onPageChange(Math.max(1, page - 1))}
       >
         Previous
       </button>
-      <span style={{ color: A.inkSoft, fontSize: 13 }}>
+      <span className="text-[13px] text-admin-ink-soft">
         Page {page} of {totalPages} · {total} total
       </span>
       <button
         type="button"
-        style={btnGhost}
+        className={btnGhostCls}
         disabled={page >= totalPages}
         onClick={() => onPageChange(Math.min(totalPages, page + 1))}
       >

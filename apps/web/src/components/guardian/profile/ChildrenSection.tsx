@@ -5,23 +5,8 @@ import type { ParentProfile } from "@/src/types/api/api";
 import Avatar from "../dashboard/Avatar";
 import SectionCard from "./SectionCard";
 
-const childCardStyle: React.CSSProperties = {
-  background: "var(--teal-lt)",
-  border: "1px solid var(--teal-mid)",
-  borderRadius: 10,
-  padding: "8px 14px",
-};
-
-const inputStyle: React.CSSProperties = {
-  width: 84,
-  border: "1.5px solid var(--border)",
-  borderRadius: 9,
-  padding: "9px 12px",
-  fontSize: 14,
-  outline: "none",
-  background: "var(--bg-warm)",
-  color: "var(--brand-text)",
-};
+const childCardCls = "bg-teal-lt border border-teal-mid rounded-[10px] px-[14px] py-2";
+const inputCls = "w-[84px] border-[1.5px] border-brand-border rounded-[9px] px-3 py-[9px] text-[14px] outline-none bg-[var(--bg-warm)] text-[var(--brand-text)]";
 
 interface ChildrenSectionProps {
   profile: ParentProfile;
@@ -30,38 +15,37 @@ interface ChildrenSectionProps {
 }
 
 export default function ChildrenSection({ profile, isSaving, onSave }: ChildrenSectionProps) {
+  const childrenAges = normalizeChildrenAges(profile.children_ages);
   const [isEditing, setIsEditing] = useState(false);
   const [ageDrafts, setAgeDrafts] = useState<string[]>(() =>
-    profile.children_ages.map((age) => String(age)),
+    childrenAges.map((age) => String(age)),
   );
   const [error, setError] = useState<string | null>(null);
 
   return (
     <SectionCard title="Children">
       {!isEditing ? (
-        <div className="flex gap-[10px] flex-wrap" style={{ marginBottom: 14 }}>
-          {profile.children_ages.map((age, index) => (
+        <div className="flex gap-[10px] flex-wrap mb-[14px]">
+          {childrenAges.map((age, index) => (
             <div
               key={`${age}-${index}`}
-              className="flex items-center gap-2"
-              style={childCardStyle}
+              className={`flex items-center gap-2 ${childCardCls}`}
             >
               <Avatar initials={String(index + 1)} size={30} />
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--teal-dk)" }}>
+                <div className="text-[13px] font-semibold text-[var(--teal-dk)]">
                   Child {index + 1}
                 </div>
-                <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
+                <div className="text-[11.5px] text-[var(--faint)]">
                   {age} {age === 1 ? "yr" : "yrs"}
                 </div>
               </div>
             </div>
           ))}
           <button
-            className="btn-outline"
-            style={{ padding: "8px 16px", fontSize: 13, borderStyle: "dashed" }}
+            className="btn-outline px-4 py-2 text-[13px] border-dashed"
             onClick={() => {
-              setAgeDrafts(profile.children_ages.map((age) => String(age)));
+              setAgeDrafts(childrenAges.map((age) => String(age)));
               setIsEditing(true);
               setError(null);
             }}
@@ -71,9 +55,9 @@ export default function ChildrenSection({ profile, isSaving, onSave }: ChildrenS
         </div>
       ) : (
         <div>
-          <div className="flex gap-[10px] flex-wrap" style={{ marginBottom: 14 }}>
+          <div className="flex gap-[10px] flex-wrap mb-[14px]">
             {ageDrafts.map((age, index) => (
-              <label key={index} style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12, color: "var(--muted)" }}>
+              <label key={index} className="flex flex-col gap-[6px] text-[12px] text-[var(--faint)]">
                 Child {index + 1} age
                 <input
                   type="number"
@@ -87,23 +71,21 @@ export default function ChildrenSection({ profile, isSaving, onSave }: ChildrenS
                       ),
                     )
                   }
-                  style={inputStyle}
+                  className={inputCls}
                 />
               </label>
             ))}
             <button
-              className="btn-outline"
-              style={{ alignSelf: "end", padding: "9px 14px", fontSize: 13, borderStyle: "dashed" }}
+              className="btn-outline self-end px-[14px] py-[9px] text-[13px] border-dashed"
               onClick={() => setAgeDrafts((current) => [...current, "0"])}
             >
               + Add child
             </button>
           </div>
-          {error && <div style={{ color: "#c0392b", fontSize: 13, marginBottom: 10 }}>{error}</div>}
+          {error && <div className="text-[#c0392b] text-[13px] mb-[10px]">{error}</div>}
           <div className="flex gap-2">
             <button
-              className="btn-cta"
-              style={{ fontSize: 14, padding: "10px 18px" }}
+              className="btn-cta text-[14px] px-[18px] py-[10px]"
               disabled={isSaving}
               onClick={async () => {
                 const ages = ageDrafts.map((age) => Number(age));
@@ -122,10 +104,9 @@ export default function ChildrenSection({ profile, isSaving, onSave }: ChildrenS
               {isSaving ? "Saving..." : "Save children"}
             </button>
             <button
-              className="btn-outline"
-              style={{ fontSize: 14, padding: "10px 18px" }}
+              className="btn-outline text-[14px] px-[18px] py-[10px]"
               onClick={() => {
-                setAgeDrafts(profile.children_ages.map((age) => String(age)));
+                setAgeDrafts(childrenAges.map((age) => String(age)));
                 setIsEditing(false);
                 setError(null);
               }}
@@ -137,4 +118,8 @@ export default function ChildrenSection({ profile, isSaving, onSave }: ChildrenS
       )}
     </SectionCard>
   );
+}
+
+function normalizeChildrenAges(childrenAges: ParentProfile["children_ages"]) {
+  return Array.isArray(childrenAges) ? childrenAges : [];
 }

@@ -132,7 +132,6 @@ export default function ParentNotificationsPanel() {
               disabled={markAllMutation.isPending}
               onClick={() => markAllMutation.mutate()}
               className="text-teal h-auto p-0 text-xs font-semibold hover:bg-transparent"
-              style={{ color: "var(--teal)" }}
             >
               Mark all read
             </Button>
@@ -151,7 +150,7 @@ export default function ParentNotificationsPanel() {
         {/* List */}
         <ScrollArea className="max-h-[min(400px,70vh)]">
           {listQuery.isLoading && (
-            <p className="px-4 py-5 text-sm text-muted-foreground">Loading...</p>
+            <p className="px-4 py-5 text-sm text-brand-faint">Loading...</p>
           )}
           {listQuery.isError && (
             <p className="px-4 py-5 text-sm text-destructive">
@@ -159,7 +158,7 @@ export default function ParentNotificationsPanel() {
             </p>
           )}
           {!listQuery.isLoading && !listQuery.isError && notifications.length === 0 && (
-            <p className="px-4 py-6 text-sm text-muted-foreground text-center">No notifications yet.</p>
+            <p className="px-4 py-6 text-sm text-brand-faint text-center">No notifications yet.</p>
           )}
 
           {!listQuery.isError && notifications.map((notif) => {
@@ -185,11 +184,11 @@ export default function ParentNotificationsPanel() {
                   <p className={cn("text-[13px] text-foreground mb-0.5", isUnread ? "font-semibold" : "font-medium")}>
                     {notif.title}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">{notif.body}</p>
+                  <p className="text-xs text-brand-faint truncate">{notif.body}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
-                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">{relativeTime(notif.created_at)}</span>
-                  {isUnread && <span className="size-2 rounded-full" style={{ background: "var(--teal)" }} />}
+                  <span className="text-[11px] text-brand-faint whitespace-nowrap">{relativeTime(notif.created_at)}</span>
+                  {isUnread && <span className="size-2 rounded-full bg-teal" />}
                 </div>
               </button>
             );
@@ -199,8 +198,7 @@ export default function ParentNotificationsPanel() {
             <button
               onClick={() => setListLimit((n) => n + LIST_LIMIT)}
               disabled={listQuery.isFetching}
-              className="w-full py-3 text-sm font-semibold border-t border-border hover:bg-muted disabled:opacity-50 transition-colors"
-              style={{ color: "var(--teal)" }}
+              className="w-full py-3 text-sm font-semibold text-teal border-t border-border hover:bg-muted disabled:opacity-50 transition-colors"
             >
               {listQuery.isFetching ? "Loading..." : "Load more"}
             </button>

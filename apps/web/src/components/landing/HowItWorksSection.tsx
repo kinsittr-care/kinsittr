@@ -60,7 +60,7 @@ export default function HowItWorksSection() {
           <RevealWrapper delay={0.2}>
             <p
               className="text-[16.5px] leading-[1.75] max-w-[400px] mx-auto"
-              style={{ color: "var(--muted)" }}
+              style={{ color: "var(--faint)" }}
             >
               Whether you&apos;re a parent or a nanny, getting started is easy.
             </p>

@@ -22,7 +22,7 @@ export default function StepCard({
       <h3 className="font-display text-[22px] mb-[10px]">{title}</h3>
       <p
         className="text-[14.5px] leading-[1.7]"
-        style={{ color: "var(--muted)" }}
+        style={{ color: "var(--faint)" }}
       >
         {description}
       </p>

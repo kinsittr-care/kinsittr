@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { A } from "./tokens";
 import AdminPageHeader from "./compositions/AdminPageHeader";
 import AdminReasonDialog, { type AdminReasonDialogState } from "./AdminReasonDialog";
 import AdminConversationDetailPanel from "./compositions/AdminConversationDetailPanel";
 import AdminConversationList from "./compositions/AdminConversationList";
-import { btnGhost } from "./compositions/admin-styles";
+import { btnGhostCls } from "./compositions/admin-styles";
+import { cn } from "@/lib/utils";
 import type { ListAdminAuditActionsParams, ListAdminConversationsParams, ListAdminMessagesParams } from "@/src/types/api/admin";
 import type { BookingStatus } from "@/src/types/api/api";
 import {
@@ -129,6 +129,13 @@ export default function ConversationsModerationView() {
     selectedConversation &&
     ((lockMutation.isPending && lockMutation.variables?.id === selectedConversation.id) ||
       (unlockMutation.isPending && unlockMutation.variables?.id === selectedConversation.id));
+  const updateStatus = (nextStatus: BookingStatus | "") => {
+    setPage(1);
+    setMessagePage(1);
+    setActionPage(1);
+    setStatus(nextStatus);
+    setSelectedConversationId(null);
+  };
 
   return (
     <>
@@ -145,50 +152,48 @@ export default function ConversationsModerationView() {
               setSubmittedSearch(search.trim());
               setSelectedConversationId(null);
             }}
-            style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}
+            className="flex w-full max-w-[760px] flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end"
           >
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search conversations..."
-              style={{
-                padding: "10px 14px",
-                background: A.card,
-                border: `1px solid ${A.border}`,
-                borderRadius: 10,
-                color: A.ink,
-                minWidth: 240,
-              }}
+              className="min-w-0 rounded-[10px] border border-admin-border bg-admin-card px-[14px] py-[10px] text-admin-ink sm:min-w-[240px]"
             />
-            <button type="submit" style={btnGhost}>Search</button>
-            {statusFilters.map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                onClick={() => {
-                  setPage(1);
-                  setMessagePage(1);
-                  setActionPage(1);
-                  setStatus(item.value);
-                  setSelectedConversationId(null);
-                }}
-                style={{
-                  ...btnGhost,
-                  borderColor: status === item.value ? A.clay : A.border,
-                  color: status === item.value ? A.clay : A.inkMid,
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
+            <button type="submit" className={btnGhostCls}>Search</button>
+            <select
+              value={status}
+              onChange={(event) => updateStatus(event.target.value as BookingStatus | "")}
+              className="rounded-[10px] border border-admin-border bg-admin-card px-[14px] py-[10px] text-admin-ink lg:hidden"
+              aria-label="Conversation booking status"
+            >
+              {statusFilters.map((item) => (
+                <option key={item.label} value={item.value}>{item.label}</option>
+              ))}
+            </select>
+            <div className="hidden flex-wrap justify-end gap-2 lg:flex">
+              {statusFilters.map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => updateStatus(item.value)}
+                  className={cn(btnGhostCls, status === item.value && "border-admin-clay text-admin-clay")}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </form>
         }
       />
 
-      <div style={{ padding: "24px 40px 40px", display: "grid", gridTemplateColumns: selectedConversation ? "360px 1fr" : "1fr", gap: 18 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div
+        className="px-10 pt-6 pb-10 grid gap-[18px]"
+        style={{ gridTemplateColumns: selectedConversation ? "360px 1fr" : "1fr" }}
+      >
+        <div className="flex flex-col gap-3">
           {actionError && (
-            <p style={{ color: A.red, fontSize: 14, margin: 0 }}>
+            <p className="text-admin-red text-[14px] m-0">
               {actionError instanceof Error ? actionError.message : "Unable to update conversation moderation."}
             </p>
           )}

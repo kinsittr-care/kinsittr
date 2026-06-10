@@ -1,7 +1,7 @@
 import AdminPagination from "../AdminPagination";
 import AdminAuditTimeline from "./AdminAuditTimeline";
-import { btnApprove, btnDanger, btnGhost } from "./admin-styles";
-import { A } from "../tokens";
+import { btnApproveCls, btnDangerCls, btnGhostCls } from "./admin-styles";
+import { cn } from "@/lib/utils";
 import type { AdminAuditAction, AdminConversation, AdminMessage } from "@/src/types/api/admin";
 import { formatShortDateTime } from "@/src/utils/format";
 import { isConversationLocked } from "./AdminConversationList";
@@ -52,60 +52,67 @@ export default function AdminConversationDetailPanel({
   const locked = isConversationLocked(conversation);
 
   return (
-    <section style={{ background: A.card, border: `1px solid ${A.border}`, borderRadius: 16, boxShadow: A.shadow, overflow: "hidden" }}>
-      <div style={{ padding: 20, borderBottom: `1px solid ${A.borderSoft}`, display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+    <section className="bg-admin-card border border-admin-border rounded-2xl shadow-[var(--admin-shadow)] overflow-hidden">
+      <div className="p-5 border-b border-admin-border-soft flex justify-between gap-4 flex-wrap">
         <div>
-          <h2 style={{ margin: 0, fontFamily: "var(--font-dm-serif), serif", fontSize: 24, color: A.ink }}>
+          <h2 className="m-0 font-display text-[24px] text-admin-ink">
             {conversation.parent.display_name} / {conversation.nanny.display_name}
           </h2>
-          <p style={{ margin: "6px 0 0", color: A.inkSoft, fontSize: 13 }}>
+          <p className="mt-[6px] mb-0 text-admin-ink-soft text-[13px]">
             Booking {conversation.booking_status} · {conversation.parent.email} · {conversation.nanny.email}
           </p>
           {conversation.lock_reason && (
-            <p style={{ margin: "8px 0 0", color: A.red, fontSize: 13 }}>
+            <p className="mt-2 mb-0 text-admin-red text-[13px]">
               Lock reason: {conversation.lock_reason}
             </p>
           )}
         </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-          <button disabled={locked || isBusy} onClick={onLock} style={{ ...btnDanger, opacity: !locked && !isBusy ? 1 : 0.55 }}>
+        <div className="flex gap-[10px] items-start">
+          <button disabled={locked || isBusy} onClick={onLock} className={cn(btnDangerCls, (locked || isBusy) && "opacity-55")}>
             Lock
           </button>
-          <button disabled={!locked || isBusy} onClick={onUnlock} style={{ ...btnApprove, opacity: locked && !isBusy ? 1 : 0.55 }}>
+          <button disabled={!locked || isBusy} onClick={onUnlock} className={cn(btnApproveCls, (!locked || isBusy) && "opacity-55")}>
             Unlock
           </button>
         </div>
       </div>
 
-      <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, maxHeight: "calc(100dvh - 290px)", overflow: "auto" }}>
+      <div className="p-5 flex flex-col gap-3">
+        <div className="flex flex-col gap-3 max-h-[calc(100dvh-290px)] overflow-auto">
           {isLoadingMessages ? (
-            <p style={{ margin: 0, color: A.inkSoft }}>Loading messages...</p>
+            <p className="m-0 text-admin-ink-soft">Loading messages...</p>
           ) : messages.length === 0 ? (
-            <p style={{ margin: 0, color: A.inkSoft }}>No messages in this conversation.</p>
+            <p className="m-0 text-admin-ink-soft">No messages in this conversation.</p>
           ) : (
             messages.map((message) => {
               const hidden = Boolean(message.hidden_at);
               const isMessageBusy = hidingMessageId === message.id;
 
               return (
-                <div key={message.id} style={{ padding: 14, border: `1px solid ${hidden ? A.red : A.borderSoft}`, background: hidden ? A.redLight : A.bgSoft, borderRadius: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                    <div style={{ color: A.ink, fontWeight: 700, fontSize: 13.5 }}>
-                      {senderName(message)} <span style={{ color: A.inkSoft, fontWeight: 500 }}>({message.sender_role})</span>
+                <div
+                  key={message.id}
+                  className="p-[14px] rounded-xl"
+                  style={{
+                    border: `1px solid ${hidden ? "var(--admin-red)" : "var(--admin-border-soft)"}`,
+                    background: hidden ? "var(--admin-red-light)" : "var(--admin-bg-soft)",
+                  }}
+                >
+                  <div className="flex justify-between gap-3 flex-wrap">
+                    <div className="text-admin-ink font-bold text-[13.5px]">
+                      {senderName(message)} <span className="text-admin-ink-soft font-medium">({message.sender_role})</span>
                     </div>
-                    <div style={{ color: A.inkSoft, fontSize: 12.5 }}>{formatShortDateTime(message.created_at)}</div>
+                    <div className="text-admin-ink-soft text-[12.5px]">{formatShortDateTime(message.created_at)}</div>
                   </div>
-                  <p style={{ margin: "10px 0 0", color: hidden ? A.red : A.inkMid, lineHeight: 1.5, fontSize: 14 }}>
+                  <p className={cn("mt-[10px] mb-0 leading-[1.5] text-[14px]", hidden ? "text-admin-red" : "text-admin-ink-mid")}>
                     {hidden ? "Hidden message" : message.body}
                   </p>
                   {message.hidden_reason && (
-                    <p style={{ margin: "8px 0 0", color: A.red, fontSize: 13 }}>
+                    <p className="mt-2 mb-0 text-admin-red text-[13px]">
                       Hidden reason: {message.hidden_reason}
                     </p>
                   )}
-                  <div style={{ marginTop: 10 }}>
-                    <button disabled={hidden || isMessageBusy} onClick={() => onHideMessage(message)} style={{ ...btnGhost, opacity: !hidden && !isMessageBusy ? 1 : 0.55 }}>
+                  <div className="mt-[10px]">
+                    <button disabled={hidden || isMessageBusy} onClick={() => onHideMessage(message)} className={cn(btnGhostCls, (hidden || isMessageBusy) && "opacity-55")}>
                       Hide message
                     </button>
                   </div>

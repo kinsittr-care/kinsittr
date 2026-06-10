@@ -62,7 +62,7 @@ export default function BenefitsSection() {
           <h2 className="font-display leading-[1.1] tracking-[-0.02em] mb-4" style={{ fontSize: "clamp(28px,3.5vw,42px)" }}>
             Built to support <em style={{ color: "var(--teal)" }}>your career</em>
           </h2>
-          <p className="text-[16px] leading-[1.75] mb-10 max-w-[540px]" style={{ color: "var(--muted)" }}>
+          <p className="text-[16px] leading-[1.75] mb-10 max-w-[540px]" style={{ color: "var(--faint)" }}>
             We&apos;re not just another job board. KinSittr is a professional platform that treats nannies with the respect they deserve.
           </p>
         </RevealWrapper>

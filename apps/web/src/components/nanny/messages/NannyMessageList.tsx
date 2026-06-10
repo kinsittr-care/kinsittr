@@ -2,7 +2,7 @@
 
 import type { Conversation, Message } from "@/src/types/api/api";
 import type { RefObject } from "react";
-import { N } from "../tokens";
+import { cn } from "@/lib/utils";
 import {
   formatConversationStatus,
   formatMessageTimestamp,
@@ -33,46 +33,20 @@ export default function NannyMessageList({
   onLoadOlder,
 }: NannyMessageListProps) {
   return (
-    <div
-      style={{
-        flex: 1,
-        overflowY: "auto",
-        padding: "24px 28px",
-        background: N.bg,
-        display: "flex",
-        flexDirection: "column",
-        gap: 12,
-      }}
-    >
+    <div className="flex-1 overflow-y-auto px-7 py-6 bg-nanny-bg flex flex-col gap-3">
       {conversation && (
-        <div style={{ textAlign: "center", marginBottom: 8 }}>
-          <span
-            style={{
-              fontSize: 12,
-              color: N.inkMute,
-              background: N.borderSoft,
-              borderRadius: 10,
-              padding: "4px 12px",
-            }}
-          >
+        <div className="text-center mb-2">
+          <span className="text-[12px] text-nanny-ink-faint bg-nanny-border-soft rounded-[10px] px-3 py-1">
             {formatConversationStatus(conversation.booking_status)}
           </span>
         </div>
       )}
 
       {!isLoading && !isError && totalMessages > messages.length && (
-        <div style={{ textAlign: "center", marginBottom: 8 }}>
+        <div className="text-center mb-2">
           <button
             onClick={onLoadOlder}
-            style={{
-              padding: "8px 14px",
-              fontSize: 13,
-              background: N.card,
-              border: `1px solid ${N.border}`,
-              borderRadius: 8,
-              cursor: "pointer",
-              color: N.inkSoft,
-            }}
+            className="py-2 px-[14px] text-[13px] bg-nanny-card border border-nanny-border rounded-lg cursor-pointer text-nanny-ink-faint"
           >
             Load older messages
           </button>
@@ -80,27 +54,19 @@ export default function NannyMessageList({
       )}
 
       {isLoading && (
-        <div style={{ textAlign: "center", color: N.inkFaint, fontSize: 14 }}>
+        <div className="text-center text-nanny-ink-faint text-[14px]">
           Loading messages...
         </div>
       )}
 
       {isError && (
-        <div style={{ textAlign: "center" }}>
-          <p style={{ color: N.rose, fontSize: 14, marginBottom: 10 }}>
+        <div className="text-center">
+          <p className="text-nanny-rose text-[14px] mb-2.5">
             {errorMessage || "Unable to load messages right now."}
           </p>
           <button
             onClick={onRetry}
-            style={{
-              padding: "8px 14px",
-              fontSize: 13,
-              background: N.card,
-              border: `1px solid ${N.border}`,
-              borderRadius: 8,
-              cursor: "pointer",
-              color: N.inkSoft,
-            }}
+            className="py-2 px-[14px] text-[13px] bg-nanny-card border border-nanny-border rounded-lg cursor-pointer text-nanny-ink-faint"
           >
             Retry
           </button>
@@ -115,30 +81,18 @@ export default function NannyMessageList({
           return (
             <div
               key={message.id}
-              style={{
-                display: "flex",
-                justifyContent: isUser ? "flex-end" : "flex-start",
-              }}
+              className={isUser ? "flex justify-end" : "flex justify-start"}
             >
               <div
-                style={{
-                  maxWidth: "60%",
-                  padding: "13px 17px",
-                  borderRadius: isUser ? "20px 20px 5px 20px" : "20px 20px 20px 5px",
-                  background: isUser ? N.green : N.card,
-                  color: isUser ? "#f6efd9" : N.inkSoft,
-                  boxShadow: N.shadow,
-                }}
+                className={cn(
+                  "max-w-[60%] py-[13px] px-[17px] shadow-[var(--nanny-shadow)]",
+                  isUser
+                    ? "bg-nanny-green text-[#f6efd9] rounded-[20px_20px_5px_20px]"
+                    : "bg-nanny-card text-nanny-ink-soft rounded-[20px_20px_20px_5px]",
+                )}
               >
-                <div style={{ fontSize: 14, lineHeight: 1.65 }}>{message.body}</div>
-                <div
-                  style={{
-                    marginTop: 6,
-                    fontSize: 11,
-                    opacity: 0.7,
-                    textAlign: isUser ? "right" : "left",
-                  }}
-                >
+                <div className="text-[14px] leading-[1.65]">{message.body}</div>
+                <div className={cn("mt-1.5 text-[11px] opacity-70", isUser ? "text-right" : "text-left")}>
                   {formatMessageTimestamp(message.created_at)}
                 </div>
               </div>
@@ -147,7 +101,7 @@ export default function NannyMessageList({
         })}
 
       {!isLoading && !isError && conversation && messages.length === 0 && (
-        <div style={{ textAlign: "center", color: N.inkFaint, fontSize: 14 }}>
+        <div className="text-center text-nanny-ink-faint text-[14px]">
           No messages in this conversation yet.
         </div>
       )}

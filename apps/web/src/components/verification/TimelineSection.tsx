@@ -35,47 +35,37 @@ const events = [
 
 export default function TimelineSection() {
   return (
-    <section style={{ background: "var(--bg-warm)", padding: "90px 0" }}>
+    <section className="bg-brand-warm py-[90px]">
       <div className="mx-auto px-[52px] max-w-[640px] max-md:px-6">
         <RevealWrapper>
           <div
-            className="inline-flex items-center gap-[7px] text-[12px] font-bold uppercase tracking-widest rounded-[30px] px-[13px] py-[5px] mb-[18px] border"
-            style={{ color: "var(--teal)", background: "var(--teal-lt)", borderColor: "var(--teal-mid)" }}
+            className="mb-[18px] inline-flex items-center gap-[7px] rounded-[30px] border border-teal-mid bg-teal-lt px-[13px] py-[5px] text-[12px] font-bold uppercase tracking-widest text-teal"
           >
             Timeline
           </div>
-          <h2 className="font-display leading-[1.1] tracking-[-0.02em] mb-12" style={{ fontSize: "clamp(28px,3.5vw,42px)" }}>
-            From apply to <em style={{ color: "var(--teal)" }}>approved</em>
+          <h2 className="font-display mb-12 text-[clamp(28px,3.5vw,42px)] leading-[1.1] tracking-[-0.02em]">
+            From apply to <em className="text-teal">approved</em>
           </h2>
         </RevealWrapper>
 
         <div className="relative">
           {/* vertical rail */}
-          <div className="absolute left-[14px] top-2 bottom-2 w-[2px]" style={{ background: "var(--border)" }} />
+          <div className="absolute bottom-2 left-[14px] top-2 w-[2px] bg-(--border)" />
 
           <div className="flex flex-col gap-8">
             {events.map((e, i) => (
               <RevealWrapper key={e.title} delay={i * 0.1}>
-                <div className="flex gap-6 items-start pl-10 relative">
+                <div className="relative flex items-start gap-6 pl-10">
                   {/* dot */}
-                  <div
-                    className="absolute left-0 top-1 w-[16px] h-[16px] rounded-full border-[3px] shrink-0"
-                    style={{
-                      background: e.gold ? "var(--gold)" : "var(--teal)",
-                      borderColor: "var(--bg-warm)",
-                    }}
-                  />
+                  <div className={`absolute left-0 top-1 h-4 w-4 shrink-0 rounded-full border-[3px] border-brand-warm ${e.gold ? "bg-gold" : "bg-teal"}`} />
                   <div>
-                    <p
-                      className="text-[12px] font-semibold uppercase tracking-[0.07em] mb-[4px]"
-                      style={{ color: "var(--faint)" }}
-                    >
+                    <p className="mb-[4px] text-[12px] font-semibold uppercase tracking-[0.07em] text-brand-faint">
                       {e.time}
                     </p>
-                    <p className="font-semibold text-[15px] mb-[4px]" style={{ color: e.gold ? "var(--gold)" : "var(--brand-text)" }}>
+                    <p className={`mb-[4px] text-[15px] font-semibold ${e.gold ? "text-gold" : "text-brand-text"}`}>
                       {e.title}
                     </p>
-                    <p className="text-[14px] leading-[1.65]" style={{ color: "var(--muted)" }}>
+                    <p className="text-[14px] leading-[1.65] text-brand-faint">
                       {e.description}
                     </p>
                   </div>

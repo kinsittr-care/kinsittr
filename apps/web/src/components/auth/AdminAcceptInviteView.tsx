@@ -4,17 +4,8 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { acceptAdminInvite } from "@/src/utils/api/admin/management";
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  border: "1.5px solid #e7ddd2",
-  borderRadius: 9,
-  padding: "11px 14px",
-  fontSize: 14,
-  outline: "none",
-  background: "#fffdf8",
-  color: "#33271f",
-  fontFamily: "inherit",
-};
+const inputClass = "w-full rounded-[9px] border-[1.5px] border-[#e7ddd2] bg-[#fffdf8] px-[14px] py-[11px] text-[14px] text-[#33271f] outline-none";
+const labelClass = "grid gap-1.5 text-[13px] text-[#7b7168]";
 
 export default function AdminAcceptInviteView() {
   const router = useRouter();
@@ -43,36 +34,36 @@ export default function AdminAcceptInviteView() {
   };
 
   return (
-    <form onSubmit={submitInvite} style={{ display: "grid", gap: 16 }}>
-      <p style={{ margin: 0, color: "#7b7168", fontSize: 13, lineHeight: 1.6 }}>
+    <form onSubmit={submitInvite} className="grid gap-4">
+      <p className="m-0 text-[13px] leading-[1.6] text-[#7b7168]">
         Accepting an invite creates your admin account. You will be redirected to admin sign in afterwards
       </p>
 
-      <label style={{ display: "grid", gap: 6, color: "#7b7168", fontSize: 13 }}>
+      <label className={labelClass}>
         Invite token
         <textarea
           value={token}
           onChange={(event) => setToken(event.target.value)}
-          style={{ ...inputStyle, minHeight: 88, resize: "vertical" }}
+          className={`${inputClass} min-h-[88px] resize-y`}
           required
         />
       </label>
 
-      <label style={{ display: "grid", gap: 6, color: "#7b7168", fontSize: 13 }}>
+      <label className={labelClass}>
         Password
         <input
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          style={inputStyle}
+          className={inputClass}
           required
           minLength={8}
         />
       </label>
 
-      {error && <p style={{ margin: 0, color: "#b24a3f", fontSize: 13 }}>{error}</p>}
+      {error && <p className="m-0 text-[13px] text-[#b24a3f]">{error}</p>}
       {success && (
-        <p style={{ margin: 0, color: "#3f6b4d", fontSize: 13 }}>
+        <p className="m-0 text-[13px] text-[#3f6b4d]">
           Invite accepted. Redirecting to admin sign in...
         </p>
       )}
@@ -80,15 +71,7 @@ export default function AdminAcceptInviteView() {
       <button
         type="submit"
         disabled={isSubmitting}
-        style={{
-          border: "none",
-          borderRadius: 10,
-          background: "#8b5e3c",
-          color: "#fff",
-          padding: "12px 18px",
-          fontWeight: 700,
-          cursor: "pointer",
-        }}
+        className="cursor-pointer rounded-[10px] border-0 bg-[#8b5e3c] px-[18px] py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-80"
       >
         {isSubmitting ? "Accepting invite..." : "Accept invite"}
       </button>

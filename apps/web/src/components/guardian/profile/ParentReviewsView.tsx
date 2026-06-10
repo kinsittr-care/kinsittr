@@ -17,21 +17,21 @@ export default function ParentReviewsView() {
   });
 
   return (
-    <div style={{ flex: 1, overflowY: "auto", padding: "20px 16px 32px" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ marginBottom: 28 }}>
-          <h1 className="font-display" style={{ fontWeight: 400, fontSize: 30, marginBottom: 4 }}>
+    <div className="flex-1 overflow-y-auto pt-5 px-4 pb-8">
+      <div className="max-w-[900px] mx-auto">
+        <div className="mb-7">
+          <h1 className="font-display font-normal text-[30px] mb-1">
             Reviews
           </h1>
-          <p style={{ color: "var(--muted)", fontSize: 14 }}>
+          <p className="text-[var(--faint)] text-[14px]">
             Reviews you have submitted for completed nanny bookings.
           </p>
         </div>
         <SectionCard title="Submitted reviews">
           {reviewsQuery.isLoading ? (
-            <p style={{ color: "var(--muted)", fontSize: 14, margin: 0 }}>Loading reviews...</p>
+            <p className="text-[var(--faint)] text-[14px] m-0">Loading reviews...</p>
           ) : reviewsQuery.isError ? (
-            <p style={{ color: "#b24a3f", fontSize: 14, margin: 0 }}>
+            <p className="text-[#b24a3f] text-[14px] m-0">
               {reviewsQuery.error instanceof Error ? reviewsQuery.error.message : "Unable to load reviews."}
             </p>
           ) : (
