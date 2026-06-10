@@ -7,7 +7,7 @@ const channels = [
     iconBgClass: "bg-[var(--teal-lt)]",
     icon: <MailIcon />,
     label: "Email",
-    value: "kinsittr@gmail.com",
+    value: "contact@kinsittr.com",
   },
   // {
   //   iconBg: "var(--gold-lt)",
@@ -31,14 +31,14 @@ export default function ContactInfo() {
   return (
     <RevealWrapper>
       <div
-        className="mb-[18px] inline-flex items-center gap-[7px] rounded-[30px] border border-[var(--teal-mid)] bg-[var(--teal-lt)] px-[13px] py-[5px] text-[12px] font-bold uppercase tracking-widest text-[var(--teal)]"
+        className="mb-[18px] inline-flex items-center gap-[7px] rounded-[30px] border border-teal-mid bg-teal-lt px-[13px] text-[12px] font-bold uppercase tracking-widest text-teal"
       >
         Contact us
       </div>
       <h1 className="font-display mb-4 text-[clamp(34px,4.5vw,52px)] leading-[1.1] tracking-[-0.02em]">
-        We&apos;d love to <br /><em className="text-[var(--teal)]">hear from you.</em>
+        We&apos;d love to <br /><em className="text-teal">hear from you.</em>
       </h1>
-      <p className="mb-9 max-w-[380px] text-[16px] leading-[1.75] text-[var(--faint)]">
+      <p className="mb-9 max-w-[380px] text-[16px] leading-[1.75] text-brand-faint">
         Have a question about KinSittr, a safety concern, or want to explore working with us? We&apos;re a small team and we read every message.
       </p>
 
@@ -50,10 +50,10 @@ export default function ContactInfo() {
             {icon}
           </div>
           <div>
-            <div className="mb-[2px] text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--faint)]">
+            <div className="mb-[2px] text-[12px] font-semibold uppercase tracking-[0.08em] text-brand-faint">
               {label}
             </div>
-            <div className="text-[15px] font-semibold text-[var(--brand-text)]">
+            <div className="text-[15px] font-semibold text-brand-text">
               {value}
             </div>
           </div>

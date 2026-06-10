@@ -2,7 +2,7 @@ import {
   Navbar,
   HeroSection,
   HowItWorksSection,
-  AudienceSection,
+  // AudienceSection,
   SafetyStrip,
   CtaSection,
   Footer,
@@ -15,7 +15,7 @@ export default function Home() {
       <main>
         <HeroSection />
         <HowItWorksSection />
-        <AudienceSection />
+        {/* <AudienceSection /> */}
         <SafetyStrip />
         <CtaSection />
       </main>

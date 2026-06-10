@@ -2,10 +2,9 @@ import { TinyCheckIcon } from "@/src/components/icons";
 import RevealWrapper from "@/src/components/landing/RevealWrapper";
 
 const perks = [
-  "Direct deposit within 2 business days",
-  "You set your own hourly rate",
-  "Payment history and tax receipts in-app",
-  "No hidden platform fees",
+  "Connect Stripe before accepting paid bookings",
+  "Payment is collected when the booking is completed",
+  "Choose daily or weekly Stripe payouts",
 ];
 
 function PhoneIllustration() {
@@ -53,12 +52,12 @@ export default function PaySection() {
                 How you get paid
               </h3>
               <p className="text-[15px] leading-[1.75] mb-7" style={{ color: "rgba(255,255,255,.78)" }}>
-                No awkward cash conversations. Every booking is backed by secure payment processing — you get paid automatically after a booking is completed.
+                No awkward cash conversations. Charges are made after the completed care session and tracks your earnings in-app.
               </p>
               <ul className="flex flex-col gap-3">
                 {perks.map((p) => (
                   <li key={p} className="flex items-center gap-3 text-[14px]" style={{ color: "rgba(255,255,255,.9)" }}>
-                    <span className="w-[20px] h-[20px] rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <span className="w-[20px] h-[20px] rounded-full bg-white/20 flex items-center justify-center shrink-0">
                       <TinyCheckIcon color="#fff" />
                     </span>
                     {p}
