@@ -33,13 +33,13 @@ Server route:
 - `POST /api/v1/contact` — submit the public contact form
 
 ### Public Nannies
-- `GET /api/v1/nannies` — list verified public nanny cards with pagination and filters
+- `GET /api/v1/nannies` — list verified public nanny cards with pagination and filters; `rating_desc` sorts reviewed nannies before unrated verified nannies
 - `GET /api/v1/nannies/:id` — return one verified nanny public profile
 - `GET /api/v1/nannies/:id/reviews` — list public reviews for one nanny
 
 ### Nanny
 - `GET /api/v1/nanny/profile` — return the authenticated nanny's own profile
-- `PATCH /api/v1/nanny/profile` — update the authenticated nanny's own profile
+- `PATCH /api/v1/nanny/profile` — update the authenticated nanny's own profile, including up to three allowed specialties
 - `POST /api/v1/nanny/avatar` — upload or replace the authenticated nanny's public profile avatar
 - `DELETE /api/v1/nanny/avatar` — remove the authenticated nanny's public profile avatar
 - `GET /api/v1/nanny/documents` — list the authenticated nanny's screening documents
@@ -63,7 +63,7 @@ Server route:
 - `GET /api/v1/parent/profile` — return the authenticated parent's profile details
 - `PATCH /api/v1/parent/profile` — update the authenticated parent's profile details
 - `GET /api/v1/parent/settings` — return notification, privacy, and preference settings
-- `PATCH /api/v1/parent/settings` — update notification, privacy, and preference settings
+- `PATCH /api/v1/parent/settings` — update notification, privacy, and preference settings; v1 web preferences are CAD-focused
 
 ### Bookings
 - `POST /api/v1/bookings` — create a booking request from parent to nanny
@@ -135,7 +135,7 @@ Server route:
 - `PATCH /api/v1/admin/reviews/:id/unflag` — restore/unflag a review with required reason
 
 ### Admin Analytics
-- `GET /api/v1/admin/analytics` — return admin metrics, trends, city breakdowns, and top nannies
+- `GET /api/v1/admin/analytics` — return admin metrics, trends, city breakdowns, and top nannies with date range, bucket, city limit, and top nanny limit query params
 
 ### Admin Management
 - `GET /api/v1/admin/admins` — list admin users
@@ -176,5 +176,9 @@ Server route:
 ## Notes
 
 - Public nanny list supports `page`, `limit`, `city`, `province`, `min_rate`, `max_rate`, repeated `specialty`, `service_type`, and `sort`.
+- Allowed nanny specialties are `Infant care`, `Special needs`, `Montessori`, `CPR certified`, and `Bilingual`. Nanny profile updates accept at most three specialties.
+- Public nanny ratings are review-backed. Unrated verified nannies are not assigned a default rating; parent-facing web surfaces omit rating text until reviews exist.
+- Parent booking details are exposed by `GET /api/v1/bookings/:id`; the web app renders those details at `/parent/bookings/[id]`.
+- Parent billing endpoints require Stripe configuration for live card setup. The web app suppresses setup/configuration errors in local or unconfigured environments while keeping real payment method errors visible.
 - Contact, auth recovery, and admin invite email delivery require Resend configuration.
 - Admin invite acceptance creates the admin account but does not issue auth tokens; the admin signs in after accepting.
