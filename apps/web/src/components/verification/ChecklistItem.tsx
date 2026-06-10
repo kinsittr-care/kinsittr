@@ -12,7 +12,7 @@ export default function ChecklistItem({ title, description }: ChecklistItemProps
       style={{ border: "1px solid var(--border)" }}
     >
       <div
-        className="w-[36px] h-[36px] rounded-full flex items-center justify-center hrink-0"
+        className="w-[36px] h-[36px] rounded-full flex items-center justify-center shrink-0"
         style={{ background: "var(--teal-lt)" }}
       >
         <ChecklistCheckIcon />

@@ -14,6 +14,24 @@ export default function RevealWrapper({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    let frame: number | null = null;
+    const revealSoon = () => {
+      frame = window.requestAnimationFrame(() => setVisible(true));
+    };
+    const rect = el.getBoundingClientRect();
+    const isInViewport = rect.top < window.innerHeight && rect.bottom > 0;
+    if (isInViewport) {
+      revealSoon();
+      return () => {
+        if (frame !== null) window.cancelAnimationFrame(frame);
+      };
+    }
+    if (!("IntersectionObserver" in window)) {
+      revealSoon();
+      return () => {
+        if (frame !== null) window.cancelAnimationFrame(frame);
+      };
+    }
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
