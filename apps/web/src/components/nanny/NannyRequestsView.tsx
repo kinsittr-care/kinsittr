@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Booking, BookingStatus } from "@/src/types/api/api";
 import {
   approveNannyBooking,
@@ -48,6 +48,7 @@ function toBookingRequest(booking: Booking): BookingRequest {
     hours: booking.duration,
     amount: formatCurrency(booking.total_amount),
     status: booking.status === "cancelled" ? "neutral" : booking.status,
+    conversationId: booking.conversation_id,
     paymentStatus: booking.payment_status,
     paymentFailure: booking.payment_failure_message,
     children: formatLocation(booking.parent_city, booking.parent_province, "Family details"),
@@ -55,6 +56,7 @@ function toBookingRequest(booking: Booking): BookingRequest {
 }
 
 export default function NannyRequestsView() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const notifiedBookingID = searchParams.get("booking_id");
@@ -193,6 +195,9 @@ export default function NannyRequestsView() {
               onApprove={() => updateMutation.mutate({ id: r.id, action: "approve" })}
               onDecline={() => updateMutation.mutate({ id: r.id, action: "decline" })}
               onComplete={() => updateMutation.mutate({ id: r.id, action: "complete" })}
+              onMessageParent={() => {
+                if (r.conversationId) router.push(`/nanny/messages?conversation_id=${r.conversationId}`);
+              }}
               onRetryPayment={() => updateMutation.mutate({ id: r.id, action: "retry-payment" })}
               onReview={() => setReviewBookingId(r.id)}
               isReviewed={reviewedBookingIds.has(r.id)}
