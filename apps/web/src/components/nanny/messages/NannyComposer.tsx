@@ -30,7 +30,7 @@ export default function NannyComposer({
       {sendError && (
         <p className="text-nanny-rose text-[13px] mb-2.5">{sendError}</p>
       )}
-      <div className="flex items-end gap-3">
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-end">
         <textarea
           value={input}
           onChange={(e) => onInputChange(e.target.value)}
@@ -42,12 +42,12 @@ export default function NannyComposer({
           }}
           placeholder="Type your message..."
           disabled={!isConversationSelected || isSending}
-          className="flex-1 min-h-[52px] max-h-[120px] resize-y rounded-2xl border border-nanny-border px-4 py-[14px] text-[14px] outline-none bg-nanny-card-soft text-nanny-ink-faint"
+          className="min-h-[52px] max-h-[120px] w-full min-w-0 flex-1 resize-y rounded-2xl border border-nanny-border bg-nanny-card-soft px-4 py-[14px] text-[14px] text-nanny-ink-faint outline-none"
         />
         <button
           onClick={onSend}
           disabled={!canSend}
-          className={`py-[13px] px-5 text-[14px] font-semibold bg-nanny-green text-[#f6efd9] border-0 rounded-xl transition-opacity duration-150 ${canSend ? "cursor-pointer opacity-100" : "cursor-default opacity-60"}`}
+          className={`w-full rounded-xl border-0 bg-nanny-green px-5 py-[13px] text-[14px] font-semibold text-[#f6efd9] transition-opacity duration-150 sm:w-auto sm:shrink-0 ${canSend ? "cursor-pointer opacity-100" : "cursor-default opacity-60"}`}
         >
           {isSending ? "Sending..." : "Send"}
         </button>

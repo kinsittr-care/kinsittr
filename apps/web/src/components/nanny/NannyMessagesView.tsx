@@ -33,7 +33,7 @@ export default function NannyMessagesView() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const notifiedConversationID = searchParams.get("conversation_id");
-  const isMobile = useIsMobile();
+  const isCompact = useIsMobile(1024);
   const queryClient = useQueryClient();
   const [conversationLimit, setConversationLimit] = useState(CONVERSATIONS_PAGE_SIZE);
   const [messageLimit, setMessageLimit] = useState(MESSAGES_PAGE_SIZE);
@@ -162,8 +162,8 @@ export default function NannyMessagesView() {
   }
 
   const activeMobileView = conversations.length === 0 ? "list" : mobileView;
-  const showThreadList = !isMobile || activeMobileView === "list";
-  const showChat = !isMobile || (activeMobileView === "chat" && activeConversationId !== null);
+  const showThreadList = !isCompact || activeMobileView === "list";
+  const showChat = !isCompact || (activeMobileView === "chat" && activeConversationId !== null);
 
   return (
     <div className="flex flex-1 overflow-hidden">
@@ -178,13 +178,13 @@ export default function NannyMessagesView() {
               ? conversationsQuery.error.message
               : undefined
           }
-          isMobile={isMobile}
+          isMobile={isCompact}
           selectedConversationId={activeConversationId}
           onRetry={() => conversationsQuery.refetch()}
           onSelectConversation={(id) => {
             setSelectedConversationId(id);
             setMessageLimit(MESSAGES_PAGE_SIZE);
-            if (isMobile) setMobileView("chat");
+            if (isCompact) setMobileView("chat");
           }}
           onLoadMore={() => setConversationLimit((c) => c + CONVERSATIONS_PAGE_SIZE)}
         />
@@ -194,7 +194,7 @@ export default function NannyMessagesView() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <NannyChatHeader
             conversation={selectedConversation}
-            isMobile={isMobile}
+            isMobile={isCompact}
             onBack={() => setMobileView("list")}
             onViewBookingDetails={() => router.push("/nanny/requests")}
           />
@@ -217,7 +217,7 @@ export default function NannyMessagesView() {
             canSend={Boolean(selectedConversation && input.trim() && !sendMessageMutation.isPending)}
             isSending={sendMessageMutation.isPending}
             isConversationSelected={selectedConversation !== null}
-            isMobile={isMobile}
+            isMobile={isCompact}
             onInputChange={(value) => {
               setInput(value);
               if (sendError) setSendError(null);

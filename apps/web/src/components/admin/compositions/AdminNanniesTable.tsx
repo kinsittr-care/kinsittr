@@ -75,17 +75,17 @@ export default function AdminNanniesTable({
       ) : nannies.length === 0 ? (
         <div className="p-6 text-admin-ink-soft">No nannies found.</div>
       ) : (
-        nannies.map((nanny, index) => {
+        <div className="flex flex-col gap-2 p-2">
+        {nannies.map((nanny) => {
           const isBusy = busyIds.has(nanny.id);
           const canVerify = canVerifyNanny(nanny);
 
           return (
             <div
               key={nanny.id}
-              className="admin-table-row grid grid-cols-1 cursor-pointer gap-3 px-4 py-4 transition-colors duration-150 sm:px-6 xl:grid-cols-[2.1fr_1.35fr_.85fr_1.1fr_1fr_1.45fr] xl:items-center"
+              className="admin-table-row grid grid-cols-1 cursor-pointer gap-3 rounded-xl border border-admin-border-soft px-4 py-4 transition-colors duration-150 sm:px-6 xl:grid-cols-[2.1fr_1.35fr_.85fr_1.1fr_1fr_1.45fr] xl:items-center"
               onClick={() => onSelect(nanny.id)}
               style={{
-                borderBottom: index < nannies.length - 1 ? "1px solid var(--admin-border-soft)" : "none",
                 background: selectedNannyId === nanny.id ? "var(--admin-card-warm)" : "transparent",
               }}
             >
@@ -123,34 +123,37 @@ export default function AdminNanniesTable({
                 </div>
               </div>
 
-              <div className="flex items-start gap-[14px] xl:hidden">
-                <AdminAvatar initials={initialsFor(nanny)} size={40} tone={nanny.user_is_active ? "clay" : "muted"} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="text-[15px] font-semibold text-admin-ink">{nanny.display_name}</div>
-                    <AdminPill tone={statusTone(nanny)}>
-                      {nanny.user_is_active ? statusLabel(nanny.verification_status) : "suspended"}
-                    </AdminPill>
-                  </div>
-                  <div className="truncate text-[12.5px] text-admin-ink-soft">{nanny.user_email}</div>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-admin-ink-mid">
-                    <span>{formatLocation(nanny.city, nanny.province, "not set")}</span>
-                    <span>
-                      <span className="font-display text-[17px] text-admin-ink">${nanny.rate_per_hour}</span>
-                      <span className="text-admin-ink-soft">/hr</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      {nanny.rating_count > 0 ? (
-                        <>
-                          <AdminStars value={Math.round(nanny.rating_avg)} />
-                          <span>{nanny.rating_avg.toFixed(1)}</span>
-                        </>
-                      ) : (
-                        <span>New</span>
-                      )}
-                    </span>
+              <div className="flex items-start justify-between gap-3 xl:hidden">
+                <div className="flex min-w-0 items-start gap-[14px]">
+                  <AdminAvatar initials={initialsFor(nanny)} size={40} tone={nanny.user_is_active ? "clay" : "muted"} />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[15px] font-semibold text-admin-ink">{nanny.display_name}</div>
+                    <div className="truncate text-[12.5px] text-admin-ink-soft">{nanny.user_email}</div>
                   </div>
                 </div>
+                <div className="shrink-0">
+                  <AdminPill tone={statusTone(nanny)}>
+                    {nanny.user_is_active ? statusLabel(nanny.verification_status) : "suspended"}
+                  </AdminPill>
+                </div>
+              </div>
+
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-admin-ink-mid xl:hidden">
+                <span>{formatLocation(nanny.city, nanny.province, "not set")}</span>
+                <span>
+                  <span className="font-display text-[17px] text-admin-ink">${nanny.rate_per_hour}</span>
+                  <span className="text-admin-ink-soft">/hr</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  {nanny.rating_count > 0 ? (
+                    <>
+                      <AdminStars value={Math.round(nanny.rating_avg)} />
+                      <span>{nanny.rating_avg.toFixed(1)}</span>
+                    </>
+                  ) : (
+                    <span>New</span>
+                  )}
+                </span>
               </div>
 
               <div onClick={(event) => event.stopPropagation()} className="flex flex-wrap gap-2 border-t border-admin-border-soft pt-3 xl:border-t-0 xl:pt-0 xl:justify-end">
@@ -166,7 +169,8 @@ export default function AdminNanniesTable({
               </div>
             </div>
           );
-        })
+        })}
+        </div>
       )}
     </div>
   );
