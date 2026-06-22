@@ -27,6 +27,7 @@ type ConversationData struct {
 	LastMessageAt            *time.Time           `json:"last_message_at,omitempty"`
 	UnreadCount              int                  `json:"unread_count"`
 	LastReadAt               *time.Time           `json:"last_read_at,omitempty"`
+	LockedAt                 *time.Time           `json:"locked_at,omitempty"`
 	CreatedAt                time.Time            `json:"created_at"`
 	UpdatedAt                time.Time            `json:"updated_at"`
 }
@@ -83,6 +84,7 @@ func toConversationData(record messages_repo.ConversationRecord) ConversationDat
 		LastMessageAt:            record.LastMessageAt,
 		UnreadCount:              record.UnreadCount,
 		LastReadAt:               record.LastReadAt,
+		LockedAt:                 record.LockedAt,
 		CreatedAt:                record.CreatedAt,
 		UpdatedAt:                record.UpdatedAt,
 	}

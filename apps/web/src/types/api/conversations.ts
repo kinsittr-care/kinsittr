@@ -13,6 +13,7 @@ export interface Conversation {
   last_message_at?: string | null;
   unread_count: number;
   last_read_at?: string | null;
+  locked_at?: string | null;
   created_at: string;
   updated_at: string;
 }

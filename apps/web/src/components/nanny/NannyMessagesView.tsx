@@ -68,6 +68,7 @@ export default function NannyMessagesView() {
 
   const selectedConversation =
     conversations.find((c) => c.id === activeConversationId) ?? null;
+  const isConversationLocked = Boolean(selectedConversation?.locked_at);
   const effectiveMessageLimit =
     activeConversationId === selectedConversationId ? messageLimit : MESSAGES_PAGE_SIZE;
 
@@ -153,7 +154,7 @@ export default function NannyMessagesView() {
 
   const send = () => {
     const body = input.trim();
-    if (!body || sendMessageMutation.isPending) return;
+    if (!body || isConversationLocked || sendMessageMutation.isPending) return;
     sendMessageMutation.mutate(body);
   };
 
@@ -214,9 +215,10 @@ export default function NannyMessagesView() {
           <NannyComposer
             input={input}
             sendError={sendError}
-            canSend={Boolean(selectedConversation && input.trim() && !sendMessageMutation.isPending)}
+            canSend={Boolean(selectedConversation && !isConversationLocked && input.trim() && !sendMessageMutation.isPending)}
             isSending={sendMessageMutation.isPending}
             isConversationSelected={selectedConversation !== null}
+            isLocked={isConversationLocked}
             isMobile={isCompact}
             onInputChange={(value) => {
               setInput(value);
