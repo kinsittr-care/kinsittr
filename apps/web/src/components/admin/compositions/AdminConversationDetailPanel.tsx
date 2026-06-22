@@ -54,11 +54,11 @@ export default function AdminConversationDetailPanel({
   return (
     <section className="bg-admin-card border border-admin-border rounded-2xl shadow-[var(--admin-shadow)] overflow-hidden">
       <div className="p-5 border-b border-admin-border-soft flex justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="m-0 font-display text-[24px] text-admin-ink">
+        <div className="min-w-0">
+          <h2 className="m-0 font-display text-[22px] text-admin-ink break-words sm:text-[24px]">
             {conversation.parent.display_name} / {conversation.nanny.display_name}
           </h2>
-          <p className="mt-[6px] mb-0 text-admin-ink-soft text-[13px]">
+          <p className="mt-[6px] mb-0 text-admin-ink-soft text-[13px] break-words">
             Booking {conversation.booking_status} · {conversation.parent.email} · {conversation.nanny.email}
           </p>
           {conversation.lock_reason && (
@@ -67,7 +67,7 @@ export default function AdminConversationDetailPanel({
             </p>
           )}
         </div>
-        <div className="flex gap-[10px] items-start">
+        <div className="flex w-full flex-col gap-[10px] items-stretch sm:w-auto sm:flex-row sm:items-start">
           <button disabled={locked || isBusy} onClick={onLock} className={cn(btnDangerCls, (locked || isBusy) && "opacity-55")}>
             Lock
           </button>
