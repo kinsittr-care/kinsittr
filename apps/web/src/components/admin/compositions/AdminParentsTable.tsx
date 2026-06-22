@@ -63,19 +63,18 @@ export default function AdminParentsTable({
         </table>
       </div>
 
-      <div className="xl:hidden">
+      <div className="flex flex-col gap-2 p-2 xl:hidden">
         {isLoading ? (
           <div className="p-6 text-admin-ink-soft">Loading parents...</div>
         ) : parents.length === 0 ? (
           <div className="p-6 text-admin-ink-soft">No parents found.</div>
         ) : (
-          parents.map((parent, index) => (
+          parents.map((parent) => (
             <ParentCard
               key={parent.id}
               isBusy={busyIds.has(parent.id)}
               parent={parent}
               selected={selectedParentId === parent.id}
-              showBorder={index < parents.length - 1}
               onSelect={onSelect}
               onSuspend={onSuspend}
             />
@@ -166,14 +165,12 @@ function ParentCard({
   isBusy,
   parent,
   selected,
-  showBorder,
   onSelect,
   onSuspend,
 }: {
   isBusy: boolean;
   parent: AdminParent;
   selected: boolean;
-  showBorder: boolean;
   onSelect: (id: string) => void;
   onSuspend: (parent: AdminParent) => void;
 }) {
@@ -181,10 +178,9 @@ function ParentCard({
     <div
       role="button"
       tabIndex={0}
-      className="admin-table-row block w-full cursor-pointer px-4 py-4 text-left transition-colors duration-150 sm:px-6"
+      className="admin-table-row block w-full cursor-pointer overflow-hidden rounded-xl border border-admin-border-soft px-4 py-4 text-left transition-colors duration-150 sm:px-6"
       style={{
         background: selected ? "var(--admin-card-warm)" : "transparent",
-        borderBottom: showBorder ? "1px solid var(--admin-border-soft)" : "none",
       }}
       onClick={() => onSelect(parent.id)}
       onKeyDown={(event) => {
@@ -194,9 +190,11 @@ function ParentCard({
         }
       }}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex min-w-0 items-start justify-between gap-3">
         <ParentIdentity parent={parent} />
-        <ParentStatus parent={parent} />
+        <div className="shrink-0">
+          <ParentStatus parent={parent} />
+        </div>
       </div>
       <div className="mt-4 grid gap-2 text-[13.5px] text-admin-ink-mid sm:grid-cols-3">
         <Meta label="Location" value={formatLocation(parent.city, parent.province, "not set")} />

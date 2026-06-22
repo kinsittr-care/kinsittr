@@ -255,9 +255,12 @@ func (r *pgRepository) ListMessages(ctx context.Context, conversationID uuid.UUI
 	}
 
 	rows, err := r.db.Query(ctx, `
-		SELECT id, conversation_id, sender_user_id, sender_role, body, created_at, updated_at
+		SELECT latest_messages.id, latest_messages.conversation_id, latest_messages.sender_user_id,
+		       latest_messages.sender_role, latest_messages.body, latest_messages.created_at,
+		       latest_messages.updated_at
 		FROM (
-			SELECT id, conversation_id, sender_user_id, sender_role, body, created_at, updated_at
+			SELECT messages.id, messages.conversation_id, messages.sender_user_id, messages.sender_role,
+			       messages.body, messages.created_at, messages.updated_at
 			FROM messages
 			WHERE conversation_id = $1 AND hidden_at IS NULL
 			ORDER BY created_at DESC

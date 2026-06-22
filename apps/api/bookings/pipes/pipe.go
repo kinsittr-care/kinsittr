@@ -16,6 +16,7 @@ import (
 
 type BookingData struct {
 	ID                string               `json:"id"`
+	ConversationID    string               `json:"conversation_id,omitempty"`
 	ParentProfileID   string               `json:"parent_profile_id"`
 	NannyProfileID    string               `json:"nanny_profile_id"`
 	ParentDisplayName string               `json:"parent_display_name,omitempty"`
@@ -125,6 +126,7 @@ func toBookingRecordData(booking bookings.BookingRecord) BookingData {
 	data.NannyDisplayName = booking.NannyDisplayName
 	data.NannyCity = booking.NannyCity
 	data.NannyProvince = booking.NannyProvince
+	data.ConversationID = booking.ConversationID
 	data.PaymentStatus = booking.PaymentStatus
 	data.PaymentFailure = booking.PaymentFailureMessage
 	data.PaymentIntentID = booking.StripePaymentIntentID

@@ -33,7 +33,7 @@ export default function NannyMessageList({
   onLoadOlder,
 }: NannyMessageListProps) {
   return (
-    <div className="flex-1 overflow-y-auto px-7 py-6 bg-nanny-bg flex flex-col gap-3">
+    <div className="flex-1 overflow-y-auto bg-nanny-bg flex flex-col gap-3 px-4 py-5 sm:px-6 lg:px-7 lg:py-6">
       {conversation && (
         <div className="text-center mb-2">
           <span className="text-[12px] text-nanny-ink-faint bg-nanny-border-soft rounded-[10px] px-3 py-1">
@@ -85,7 +85,7 @@ export default function NannyMessageList({
             >
               <div
                 className={cn(
-                  "max-w-[60%] py-[13px] px-[17px] shadow-[var(--nanny-shadow)]",
+                  "max-w-[88%] py-[13px] px-[17px] shadow-(--nanny-shadow) sm:max-w-[78%] lg:max-w-[60%]",
                   isUser
                     ? "bg-nanny-green text-[#f6efd9] rounded-[20px_20px_5px_20px]"
                     : "bg-nanny-card text-nanny-ink-soft rounded-[20px_20px_20px_5px]",

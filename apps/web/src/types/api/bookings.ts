@@ -19,6 +19,7 @@ export type PaymentStatus =
 
 export interface Booking {
   id: string;
+  conversation_id?: string;
   parent_profile_id: string;
   nanny_profile_id: string;
   parent_display_name?: string;
