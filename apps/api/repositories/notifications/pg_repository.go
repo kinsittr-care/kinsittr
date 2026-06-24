@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -13,6 +14,73 @@ import (
 
 type pgRepository struct {
 	db *pgxpool.Pool
+}
+
+func (r *pgRepository) CreateBookingReminder24h(ctx context.Context, windowStart, windowEnd time.Time) (int64, error) {
+	tag, err := r.db.Exec(ctx, `
+		WITH due_bookings AS (
+			SELECT b.id, b.start_time, pp.user_id AS parent_user_id, np.user_id AS nanny_user_id
+			FROM bookings b
+			INNER JOIN parent_profiles pp ON pp.id = b.parent_profile_id
+			INNER JOIN nanny_profiles np ON np.id = b.nanny_profile_id
+			WHERE b.status = 'approved'
+			  AND b.start_time >= $1
+			  AND b.start_time < $2
+		),
+		parent_reminders AS (
+			INSERT INTO notifications (id, user_id, role, type, title, body, data)
+			SELECT (
+				   substr(md5(db.id::text || ':parent:booking_reminder_24h'), 1, 8) || '-' ||
+				   substr(md5(db.id::text || ':parent:booking_reminder_24h'), 9, 4) || '-' ||
+				   substr(md5(db.id::text || ':parent:booking_reminder_24h'), 13, 4) || '-' ||
+				   substr(md5(db.id::text || ':parent:booking_reminder_24h'), 17, 4) || '-' ||
+				   substr(md5(db.id::text || ':parent:booking_reminder_24h'), 21, 12)
+			       )::uuid, db.parent_user_id, 'parent', $3,
+			       'Booking starts in 24 hours',
+			       'Your booking starts in about 24 hours.',
+			       jsonb_build_object('booking_id', db.id::text)
+			FROM due_bookings db
+			WHERE NOT EXISTS (
+				SELECT 1 FROM notifications n
+				WHERE n.user_id = db.parent_user_id
+				  AND n.role = 'parent'
+				  AND n.type = $3
+				  AND n.data->>'booking_id' = db.id::text
+			)
+			RETURNING 1
+		),
+		nanny_reminders AS (
+			INSERT INTO notifications (id, user_id, role, type, title, body, data)
+			SELECT (
+				   substr(md5(db.id::text || ':nanny:booking_reminder_24h'), 1, 8) || '-' ||
+				   substr(md5(db.id::text || ':nanny:booking_reminder_24h'), 9, 4) || '-' ||
+				   substr(md5(db.id::text || ':nanny:booking_reminder_24h'), 13, 4) || '-' ||
+				   substr(md5(db.id::text || ':nanny:booking_reminder_24h'), 17, 4) || '-' ||
+				   substr(md5(db.id::text || ':nanny:booking_reminder_24h'), 21, 12)
+			       )::uuid, db.nanny_user_id, 'nanny', $3,
+			       'Booking starts in 24 hours',
+			       'Your booking starts in about 24 hours.',
+			       jsonb_build_object('booking_id', db.id::text)
+			FROM due_bookings db
+			WHERE NOT EXISTS (
+				SELECT 1 FROM notifications n
+				WHERE n.user_id = db.nanny_user_id
+				  AND n.role = 'nanny'
+				  AND n.type = $3
+				  AND n.data->>'booking_id' = db.id::text
+			)
+			RETURNING 1
+		)
+		SELECT 1
+		FROM parent_reminders
+		UNION ALL
+		SELECT 1
+		FROM nanny_reminders
+	`, windowStart, windowEnd, models.BookingReminder24hNotificationType)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
 }
 
 func newPgRepository(db *pgxpool.Pool) *pgRepository {

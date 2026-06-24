@@ -7,6 +7,7 @@ export type NotificationType =
   | "booking_change_requested"
   | "booking_change_accepted"
   | "booking_change_declined"
+  | "booking_reminder_24h"
   | "message_received";
 
 export interface NotificationPayloadData {

@@ -24,7 +24,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 const POLL_INTERVAL = 30_000;
-const LIST_LIMIT = 30;
+const LIST_LIMIT = 7;
 const ROLE = "parent";
 
 function routeForNotification(notif: Notification): string {
@@ -52,13 +52,13 @@ function typeIcon(type: NotificationType): string {
   if (type === "booking_approved" || type === "booking_change_accepted") return "✅";
   if (type === "booking_declined" || type === "booking_change_declined") return "❌";
   if (type === "booking_completed") return "🏁";
+  if (type === "booking_reminder_24h") return "⏰";
   if (type === "booking_change_requested") return "🔄";
   return "📋";
 }
 
 export default function ParentNotificationsPanel() {
   const [open, setOpen] = useState(false);
-  const [listLimit, setListLimit] = useState(LIST_LIMIT);
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -69,14 +69,13 @@ export default function ParentNotificationsPanel() {
   });
 
   const listQuery = useQuery({
-    queryKey: notificationsQueryKey(ROLE, { page: 1, limit: listLimit }),
-    queryFn: () => listNotifications({ page: 1, limit: listLimit }),
+    queryKey: notificationsQueryKey(ROLE, { page: 1, limit: LIST_LIMIT }),
+    queryFn: () => listNotifications({ page: 1, limit: LIST_LIMIT }),
     enabled: open,
   });
 
   const unreadCount = countQuery.data?.data?.count ?? 0;
   const notifications = listQuery.data?.data?.items ?? [];
-  const total = listQuery.data?.data?.total ?? 0;
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: notificationsQueryKey(ROLE) });
@@ -113,7 +112,7 @@ export default function ParentNotificationsPanel() {
         side="bottom"
         align="end"
         sideOffset={10}
-        className="w-[calc(100vw-2rem)] max-w-80 p-0"
+        className="w-[calc(100vw-2rem)] max-w-80 overflow-hidden p-0"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
@@ -148,7 +147,7 @@ export default function ParentNotificationsPanel() {
         )}
 
         {/* List */}
-        <ScrollArea className="max-h-[min(400px,70vh)]">
+        <ScrollArea className="h-[min(360px,65vh)]">
           {listQuery.isLoading && (
             <p className="px-4 py-5 text-sm text-brand-faint">Loading...</p>
           )}
@@ -168,7 +167,7 @@ export default function ParentNotificationsPanel() {
                 key={notif.id}
                 onClick={() => handleClick(notif)}
                 className={cn(
-                  "w-full flex items-start gap-3 px-4 py-3 text-left border-b border-border/50 transition-colors",
+                  "w-full min-w-0 flex items-start gap-3 overflow-hidden px-4 py-3 text-left border-b border-border/50 transition-colors",
                   isUnread ? "bg-teal-lt hover:bg-[#d0eeee]" : "hover:bg-muted"
                 )}
                 style={isUnread ? { background: "var(--teal-lt)" } : undefined}
@@ -180,11 +179,11 @@ export default function ParentNotificationsPanel() {
                 }}
               >
                 <span className="text-lg leading-none mt-0.5 shrink-0">{typeIcon(notif.type)}</span>
-                <div className="flex-1 min-w-0">
-                  <p className={cn("text-[13px] text-foreground mb-0.5", isUnread ? "font-semibold" : "font-medium")}>
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <p className={cn("line-clamp-2 break-words text-[13px] text-foreground mb-0.5", isUnread ? "font-semibold" : "font-medium")}>
                     {notif.title}
                   </p>
-                  <p className="text-xs text-brand-faint truncate">{notif.body}</p>
+                  <p className="line-clamp-2 break-words text-xs text-brand-faint">{notif.body}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
                   <span className="text-[11px] text-brand-faint whitespace-nowrap">{relativeTime(notif.created_at)}</span>
@@ -194,15 +193,6 @@ export default function ParentNotificationsPanel() {
             );
           })}
 
-          {total > notifications.length && (
-            <button
-              onClick={() => setListLimit((n) => n + LIST_LIMIT)}
-              disabled={listQuery.isFetching}
-              className="w-full py-3 text-sm font-semibold text-teal border-t border-border hover:bg-muted disabled:opacity-50 transition-colors"
-            >
-              {listQuery.isFetching ? "Loading..." : "Load more"}
-            </button>
-          )}
         </ScrollArea>
       </PopoverContent>
     </Popover>

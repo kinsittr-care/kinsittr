@@ -4,8 +4,6 @@ import NannyPill from "../NannyPill";
 import type { NannyEarningData } from "@/src/types/api/payments";
 import { formatCurrency, formatDateOnlyShort } from "@/src/utils/format";
 
-const colTemplate = "1.8fr 0.7fr 1.3fr 1fr 0.8fr";
-
 export default function PayoutHistoryTable({
   earnings,
   isLoading,
@@ -28,8 +26,7 @@ export default function PayoutHistoryTable({
       </div>
 
       <div
-        className="hidden md:grid px-6 py-3 border-b border-nanny-border-soft text-[11px] font-semibold tracking-[.12em] uppercase text-nanny-ink-faint"
-        style={{ gridTemplateColumns: colTemplate }}
+        className="hidden xl:grid xl:grid-cols-[1.8fr_0.7fr_1.3fr_1fr_0.8fr] px-6 py-3 border-b border-nanny-border-soft text-[11px] font-semibold tracking-[.12em] uppercase text-nanny-ink-faint"
       >
         <div>Parent</div>
         <div>Hours</div>
@@ -43,7 +40,11 @@ export default function PayoutHistoryTable({
       ) : earnings.length === 0 ? (
         <EmptyRow message="No completed paid bookings yet." />
       ) : (
-        earnings.map((earning, i) => <EarningRow key={earning.booking_id} earning={earning} showBorder={i < earnings.length - 1} />)
+        <div className="flex flex-col gap-3 p-3 xl:block xl:p-0">
+          {earnings.map((earning, i) => (
+            <EarningRow key={earning.booking_id} earning={earning} showBorder={i < earnings.length - 1} />
+          ))}
+        </div>
       )}
 
       {!isLoading && totalPages > 1 && (
@@ -76,21 +77,29 @@ export default function PayoutHistoryTable({
 function EarningRow({ earning, showBorder }: { earning: NannyEarningData; showBorder: boolean }) {
   return (
     <div
-      className="nanny-payout-row grid grid-cols-1 gap-2 md:grid-cols-none md:gap-0 items-center px-6 py-[15px] transition-[background] duration-150"
+      className="nanny-payout-row grid grid-cols-1 gap-3 rounded-2xl border border-nanny-border-soft bg-nanny-card-soft px-4 py-4 transition-[background] duration-150 xl:grid-cols-[1.8fr_0.7fr_1.3fr_1fr_0.8fr] xl:gap-0 xl:items-center xl:rounded-none xl:border-0 xl:bg-transparent xl:px-6 xl:py-[15px]"
       style={{
-        gridTemplateColumns: colTemplate,
         borderBottom: showBorder ? "1px solid var(--nanny-border-soft)" : "none",
       }}
     >
-      <div className="text-[14.5px] font-semibold text-nanny-green-dk">{earning.parent_display_name}</div>
-      <div className="text-[14px] text-nanny-ink-faint">{earning.duration}h</div>
+      <div className="text-[14.5px] font-semibold text-nanny-green-dk">
+        <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[.08em] text-nanny-ink-faint xl:hidden">Parent</span>
+        {earning.parent_display_name}
+      </div>
+      <div className="text-[14px] text-nanny-ink-faint">
+        <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[.08em] xl:hidden">Hours</span>
+        {earning.duration}h
+      </div>
       <div className="text-[13.5px] text-nanny-ink-faint">
+        <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[.08em] xl:hidden">Date</span>
         {formatDateOnlyShort(earning.date)} · {earning.start_time}
       </div>
       <div className="font-display text-[18px] text-nanny-green">
+        <span className="mb-1 block font-sans text-[11px] font-semibold uppercase tracking-[.08em] text-nanny-ink-faint xl:hidden">Amount</span>
         {formatCurrency(earning.net_amount, earning.currency)}
       </div>
-      <div>
+      <div className="flex items-center justify-between gap-3 xl:block">
+        <span className="text-[11px] font-semibold uppercase tracking-[.08em] text-nanny-ink-faint xl:hidden">Status</span>
         <NannyPill tone="paid">Paid</NannyPill>
       </div>
     </div>

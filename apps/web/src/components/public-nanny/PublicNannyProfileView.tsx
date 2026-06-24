@@ -21,12 +21,13 @@ export default function PublicNannyProfileView({ nannyId }: PublicNannyProfileVi
     queryKey: publicNannyProfileQueryKey(nannyId),
     queryFn: () => getPublicNannyProfile(nannyId),
   });
+  const profile = profileQuery.data?.data;
   const reviewsQuery = useQuery({
-    queryKey: publicNannyReviewsQueryKey(nannyId, PUBLIC_REVIEW_PARAMS),
-    queryFn: () => listPublicNannyReviews(nannyId, PUBLIC_REVIEW_PARAMS),
+    queryKey: publicNannyReviewsQueryKey(profile?.id ?? nannyId, PUBLIC_REVIEW_PARAMS),
+    queryFn: () => listPublicNannyReviews(profile?.id ?? nannyId, PUBLIC_REVIEW_PARAMS),
+    enabled: Boolean(profile?.id),
   });
 
-  const profile = profileQuery.data?.data;
   const reviews = reviewsQuery.data?.data?.items ?? [];
 
   return (
@@ -140,12 +141,38 @@ function ReviewCard({ reviews }: { reviews: Review[] }) {
       <div className="mt-4 space-y-4">
         {reviews.map((review) => (
           <article key={review.id} className="border-t border-(--border) pt-4 first:border-t-0 first:pt-0">
-            <p className="text-sm font-semibold text-brand-text">{review.rating}/5 stars</p>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <ReviewStars rating={review.rating} />
+              <p className="m-0 text-sm font-semibold text-brand-text">
+                {review.parent_display_name}
+              </p>
+            </div>
             <p className="mt-1 line-clamp-3 text-sm leading-6 text-brand-faint">{review.comment}</p>
           </article>
         ))}
       </div>
     </div>
+  );
+}
+
+function ReviewStars({ rating }: { rating: number }) {
+  const normalizedRating = Math.max(0, Math.min(5, Math.round(rating)));
+
+  return (
+    <span
+      className="inline-flex gap-0.5 text-[15px] leading-none"
+      aria-label={`${normalizedRating} out of 5 stars`}
+    >
+      {[1, 2, 3, 4, 5].map((star) => (
+        <span
+          key={star}
+          aria-hidden="true"
+          className={star <= normalizedRating ? "text-gold" : "text-brand-faint"}
+        >
+          ★
+        </span>
+      ))}
+    </span>
   );
 }
 

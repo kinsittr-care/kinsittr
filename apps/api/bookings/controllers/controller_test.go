@@ -120,6 +120,9 @@ type mockNannyRepo struct {
 func (m *mockNannyRepo) GetVerifiedNannyByID(context.Context, uuid.UUID) (models.NannyProfile, error) {
 	return m.nanny, nil
 }
+func (m *mockNannyRepo) GetVerifiedNannyByPublicSlug(context.Context, string) (models.NannyProfile, error) {
+	return m.nanny, nil
+}
 func (m *mockNannyRepo) ListVerifiedNannies(context.Context, nannyrepo.ListVerifiedNanniesFilter) ([]models.NannyProfile, int, error) {
 	return []models.NannyProfile{m.nanny}, 1, nil
 }

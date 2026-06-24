@@ -20,6 +20,9 @@ func newPgRepository(db *pgxpool.Pool) *pgRepository {
 	return &pgRepository{db: db}
 }
 
+const publicSlugExpr = `COALESCE(NULLIF(TRIM(BOTH '-' FROM LOWER(REGEXP_REPLACE(TRIM(display_name), '[^a-zA-Z0-9]+', '-', 'g'))), ''), 'nanny') || '-' || SUBSTRING(MD5(id::text), 1, 8)`
+const legacyPublicSlugExpr = `LOWER(REGEXP_REPLACE(TRIM(display_name), '[^a-zA-Z0-9]+', '-', 'g')) || '-' || SUBSTRING(MD5(id::text), 1, 8)`
+
 type ListVerifiedNanniesFilter struct {
 	Page        int
 	Limit       int
@@ -49,7 +52,7 @@ func (r *pgRepository) ListVerifiedNannies(ctx context.Context, filter ListVerif
 	orderBy := buildVerifiedNanniesOrder(filter.NormalizedSort())
 	listArgs := append(append([]any{}, whereArgs...), filter.Limit, offset)
 	query := fmt.Sprintf(`
-		SELECT id, user_id, display_name, bio, COALESCE(specialties, '{}'::text[]),
+		SELECT id, `+publicSlugExpr+`, user_id, display_name, bio, COALESCE(specialties, '{}'::text[]),
 		       rate_per_hour, service_type, currency, verification_status, verified_at,
 		       stripe_account_id, stripe_onboarded, rating_avg, rating_count, COALESCE(avatar_url, ''), city, province, created_at, updated_at
 		FROM nanny_profiles
@@ -68,6 +71,7 @@ func (r *pgRepository) ListVerifiedNannies(ctx context.Context, filter ListVerif
 		var nanny models.NannyProfile
 		if err := rows.Scan(
 			&nanny.ID,
+			&nanny.PublicSlug,
 			&nanny.UserID,
 			&nanny.DisplayName,
 			&nanny.Bio,
@@ -102,13 +106,50 @@ func (r *pgRepository) ListVerifiedNannies(ctx context.Context, filter ListVerif
 func (r *pgRepository) GetVerifiedNannyByID(ctx context.Context, nannyID uuid.UUID) (models.NannyProfile, error) {
 	var nanny models.NannyProfile
 	err := r.db.QueryRow(ctx, `
-		SELECT id, user_id, display_name, bio, COALESCE(specialties, '{}'::text[]),
+		SELECT id, `+publicSlugExpr+`, user_id, display_name, bio, COALESCE(specialties, '{}'::text[]),
 		       rate_per_hour, service_type, currency, verification_status, verified_at,
 		       stripe_account_id, stripe_onboarded, rating_avg, rating_count, COALESCE(avatar_url, ''), city, province, created_at, updated_at
 		FROM nanny_profiles
 		WHERE id = $1 AND verification_status = $2
 	`, nannyID, models.VerifiedVerificationStatus).Scan(
 		&nanny.ID,
+		&nanny.PublicSlug,
+		&nanny.UserID,
+		&nanny.DisplayName,
+		&nanny.Bio,
+		&nanny.Specialties,
+		&nanny.RatePerHour,
+		&nanny.ServiceType,
+		&nanny.Currency,
+		&nanny.VerificationStatus,
+		&nanny.VerifiedAt,
+		&nanny.StripeAccountID,
+		&nanny.StripeOnboarded,
+		&nanny.RatingAvg,
+		&nanny.RatingCount,
+		&nanny.AvatarURL,
+		&nanny.City,
+		&nanny.Province,
+		&nanny.CreatedAt,
+		&nanny.UpdatedAt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return models.NannyProfile{}, nil
+	}
+	return nanny, err
+}
+
+func (r *pgRepository) GetVerifiedNannyByPublicSlug(ctx context.Context, slug string) (models.NannyProfile, error) {
+	var nanny models.NannyProfile
+	err := r.db.QueryRow(ctx, `
+		SELECT id, `+publicSlugExpr+`, user_id, display_name, bio, COALESCE(specialties, '{}'::text[]),
+		       rate_per_hour, service_type, currency, verification_status, verified_at,
+		       stripe_account_id, stripe_onboarded, rating_avg, rating_count, COALESCE(avatar_url, ''), city, province, created_at, updated_at
+		FROM nanny_profiles
+		WHERE (`+publicSlugExpr+` = $1 OR `+legacyPublicSlugExpr+` = $1) AND verification_status = $2
+	`, strings.TrimSpace(strings.ToLower(slug)), models.VerifiedVerificationStatus).Scan(
+		&nanny.ID,
+		&nanny.PublicSlug,
 		&nanny.UserID,
 		&nanny.DisplayName,
 		&nanny.Bio,

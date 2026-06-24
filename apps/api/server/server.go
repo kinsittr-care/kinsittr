@@ -61,6 +61,7 @@ import (
 	cloudinary_api "github.com/kinsittr/kinsittr-api/shared/cloudinary"
 	"github.com/kinsittr/kinsittr-api/shared/mail"
 	stripe_api "github.com/kinsittr/kinsittr-api/shared/stripe"
+	notification_worker "github.com/kinsittr/kinsittr-api/workers/notifications"
 	recovery_worker "github.com/kinsittr/kinsittr-api/workers/recovery"
 )
 
@@ -125,6 +126,12 @@ func New(cfg *config.Config) (*fiber.App, error) {
 		Retention: cfg.RecoveryTokenRetention,
 	})
 	log.Printf("api_worker_started name=password_recovery_cleanup interval=%s retention=%s", cfg.RecoveryCleanupInterval, cfg.RecoveryTokenRetention)
+	notification_worker.StartBookingReminders(workerCtx, notifications_repo.NotificationsRepo, notification_worker.BookingReminderConfig{
+		Interval:  time.Hour,
+		Lookahead: 24 * time.Hour,
+		Window:    time.Hour,
+	})
+	log.Printf("api_worker_started name=booking_reminders interval=%s lookahead=%s", time.Hour, 24*time.Hour)
 
 	// auth
 	authPipe := auth_pipe.NewAuthPipe(account.AccountRepo, profile_repo.ProfileRepo, cfg.JWTSecret, cfg.JWTRefreshSecret)

@@ -24,6 +24,7 @@ const (
 
 type NannyProfile struct {
 	ID                 uuid.UUID          `json:"id"`
+	PublicSlug         string             `json:"public_slug"`
 	UserID             uuid.UUID          `json:"user_id"`
 	DisplayName        string             `json:"display_name"`
 	Phone              string             `json:"phone"`

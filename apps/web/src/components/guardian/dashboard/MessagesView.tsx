@@ -237,7 +237,7 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
             onBack={() => setMobileView("list")}
             onViewProfile={() => {
               if (selectedConversation) {
-                router.push(`/nannies/${selectedConversation.nanny_profile_id}`);
+                router.push(`/nannies/${selectedConversation.other_participant_public_slug || selectedConversation.nanny_profile_id}`);
               }
             }}
             onViewBookingDetails={() => router.push("/parent/bookings")}
