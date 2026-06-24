@@ -41,6 +41,9 @@ func (m *mockNotificationsRepo) MarkRead(_ context.Context, _ uuid.UUID, _ model
 func (m *mockNotificationsRepo) MarkAllRead(_ context.Context, _ uuid.UUID, _ models.UserRole) (int, error) {
 	return m.updated, nil
 }
+func (m *mockNotificationsRepo) CreateBookingReminder24h(_ context.Context, _, _ time.Time) (int64, error) {
+	return 0, nil
+}
 
 func TestListNotifications(t *testing.T) {
 	userID := uuid.New()

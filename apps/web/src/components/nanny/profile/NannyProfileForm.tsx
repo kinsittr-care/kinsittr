@@ -59,7 +59,7 @@ export default function NannyProfileForm({ profile }: { profile: NannyProfile })
           {updateMutation.isPending ? "Saving..." : "Save changes"}
         </button>
         {isPublicProfile ? (
-          <Link className={cn("w-full sm:w-auto text-center", btnGhostCls)} href={`/nannies/${profile.id}`} target="_blank">
+          <Link className={cn("w-full sm:w-auto text-center", btnGhostCls)} href={`/nannies/${profile.public_slug || profile.id}`} target="_blank">
             Preview public profile
           </Link>
         ) : (

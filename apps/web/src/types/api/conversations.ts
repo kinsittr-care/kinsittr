@@ -7,12 +7,14 @@ export interface Conversation {
   nanny_profile_id: string;
   booking_status: BookingStatus;
   other_participant_name: string;
+  other_participant_public_slug?: string;
   other_participant_city?: string;
   other_participant_province?: string;
   last_message_preview?: string;
   last_message_at?: string | null;
   unread_count: number;
   last_read_at?: string | null;
+  locked_at?: string | null;
   created_at: string;
   updated_at: string;
 }

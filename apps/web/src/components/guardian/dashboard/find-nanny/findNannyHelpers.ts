@@ -44,6 +44,7 @@ function getInitials(name: string) {
 export function mapPublicNannyToCard(nanny: PublicNannyCard): Nanny {
   return {
     id: nanny.id,
+    publicSlug: nanny.public_slug,
     name: nanny.display_name,
     initials: getInitials(nanny.display_name),
     city: `${nanny.city}, ${nanny.province}`,

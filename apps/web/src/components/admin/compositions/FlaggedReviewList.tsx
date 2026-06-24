@@ -59,24 +59,24 @@ export default function FlaggedReviewList({
           <button
             key={`${review.target}-${review.id}`}
             onClick={() => onSelect({ id: review.id, target: review.target })}
-            className={cn(cardCls, "block w-full text-left cursor-pointer", isSelected ? "bg-admin-card-warm" : "bg-admin-card")}
+            className={cn(cardCls, "block w-full min-w-0 text-left cursor-pointer", isSelected ? "bg-admin-card-warm" : "bg-admin-card")}
           >
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="text-[15.5px] text-admin-ink">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0 text-[14px] text-admin-ink sm:text-[15.5px]">
                 <span className="font-bold">{reviewerName(review)}</span>
                 <span className="text-admin-ink-soft mx-2">review of</span>
                 <span className="font-bold">{targetName(review)}</span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 lg:justify-end">
                 <AdminPill tone={review.is_visible ? "green" : "red"}>{review.is_visible ? "Visible" : "Hidden"}</AdminPill>
                 <AdminPill tone={review.reviewed_by_admin ? "clay" : "amber"}>{review.reviewed_by_admin ? "Reviewed" : "Needs review"}</AdminPill>
                 <span className="text-[13px] text-admin-ink-soft">{formatShortDate(review.created_at)}</span>
               </div>
             </div>
 
-            <div className="mt-4 px-5 py-[18px] bg-admin-bg-soft border border-admin-border-soft rounded-xl">
+            <div className="mt-4 px-4 py-4 bg-admin-bg-soft border border-admin-border-soft rounded-xl sm:px-5 sm:py-[18px]">
               <AdminStars value={review.rating} />
-              <p className="mt-3 mb-0 font-display italic text-[17px] text-admin-ink leading-[1.4]">
+              <p className="mt-3 mb-0 font-display italic text-[15px] text-admin-ink leading-[1.45] break-words sm:text-[17px]">
                 &ldquo;{review.comment}&rdquo;
               </p>
               {review.flag_reason && <p className="mt-[10px] mb-0 text-admin-red text-[13px]">Flag reason: {review.flag_reason}</p>}

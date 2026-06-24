@@ -8,6 +8,7 @@ interface MessagesComposerProps {
   canSend: boolean;
   isSending: boolean;
   isConversationSelected: boolean;
+  isLocked: boolean;
   isMobile: boolean;
   onInputChange: (value: string) => void;
   onSend: () => void;
@@ -19,6 +20,7 @@ export default function MessagesComposer({
   canSend,
   isSending,
   isConversationSelected,
+  isLocked,
   isMobile,
   onInputChange,
   onSend,
@@ -31,6 +33,11 @@ export default function MessagesComposer({
       {sendError && (
         <p className="text-[#c0392b] text-[13px] mb-[10px]">{sendError}</p>
       )}
+      {isLocked ? (
+        <div className="rounded-2xl border border-brand-border bg-[#f9f4e8] px-4 py-3 text-[13.5px] leading-normal text-brand-ink-soft">
+          This conversation has been locked by KinSittr support. You can view past messages, but new messages cannot be sent.
+        </div>
+      ) : (
       <div className="flex items-end gap-[12px]">
         <textarea
           value={input}
@@ -43,7 +50,7 @@ export default function MessagesComposer({
           }}
           placeholder="Type your message..."
           disabled={!isConversationSelected || isSending}
-          className="flex-1 min-h-[52px] max-h-[120px] resize-y rounded-2xl border border-brand-border px-4 py-[14px] text-[14px] [font-family:inherit] outline-none"
+          className="flex-1 min-h-[52px] max-h-[120px] resize-y rounded-2xl border border-brand-border px-4 py-[14px] text-[14px] font-[inherit] outline-none"
         />
         <button
           onClick={onSend}
@@ -53,6 +60,7 @@ export default function MessagesComposer({
           {isSending ? "Sending..." : "Send"}
         </button>
       </div>
+      )}
     </div>
   );
 }

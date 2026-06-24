@@ -19,6 +19,8 @@ func newPgRepository(db *pgxpool.Pool) *pgRepository {
 	return &pgRepository{db: db}
 }
 
+const nannyPublicSlugExpr = `COALESCE(NULLIF(TRIM(BOTH '-' FROM LOWER(REGEXP_REPLACE(TRIM(np.display_name), '[^a-zA-Z0-9]+', '-', 'g'))), ''), 'nanny') || '-' || SUBSTRING(MD5(np.id::text), 1, 8)`
+
 func normalizeConversationFilter(filter ConversationListFilter) ConversationListFilter {
 	if filter.Page < 1 {
 		filter.Page = 1
@@ -103,6 +105,7 @@ func (r *pgRepository) listConversations(ctx context.Context, column string, pro
 		SELECT c.id, c.booking_id, c.parent_profile_id, c.nanny_profile_id, c.created_at, c.updated_at,
 		       b.status,
 		       CASE WHEN $1 = c.parent_profile_id THEN np.display_name ELSE pp.display_name END AS other_name,
+		       CASE WHEN $1 = c.parent_profile_id THEN `+nannyPublicSlugExpr+` ELSE '' END AS other_public_slug,
 		       CASE WHEN $1 = c.parent_profile_id THEN np.city ELSE pp.city END AS other_city,
 		       CASE WHEN $1 = c.parent_profile_id THEN np.province ELSE pp.province END AS other_province,
 			       COALESCE(LEFT(lm.body, 100), '') AS last_message_preview,
@@ -154,6 +157,7 @@ func (r *pgRepository) listConversations(ctx context.Context, column string, pro
 			&record.UpdatedAt,
 			&record.BookingStatus,
 			&record.OtherParticipantName,
+			&record.OtherParticipantPublicSlug,
 			&record.OtherParticipantCity,
 			&record.OtherParticipantProvince,
 			&record.LastMessagePreview,
@@ -184,6 +188,7 @@ func (r *pgRepository) getConversationByID(ctx context.Context, conversationID u
 		SELECT c.id, c.booking_id, c.parent_profile_id, c.nanny_profile_id, c.created_at, c.updated_at,
 		       b.status,
 		       CASE WHEN $2 = c.parent_profile_id THEN np.display_name ELSE pp.display_name END AS other_name,
+		       CASE WHEN $2 = c.parent_profile_id THEN `+nannyPublicSlugExpr+` ELSE '' END AS other_public_slug,
 		       CASE WHEN $2 = c.parent_profile_id THEN np.city ELSE pp.city END AS other_city,
 		       CASE WHEN $2 = c.parent_profile_id THEN np.province ELSE pp.province END AS other_province,
 		       COALESCE(LEFT(lm.body, 100), '') AS last_message_preview,
@@ -224,6 +229,7 @@ func (r *pgRepository) getConversationByID(ctx context.Context, conversationID u
 		&record.UpdatedAt,
 		&record.BookingStatus,
 		&record.OtherParticipantName,
+		&record.OtherParticipantPublicSlug,
 		&record.OtherParticipantCity,
 		&record.OtherParticipantProvince,
 		&record.LastMessagePreview,

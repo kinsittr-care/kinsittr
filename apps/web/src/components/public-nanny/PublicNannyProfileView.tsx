@@ -21,12 +21,13 @@ export default function PublicNannyProfileView({ nannyId }: PublicNannyProfileVi
     queryKey: publicNannyProfileQueryKey(nannyId),
     queryFn: () => getPublicNannyProfile(nannyId),
   });
+  const profile = profileQuery.data?.data;
   const reviewsQuery = useQuery({
-    queryKey: publicNannyReviewsQueryKey(nannyId, PUBLIC_REVIEW_PARAMS),
-    queryFn: () => listPublicNannyReviews(nannyId, PUBLIC_REVIEW_PARAMS),
+    queryKey: publicNannyReviewsQueryKey(profile?.id ?? nannyId, PUBLIC_REVIEW_PARAMS),
+    queryFn: () => listPublicNannyReviews(profile?.id ?? nannyId, PUBLIC_REVIEW_PARAMS),
+    enabled: Boolean(profile?.id),
   });
 
-  const profile = profileQuery.data?.data;
   const reviews = reviewsQuery.data?.data?.items ?? [];
 
   return (
@@ -52,14 +53,33 @@ function ProfileContent({ profile, reviews }: { profile: PublicNannyProfile; rev
 
   return (
     <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1.4fr_0.8fr]">
-      <section className="rounded-[28px] border border-(--border) bg-white p-6 shadow-sm sm:p-8">
+      <section className="rounded-[28px] border border-(--border) bg-white p-5 shadow-sm sm:p-8">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-          <Avatar initials={initials} src={profile.avatar_url} size={88} />
+          <div className="flex items-center gap-4 sm:block">
+            <div className="sm:hidden">
+              <Avatar initials={initials} src={profile.avatar_url} size={72} />
+            </div>
+            <div className="hidden sm:block">
+              <Avatar initials={initials} src={profile.avatar_url} size={88} />
+            </div>
+            <div className="min-w-0 sm:hidden">
+              <h1 className="truncate font-display text-[28px] font-normal leading-tight text-brand-text">
+                {profile.display_name}
+              </h1>
+              <p className="mt-1 text-xs text-brand-faint">
+                {formatLocation(profile.city, profile.province)}
+              </p>
+              <p className="mb-1 text-[10px] sm:hidden font-bold uppercase tracking-[0.14em] text-teal">
+                Verified childcare giver
+              </p>
+            </div>
+            
+          </div>
           <div className="flex-1">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
+              <div className="hidden sm:block">
                 <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-teal">
-                  Verified nanny
+                  Verified childcare giver
                 </p>
                 <h1 className="font-display text-4xl font-normal leading-tight text-brand-text sm:text-5xl">
                   {profile.display_name}
@@ -68,8 +88,8 @@ function ProfileContent({ profile, reviews }: { profile: PublicNannyProfile; rev
                   {formatLocation(profile.city, profile.province)}
                 </p>
               </div>
-              <div className="rounded-2xl bg-teal-lt px-5 py-4 text-left sm:text-right">
-                <p className="text-3xl font-bold leading-none text-teal">
+              <div className="w-fit rounded-2xl bg-teal-lt px-4 py-3 text-left sm:px-5 sm:py-4 sm:text-right">
+                <p className="text-2xl font-bold leading-none text-teal sm:text-3xl">
                   {formatCurrency(profile.rate_per_hour, profile.currency)}
                 </p>
                 <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-brand-faint">
@@ -121,12 +141,38 @@ function ReviewCard({ reviews }: { reviews: Review[] }) {
       <div className="mt-4 space-y-4">
         {reviews.map((review) => (
           <article key={review.id} className="border-t border-(--border) pt-4 first:border-t-0 first:pt-0">
-            <p className="text-sm font-semibold text-brand-text">{review.rating}/5 stars</p>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <ReviewStars rating={review.rating} />
+              <p className="m-0 text-sm font-semibold text-brand-text">
+                {review.parent_display_name}
+              </p>
+            </div>
             <p className="mt-1 line-clamp-3 text-sm leading-6 text-brand-faint">{review.comment}</p>
           </article>
         ))}
       </div>
     </div>
+  );
+}
+
+function ReviewStars({ rating }: { rating: number }) {
+  const normalizedRating = Math.max(0, Math.min(5, Math.round(rating)));
+
+  return (
+    <span
+      className="inline-flex gap-0.5 text-[15px] leading-none"
+      aria-label={`${normalizedRating} out of 5 stars`}
+    >
+      {[1, 2, 3, 4, 5].map((star) => (
+        <span
+          key={star}
+          aria-hidden="true"
+          className={star <= normalizedRating ? "text-gold" : "text-brand-faint"}
+        >
+          ★
+        </span>
+      ))}
+    </span>
   );
 }
 

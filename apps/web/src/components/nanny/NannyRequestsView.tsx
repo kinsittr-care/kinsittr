@@ -200,6 +200,7 @@ export default function NannyRequestsView() {
               }}
               onRetryPayment={() => updateMutation.mutate({ id: r.id, action: "retry-payment" })}
               onReview={() => setReviewBookingId(r.id)}
+              onViewDetails={() => router.push(`/nanny/requests/${r.id}`)}
               isReviewed={reviewedBookingIds.has(r.id)}
             />
           ))

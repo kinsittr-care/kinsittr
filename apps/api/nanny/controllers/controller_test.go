@@ -25,6 +25,9 @@ type mockNannyRepo struct {
 func (m *mockNannyRepo) GetVerifiedNannyByID(_ context.Context, _ uuid.UUID) (models.NannyProfile, error) {
 	return m.nanny, nil
 }
+func (m *mockNannyRepo) GetVerifiedNannyByPublicSlug(_ context.Context, _ string) (models.NannyProfile, error) {
+	return m.nanny, nil
+}
 func (m *mockNannyRepo) ListVerifiedNannies(_ context.Context, _ nanny_repo.ListVerifiedNanniesFilter) ([]models.NannyProfile, int, error) {
 	return m.nannies, m.nanniesTotal, nil
 }
@@ -101,12 +104,12 @@ func TestNannyControllerPublicRoutes(t *testing.T) {
 		t.Fatalf("expected 200, got %d", resp.StatusCode)
 	}
 
-	resp, err = nannyTestApp(controller, models.ParentUserRole).Test(httptest.NewRequest(fiber.MethodGet, "/nannies/not-a-uuid", nil))
+	resp, err = nannyTestApp(controller, models.ParentUserRole).Test(httptest.NewRequest(fiber.MethodGet, "/nannies/jane-abc12345", nil))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resp.StatusCode != fiber.StatusBadRequest {
-		t.Fatalf("expected 400 %s, got %d", messages.Invalid_Nanny_ID, resp.StatusCode)
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected 200 for public slug lookup, got %d", resp.StatusCode)
 	}
 }
 

@@ -36,10 +36,6 @@ export default function ReviewDialog({
 
   const handleSubmit = () => {
     if (!canSubmit) return;
-    const confirmed = window.confirm(
-      "Reviews cannot be edited or deleted after submission. Submit this review?",
-    );
-    if (!confirmed) return;
     onSubmit({ rating, comment: trimmedComment });
   };
 

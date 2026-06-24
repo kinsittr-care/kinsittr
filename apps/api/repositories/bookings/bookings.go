@@ -25,6 +25,7 @@ type BookingRecord struct {
 	ParentDisplayName     string `json:"parent_display_name"`
 	ParentCity            string `json:"parent_city"`
 	ParentProvince        string `json:"parent_province"`
+	ParentNumChildren     int    `json:"parent_num_children"`
 	PaymentStatus         string `json:"payment_status,omitempty"`
 	PaymentFailureMessage string `json:"payment_failure_message,omitempty"`
 	StripePaymentIntentID string `json:"stripe_payment_intent_id,omitempty"`

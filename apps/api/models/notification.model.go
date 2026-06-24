@@ -18,6 +18,7 @@ const (
 	BookingChangeRequestedNotificationType NotificationType = "booking_change_requested"
 	BookingChangeAcceptedNotificationType  NotificationType = "booking_change_accepted"
 	BookingChangeDeclinedNotificationType  NotificationType = "booking_change_declined"
+	BookingReminder24hNotificationType     NotificationType = "booking_reminder_24h"
 	MessageReceivedNotificationType        NotificationType = "message_received"
 	PaymentSetupMissingNotificationType    NotificationType = "payment_setup_missing"
 	PaymentSucceededNotificationType       NotificationType = "payment_succeeded"
