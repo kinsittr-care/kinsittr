@@ -52,14 +52,33 @@ function ProfileContent({ profile, reviews }: { profile: PublicNannyProfile; rev
 
   return (
     <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1.4fr_0.8fr]">
-      <section className="rounded-[28px] border border-(--border) bg-white p-6 shadow-sm sm:p-8">
+      <section className="rounded-[28px] border border-(--border) bg-white p-5 shadow-sm sm:p-8">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-          <Avatar initials={initials} src={profile.avatar_url} size={88} />
+          <div className="flex items-center gap-4 sm:block">
+            <div className="sm:hidden">
+              <Avatar initials={initials} src={profile.avatar_url} size={72} />
+            </div>
+            <div className="hidden sm:block">
+              <Avatar initials={initials} src={profile.avatar_url} size={88} />
+            </div>
+            <div className="min-w-0 sm:hidden">
+              <h1 className="truncate font-display text-[28px] font-normal leading-tight text-brand-text">
+                {profile.display_name}
+              </h1>
+              <p className="mt-1 text-xs text-brand-faint">
+                {formatLocation(profile.city, profile.province)}
+              </p>
+              <p className="mb-1 text-[10px] sm:hidden font-bold uppercase tracking-[0.14em] text-teal">
+                Verified childcare giver
+              </p>
+            </div>
+            
+          </div>
           <div className="flex-1">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
+              <div className="hidden sm:block">
                 <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-teal">
-                  Verified nanny
+                  Verified childcare giver
                 </p>
                 <h1 className="font-display text-4xl font-normal leading-tight text-brand-text sm:text-5xl">
                   {profile.display_name}
@@ -68,8 +87,8 @@ function ProfileContent({ profile, reviews }: { profile: PublicNannyProfile; rev
                   {formatLocation(profile.city, profile.province)}
                 </p>
               </div>
-              <div className="rounded-2xl bg-teal-lt px-5 py-4 text-left sm:text-right">
-                <p className="text-3xl font-bold leading-none text-teal">
+              <div className="w-fit rounded-2xl bg-teal-lt px-4 py-3 text-left sm:px-5 sm:py-4 sm:text-right">
+                <p className="text-2xl font-bold leading-none text-teal sm:text-3xl">
                   {formatCurrency(profile.rate_per_hour, profile.currency)}
                 </p>
                 <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-brand-faint">

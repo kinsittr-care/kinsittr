@@ -22,6 +22,7 @@ type BookingData struct {
 	ParentDisplayName string               `json:"parent_display_name,omitempty"`
 	ParentCity        string               `json:"parent_city,omitempty"`
 	ParentProvince    string               `json:"parent_province,omitempty"`
+	ParentNumChildren int                  `json:"parent_num_children,omitempty"`
 	NannyDisplayName  string               `json:"nanny_display_name,omitempty"`
 	NannyCity         string               `json:"nanny_city,omitempty"`
 	NannyProvince     string               `json:"nanny_province,omitempty"`
@@ -123,6 +124,7 @@ func toBookingRecordData(booking bookings.BookingRecord) BookingData {
 	data.ParentDisplayName = booking.ParentDisplayName
 	data.ParentCity = booking.ParentCity
 	data.ParentProvince = booking.ParentProvince
+	data.ParentNumChildren = booking.ParentNumChildren
 	data.NannyDisplayName = booking.NannyDisplayName
 	data.NannyCity = booking.NannyCity
 	data.NannyProvince = booking.NannyProvince

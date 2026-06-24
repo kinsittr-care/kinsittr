@@ -29,6 +29,7 @@ export default function BookingRequestCard({
   onMessageParent,
   onRetryPayment,
   onReview,
+  onViewDetails,
   isUpdating = false,
   isHighlighted = false,
   isReviewed = false,
@@ -40,6 +41,7 @@ export default function BookingRequestCard({
   onMessageParent?: () => void;
   onRetryPayment?: () => void;
   onReview?: () => void;
+  onViewDetails?: () => void;
   isUpdating?: boolean;
   isHighlighted?: boolean;
   isReviewed?: boolean;
@@ -116,7 +118,7 @@ export default function BookingRequestCard({
       )}
       {!isPending && (
         <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:gap-[10px] sm:flex-wrap">
-          <button className={compactGhostCls}>View details</button>
+          <button className={compactGhostCls} onClick={onViewDetails}>View details</button>
           <button
             className={cn(compactGhostCls, !canMessageParent && "opacity-55 cursor-not-allowed")}
             onClick={onMessageParent}
