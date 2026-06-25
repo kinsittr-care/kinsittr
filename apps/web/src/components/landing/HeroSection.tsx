@@ -50,11 +50,11 @@ export default function HeroSection() {
 
         <RevealWrapper delay={0.3}>
           <div className="flex gap-3 flex-wrap">
-            <Link href="/auth/parent" className="btn-cta">
+            <Link href="/waitlist?role=parent" className="btn-cta">
               I need a nanny
               <ArrowRightIcon color="#fff" />
             </Link>
-            <Link href="/auth/nanny" className="btn-outline">I&apos;m a nanny →</Link>
+            <Link href="/waitlist?role=nanny" className="btn-outline">I&apos;m a nanny →</Link>
           </div>
         </RevealWrapper>
       </div>
