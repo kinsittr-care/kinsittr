@@ -27,11 +27,11 @@ export default function CtaSection() {
 
       <RevealWrapper delay={0.3}>
         <div className="flex gap-[14px] justify-center flex-wrap relative">
-          <Link href="/auth/parent" className="btn-cta px-7 py-[14px] text-[15px]">
+          <Link href="/waitlist?role=parent" className="btn-cta px-7 py-[14px] text-[15px]">
             Find a nanny
             <ArrowRightIcon color="#fff" />
           </Link>
-          <Link href="/auth/nanny" className="btn-outline px-[26px] py-[13px] text-[15px]">
+          <Link href="/waitlist?role=nanny" className="btn-outline px-[26px] py-[13px] text-[15px]">
             Join as a nanny
           </Link>
         </div>

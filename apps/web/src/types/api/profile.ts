@@ -50,6 +50,7 @@ export interface UpdateParentSettingsPayload {
 
 export interface NannyProfile {
   id: string;
+  public_slug?: string;
   display_name: string;
   phone: string;
   bio: string;
@@ -78,6 +79,7 @@ export interface UpdateNannyProfilePayload {
 
 export interface PublicNannyCard {
   id: string;
+  public_slug?: string;
   display_name: string;
   bio: string;
   specialties: string[];

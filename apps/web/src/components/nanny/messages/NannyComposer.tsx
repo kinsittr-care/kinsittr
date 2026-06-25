@@ -7,6 +7,7 @@ interface NannyComposerProps {
   canSend: boolean;
   isSending: boolean;
   isConversationSelected: boolean;
+  isLocked: boolean;
   isMobile: boolean;
   onInputChange: (value: string) => void;
   onSend: () => void;
@@ -18,6 +19,7 @@ export default function NannyComposer({
   canSend,
   isSending,
   isConversationSelected,
+  isLocked,
   isMobile,
   onInputChange,
   onSend,
@@ -30,6 +32,11 @@ export default function NannyComposer({
       {sendError && (
         <p className="text-nanny-rose text-[13px] mb-2.5">{sendError}</p>
       )}
+      {isLocked ? (
+        <div className="rounded-2xl border border-nanny-border bg-nanny-card-soft px-4 py-3 text-[13.5px] leading-normal text-nanny-ink-faint">
+          This conversation has been locked by KinSittr support. You can view past messages, but new messages cannot be sent.
+        </div>
+      ) : (
       <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-end">
         <textarea
           value={input}
@@ -52,6 +59,7 @@ export default function NannyComposer({
           {isSending ? "Sending..." : "Send"}
         </button>
       </div>
+      )}
     </div>
   );
 }

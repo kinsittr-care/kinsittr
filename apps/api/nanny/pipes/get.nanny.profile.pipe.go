@@ -2,7 +2,11 @@ package pipes
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
+	"regexp"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -31,6 +35,7 @@ func (p *NannyPipe) GetOwnProfile(ctx context.Context, userID uuid.UUID) *shared
 func ownNannyProfileData(profile models.NannyProfile) OwnNannyProfile {
 	return OwnNannyProfile{
 		ID:                 profile.ID.String(),
+		PublicSlug:         publicSlugForProfile(profile),
 		DisplayName:        profile.DisplayName,
 		Phone:              profile.Phone,
 		Bio:                profile.Bio,
@@ -47,6 +52,18 @@ func ownNannyProfileData(profile models.NannyProfile) OwnNannyProfile {
 		City:               profile.City,
 		Province:           profile.Province,
 	}
+}
+
+var slugUnsafeChars = regexp.MustCompile(`[^a-z0-9]+`)
+
+func publicSlugForProfile(profile models.NannyProfile) string {
+	name := strings.Trim(slugUnsafeChars.ReplaceAllString(strings.ToLower(strings.TrimSpace(profile.DisplayName)), "-"), "-")
+	if name == "" {
+		name = "nanny"
+	}
+	sum := md5.Sum([]byte(profile.ID.String()))
+	hash := hex.EncodeToString(sum[:])[:8]
+	return name + "-" + hash
 }
 
 func formatOptionalProfileTime(value *time.Time) string {

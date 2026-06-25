@@ -70,6 +70,7 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
     conversations.find(
       (conversation) => conversation.id === resolvedSelectedConversationId,
     ) ?? null;
+  const isConversationLocked = Boolean(selectedConversation?.locked_at);
 
   const messagesQuery = useQuery({
     queryKey:
@@ -182,7 +183,7 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
 
   const send = () => {
     const body = input.trim();
-    if (!body || sendMessageMutation.isPending) {
+    if (!body || isConversationLocked || sendMessageMutation.isPending) {
       return;
     }
 
@@ -234,7 +235,11 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
             conversation={selectedConversation}
             isMobile={isMobile}
             onBack={() => setMobileView("list")}
-            onViewProfile={() => router.push("/parent")}
+            onViewProfile={() => {
+              if (selectedConversation) {
+                router.push(`/nannies/${selectedConversation.other_participant_public_slug || selectedConversation.nanny_profile_id}`);
+              }
+            }}
             onViewBookingDetails={() => router.push("/parent/bookings")}
           />
 
@@ -259,9 +264,10 @@ export default function MessagesView({ hasMessages }: MessagesViewProps) {
           <MessagesComposer
             input={input}
             sendError={sendError}
-            canSend={Boolean(selectedConversation && input.trim() && !sendMessageMutation.isPending)}
+            canSend={Boolean(selectedConversation && !isConversationLocked && input.trim() && !sendMessageMutation.isPending)}
             isSending={sendMessageMutation.isPending}
             isConversationSelected={selectedConversation !== null}
+            isLocked={isConversationLocked}
             isMobile={isMobile}
             onInputChange={(value) => {
               setInput(value);

@@ -15,20 +15,22 @@ import (
 )
 
 type ConversationData struct {
-	ID                       string               `json:"id"`
-	BookingID                string               `json:"booking_id"`
-	ParentProfileID          string               `json:"parent_profile_id"`
-	NannyProfileID           string               `json:"nanny_profile_id"`
-	BookingStatus            models.BookingStatus `json:"booking_status"`
-	OtherParticipantName     string               `json:"other_participant_name"`
-	OtherParticipantCity     string               `json:"other_participant_city,omitempty"`
-	OtherParticipantProvince string               `json:"other_participant_province,omitempty"`
-	LastMessagePreview       string               `json:"last_message_preview,omitempty"`
-	LastMessageAt            *time.Time           `json:"last_message_at,omitempty"`
-	UnreadCount              int                  `json:"unread_count"`
-	LastReadAt               *time.Time           `json:"last_read_at,omitempty"`
-	CreatedAt                time.Time            `json:"created_at"`
-	UpdatedAt                time.Time            `json:"updated_at"`
+	ID                         string               `json:"id"`
+	BookingID                  string               `json:"booking_id"`
+	ParentProfileID            string               `json:"parent_profile_id"`
+	NannyProfileID             string               `json:"nanny_profile_id"`
+	BookingStatus              models.BookingStatus `json:"booking_status"`
+	OtherParticipantName       string               `json:"other_participant_name"`
+	OtherParticipantPublicSlug string               `json:"other_participant_public_slug,omitempty"`
+	OtherParticipantCity       string               `json:"other_participant_city,omitempty"`
+	OtherParticipantProvince   string               `json:"other_participant_province,omitempty"`
+	LastMessagePreview         string               `json:"last_message_preview,omitempty"`
+	LastMessageAt              *time.Time           `json:"last_message_at,omitempty"`
+	UnreadCount                int                  `json:"unread_count"`
+	LastReadAt                 *time.Time           `json:"last_read_at,omitempty"`
+	LockedAt                   *time.Time           `json:"locked_at,omitempty"`
+	CreatedAt                  time.Time            `json:"created_at"`
+	UpdatedAt                  time.Time            `json:"updated_at"`
 }
 
 type ConversationListData struct {
@@ -71,20 +73,22 @@ func NewConversationsPipe(repo messages_repo.MessagesRepository, profileRepo pro
 
 func toConversationData(record messages_repo.ConversationRecord) ConversationData {
 	return ConversationData{
-		ID:                       record.ID.String(),
-		BookingID:                record.BookingID.String(),
-		ParentProfileID:          record.ParentProfileID.String(),
-		NannyProfileID:           record.NannyProfileID.String(),
-		BookingStatus:            record.BookingStatus,
-		OtherParticipantName:     record.OtherParticipantName,
-		OtherParticipantCity:     record.OtherParticipantCity,
-		OtherParticipantProvince: record.OtherParticipantProvince,
-		LastMessagePreview:       record.LastMessagePreview,
-		LastMessageAt:            record.LastMessageAt,
-		UnreadCount:              record.UnreadCount,
-		LastReadAt:               record.LastReadAt,
-		CreatedAt:                record.CreatedAt,
-		UpdatedAt:                record.UpdatedAt,
+		ID:                         record.ID.String(),
+		BookingID:                  record.BookingID.String(),
+		ParentProfileID:            record.ParentProfileID.String(),
+		NannyProfileID:             record.NannyProfileID.String(),
+		BookingStatus:              record.BookingStatus,
+		OtherParticipantName:       record.OtherParticipantName,
+		OtherParticipantPublicSlug: record.OtherParticipantPublicSlug,
+		OtherParticipantCity:       record.OtherParticipantCity,
+		OtherParticipantProvince:   record.OtherParticipantProvince,
+		LastMessagePreview:         record.LastMessagePreview,
+		LastMessageAt:              record.LastMessageAt,
+		UnreadCount:                record.UnreadCount,
+		LastReadAt:                 record.LastReadAt,
+		LockedAt:                   record.LockedAt,
+		CreatedAt:                  record.CreatedAt,
+		UpdatedAt:                  record.UpdatedAt,
 	}
 }
 

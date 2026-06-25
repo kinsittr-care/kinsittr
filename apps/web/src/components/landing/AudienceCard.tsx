@@ -83,7 +83,7 @@ export default function AudienceCard({ variant }: AudienceCardProps) {
       </div>
 
       {/* CTA */}
-      <Link href="/contact" className={isFamilies ? "btn-white" : "btn-gold"}>
+      <Link href={isFamilies ? "/waitlist?role=parent" : "/waitlist?role=nanny"} className={isFamilies ? "btn-white" : "btn-gold"}>
         {data.cta}
       </Link>
 

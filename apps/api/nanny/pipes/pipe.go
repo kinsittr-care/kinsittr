@@ -20,6 +20,7 @@ type cloudinaryClient interface {
 
 type PublicNannyCard struct {
 	ID          string             `json:"id"`
+	PublicSlug  string             `json:"public_slug"`
 	DisplayName string             `json:"display_name"`
 	Bio         string             `json:"bio"`
 	Specialties []string           `json:"specialties"`
@@ -41,6 +42,7 @@ type PublicNannyProfile struct {
 
 type OwnNannyProfile struct {
 	ID                 string                    `json:"id"`
+	PublicSlug         string                    `json:"public_slug"`
 	DisplayName        string                    `json:"display_name"`
 	Phone              string                    `json:"phone"`
 	Bio                string                    `json:"bio"`

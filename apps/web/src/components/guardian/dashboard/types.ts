@@ -1,5 +1,6 @@
 export interface Nanny {
   id: string;
+  publicSlug?: string;
   name: string;
   initials: string;
   city: string;

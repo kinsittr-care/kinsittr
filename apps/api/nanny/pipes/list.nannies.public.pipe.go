@@ -120,6 +120,7 @@ func (p *NannyPipe) ListPublic(ctx context.Context, query dtos.ListPublicNannies
 	for _, nanny := range nannies {
 		items = append(items, PublicNannyCard{
 			ID:          nanny.ID.String(),
+			PublicSlug:  nanny.PublicSlug,
 			DisplayName: nanny.DisplayName,
 			Bio:         nanny.Bio,
 			Specialties: slices.Clone(nanny.Specialties),

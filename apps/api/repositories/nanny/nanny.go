@@ -11,6 +11,7 @@ import (
 type NannyRepository interface {
 	ListVerifiedNannies(ctx context.Context, filter ListVerifiedNanniesFilter) ([]models.NannyProfile, int, error)
 	GetVerifiedNannyByID(ctx context.Context, nannyID uuid.UUID) (models.NannyProfile, error)
+	GetVerifiedNannyByPublicSlug(ctx context.Context, slug string) (models.NannyProfile, error)
 }
 
 var NannyRepo NannyRepository

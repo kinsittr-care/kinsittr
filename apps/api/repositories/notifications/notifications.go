@@ -2,6 +2,7 @@ package notifications
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -22,6 +23,7 @@ type NotificationsRepository interface {
 	CountUnread(ctx context.Context, userID uuid.UUID, role models.UserRole) (int, error)
 	MarkRead(ctx context.Context, userID uuid.UUID, role models.UserRole, notificationID uuid.UUID) (models.Notification, error)
 	MarkAllRead(ctx context.Context, userID uuid.UUID, role models.UserRole) (int, error)
+	CreateBookingReminder24h(ctx context.Context, windowStart, windowEnd time.Time) (int64, error)
 }
 
 var NotificationsRepo NotificationsRepository

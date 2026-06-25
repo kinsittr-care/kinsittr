@@ -84,7 +84,7 @@ export default function MessagesMessageList({
               className={cn("flex", sender === "user" ? "justify-end" : "justify-start")}
             >
               <div
-                className="max-w-[60%] px-[17px] py-[13px] shadow-[0_4px_14px_rgba(40,30,20,.07)]"
+                className="max-w-[88%] px-[17px] py-[13px] shadow-[0_4px_14px_rgba(40,30,20,.07)]"
                 style={{
                   borderRadius:
                     sender === "user" ? "20px 20px 5px 20px" : "20px 20px 20px 5px",

@@ -181,8 +181,11 @@ export default function FlaggedReviewsView() {
         }
       />
       <div
-        className="px-10 pt-6 pb-10 grid gap-[18px]"
-        style={{ gridTemplateColumns: currentReview ? "1fr 360px" : "1fr" }}
+        className={
+          currentReview
+            ? "grid gap-[18px] px-4 pt-5 pb-10 md:px-10 md:pt-6 xl:grid-cols-[1fr_360px]"
+            : "grid gap-[18px] px-4 pt-5 pb-10 md:px-10 md:pt-6"
+        }
       >
         <div className="flex flex-col gap-[18px]">
           {actionError && (

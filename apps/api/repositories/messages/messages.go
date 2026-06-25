@@ -11,15 +11,16 @@ import (
 
 type ConversationRecord struct {
 	models.Conversation
-	BookingStatus            models.BookingStatus `json:"booking_status"`
-	OtherParticipantName     string               `json:"other_participant_name"`
-	OtherParticipantCity     string               `json:"other_participant_city"`
-	OtherParticipantProvince string               `json:"other_participant_province"`
-	LastMessagePreview       string               `json:"last_message_preview"`
-	LastMessageAt            *time.Time           `json:"last_message_at"`
-	UnreadCount              int                  `json:"unread_count"`
-	LastReadAt               *time.Time           `json:"last_read_at"`
-	LockedAt                 *time.Time           `json:"locked_at"`
+	BookingStatus              models.BookingStatus `json:"booking_status"`
+	OtherParticipantName       string               `json:"other_participant_name"`
+	OtherParticipantPublicSlug string               `json:"other_participant_public_slug"`
+	OtherParticipantCity       string               `json:"other_participant_city"`
+	OtherParticipantProvince   string               `json:"other_participant_province"`
+	LastMessagePreview         string               `json:"last_message_preview"`
+	LastMessageAt              *time.Time           `json:"last_message_at"`
+	UnreadCount                int                  `json:"unread_count"`
+	LastReadAt                 *time.Time           `json:"last_read_at"`
+	LockedAt                   *time.Time           `json:"locked_at"`
 }
 
 type MessageListFilter struct {

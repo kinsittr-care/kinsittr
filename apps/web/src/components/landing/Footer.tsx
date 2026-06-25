@@ -5,12 +5,14 @@ const columns: FooterColumn[] = [
   {
     heading: "Families",
     links: [
+      { label: "Join waitlist", href: "/waitlist?role=parent" },
       { label: "Safety",        href: "/safety" },
     ],
   },
   {
     heading: "Nannies",
     links: [
+      { label: "Join waitlist", href: "/waitlist?role=nanny" },
       { label: "Verification",  href: "/verification" },
       { label: "Resources",     href: "/nanny-resources" },
     ],

@@ -39,6 +39,9 @@ func (m *mockNotificationsRepo) MarkRead(context.Context, uuid.UUID, models.User
 func (m *mockNotificationsRepo) MarkAllRead(context.Context, uuid.UUID, models.UserRole) (int, error) {
 	return 2, nil
 }
+func (m *mockNotificationsRepo) CreateBookingReminder24h(context.Context, time.Time, time.Time) (int64, error) {
+	return 0, nil
+}
 
 func notificationsTestApp(role models.UserRole, notification models.Notification) *fiber.App {
 	app := fiber.New()
