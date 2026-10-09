@@ -10,9 +10,9 @@ const statusCls: Record<BookingStatus, string> = {
   completed: "bg-[#edf3ec] text-[#557a50] border-[#cbdcc7]",
 };
 
-export default function BookingStatusBadge({ status }: { status: BookingStatus }) {
+export default function BookingStatusBadge({ status, className }: { status: BookingStatus; className?: string }) {
   return (
-    <span className={cn("text-[11.5px] px-[9px] py-[3px] rounded-[20px] font-medium border", statusCls[status])}>
+    <span className={cn("inline-flex items-center rounded-full border px-3 py-1 text-[12px] font-semibold leading-none", statusCls[status], className)}>
       {formatBookingStatus(status)}
     </span>
   );

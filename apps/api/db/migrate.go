@@ -27,6 +27,7 @@ type MigrationConfig struct {
 	LockTimeout time.Duration
 }
 
+// opens a database pool from the URL and applies pending migrations.
 func RunMigrationsFromURL(ctx context.Context, databaseURL string, cfg MigrationConfig) error {
 	if strings.TrimSpace(databaseURL) == "" {
 		return fmt.Errorf("database URL is required")
@@ -47,6 +48,7 @@ func RunMigrationsFromURL(ctx context.Context, databaseURL string, cfg Migration
 	return RunMigrations(ctx, pool, cfg)
 }
 
+// applies embedded SQL migrations that have not been recorded yet.
 func RunMigrations(ctx context.Context, pool *pgxpool.Pool, cfg MigrationConfig) error {
 	if pool == nil {
 		return fmt.Errorf("database pool is required")
@@ -117,6 +119,7 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool, cfg MigrationConfig)
 	return nil
 }
 
+// opens a database pool from the URL and records migrations without running SQL.
 func BaselineMigrationsFromURL(ctx context.Context, databaseURL string, cfg MigrationConfig) error {
 	if strings.TrimSpace(databaseURL) == "" {
 		return fmt.Errorf("database URL is required")
@@ -137,6 +140,7 @@ func BaselineMigrationsFromURL(ctx context.Context, databaseURL string, cfg Migr
 	return BaselineMigrations(ctx, pool, cfg)
 }
 
+// records embedded migrations as applied without executing their SQL.
 func BaselineMigrations(ctx context.Context, pool *pgxpool.Pool, cfg MigrationConfig) error {
 	if pool == nil {
 		return fmt.Errorf("database pool is required")
@@ -194,6 +198,7 @@ func BaselineMigrations(ctx context.Context, pool *pgxpool.Pool, cfg MigrationCo
 	return nil
 }
 
+// creates the migration tracking and failure tables when missing.
 func ensureMigrationTable(ctx context.Context, conn *pgxpool.Conn) error {
 	if _, err := conn.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -221,6 +226,7 @@ func ensureMigrationTable(ctx context.Context, conn *pgxpool.Conn) error {
 	return err
 }
 
+// waits for the advisory lock that serializes migration runs.
 func acquireMigrationLock(ctx context.Context, conn *pgxpool.Conn, timeout time.Duration) error {
 	if timeout <= 0 {
 		timeout = 30 * time.Second
@@ -252,6 +258,7 @@ func acquireMigrationLock(ctx context.Context, conn *pgxpool.Conn, timeout time.
 	}
 }
 
+// returns the embedded SQL migration files in deterministic order.
 func migrationFiles() ([]string, error) {
 	entries, err := fs.ReadDir(migrationsFS, "migrations")
 	if err != nil {
@@ -269,6 +276,7 @@ func migrationFiles() ([]string, error) {
 	return files, nil
 }
 
+// reports whether a migration version is recorded with the expected checksum.
 func migrationApplied(ctx context.Context, conn *pgxpool.Conn, version string, checksum string) (bool, error) {
 	var storedChecksum string
 	err := conn.QueryRow(ctx, `
@@ -297,6 +305,7 @@ func migrationApplied(ctx context.Context, conn *pgxpool.Conn, version string, c
 	return true, nil
 }
 
+// records one migration version and checksum without executing SQL.
 func baselineMigration(ctx context.Context, conn *pgxpool.Conn, version string, checksum string) (bool, error) {
 	var storedChecksum string
 	err := conn.QueryRow(ctx, `
@@ -329,6 +338,7 @@ func baselineMigration(ctx context.Context, conn *pgxpool.Conn, version string, 
 	return false, fmt.Errorf("migration checksum mismatch version=%s", version)
 }
 
+// executes one SQL migration in a transaction and records it on success.
 func applyMigration(ctx context.Context, conn *pgxpool.Conn, sql string, version string, checksum string) error {
 	tx, err := conn.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
@@ -360,6 +370,7 @@ func applyMigration(ctx context.Context, conn *pgxpool.Conn, sql string, version
 	return nil
 }
 
+// stores the latest failure details for a migration version.
 func recordMigrationFailure(ctx context.Context, conn *pgxpool.Conn, version string, checksum string, migrationErr error) {
 	_, err := conn.Exec(ctx, `
 		INSERT INTO schema_migration_failures (version, checksum, error, failed_at)
@@ -374,6 +385,7 @@ func recordMigrationFailure(ctx context.Context, conn *pgxpool.Conn, version str
 	}
 }
 
+// returns a SHA-256 checksum for migration contents.
 func migrationChecksum(contents []byte) string {
 	sum := sha256.Sum256(contents)
 	return hex.EncodeToString(sum[:])

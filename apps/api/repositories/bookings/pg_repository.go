@@ -168,7 +168,7 @@ func scanBookingRecord(scanner bookingScanner) (BookingRecord, error) {
 	err := scanner.Scan(
 		&booking.ID, &booking.ConversationID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
-		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
+		&booking.NannyDisplayName, &booking.NannyAvatarURL, &booking.NannyCity, &booking.NannyProvince,
 		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince, &booking.ParentNumChildren,
 		&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
 		&booking.StripeChargeID, &booking.StripeRefundID,
@@ -206,7 +206,7 @@ func (r *pgRepository) ListParentBookings(ctx context.Context, parentProfileID u
 	args = append(args, filter.Limit, (filter.Page-1)*filter.Limit)
 	query := fmt.Sprintf(`
 		SELECT b.id, `+bookingConversationColumn+`, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
-		       np.display_name, np.city, np.province,
+		       np.display_name, COALESCE(np.avatar_url, ''), np.city, np.province,
 		       pp.display_name, pp.city, pp.province, pp.num_children,
 		       `+bookingPaymentColumns+`
 		FROM bookings b
@@ -231,7 +231,7 @@ func (r *pgRepository) GetParentBookingByID(ctx context.Context, parentProfileID
 	var booking BookingRecord
 	err := r.db.QueryRow(ctx, `
 		SELECT b.id, `+bookingConversationColumn+`, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
-		       np.display_name, np.city, np.province,
+		       np.display_name, COALESCE(np.avatar_url, ''), np.city, np.province,
 		       pp.display_name, pp.city, pp.province, pp.num_children,
 		       `+bookingPaymentColumns+`
 		FROM bookings b
@@ -242,7 +242,7 @@ func (r *pgRepository) GetParentBookingByID(ctx context.Context, parentProfileID
 	`, parentProfileID, bookingID).Scan(
 		&booking.ID, &booking.ConversationID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
-		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
+		&booking.NannyDisplayName, &booking.NannyAvatarURL, &booking.NannyCity, &booking.NannyProvince,
 		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince, &booking.ParentNumChildren,
 		&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
 		&booking.StripeChargeID, &booking.StripeRefundID,
@@ -265,13 +265,13 @@ func (r *pgRepository) CancelParentBooking(ctx context.Context, parentProfileID,
 		  AND b.id = $3
 		  AND b.status = $4
 		RETURNING b.id, `+bookingConversationColumn+`, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
-		          np.display_name, np.city, np.province,
+		          np.display_name, COALESCE(np.avatar_url, ''), np.city, np.province,
 		          pp.display_name, pp.city, pp.province, pp.num_children,
 		          `+bookingPaymentReturningColumns+`
 	`, models.CancelledBookingStatus, parentProfileID, bookingID, models.PendingBookingStatus).Scan(
 		&booking.ID, &booking.ConversationID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
-		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
+		&booking.NannyDisplayName, &booking.NannyAvatarURL, &booking.NannyCity, &booking.NannyProvince,
 		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince, &booking.ParentNumChildren,
 		&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
 		&booking.StripeChargeID, &booking.StripeRefundID,
@@ -296,7 +296,7 @@ func (r *pgRepository) ListNannyBookings(ctx context.Context, nannyProfileID uui
 	args = append(args, filter.Limit, (filter.Page-1)*filter.Limit)
 	query := fmt.Sprintf(`
 		SELECT b.id, `+bookingConversationColumn+`, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
-		       np.display_name, np.city, np.province,
+		       np.display_name, COALESCE(np.avatar_url, ''), np.city, np.province,
 		       pp.display_name, pp.city, pp.province, pp.num_children,
 		       `+bookingPaymentColumns+`
 		FROM bookings b
@@ -321,7 +321,7 @@ func (r *pgRepository) GetNannyBookingByID(ctx context.Context, nannyProfileID, 
 	var booking BookingRecord
 	err := r.db.QueryRow(ctx, `
 		SELECT b.id, `+bookingConversationColumn+`, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
-		       np.display_name, np.city, np.province,
+		       np.display_name, COALESCE(np.avatar_url, ''), np.city, np.province,
 		       pp.display_name, pp.city, pp.province, pp.num_children,
 		       `+bookingPaymentColumns+`
 		FROM bookings b
@@ -332,7 +332,7 @@ func (r *pgRepository) GetNannyBookingByID(ctx context.Context, nannyProfileID, 
 	`, nannyProfileID, bookingID).Scan(
 		&booking.ID, &booking.ConversationID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
-		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
+		&booking.NannyDisplayName, &booking.NannyAvatarURL, &booking.NannyCity, &booking.NannyProvince,
 		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince, &booking.ParentNumChildren,
 		&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
 		&booking.StripeChargeID, &booking.StripeRefundID,
@@ -365,13 +365,13 @@ func (r *pgRepository) ApproveNannyBookingWithConversation(ctx context.Context, 
 		  AND b.id = $3
 		  AND b.status = $4
 		RETURNING b.id, `+bookingConversationColumn+`, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
-		          np.display_name, np.city, np.province,
+		          np.display_name, COALESCE(np.avatar_url, ''), np.city, np.province,
 		          pp.display_name, pp.city, pp.province, pp.num_children,
 		          `+bookingPaymentReturningColumns+`
 	`, models.ApprovedBookingStatus, nannyProfileID, bookingID, models.PendingBookingStatus).Scan(
 		&booking.ID, &booking.ConversationID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
-		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
+		&booking.NannyDisplayName, &booking.NannyAvatarURL, &booking.NannyCity, &booking.NannyProvince,
 		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince, &booking.ParentNumChildren,
 		&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
 		&booking.StripeChargeID, &booking.StripeRefundID,
@@ -420,13 +420,13 @@ func (r *pgRepository) updateNannyBookingStatus(ctx context.Context, nannyProfil
 		  AND b.id = $3
 		  AND b.status = $4
 		RETURNING b.id, `+bookingConversationColumn+`, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
-		          np.display_name, np.city, np.province,
+		          np.display_name, COALESCE(np.avatar_url, ''), np.city, np.province,
 		          pp.display_name, pp.city, pp.province, pp.num_children,
 		          `+bookingPaymentReturningColumns+`
 	`, status, nannyProfileID, bookingID, models.PendingBookingStatus).Scan(
 		&booking.ID, &booking.ConversationID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
-		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
+		&booking.NannyDisplayName, &booking.NannyAvatarURL, &booking.NannyCity, &booking.NannyProvince,
 		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince, &booking.ParentNumChildren,
 		&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
 		&booking.StripeChargeID, &booking.StripeRefundID,
@@ -554,13 +554,13 @@ func (r *pgRepository) AcceptBookingChangeRequest(ctx context.Context, bookingID
 			  AND b.id = $2
 			  AND b.status = $3
 			RETURNING b.id, `+bookingConversationColumn+`, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
-			          np.display_name, np.city, np.province,
+			          np.display_name, COALESCE(np.avatar_url, ''), np.city, np.province,
 			          pp.display_name, pp.city, pp.province, pp.num_children,
 			          `+bookingPaymentReturningColumns+`
 		`, models.CancelledBookingStatus, bookingID, models.ApprovedBookingStatus).Scan(
 			&booking.ID, &booking.ConversationID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 			&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
-			&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
+			&booking.NannyDisplayName, &booking.NannyAvatarURL, &booking.NannyCity, &booking.NannyProvince,
 			&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince, &booking.ParentNumChildren,
 			&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
 			&booking.StripeChargeID, &booking.StripeRefundID,
@@ -579,13 +579,13 @@ func (r *pgRepository) AcceptBookingChangeRequest(ctx context.Context, bookingID
 			  AND b.id = $4
 			  AND b.status IN ($5, $6)
 			RETURNING b.id, `+bookingConversationColumn+`, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
-			          np.display_name, np.city, np.province,
+			          np.display_name, COALESCE(np.avatar_url, ''), np.city, np.province,
 			          pp.display_name, pp.city, pp.province, pp.num_children,
 			          `+bookingPaymentReturningColumns+`
 		`, *request.ProposedDate, *request.ProposedStartTime, *request.ProposedDuration, bookingID, models.PendingBookingStatus, models.ApprovedBookingStatus).Scan(
 			&booking.ID, &booking.ConversationID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 			&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
-			&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
+			&booking.NannyDisplayName, &booking.NannyAvatarURL, &booking.NannyCity, &booking.NannyProvince,
 			&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince, &booking.ParentNumChildren,
 			&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
 			&booking.StripeChargeID, &booking.StripeRefundID,
@@ -623,13 +623,13 @@ func (r *pgRepository) CompleteNannyBooking(ctx context.Context, nannyProfileID,
 		  AND b.id = $3
 		  AND b.status = $4
 		RETURNING b.id, `+bookingConversationColumn+`, b.parent_profile_id, b.nanny_profile_id, b.date, b.start_time, b.duration, b.total_amount, b.status, b.created_at, b.updated_at,
-		          np.display_name, np.city, np.province,
+		          np.display_name, COALESCE(np.avatar_url, ''), np.city, np.province,
 		          pp.display_name, pp.city, pp.province, pp.num_children,
 		          `+bookingPaymentReturningColumns+`
 	`, models.CompletedBookingStatus, nannyProfileID, bookingID, models.ApprovedBookingStatus).Scan(
 		&booking.ID, &booking.ConversationID, &booking.ParentProfileID, &booking.NannyProfileID, &booking.Date, &booking.StartTime,
 		&booking.Duration, &booking.TotalAmount, &booking.Status, &booking.CreatedAt, &booking.UpdatedAt,
-		&booking.NannyDisplayName, &booking.NannyCity, &booking.NannyProvince,
+		&booking.NannyDisplayName, &booking.NannyAvatarURL, &booking.NannyCity, &booking.NannyProvince,
 		&booking.ParentDisplayName, &booking.ParentCity, &booking.ParentProvince, &booking.ParentNumChildren,
 		&booking.PaymentStatus, &booking.PaymentFailureMessage, &booking.StripePaymentIntentID,
 		&booking.StripeChargeID, &booking.StripeRefundID,

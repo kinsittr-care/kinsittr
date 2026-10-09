@@ -27,6 +27,7 @@ export interface Booking {
   parent_province?: string;
   parent_num_children?: number;
   nanny_display_name?: string;
+  nanny_avatar_url?: string;
   nanny_city?: string;
   nanny_province?: string;
   date: string;

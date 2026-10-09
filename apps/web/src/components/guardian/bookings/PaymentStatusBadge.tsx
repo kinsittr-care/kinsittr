@@ -9,11 +9,11 @@ const toneCls: Record<PaymentStateTone, string> = {
   danger:  "bg-[#f7eceb] text-[#a84b43] border-[#e7c7c3]",
 };
 
-export default function PaymentStatusBadge({ status }: { status?: PaymentStatus | "" }) {
+export default function PaymentStatusBadge({ status, className }: { status?: PaymentStatus | ""; className?: string }) {
   const state = formatPaymentState(status);
 
   return (
-    <span className={cn("text-[11.5px] px-[9px] py-[3px] rounded-[20px] font-medium border", toneCls[state.tone])}>
+    <span className={cn("inline-flex items-center rounded-full border px-3 py-1 text-[12px] font-semibold leading-none", toneCls[state.tone], className)}>
       {state.label}
     </span>
   );

@@ -101,11 +101,12 @@ export function useNannySidebarData() {
     [session?.user.firstname, session?.user.lastname].filter(Boolean).join(" ") ||
     "Nanny";
   const initials = displayName.split(" ").map((p: string) => p[0]).join("").slice(0, 2).toUpperCase();
+  const avatarUrl = session?.nanny_profile?.avatar_url || undefined;
   const isVerified = session?.nanny_profile?.verification_status === "verified";
   const pendingCount = pendingBookingsQuery.data?.data?.total ?? 0;
   const hasConversations = (conversationsQuery.data?.data?.total ?? 0) > 0;
 
-  return { displayName, initials, isVerified, pendingCount, hasConversations };
+  return { displayName, initials, avatarUrl, isVerified, pendingCount, hasConversations };
 }
 
 export function NannyNavLinks({
@@ -158,7 +159,7 @@ export function NannyNavLinks({
 
 export default function NannySidebar() {
   const pathname = usePathname();
-  const { displayName, initials, isVerified, pendingCount, hasConversations } = useNannySidebarData();
+  const { displayName, initials, avatarUrl, isVerified, pendingCount, hasConversations } = useNannySidebarData();
   const logout = useLogout("nanny");
 
   return (
@@ -183,7 +184,7 @@ export default function NannySidebar() {
 
       {/* User + notifications */}
       <div className="flex items-center gap-3 mx-2.5 px-3.5 pt-4 mt-2 border-t border-nanny-border-soft">
-        <NannyAvatar initials={initials} size={40} tone="cream" />
+        <NannyAvatar initials={initials} src={avatarUrl} size={40} tone="cream" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-nanny-green-dk truncate">{displayName}</p>
           <p className="text-xs text-nanny-ink-faint mt-0.5">

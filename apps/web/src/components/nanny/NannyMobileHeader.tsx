@@ -19,7 +19,7 @@ import { useLogout } from "../auth/useLogout";
 export default function NannyMobileHeader() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const { displayName, initials, isVerified, pendingCount, hasConversations } = useNannySidebarData();
+  const { displayName, initials, avatarUrl, isVerified, pendingCount, hasConversations } = useNannySidebarData();
   const logout = useLogout("nanny");
 
   return (
@@ -93,7 +93,7 @@ export default function NannyMobileHeader() {
 
           {/* User footer */}
           <div className="flex items-center gap-3 mx-2.5 px-3.5 py-4 border-t border-nanny-border-soft">
-            <NannyAvatar initials={initials} size={38} tone="cream" />
+            <NannyAvatar initials={initials} src={avatarUrl} size={38} tone="cream" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-nanny-green-dk truncate">{displayName}</p>
               <p className="text-xs text-nanny-ink-faint mt-0.5">

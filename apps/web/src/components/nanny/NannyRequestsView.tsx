@@ -18,7 +18,7 @@ import {
   findNannyReviewedBookingIds,
   nannyReviewedBookingIdsQueryKey,
 } from "@/src/utils/api/reviews";
-import { formatCurrency, formatLocation, formatTimeRange, formatWeekdayDateOnly } from "@/src/utils/format";
+import { formatCurrency, formatLocation, formatTimeRange } from "@/src/utils/format";
 import { cn } from "@/lib/utils";
 import BookingRequestCard from "./requests/BookingRequestCard";
 import type { BookingRequest } from "./requests/BookingRequestCard";
@@ -37,21 +37,39 @@ function getInitials(name?: string) {
     .join("");
 }
 
+function getRequestDateParts(value: string) {
+  const date = new Date(`${value}T00:00:00`);
+  return {
+    month: new Intl.DateTimeFormat("en-CA", { month: "short" }).format(date).toUpperCase(),
+    day: new Intl.DateTimeFormat("en-CA", { day: "numeric" }).format(date),
+    weekday: new Intl.DateTimeFormat("en-CA", { weekday: "short" }).format(date),
+  };
+}
+
+function formatRequestStatus(status: BookingStatus) {
+  if (status === "cancelled") return "Cancelled";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
 function toBookingRequest(booking: Booking): BookingRequest {
   const parent = booking.parent_display_name || "Parent";
+  const dateParts = getRequestDateParts(booking.date);
   return {
     id: booking.id,
     parent,
     initials: getInitials(parent),
-    date: formatWeekdayDateOnly(booking.date),
+    dateMonth: dateParts.month,
+    dateDay: dateParts.day,
+    dateWeekday: dateParts.weekday,
     time: formatTimeRange(booking.start_time, booking.duration),
     hours: booking.duration,
     amount: formatCurrency(booking.total_amount),
     status: booking.status === "cancelled" ? "neutral" : booking.status,
+    statusLabel: formatRequestStatus(booking.status),
     conversationId: booking.conversation_id,
     paymentStatus: booking.payment_status,
     paymentFailure: booking.payment_failure_message,
-    children: formatLocation(booking.parent_city, booking.parent_province, "Family details"),
+    location: formatLocation(booking.parent_city, booking.parent_province, "Family details"),
   };
 }
 
@@ -136,27 +154,15 @@ export default function NannyRequestsView() {
         </p>
       </div>
 
-      {/* Filter — select on mobile, pill tabs on desktop */}
+      {/* Filter tabs */}
       <div className="mb-6">
-        {/* Mobile/intermediate select */}
-        <select
-          value={filter}
-          onChange={(e) => changeFilter(e.target.value as Filter)}
-          className="lg:hidden w-full bg-nanny-card-soft border border-nanny-border rounded-xl px-3 py-2.5 text-sm text-nanny-ink-faint font-medium capitalize focus:outline-none focus:ring-2 focus:ring-nanny-green/30"
-        >
-          {FILTERS.map((f) => (
-            <option key={f} value={f} className="capitalize">{f}</option>
-          ))}
-        </select>
-
-        {/* Desktop pill tabs */}
-        <div className="hidden lg:flex gap-1.5 bg-nanny-card-soft border border-nanny-border rounded-xl p-1 w-fit">
+        <div className="flex w-full gap-1.5 overflow-x-auto rounded-xl border border-nanny-border bg-nanny-card-soft p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:w-fit">
           {FILTERS.map((f) => (
             <button
               key={f}
               onClick={() => changeFilter(f)}
               className={cn(
-                "px-4 py-2 rounded-[9px] text-[13.5px] capitalize transition-all cursor-pointer",
+                "shrink-0 px-4 py-2 rounded-[9px] text-[13.5px] capitalize transition-all cursor-pointer",
                 filter === f
                   ? "bg-nanny-card border border-nanny-border text-nanny-green font-semibold shadow-[var(--nanny-shadow)]"
                   : "text-nanny-ink-faint font-medium hover:text-nanny-ink border border-transparent"

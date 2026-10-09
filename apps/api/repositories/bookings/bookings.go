@@ -20,6 +20,7 @@ type BookingRecord struct {
 	models.Booking
 	ConversationID        string `json:"conversation_id,omitempty"`
 	NannyDisplayName      string `json:"nanny_display_name"`
+	NannyAvatarURL        string `json:"nanny_avatar_url,omitempty"`
 	NannyCity             string `json:"nanny_city"`
 	NannyProvince         string `json:"nanny_province"`
 	ParentDisplayName     string `json:"parent_display_name"`

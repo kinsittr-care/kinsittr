@@ -40,14 +40,14 @@ export default function BookingDetailCard({ bookingId }: BookingDetailCardProps)
 
           return (
             <div className="grid gap-[14px]">
-              <div className="flex items-center justify-between gap-3">
-                <div>
+              <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
+                <div className="min-w-0">
                   <div className="font-bold text-[18px]">{booking.nanny_display_name ?? "Selected nanny"}</div>
-                  <div className="text-[var(--faint)] text-[13px] mt-[2px]">
+                  <div className="mt-[2px] w-full text-[13px] text-[var(--faint)]">
                     {formatLocation(booking.nanny_city, booking.nanny_province, "Location not set")}
                   </div>
                 </div>
-                <div className="flex flex-wrap justify-end gap-2">
+                <div className="flex flex-wrap gap-2 sm:justify-end">
                   <BookingStatusBadge status={booking.status} />
                   <PaymentStatusBadge status={booking.payment_status} />
                 </div>

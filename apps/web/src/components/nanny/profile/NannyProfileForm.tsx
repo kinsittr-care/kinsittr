@@ -55,16 +55,16 @@ export default function NannyProfileForm({ profile }: { profile: NannyProfile })
       <RateField rate={form.rate_per_hour} updateField={updateField} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <button className={cn("w-full sm:w-auto", btnPrimaryCls)} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate(form)}>
+        <button className={cn("w-full justify-center text-center sm:w-auto", btnPrimaryCls)} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate(form)}>
           {updateMutation.isPending ? "Saving..." : "Save changes"}
         </button>
         {isPublicProfile ? (
-          <Link className={cn("w-full sm:w-auto text-center", btnGhostCls)} href={`/nannies/${profile.public_slug || profile.id}`} target="_blank">
+          <Link className={cn("w-full justify-center text-center sm:w-auto", btnGhostCls)} href={`/nannies/${profile.public_slug || profile.id}`} target="_blank">
             Preview public profile
           </Link>
         ) : (
           <button
-            className={cn("w-full sm:w-auto cursor-not-allowed opacity-[0.62]", btnGhostCls)}
+            className={cn("w-full cursor-not-allowed justify-center text-center opacity-[0.62] sm:w-auto", btnGhostCls)}
             type="button"
             disabled
             title="Your public profile is available after KinSittr verifies your nanny account."
