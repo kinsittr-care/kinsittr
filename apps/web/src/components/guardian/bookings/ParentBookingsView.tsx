@@ -130,6 +130,48 @@ export default function ParentBookingsView({
     setPage(1);
   };
 
+  const bookingsContent = (
+    <>
+      {isLoading ? (
+        <p className="m-0 text-[14px] text-brand-faint">Loading bookings...</p>
+      ) : error ? (
+        <p className="m-0 text-[14px] text-[#b24a3f]">
+          {error instanceof Error ? error.message : "Unable to load bookings."}
+        </p>
+      ) : bookings.length === 0 ? (
+        <div className={compact ? "py-2 text-left" : "py-10 text-center"}>
+          <p className="m-0 text-[15px] text-brand-faint">No bookings match your filters.</p>
+          {!compact && (
+            <p className="mt-2 text-[13px] text-brand-faint">
+              Try adjusting the status or date range.
+            </p>
+          )}
+        </div>
+      ) : (
+        <>
+          {isFetching && (
+            <p className="mt-0 text-[13px] text-brand-faint">Updating bookings...</p>
+          )}
+          {cancelError && (
+            <p className="mt-0 text-[13px] text-[#b24a3f]">{cancelError}</p>
+          )}
+          <ParentBookingsList
+            bookings={bookings}
+            cancelIsPending={cancelMutation.isPending}
+            compact={compact}
+            currentPage={currentPage}
+            reviewedBookingIds={reviewedBookingIds}
+            totalPages={totalPages}
+            onCancel={(bookingId) => cancelMutation.mutate(bookingId)}
+            onPageChange={setPage}
+            onReview={setReviewBookingId}
+            onSelect={(bookingId) => router.push(`/parent/bookings/${bookingId}`)}
+          />
+        </>
+      )}
+    </>
+  );
+
   return (
     <div className="grid gap-5">
       {!compact && (
@@ -143,57 +185,27 @@ export default function ParentBookingsView({
         />
       )}
 
-      <SectionCard
-        title={compact ? "Booking History" : "Bookings"}
-        titleAction={
-          compact && showViewAllLink ? (
-            <Link
-              href="/parent/bookings"
-              className="text-[13px] text-brand-text underline whitespace-nowrap"
-            >
-              View all
-            </Link>
-          ) : undefined
-        }
-      >
-        {isLoading ? (
-          <p className="text-brand-faint text-[14px] m-0">Loading bookings…</p>
-        ) : error ? (
-          <p className="text-[#b24a3f] text-[14px] m-0">
-            {error instanceof Error ? error.message : "Unable to load bookings."}
-          </p>
-        ) : bookings.length === 0 ? (
-          <div className={compact ? "text-left py-2" : "text-center py-7"}>
-            <p className="text-[15px] m-0 text-brand-faint">No bookings match your filters.</p>
-            {!compact && (
-              <p className="text-[13px] mt-2 text-brand-faint">
-                Try adjusting the status or date range.
-              </p>
-            )}
-          </div>
-        ) : (
-          <>
-            {isFetching && (
-              <p className="text-[13px] text-brand-faint mt-0">Updating bookings…</p>
-            )}
-            {cancelError && (
-              <p className="text-[13px] text-[#b24a3f] mt-0">{cancelError}</p>
-            )}
-            <ParentBookingsList
-              bookings={bookings}
-              cancelIsPending={cancelMutation.isPending}
-              compact={compact}
-              currentPage={currentPage}
-              reviewedBookingIds={reviewedBookingIds}
-              totalPages={totalPages}
-              onCancel={(bookingId) => cancelMutation.mutate(bookingId)}
-              onPageChange={setPage}
-              onReview={setReviewBookingId}
-              onSelect={(bookingId) => router.push(`/parent/bookings/${bookingId}`)}
-            />
-          </>
-        )}
-      </SectionCard>
+      {compact ? (
+        <SectionCard
+          title="Booking History"
+          titleAction={
+            showViewAllLink ? (
+              <Link
+                href="/parent/bookings"
+                className="whitespace-nowrap text-[13px] text-brand-text underline"
+              >
+                View all
+              </Link>
+            ) : undefined
+          }
+        >
+          {bookingsContent}
+        </SectionCard>
+      ) : (
+        <div className="overflow-hidden rounded-[34px] border border-[#e7decf] bg-[#fffdfa] px-8 py-7 shadow-[0_18px_55px_rgba(40,30,20,.08)] max-sm:rounded-[30px] max-sm:px-5 max-sm:py-7">
+          {bookingsContent}
+        </div>
+      )}
 
       <ReviewDialog
         open={!!reviewBooking}

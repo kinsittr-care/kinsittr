@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { btnPrimaryCls } from "../nanny-styles";
 import {
@@ -41,70 +42,80 @@ export default function StripeStatusCard({ status, isLoading, error, onRefresh }
         ? "Stripe still needs identity, tax, or bank details before payouts can be enabled."
         : "Parents pay through KinSittr. Stripe sends payouts to your bank after completed bookings.";
 
+  const nextStepCopy = onboarded
+    ? "Use Stripe Express to update payout details or review account status."
+    : connected
+      ? "Continue setup in Stripe to finish identity and bank verification."
+      : "Start Stripe Express onboarding. You’ll leave KinSittr and return after setup.";
+
   return (
-    <div className="flex flex-col gap-5 p-6 sm:p-7 lg:flex-row lg:items-center bg-nanny-card border border-nanny-border rounded-[18px] shadow-[var(--nanny-shadow)]">
-      <div className="flex flex-1 gap-4">
-        <div className="w-12 h-12 rounded-xl bg-nanny-green-lt border border-nanny-green-mid flex items-center justify-center shrink-0">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-            <rect x="2" y="5" width="18" height="12" rx="3" stroke="var(--nanny-green)" strokeWidth="1.6" />
-            <path d="M2 10h18" stroke="var(--nanny-green)" strokeWidth="1.6" />
-          </svg>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-[15px] font-semibold text-nanny-green-dk">Stripe Connect</div>
-          <div className="mt-1 text-[13.5px] text-nanny-ink-faint leading-[1.55]">
-            {statusCopy}
+    <div className="grid gap-[18px] xl:grid-cols-2">
+      <div className="bg-nanny-card border border-nanny-border rounded-[24px] p-6 shadow-[var(--nanny-shadow)] sm:p-8">
+        <div className="flex gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-nanny-green-lt border border-nanny-green-mid flex items-center justify-center shrink-0">
+            <svg width="24" height="24" viewBox="0 0 22 22" fill="none">
+              <rect x="2" y="5" width="18" height="12" rx="3" stroke="var(--nanny-green)" strokeWidth="1.8" />
+              <path d="M2 10h18" stroke="var(--nanny-green)" strokeWidth="1.8" />
+            </svg>
           </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <StatusPill tone={statusTone}>{statusLabel}</StatusPill>
-            {connected && !onboarded && <StatusPill tone="review">Action required in Stripe</StatusPill>}
-            {onboarded && <StatusPill tone="connected">Payouts enabled</StatusPill>}
+          <div className="min-w-0">
+            <div className="text-[22px] font-bold text-nanny-green-dk">Stripe Connect</div>
+            <div className="mt-1 text-[15px] text-nanny-ink-faint">Express account</div>
           </div>
-          {connected && !onboarded && (requirements.length > 0 || status?.disabled_reason) && (
-            <div className="mt-[10px] text-[12.5px] leading-[1.55] text-nanny-ink-faint">
-              {status?.disabled_reason && <div>Stripe reason: {status.disabled_reason.replaceAll("_", " ")}</div>}
-              {requirements.length > 0 && <div>Still needed: {requirements.slice(0, 3).map(formatRequirement).join(", ")}{requirements.length > 3 ? "..." : ""}</div>}
-            </div>
-          )}
-          {(error || connectMutation.error) && (
-            <div className="mt-2 text-[12.5px] text-[#b34b39]">
-              {(error ?? connectMutation.error) instanceof Error
-                ? (error ?? connectMutation.error)?.message
-                : "Unable to load Stripe status."}
-            </div>
-          )}
         </div>
+
+        <p className="mt-7 text-[17px] leading-8 text-nanny-ink">
+          {statusCopy}
+        </p>
+
+        <div className="mt-6 flex flex-wrap gap-2.5">
+          <StatusPill tone={statusTone}>{statusLabel}</StatusPill>
+          {connected && !onboarded && <StatusPill tone="review">Action required in Stripe</StatusPill>}
+          {onboarded && <StatusPill tone="connected">Payouts enabled</StatusPill>}
+        </div>
+
+        {connected && !onboarded && (requirements.length > 0 || status?.disabled_reason) && (
+          <div className="mt-[14px] text-[13px] leading-[1.55] text-nanny-ink-faint">
+            {status?.disabled_reason && <div>Stripe reason: {status.disabled_reason.replaceAll("_", " ")}</div>}
+            {requirements.length > 0 && <div>Still needed: {requirements.slice(0, 3).map(formatRequirement).join(", ")}{requirements.length > 3 ? "..." : ""}</div>}
+          </div>
+        )}
+
+        {(error || connectMutation.error) && (
+          <div className="mt-3 text-[13px] text-[#b34b39]">
+            {(error ?? connectMutation.error) instanceof Error
+              ? (error ?? connectMutation.error)?.message
+              : "Unable to load Stripe status."}
+          </div>
+        )}
       </div>
 
-      <div className="rounded-2xl border border-nanny-border bg-nanny-card-soft p-4 lg:w-[300px]">
-        <div className="text-[12px] font-bold tracking-[0.08em] uppercase text-nanny-ink-faint">
+      <div className="bg-nanny-card-soft border border-nanny-border rounded-[24px] p-6 shadow-[var(--nanny-shadow)] sm:p-8">
+        <div className="text-[13px] font-black tracking-[0.18em] uppercase text-nanny-ink-faint">
           Next step
         </div>
-        <p className="mt-2 mb-[14px] text-[13.5px] leading-[1.55] text-nanny-ink-faint">
-          {onboarded
-            ? "Use Stripe Express to update payout details or review account status."
-            : connected
-              ? "Continue setup in Stripe to finish identity and bank verification."
-              : "Start Stripe Express onboarding. You’ll leave KinSittr and return after setup."}
+        <p className="mt-6 text-[18px] leading-8 text-nanny-ink">
+          {nextStepCopy}
         </p>
-        <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+        <div className="mt-7 grid gap-3 md:grid-cols-2 xl:grid-cols-1">
           <button
-            className={btnPrimaryCls}
+            className={cn(btnPrimaryCls, "w-full justify-center whitespace-nowrap text-center text-[15px] sm:text-[16px]")}
             disabled={connectMutation.isPending}
             onClick={() => connectMutation.mutate()}
           >
-            {connectMutation.isPending ? "Opening Stripe..." : onboarded ? "Manage Stripe" : connected ? "Continue setup" : "Connect Stripe"}
+            <span>{connectMutation.isPending ? "Opening Stripe..." : onboarded ? "Manage Stripe" : connected ? "Continue setup" : "Connect Stripe"}</span>
+            {!connectMutation.isPending && <ArrowUpRight className="size-5" aria-hidden="true" />}
           </button>
           <button
             type="button"
-            className="px-[14px] py-[10px] bg-transparent border border-nanny-border rounded-[10px] text-[13.5px] text-nanny-green-dk font-semibold cursor-pointer"
+            className="w-full rounded-[12px] border border-nanny-border bg-nanny-card px-3.5 py-3 text-center text-[15px] font-bold text-nanny-green-dk cursor-pointer"
             onClick={onRefresh}
           >
             Refresh status
           </button>
         </div>
-        <p className="mt-[10px] mb-0 text-[12.5px] leading-[1.5] text-nanny-ink-faint">
-          KinSittr does not store your SIN, bank account, or tax identity details.
+        <p className="mt-6 mb-0 text-[14px] leading-6 text-nanny-ink-faint">
+          KinSittr never stores your SIN, bank account or tax identity details.
         </p>
       </div>
     </div>
