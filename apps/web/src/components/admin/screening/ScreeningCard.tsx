@@ -1,7 +1,6 @@
 import AdminAvatar from "../compositions/AdminAvatar";
 import AdminNannyDocumentsList from "../compositions/AdminNannyDocumentsList";
-import AdminStepChip from "../compositions/AdminStepChip";
-import { TimerIcon, PinIcon, ArrowSmIcon } from "../compositions/admin-icons";
+import { PinIcon, ArrowSmIcon } from "../compositions/admin-icons";
 import { btnGhostSmCls, cardCls } from "../compositions/admin-styles";
 import { cn } from "@/lib/utils";
 import type { AdminNannyDocument, AdminVerificationStatus } from "@/src/types/api/admin";
@@ -39,15 +38,15 @@ export default function ScreeningCard({
   const canReset = applicant.status === "rejected";
 
   return (
-    <div className={cardCls}>
-      <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[56px_minmax(0,1fr)_minmax(160px,auto)] xl:items-start xl:gap-x-[18px]">
-        <div className="flex items-start gap-4 xl:contents">
-          <AdminAvatar initials={applicant.initials} size={56} />
-          <div className="flex-1 min-w-0">
-            <div className="font-display text-[22px] text-admin-ink leading-[1.1]">
+    <div className={cn(cardCls, "rounded-[28px] px-5 py-6 sm:px-7 lg:px-9 lg:py-8")}>
+      <div className="grid gap-7">
+        <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-4 lg:grid-cols-[72px_minmax(0,1fr)_auto] lg:gap-5">
+          <AdminAvatar initials={applicant.initials} size={72} />
+          <div className="min-w-0 pt-1">
+            <div className="font-display text-[26px] leading-[1.08] text-admin-ink lg:text-[30px]">
               {applicant.name}
             </div>
-            <div className="mt-[7px] flex flex-wrap items-center gap-2 text-[13.5px] text-admin-ink-soft">
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[15px] text-admin-ink-soft lg:text-[17px]">
               <span className="flex text-admin-clay">
                 <PinIcon />
               </span>
@@ -56,62 +55,90 @@ export default function ScreeningCard({
               <span>Submitted {applicant.submitted}</span>
             </div>
           </div>
+          <div className={cn("col-span-2 inline-flex w-fit items-center justify-center rounded-full px-3.5 py-1.5 text-center text-[13px] font-bold leading-none lg:col-span-1 lg:self-start lg:justify-self-end", urgent ? "bg-admin-red-light text-admin-red" : "bg-admin-amber-light text-admin-amber")}>
+            Waiting {applicant.waiting} day{applicant.waiting > 1 ? "s" : ""}
+          </div>
         </div>
 
-        <div className="flex w-full flex-nowrap items-center justify-between gap-3 xl:col-start-3 xl:row-start-1 xl:w-auto xl:flex-col xl:items-end xl:justify-start xl:gap-[14px]">
-          <div className={cn("inline-flex min-w-0 items-center gap-[6px] text-[13px] font-semibold xl:text-[13.5px]", urgent ? "text-admin-red" : "text-admin-amber")}>
-            <span className="flex">
-              <TimerIcon />
+        <section className="grid gap-4">
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="m-0 text-[20px] font-bold text-admin-ink">Screening checklist</h3>
+            <span className="text-[15px] text-admin-ink-soft">
+              {Object.values(steps).filter(Boolean).length} of 3 complete
             </span>
-            <span className="truncate">Waiting {applicant.waiting} day{applicant.waiting > 1 ? "s" : ""}</span>
           </div>
-          {applicant.status === "pending" ? (
-            <button className={cn("inline-flex shrink-0 items-center gap-1.5 rounded-[9px] border border-black bg-admin-clay px-3 py-2 text-[13px] font-semibold text-black xl:gap-2 xl:rounded-[10px] xl:px-[22px] xl:py-[11px] xl:text-[14px]", isBusy && "opacity-65")} disabled={isBusy} onClick={onStart}>
-              Start review <ArrowSmIcon />
-            </button>
-          ) : canReset ? (
-            <button className={cn("shrink-0", btnGhostSmCls, isBusy && "opacity-65")} disabled={isBusy} onClick={onReset}>
-              Reset
-            </button>
-          ) : (
-            <button
-              className="inline-flex shrink-0 cursor-not-allowed items-center gap-1.5 rounded-[9px] border border-admin-red bg-admin-card px-3 py-2 text-[13px] font-semibold text-admin-red opacity-65 xl:gap-2 xl:rounded-[10px] xl:px-[22px] xl:py-[11px] xl:text-[14px]"
-              disabled
-            >
-              In review <ArrowSmIcon />
-            </button>
-          )}
-        </div>
+          <div className="h-2 rounded-full bg-admin-border-soft" />
+          <div className="grid gap-3 lg:grid-cols-3">
+            {(["docs", "refs", "interview"] as const).map((key) => (
+              <button
+                key={key}
+                disabled={!canUpdateSteps || isBusy}
+                onClick={() => onToggle(key)}
+                className={cn(
+                  "flex min-h-15.5 items-center gap-3 rounded-[18px] border border-admin-border bg-admin-card px-4 text-left text-[15px] font-bold text-admin-ink transition-colors sm:text-[16px]",
+                  steps[key] && "border-admin-green bg-admin-green-light text-admin-green",
+                  canUpdateSteps && !isBusy ? "cursor-pointer hover:border-admin-clay" : "cursor-not-allowed",
+                  !canUpdateSteps && "opacity-80",
+                )}
+              >
+                <StepCircle done={steps[key]} />
+                <span>{key === "docs" ? "Documents reviewed" : key === "refs" ? "References checked" : "Interview done"}</span>
+              </button>
+            ))}
+          </div>
+        </section>
 
-        <div className="flex flex-wrap gap-2 xl:col-start-2 xl:mt-[2px] xl:gap-[10px]">
-          {(["docs", "refs", "interview"] as const).map((key) => (
-            <button
-              key={key}
-              disabled={!canUpdateSteps || isBusy}
-              onClick={() => onToggle(key)}
-              className={cn(
-                "[all:unset]",
-                canUpdateSteps && !isBusy ? "cursor-pointer" : "cursor-not-allowed",
-                !canUpdateSteps && "opacity-60",
-              )}
-            >
-              <AdminStepChip
-                label={key === "docs" ? "Docs reviewed" : key === "refs" ? "References checked" : "Interview done"}
-                done={steps[key]}
-              />
-            </button>
-          ))}
-        </div>
-
-        <div className="min-w-0 xl:col-start-2 xl:col-span-2">
-          <div className="text-admin-ink text-[13px] font-bold">
+        <section className="grid gap-4">
+          <h3 className="m-0 text-[20px] font-bold text-admin-ink">
             Uploaded documents ({applicant.documents.length})
+          </h3>
+          <div className="rounded-[18px] border border-dashed border-admin-clay/50 px-5 py-5 sm:px-6">
+            <div className="max-h-55 overflow-y-auto pr-1 lg:max-h-none lg:overflow-visible lg:pr-0">
+              <AdminNannyDocumentsList documents={applicant.documents} compact />
+            </div>
           </div>
-          <div className="max-h-[180px] overflow-y-auto pr-1 xl:max-h-none xl:overflow-visible xl:pr-0">
-            <AdminNannyDocumentsList documents={applicant.documents} compact />
+        </section>
+
+        <div className="border-t border-admin-border pt-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            {applicant.status === "pending" ? (
+              <button className={cn("inline-flex items-center justify-center gap-2 rounded-[12px] border border-black bg-admin-clay px-5 py-3 text-[14px] font-semibold text-black", isBusy && "opacity-65")} disabled={isBusy} onClick={onStart}>
+                Start review <ArrowSmIcon />
+              </button>
+            ) : canReset ? (
+              <button className={cn("justify-center", btnGhostSmCls, isBusy && "opacity-65")} disabled={isBusy} onClick={onReset}>
+                Reset
+              </button>
+            ) : (
+              <button
+                className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-[12px] border border-admin-red bg-admin-card px-5 py-3 text-[14px] font-semibold text-admin-red opacity-65"
+                disabled
+              >
+                In review <ArrowSmIcon />
+              </button>
+            )}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function StepCircle({ done }: { done: boolean }) {
+  return (
+    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full border-[3px]", done ? "border-admin-green bg-admin-green text-white" : "border-admin-border bg-admin-card")}>
+      {done && (
+        <svg width="16" height="16" viewBox="0 0 14 14" aria-hidden="true">
+          <path
+            d="M2 7l3.5 3.5L12 3.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )}
+    </span>
   );
 }

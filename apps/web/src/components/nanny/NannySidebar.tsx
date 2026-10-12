@@ -163,7 +163,7 @@ export default function NannySidebar() {
   const logout = useLogout("nanny");
 
   return (
-    <aside className="hidden md:flex w-[260px] shrink-0 h-full flex-col bg-nanny-bg border-r border-nanny-border py-6">
+    <aside className="hidden md:flex w-65 shrink-0 h-full flex-col bg-nanny-bg border-r border-nanny-border py-6">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 pb-5 mb-4 border-b border-nanny-border-soft">
         <div className="size-8 rounded-[9px] bg-nanny-green flex items-center justify-center text-[#f6efd9] font-display text-lg shrink-0">
